@@ -120,16 +120,43 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ### 파일 포맷
 - 분석 문서: .md (원본) + .pdf (배포용) + .docx (제출용)
-- PDF 생성 시 **NanumSquareOTF** 폰트 사용 (한글 임베딩 필수)
+- PDF 생성 시 **Apple SD Gothic Neo** 폰트 사용 (한글 임베딩 필수)
 - 번호 체계: `(번호) 제목_유형.확장자` — 예: `(01) Exqutor_상세분석.md`
+- 연구 방향 문서: `연구방향_설계안_YYYYMMDD_HHMMSS.md` 형식
 
 ## 도구
 
 - **DB**: pgvector (PostgreSQL), DuckDB
 - **라이브러리**: Python, NumPy, FAISS
 - **분석**: EXPLAIN ANALYZE, pg_hint_plan
-- **PDF 생성**: fpdf2 + NanumSquareOTF (D2Coding for code blocks)
 - **제출물 양식**: Templates/ 디렉토리 참조
+
+### MD → PDF 변환 환경
+
+```
+라이브러리: fpdf2 v2.8.7 (pip install fpdf2)
+변환 스크립트: scripts/md2pdf.py
+```
+
+**사용 가능 폰트 (로컬 확인 완료)**:
+| 폰트 | 경로 | 용도 |
+|------|------|------|
+| Apple SD Gothic Neo | `/System/Library/Fonts/AppleSDGothicNeo.ttc` | 본문 (Regular + Bold, TTC 직접 로드 가능) |
+| NanumSquareOTF | `~/Library/Fonts/NanumSquareOTF_ac*.otf` | 대체 본문 (R/B/EB/L 4종) |
+| NanumSquare | `~/Library/Fonts/NanumSquare*.otf` | 대체 본문 (R/B/EB/L 4종) |
+| D2Coding | **미설치** — 코드 블록용, 필요시 `brew install font-d2coding` |
+
+**사용법**:
+```bash
+python3 scripts/md2pdf.py Research/문서이름.md
+# → Research/문서이름.pdf 자동 생성 (Apple SD Gothic Neo 고정)
+```
+
+**fpdf2 한글 주의사항**:
+- Courier 등 core font는 한글 불가 → 코드 블록도 한글 폰트 사용
+- TTC 파일 직접 로드 가능 (fpdf2 2.5.1+)
+- `uni=True` 파라미터는 deprecated (자동 처리됨)
+- D2Coding 미설치 시 코드 블록도 본문 폰트 fallback
 
 ## 팀 운영
 

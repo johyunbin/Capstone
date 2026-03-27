@@ -50,7 +50,8 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 │
 ├── Plans/                      # 연구 방향 기획 및 설계 문서
 │   ├── 연구방향_기획안.md       # 12개 연구 방향 후보 (v1)
-│   ├── 연구방향_설계안_v2.md    # 필터 순서 최적화 중심 3단계 실험 설계
+│   ├── 연구방향_설계안.md       # 필터 순서 최적화 중심 3단계 실험 설계 (최종)
+│   ├── 연구방향_설계안.pdf      # 설계안 PDF (Apple SD Gothic Neo)
 │   └── 연구방향_카톡요약.md     # 팀 토의용 요약
 │
 ├── Research/                   # 분석 문서 + 원논문
@@ -59,6 +60,10 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 │   │   └── archive/            # 중간 산출물 (03~06, 09~12)
 │   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf/docx)
 │   └── papers/                 # 원논문 PDF 69편
+│
+├── Learning/                   # Claude Code 학습 자료
+│   ├── kr/                     # 한국어 튜토리얼/팁 (유튜브 스크립트 등)
+│   └── us/                     # 영어 튜토리얼/팁
 │
 ├── Submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
 │

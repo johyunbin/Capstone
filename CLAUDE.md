@@ -47,14 +47,20 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── CLAUDE.md                   # 이 파일
 ├── README.md                   # GitHub README
 ├── .gitignore                  # papers/, tmp, bak 등 제외
-├── 1차 자문내역서...pdf         # 자문위원 피드백
-├── 미팅준비_브리핑*.md/pdf/docx  # 교수님 미팅 자료
+│
+├── Plans/                      # 연구 방향 기획 및 설계 문서
+│   ├── 연구방향_기획안.md       # 12개 연구 방향 후보 (v1)
+│   ├── 연구방향_설계안_v2.md    # 필터 순서 최적화 중심 3단계 실험 설계
+│   └── 연구방향_카톡요약.md     # 팀 토의용 요약
 │
 ├── Research/                   # 분석 문서 + 원논문
-│   ├── (01)~(12)*.md/pdf/docx  # 시리즈 분석 문서
-│   ├── [0]~[81]*총정리.md/pdf/docx  # 개별 논문 총정리 (82편)
-│   ├── papers/                 # 원논문 PDF 84편 (Pre+Reference 통합)
-│   └── Project_Instructions_Updated_0319.md  # 상세 지침 (레거시)
+│   ├── analysis/               # 시리즈 분석 문서
+│   │   ├── (01),(02),(07),(08)  # 핵심 분석 (Exqutor + 81편 종합)
+│   │   └── archive/            # 중간 산출물 (03~06, 09~12)
+│   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf/docx)
+│   └── papers/                 # 원논문 PDF 69편
+│
+├── Submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
 │
 ├── Templates/                  # 캡스톤 제출물 양식 및 예시
 │   ├── 양식/                   # 연구지도확인서, 결과보고서, 회의록 등 (hwp)

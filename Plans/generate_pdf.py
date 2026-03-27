@@ -38,7 +38,12 @@ html_body = re.sub(
     html_body
 )
 
-# 3-E, 3-F는 짧으므로 3-D 뒤에 자연스럽게 이어짐 (page-break 없음)
+# 3-D 앞에 페이지 브레이크 (→p7)
+html_body = re.sub(
+    r'<h4 id="[^"]*">3-D\.',
+    PB + '<h4>3-D.',
+    html_body
+)
 
 # VI는 V와 같은 페이지에 이어지게
 html_body = re.sub(

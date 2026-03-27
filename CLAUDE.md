@@ -57,7 +57,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── .gitignore                  # papers/, tmp, bak 등 제외
 │
 ├── plans/                      # 연구 방향 기획 및 설계 문서
-│   ├── 연구_기획안.md           # 연구 방향 후보 brainstorming (A~J)
+│   ├── 연구_기획안_YYYYMMDD_HHMMSS.md      # 연구 방향 후보 brainstorming (A~J)
 │   └── 연구_설계안_YYYYMMDD_HHMMSS.md/pdf  # Cascade Decomposition 설계안
 │
 ├── research/                   # 분석 문서 + 원논문

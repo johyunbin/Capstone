@@ -137,7 +137,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ### 파일 포맷
 - 분석 문서: .md (원본) + .pdf (배포용) + .docx (제출용)
-- PDF 생성 시 **Apple SD Gothic Neo** 폰트 사용 (한글 임베딩 필수)
+- PDF 생성 시 **NanumSquare OTF** 폰트 사용 (한글 임베딩 필수)
 - 번호 체계: `(번호) 제목_유형.확장자` — 예: `(01) Exqutor_상세분석.md`
 - 연구 방향 문서: `연구_설계안_YYYYMMDD_HHMMSS.md` 형식
 
@@ -166,7 +166,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 **사용법**:
 ```bash
 python3 scripts/md2pdf.py Research/문서이름.md
-# → Research/문서이름.pdf 자동 생성 (Apple SD Gothic Neo 고정)
+# → Research/문서이름.pdf 자동 생성 (NanumSquare OTF 고정)
 ```
 
 **fpdf2 한글 주의사항**:

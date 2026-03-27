@@ -3,7 +3,7 @@
 md2pdf.py — Markdown → PDF 변환 스크립트
 사용법: python3 scripts/md2pdf.py Research/문서이름.md
 출력:   Research/문서이름.pdf (같은 디렉토리)
-폰트:   Apple SD Gothic Neo (고정)
+폰트:   NanumSquare OTF (고정)
 """
 
 import re
@@ -11,10 +11,10 @@ import sys
 import os
 from fpdf import FPDF
 
-# ─── 폰트 설정 (Apple SD Gothic Neo 고정) ───
-FONT_REGULAR = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
-FONT_BOLD = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
-FONT_NAME = "Neo"
+# ─── 폰트 설정 (NanumSquare OTF 고정) ───
+FONT_REGULAR = os.path.expanduser("~/Library/Fonts/NanumSquareOTF_acR.otf")
+FONT_BOLD = os.path.expanduser("~/Library/Fonts/NanumSquareOTF_acB.otf")
+FONT_NAME = "Nanum"
 
 
 # ─── PDF 클래스 ───
@@ -106,7 +106,7 @@ class MarkdownPDF(FPDF):
         self.set_font(self.font_name, "", 9.5)
         self.set_text_color(30, 30, 30)
         indent = 6 + level * 6
-        b = "\u2022" if level == 0 else "\u25e6"
+        b = "-" if level == 0 else ">"
         self.set_x(self.l_margin + indent)
         self.cell(5, 6, b)
         self.multi_cell(

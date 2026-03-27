@@ -40,6 +40,12 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 - 자문위원(박성원) 피드백 핵심: **데이터셋 선정, 대조군 설정, 평가 지표 설정** 구체화 필요
 - EXPLAIN ANALYZE 숙달이 첫걸음
 
+## 세션 루틴
+
+**캡스톤 작업 시 매번 확인:**
+1. 캡스톤 홈페이지(https://capstone.cs.yonsei.ac.kr/capstone/) 공지사항 확인 → 새 일정 있으면 노션 일정 DB 업데이트
+2. 일정 변경/추가 시 노션 `캡스톤 일정` DB에 반영
+
 ## 디렉토리 구조
 
 ```
@@ -68,8 +74,8 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
 │
 ├── templates/                  # 캡스톤 제출물 양식 및 예시
-│   ├── 양식/                   # 연구지도확인서, 결과보고서, 회의록 등 (hwp)
-│   └── 예시/                   # 중간발표/보고서/포스터/최종보고서 샘플
+│   ├── forms/                  # 양식 (연구지도확인서, 결과보고서, 회의록 등)
+│   └── samples/                # 샘플 (중간발표/보고서/포스터/최종보고서)
 │
 └── .claude/                    # Claude Code 설정
     ├── settings.json           # 권한 + hooks

@@ -26,18 +26,6 @@ FONTS = [
         "family": "'Apple SD Gothic Neo', 'AppleSDGothicNeo', sans-serif",
         "heading_weight": "800",
     },
-    {
-        "key": "NanumSquare",
-        "label": "NanumSquare",
-        "family": "'NanumSquareOTF_ac', 'NanumSquareOTF', 'NanumSquare', sans-serif",
-        "heading_weight": "800",
-    },
-    {
-        "key": "Binggrae",
-        "label": "빙그레체",
-        "family": "'Binggrae', '빙그레체', sans-serif",
-        "heading_weight": "700",
-    },
 ]
 
 
@@ -81,6 +69,15 @@ h2 {{
     margin-bottom: 10px;
     padding-bottom: 5px;
     border-bottom: 1.2px solid #ddd;
+    page-break-before: always;
+}}
+
+h1 + hr + h2 {{
+    page-break-before: auto;
+}}
+
+h2:first-of-type {{
+    page-break-before: auto;
 }}
 
 h3 {{
@@ -89,6 +86,11 @@ h3 {{
     color: #333;
     margin-top: 22px;
     margin-bottom: 8px;
+    page-break-after: avoid;
+}}
+
+h4 {{
+    page-break-after: avoid;
 }}
 
 h4 {{
@@ -161,6 +163,15 @@ pre {{
     line-height: 1.55;
     overflow-x: auto;
     margin: 12px 0;
+    page-break-inside: avoid;
+}}
+
+table {{
+    page-break-inside: avoid;
+}}
+
+blockquote {{
+    page-break-inside: avoid;
 }}
 
 pre code {{
@@ -209,7 +220,7 @@ for cfg in FONTS:
     tmp_html.write(html)
     tmp_html.close()
 
-    out_pdf = OUT_DIR / f"연구방향_설계안_{cfg['key']}.pdf"
+    out_pdf = OUT_DIR / "연구방향_설계안.pdf"
 
     print(f"  {cfg['label']}...", end=" ", flush=True)
     result = subprocess.run([

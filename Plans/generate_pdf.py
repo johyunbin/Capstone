@@ -19,6 +19,39 @@ html_body = markdown.markdown(
     extensions=["tables", "fenced_code", "codehilite", "toc"],
 )
 
+# 특정 위치에 강제 페이지 브레이크 삽입
+PB = '<div style="page-break-before: always;"></div>'
+
+import re
+
+# 2단계 앞에 페이지 브레이크 (→4페이지)
+html_body = re.sub(
+    r'<h3 id="[^"]*">2단계',
+    PB + '<h3>2단계',
+    html_body
+)
+
+# (c) 실험 매트릭스 앞에 페이지 브레이크 (→5페이지)
+html_body = html_body.replace(
+    '<p><strong>(c) 실험 매트릭스</strong>',
+    PB + '<p><strong>(c) 실험 매트릭스</strong>'
+)
+
+# 3-C. 고차원 벡터 앞에 페이지 브레이크 (→6페이지)
+html_body = re.sub(
+    r'<h4 id="[^"]*">3-C',
+    PB + '<h4>3-C',
+    html_body
+)
+
+# VI, VII, VIII, IX는 짧으므로 page-break 제거 → 자연스럽게 이어지게
+for keyword in ['VI.', 'VII.', 'VIII.', 'IX.']:
+    html_body = re.sub(
+        rf'<h2 id="[^"]*">({keyword})',
+        r'<h2 class="no-break">\1',
+        html_body
+    )
+
 FONTS = [
     {
         "key": "AppleNeo",
@@ -77,6 +110,10 @@ h1 + hr + h2 {{
 }}
 
 h2:first-of-type {{
+    page-break-before: auto;
+}}
+
+h2.no-break {{
     page-break-before: auto;
 }}
 

@@ -44,13 +44,15 @@ html_body = re.sub(
     html_body
 )
 
-# VI, VII, VIII, IX는 짧으므로 page-break 제거 → 자연스럽게 이어지게
-for keyword in ['VI.', 'VII.', 'VIII.', 'IX.']:
-    html_body = re.sub(
-        rf'<h2 id="[^"]*">({keyword})',
-        r'<h2 class="no-break">\1',
-        html_body
-    )
+# VI는 V와 같은 페이지에 이어지게
+html_body = re.sub(
+    r'<h2 id="[^"]*">(VI\.)',
+    r'<h2 class="no-break">\1',
+    html_body
+)
+# VII은 h2 기본 CSS로 새 페이지에서 시작됨
+# VII은 이제 유일한 non-no-break h2이므로 기본 CSS가 page-break 적용
+# (force-break 불필요 — 제거)
 
 FONTS = [
     {
@@ -114,7 +116,13 @@ h2:first-of-type {{
 }}
 
 h2.no-break {{
-    page-break-before: auto;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+}}
+
+h2.force-break {{
+    page-break-before: always !important;
+    break-before: page !important;
 }}
 
 h3 {{

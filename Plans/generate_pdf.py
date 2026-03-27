@@ -31,16 +31,17 @@ html_body = re.sub(
     html_body
 )
 
-# (c) 실험 매트릭스 앞에 페이지 브레이크 (→5페이지)
-html_body = html_body.replace(
-    '<p><strong>(c) 실험 매트릭스</strong>',
-    PB + '<p><strong>(c) 실험 매트릭스</strong>'
+# 3단계 h3 앞에 페이지 브레이크 (→p6)
+html_body = re.sub(
+    r'<h3 id="[^"]*">3단계',
+    PB + '<h3>3단계',
+    html_body
 )
 
-# 3-C. 고차원 벡터 앞에 페이지 브레이크 (→6페이지)
+# 3-D 앞에 페이지 브레이크 (→p7)
 html_body = re.sub(
-    r'<h4 id="[^"]*">3-C',
-    PB + '<h4>3-C',
+    r'<h4 id="[^"]*">3-D',
+    PB + '<h4>3-D',
     html_body
 )
 

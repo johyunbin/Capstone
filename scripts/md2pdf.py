@@ -1,275 +1,182 @@
 #!/usr/bin/env python3
 """
 md2pdf.py — Markdown → PDF 변환 스크립트
-사용법: python3 scripts/md2pdf.py Research/문서이름.md
-출력:   Research/문서이름.pdf (같은 디렉토리)
-폰트:   NanumSquare OTF (고정)
+사용법: python3 scripts/md2pdf.py plans/문서이름.md
+출력:   plans/문서이름.pdf (같은 디렉토리)
+방식:   Markdown → HTML+CSS → Chrome headless PDF
+폰트:   Apple SD Gothic Neo (고정)
 """
 
-import re
+import markdown
+import subprocess
 import sys
 import os
-from fpdf import FPDF
+import tempfile
+from pathlib import Path
 
-# ─── 폰트 설정 (NanumSquare OTF 고정) ───
-FONT_REGULAR = os.path.expanduser("~/Library/Fonts/NanumSquareOTF_acR.otf")
-FONT_BOLD = os.path.expanduser("~/Library/Fonts/NanumSquareOTF_acB.otf")
-FONT_NAME = "Nanum"
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-
-# ─── PDF 클래스 ───
-class MarkdownPDF(FPDF):
-    def __init__(self):
-        super().__init__()
-        self.font_name = FONT_NAME
-        self.add_font(FONT_NAME, "", FONT_REGULAR)
-        self.add_font(FONT_NAME, "B", FONT_BOLD)
-        self.set_auto_page_break(auto=True, margin=20)
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font(self.font_name, "", 8)
-        self.set_text_color(150, 150, 150)
-        self.cell(0, 10, f"{self.page_no()}", align="C")
-
-    # ─── 텍스트 출력 헬퍼 ───
-    def title_text(self, text):
-        self.set_font(self.font_name, "B", 16)
-        self.set_text_color(0, 0, 0)
-        self.multi_cell(0, 10, text, align="C")
-        self.ln(4)
-
-    def h2(self, text):
-        self.ln(4)
-        self.set_font(self.font_name, "B", 13)
-        self.set_text_color(30, 30, 30)
-        self.multi_cell(0, 8, text)
-        self.ln(2)
-
-    def h3(self, text):
-        self.ln(3)
-        self.set_font(self.font_name, "B", 11)
-        self.set_text_color(50, 50, 50)
-        self.multi_cell(0, 7, text)
-        self.ln(1)
-
-    def h4(self, text):
-        self.ln(2)
-        self.set_font(self.font_name, "B", 10)
-        self.set_text_color(60, 60, 60)
-        self.multi_cell(0, 7, text)
-        self.ln(1)
-
-    def body(self, text):
-        self.set_font(self.font_name, "", 9.5)
-        self.set_text_color(30, 30, 30)
-        self.multi_cell(0, 6, text)
-        self.ln(1)
-
-    def bold_body(self, text):
-        self.set_font(self.font_name, "B", 9.5)
-        self.set_text_color(30, 30, 30)
-        self.multi_cell(0, 6, text)
-        self.ln(1)
-
-    def blockquote(self, text):
-        self.set_font(self.font_name, "", 9.5)
-        self.set_text_color(60, 60, 60)
-        x0 = self.l_margin
-        self.set_x(x0 + 8)
-        self.set_draw_color(180, 180, 180)
-        self.set_line_width(0.8)
-        y_start = self.get_y()
-        self.multi_cell(self.w - self.l_margin - self.r_margin - 16, 6, text)
-        y_end = self.get_y()
-        self.line(x0 + 4, y_start, x0 + 4, y_end)
-        self.ln(2)
-
-    def code_block(self, text):
-        self.set_font(self.font_name, "", 8)
-        self.set_text_color(40, 40, 40)
-        self.set_fill_color(245, 245, 245)
-        for line in text.split("\n"):
-            x0 = self.l_margin + 4
-            self.set_x(x0)
-            self.cell(
-                self.w - self.l_margin - self.r_margin - 8,
-                5,
-                line,
-                fill=True,
-                new_x="LMARGIN",
-                new_y="NEXT",
-            )
-        self.ln(2)
-
-    def bullet(self, text, level=0):
-        self.set_font(self.font_name, "", 9.5)
-        self.set_text_color(30, 30, 30)
-        indent = 6 + level * 6
-        b = "-" if level == 0 else ">"
-        self.set_x(self.l_margin + indent)
-        self.cell(5, 6, b)
-        self.multi_cell(
-            self.w - self.l_margin - self.r_margin - indent - 5, 6, text
-        )
-
-    def hr(self):
-        self.ln(3)
-        self.set_draw_color(200, 200, 200)
-        self.set_line_width(0.3)
-        y = self.get_y()
-        self.line(self.l_margin, y, self.w - self.r_margin, y)
-        self.ln(3)
-
-    def table(self, header_cells, data_rows):
-        n = len(header_cells)
-        w = (self.w - self.l_margin - self.r_margin) / n
-        self.set_font(self.font_name, "B", 8)
-        self.set_fill_color(230, 230, 230)
-        for h in header_cells:
-            self.cell(w, 6, h, border=1, fill=True, align="C")
-        self.ln()
-        self.set_font(self.font_name, "", 7.5)
-        for row_cells in data_rows:
-            y0 = self.get_y()
-            x0 = self.get_x()
-            for j, c in enumerate(row_cells[:n]):
-                self.set_xy(x0 + j * w, y0)
-                self.multi_cell(w, 5, c, border=1)
-            self.set_y(max(self.get_y(), y0 + 6))
-        self.ln(2)
+CSS = """
+@page { size: A4; margin: 25mm 20mm; }
+body {
+    font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    font-size: 11pt; line-height: 1.7; color: #1a202c;
+    max-width: 170mm; margin: 0 auto;
+}
+h1 {
+    font-size: 22pt; font-weight: 800; color: #1a202c;
+    border-bottom: 3px solid #2d3748; padding-bottom: 12px;
+    margin-top: 0; margin-bottom: 20px;
+}
+h2 {
+    font-size: 16pt; font-weight: 700; color: #fff;
+    background: #2d3748; padding: 10px 16px; border-radius: 6px;
+    margin-top: 32px; margin-bottom: 16px;
+}
+h3 {
+    font-size: 13pt; font-weight: 700; color: #2d3748;
+    border-left: 4px solid #4299e1; padding-left: 12px;
+    margin-top: 24px; margin-bottom: 10px;
+}
+h4 {
+    font-size: 11.5pt; font-weight: 700; color: #2d3748;
+    margin-top: 18px; margin-bottom: 8px;
+}
+p { margin: 8px 0; text-align: justify; }
+strong { color: #2d3748; }
+blockquote {
+    background: #ebf8ff; border-left: 4px solid #4299e1;
+    padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0;
+    font-style: normal; color: #2a4365;
+}
+blockquote p { margin: 4px 0; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 14px 0; font-size: 9.5pt;
+}
+th {
+    background: #edf2f7; color: #2d3748; font-weight: 700;
+    padding: 8px 10px; border: 1px solid #cbd5e0; text-align: left;
+}
+td {
+    padding: 7px 10px; border: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+tr:nth-child(even) { background: #f7fafc; }
+code {
+    background: #edf2f7; padding: 2px 6px; border-radius: 3px;
+    font-family: 'D2Coding', 'SF Mono', monospace; font-size: 9.5pt;
+    color: #e53e3e;
+}
+pre {
+    background: #2d3748; color: #e2e8f0; padding: 14px 18px;
+    border-radius: 6px; overflow-x: auto; margin: 14px 0;
+    font-size: 9pt; line-height: 1.5;
+}
+pre code {
+    background: none; color: inherit; padding: 0;
+    font-size: 9pt;
+}
+ul, ol { padding-left: 24px; margin: 8px 0; }
+li { margin: 4px 0; }
+hr {
+    border: none; border-top: 1px solid #e2e8f0;
+    margin: 28px 0;
+}
+.meta {
+    color: #718096; font-size: 9.5pt; line-height: 1.6;
+    margin-bottom: 24px;
+}
+"""
 
 
-# ─── 마크다운 정리 ───
-def clean(text):
-    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
-    text = re.sub(r"\*(.+?)\*", r"\1", text)
-    text = re.sub(r"`(.+?)`", r"\1", text)
-    return text
-
-
-# ─── 테이블 파서 ───
-def parse_table(lines, start):
-    header_cells = [c.strip() for c in lines[start].split("|") if c.strip()]
-    idx = start + 1
-    if idx < len(lines) and all(
-        set(c.strip()) <= set("-:|") for c in lines[idx].split("|") if c.strip()
-    ):
-        idx += 1
-    data_rows = []
-    while idx < len(lines) and "|" in lines[idx] and lines[idx].strip().startswith("|"):
-        cells = [c.strip() for c in lines[idx].split("|") if c.strip()]
-        if not all(set(c.strip()) <= set("-:") for c in cells):
-            data_rows.append(cells)
-        idx += 1
-    return header_cells, data_rows, idx
-
-
-# ─── 메인 변환 ───
 def convert(md_path):
-    with open(md_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    md_path = Path(md_path)
+    md_text = md_path.read_text(encoding="utf-8")
 
-    pdf = MarkdownPDF()
-    pdf.add_page()
-    lines = content.split("\n")
-    i = 0
-    in_code = False
-    code_buf = []
+    # 메타 정보 분리 (작성일, 목적 등 **key**: value 형태)
+    lines = md_text.split("\n")
+    meta_lines = []
+    body_lines = []
+    in_meta = False
+    title_found = False
 
-    while i < len(lines):
-        line = lines[i]
+    for line in lines:
         stripped = line.strip()
-
-        # 코드 블록
-        if stripped.startswith("```"):
-            if in_code:
-                pdf.code_block("\n".join(code_buf))
-                code_buf = []
-                in_code = False
-            else:
-                in_code = True
-            i += 1
+        if not title_found and stripped.startswith("# "):
+            title_found = True
+            body_lines.append(line)
+            in_meta = True
             continue
-        if in_code:
-            code_buf.append(line)
-            i += 1
+        if in_meta and stripped.startswith("**") and "**:" in stripped:
+            meta_lines.append(stripped)
             continue
+        if in_meta and stripped == "":
+            if meta_lines:
+                continue
+        else:
+            in_meta = False
+        body_lines.append(line)
 
-        # 테이블
-        if "|" in stripped and stripped.startswith("|"):
-            hdr, rows, end = parse_table(lines, i)
-            if hdr:
-                pdf.table(hdr, rows)
-            i = end
-            continue
+    # 메타를 별도 div로
+    meta_html = ""
+    if meta_lines:
+        meta_parts = []
+        for m in meta_lines:
+            m = m.replace("**", "")
+            meta_parts.append(m)
+        meta_html = '<div class="meta">' + "<br>".join(meta_parts) + "</div>"
 
-        # 제목
-        if stripped.startswith("# ") and not stripped.startswith("## "):
-            pdf.title_text(clean(stripped[2:]))
-            i += 1; continue
-        if stripped.startswith("## "):
-            pdf.h2(clean(stripped[3:]))
-            i += 1; continue
-        if stripped.startswith("### "):
-            pdf.h3(clean(stripped[4:]))
-            i += 1; continue
-        if stripped.startswith("#### "):
-            pdf.h4(clean(stripped[5:]))
-            i += 1; continue
+    # Markdown → HTML
+    html_body = markdown.markdown(
+        "\n".join(body_lines),
+        extensions=["tables", "fenced_code", "codehilite", "toc"],
+    )
 
-        # 수평선
-        if stripped == "---":
-            pdf.hr()
-            i += 1; continue
+    # 제목 뒤에 메타 삽입
+    if meta_html:
+        html_body = html_body.replace("</h1>", "</h1>\n" + meta_html, 1)
 
-        # 인용
-        if stripped.startswith("> "):
-            q = [stripped[2:]]
-            j = i + 1
-            while j < len(lines) and lines[j].strip().startswith(">"):
-                q.append(lines[j].strip().lstrip("> "))
-                j += 1
-            pdf.blockquote(clean("\n".join(q)))
-            i = j; continue
+    full_html = f"""<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<style>{CSS}</style>
+</head><body>
+{html_body}
+</body></html>"""
 
-        # 불릿
-        if stripped.startswith("- ") or stripped.startswith("* "):
-            pdf.bullet(clean(stripped[2:]), level=0)
-            i += 1; continue
-        if line.startswith("  -") or line.startswith("  *") or line.startswith("    -"):
-            pdf.bullet(clean(stripped.lstrip("-* ")), level=1)
-            i += 1; continue
+    # 임시 HTML 저장
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".html", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(full_html)
+        html_path = f.name
 
-        # 굵은 줄
-        if stripped.startswith("**") and stripped.endswith("**") and len(stripped) > 4:
-            pdf.bold_body(clean(stripped))
-            i += 1; continue
+    # Chrome headless → PDF
+    out_pdf = md_path.with_suffix(".pdf")
+    cmd = [
+        CHROME,
+        "--headless",
+        "--disable-gpu",
+        "--no-sandbox",
+        f"--print-to-pdf={out_pdf}",
+        "--print-to-pdf-no-header",
+        f"file://{html_path}",
+    ]
 
-        # 빈 줄
-        if stripped == "":
-            pdf.ln(2)
-            i += 1; continue
+    try:
+        subprocess.run(cmd, capture_output=True, timeout=30)
+        print(f"✓ {out_pdf}")
+    except FileNotFoundError:
+        print(f"Chrome을 찾을 수 없습니다: {CHROME}")
+        sys.exit(1)
+    except subprocess.TimeoutExpired:
+        print("Chrome PDF 변환 타임아웃")
+        sys.exit(1)
+    finally:
+        os.unlink(html_path)
 
-        # 일반 문단
-        para = [stripped]
-        j = i + 1
-        while j < len(lines):
-            ns = lines[j].strip()
-            if (ns == "" or ns.startswith("#") or ns.startswith("---") or
-                ns.startswith("```") or ns.startswith("- ") or ns.startswith("* ") or
-                ns.startswith("> ") or (ns.startswith("|") and "|" in ns[1:]) or
-                (ns.startswith("**") and ns.endswith("**"))):
-                break
-            para.append(ns)
-            j += 1
-        pdf.body(clean(" ".join(para)))
-        i = j
-
-    out_path = md_path.rsplit(".", 1)[0] + ".pdf"
-    pdf.output(out_path)
-    print(f"✓ {out_path}")
-    return out_path
+    return str(out_pdf)
 
 
 if __name__ == "__main__":
@@ -278,7 +185,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     md_file = sys.argv[1]
-
     if not os.path.exists(md_file):
         print(f"파일 없음: {md_file}")
         sys.exit(1)

@@ -36,8 +36,8 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 > **실행 단계** — 연구 방향 설계안 확정, 연구제안서 작성 및 환경 구축 진행 중
 
-- 연구 방향: **다중 조건 VAQ에서 필터 순서 최적화** (재현님 아이디어 기반 3단계 실험)
-- 설계안 최종: `plans/연구방향_설계안.md` + `.pdf`
+- 연구 방향: **Cascaded Vector Similarity Decomposition** (재현 아이디어 기반 3단계 실험)
+- 설계안 최종: `plans/연구_설계안_YYYYMMDD_HHMMSS.md` + `.pdf`
 - 다음 마감: **4/2 연구제안서 + 수행계획서**
 - 환경 구축(pgvector + Exqutor 패치 빌드) 시작 전
 - 자문위원(박성원) 피드백: 데이터셋 선정, 대조군 설정, 평가 지표 구체화
@@ -57,10 +57,8 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── .gitignore                  # papers/, tmp, bak 등 제외
 │
 ├── plans/                      # 연구 방향 기획 및 설계 문서
-│   ├── 연구방향_기획안.md       # 12개 연구 방향 후보 (v1)
-│   ├── 연구방향_설계안.md       # 필터 순서 최적화 중심 3단계 실험 설계 (최종)
-│   ├── 연구방향_설계안.pdf      # 설계안 PDF (Apple SD Gothic Neo)
-│   └── 연구방향_카톡요약.md     # 팀 토의용 요약
+│   ├── 연구_기획안.md           # 연구 방향 후보 brainstorming (A~J)
+│   └── 연구_설계안_YYYYMMDD_HHMMSS.md/pdf  # Cascade Decomposition 설계안
 │
 ├── research/                   # 분석 문서 + 원논문
 │   ├── analysis/               # 시리즈 분석 문서
@@ -141,7 +139,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 - 분석 문서: .md (원본) + .pdf (배포용) + .docx (제출용)
 - PDF 생성 시 **Apple SD Gothic Neo** 폰트 사용 (한글 임베딩 필수)
 - 번호 체계: `(번호) 제목_유형.확장자` — 예: `(01) Exqutor_상세분석.md`
-- 연구 방향 문서: `연구방향_설계안_YYYYMMDD_HHMMSS.md` 형식
+- 연구 방향 문서: `연구_설계안_YYYYMMDD_HHMMSS.md` 형식
 
 ## 도구
 

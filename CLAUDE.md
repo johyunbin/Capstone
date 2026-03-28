@@ -168,6 +168,12 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 - 제목(h1~h4) 뒤에는 반드시 본문이 함께 (page-break-after: avoid)
 - 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
 
+## 카카오톡 대화 처리
+
+사용자가 카카오톡 대화를 붙여넣으면 `records/meetings/YYYYMMDD_제목.md`에 구조화된 회의록으로 저장:
+- 날짜, 참석자, 주요 논의, 결정사항, 후속 과제
+- 저장 후 Notion 팀 회의록 DB 업데이트 여부 확인
+
 ## 팀 운영
 
 - 4인 팀, 2명×2그룹 편성 가능

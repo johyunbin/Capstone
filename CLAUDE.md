@@ -83,9 +83,10 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 | 마감 | 제출물 | 상태 |
 |------|--------|------|
 | ~3/26 | 연구지도 확인서 1~4회차 | ✅ |
+| 3/26 | 1차 자문내역서 + 자문컨택내역 (런어스 제출) | ✅ |
 | 3/28 | 교수님 미팅 (방향 확정) | ✅ |
-| 4/1 | 세미나 | ⬜ |
-| 4월 초 | 연구제안서 | ⬜ |
+| 4/1 | 세미나 (초청 강연, 전해곤 교수님) | ⬜ |
+| 4/2 | 연구제안서 + 수행계획서 제출 | ⬜ |
 | 4월 중 | 실험 설계 확정 | ⬜ |
 | 5월 | 중간발표 + 중간보고서 | ⬜ |
 | 6월 | 최종발표 + 최종보고서 + 전시회 | ⬜ |
@@ -173,10 +174,18 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 - 논문 리딩은 팀원 분담 체계
 - 조현빈: 코디네이터 역할
 
+| 이름 | 역할 | GitHub |
+|------|------|--------|
+| 조현빈 | 코디네이터 | johyunbin |
+| 박세은 | 팀원 | triangle-park |
+| 강재현 | 팀원 | newagency |
+| 이동욱 | 팀원 | dlee004 |
+
 ## 참고 링크
 
 - 캡스톤 사이트: https://capstone.cs.yonsei.ac.kr/capstone/
 - 제출물 양식: https://capstone.cs.yonsei.ac.kr/capstone/?page_id=27
 - 학기 일정표: https://capstone.cs.yonsei.ac.kr/capstone/?page_id=370
 - Exqutor GitHub: https://github.com/BDAI-Research/Exqutor
+- 팀 GitHub: https://github.com/johyunbin/Capstone
 - 팀 Notion: https://www.notion.so/306db4d4869b8039affeca0b0fa4d2fa

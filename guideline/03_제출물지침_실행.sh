@@ -1,74 +1,45 @@
 #!/bin/bash
-# 제출물지침 자동 실행 스크립트
-# 사용법: cd ~/Capstone && ./guideline/03_제출물지침_실행.sh
-
+# [03] 03_제출물_실행.sh — Phase별 독립 claude 세션으로 제출물 작성
+# 사용: cd ~/Capstone && ./guideline/03_제출물지침_실행.sh
 set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOG_FILE="${PROJECT_ROOT}/03_제출물지침.log"
+cd ~/Capstone
 
-echo "=== 제출물지침 시작: $(date) ===" | tee "$LOG_FILE"
+LOG="guideline/제출물.log"
+STATE="guideline/PHASE_STATE_03_제출물.md"
+TOOLS="Read,Write,Edit,Bash,Glob,Grep,WebFetch"
 
-# Phase 0: 일정 확인 + 다음 마감 식별
-echo "" | tee -a "$LOG_FILE"
-echo "--- Phase 0: 일정 확인 ---" | tee -a "$LOG_FILE"
-cd "$PROJECT_ROOT"
+echo "=== 제출물 시작: $(date) ===" | tee "$LOG"
 
-echo "== CLAUDE.md 미완료 일정 ==" | tee -a "$LOG_FILE"
-grep "⬜" CLAUDE.md 2>/dev/null | tee -a "$LOG_FILE" || echo "(미완료 항목 없음)" | tee -a "$LOG_FILE"
+PHASES=(0 1 2 3 4 5 6)
+PHASE_NAMES=(
+  "일정 확인 + 다음 마감 식별"
+  "양식 확인"
+  "기존 자료 수집"
+  "제출물 작성"
+  "검증 + 최종본 저장"
+  "일정 동기화"
+  "결과 보고"
+)
 
-python3 -c "
-from datetime import date
-deadlines = {
-    '연구제안서 + 수행계획서': date(2026, 4, 2),
-}
-today = date.today()
-print(f'오늘: {today}')
-for name, d in sorted(deadlines.items(), key=lambda x: x[1]):
-    delta = (d - today).days
-    if delta > 0:
-        print(f'{name}: D-{delta}')
-    elif delta == 0:
-        print(f'{name}: D-DAY!')
-    else:
-        print(f'{name}: D+{abs(delta)} (지남)')
-" 2>&1 | tee -a "$LOG_FILE"
+for i in "${!PHASES[@]}"; do
+  P="${PHASES[$i]}"
+  NAME="${PHASE_NAMES[$i]}"
+  echo "" | tee -a "$LOG"
+  echo "=== Phase $P: $NAME 시작 — $(date) ===" | tee -a "$LOG"
 
-# Phase 1: 양식 확인
-echo "" | tee -a "$LOG_FILE"
-echo "--- Phase 1: 양식 확인 ---" | tee -a "$LOG_FILE"
-cd "$PROJECT_ROOT"
+  claude -p "Capstone 프로젝트 제출물 Phase $P ($NAME) 실행.
 
-echo "== templates/forms/ ==" | tee -a "$LOG_FILE"
-ls templates/forms/ 2>/dev/null | grep -v DS_Store | tee -a "$LOG_FILE" || echo "(양식 없음)" | tee -a "$LOG_FILE"
+1. $STATE 읽고 이전 Phase 결과 확인
+2. guideline/03_제출물지침_auto.md 의 Phase $P 체크리스트 수행
+3. 완료 후 $STATE 업데이트
+4. 팀명 '속도는벡터' 일관 표기, 한국어 학술 산문" \
+    --allowedTools "$TOOLS" \
+    --permission-mode "bypassPermissions" \
+    2>&1 | tee -a "$LOG"
 
-echo "== templates/samples/ ==" | tee -a "$LOG_FILE"
-ls templates/samples/ 2>/dev/null | grep -v DS_Store | tee -a "$LOG_FILE" || echo "(샘플 없음)" | tee -a "$LOG_FILE"
+  echo "=== Phase $P: $NAME 완료 — $(date) ===" | tee -a "$LOG"
+done
 
-# Phase 2: 기존 자료 수집
-echo "" | tee -a "$LOG_FILE"
-echo "--- Phase 2: 기존 자료 현황 ---" | tee -a "$LOG_FILE"
-cd "$PROJECT_ROOT"
-
-echo "설계안: $(ls plans/연구_설계안_* 2>/dev/null | wc -l | tr -d ' ')건" | tee -a "$LOG_FILE"
-echo "기획안: $(ls plans/연구_기획안_* 2>/dev/null | wc -l | tr -d ' ')건" | tee -a "$LOG_FILE"
-echo "분석 시리즈: $(ls research/analysis/*.md 2>/dev/null | wc -l | tr -d ' ')건" | tee -a "$LOG_FILE"
-echo "총정리: $(ls research/summaries/*.md 2>/dev/null | wc -l | tr -d ' ')건" | tee -a "$LOG_FILE"
-
-echo "" | tee -a "$LOG_FILE"
-echo "== 기존 제출물 ==" | tee -a "$LOG_FILE"
-ls submission/ 2>/dev/null | grep -v DS_Store | tee -a "$LOG_FILE" || echo "(제출물 없음)" | tee -a "$LOG_FILE"
-
-# Phase 3~5: Claude Code에게 위임
-echo "" | tee -a "$LOG_FILE"
-echo "--- Phase 3~5: Claude Code 위임 ---" | tee -a "$LOG_FILE"
-echo "제출물 작성/검증/일정 동기화는 Claude Code 세션에서 실행합니다." | tee -a "$LOG_FILE"
-echo "아래 명령어로 Claude에게 위임:" | tee -a "$LOG_FILE"
-echo '  claude --print "guideline/03_제출물지침_auto.md 읽고 전체 Phase 실행"' | tee -a "$LOG_FILE"
-
-echo "" | tee -a "$LOG_FILE"
-echo "=== 제출물지침 완료: $(date) ===" | tee -a "$LOG_FILE"
-echo "상세 로그: ${LOG_FILE}"
-
-# Claude Code 연동 (전체 Phase를 Claude에게 위임할 경우)
-# claude --print "guideline/03_제출물지침_auto.md 읽고 전체 Phase 실행" 2>&1 | tee -a "$LOG_FILE"
+echo "" | tee -a "$LOG"
+echo "=== 제출물 전체 완료: $(date) ===" | tee -a "$LOG"
+echo "결과 확인: cat $STATE" | tee -a "$LOG"

@@ -1,108 +1,126 @@
-# 점검지침 (MANUAL)
+# [00] 점검지침 (MANUAL)
 
-> 사람이 직접 수행하거나 Claude에게 개별 요청할 때 참조
+> 대상: Capstone 프로젝트 | 모드: 수동 (Phase별 정지, 사용자 확인 후 진행)
+> 마지막 실행: 2026-03-28 — Phase 0~7 전체 완료
 
-## 언제 실행하나?
+## 사용법
 
-- **매 세션 시작 시** — 파일 상태가 이전 세션과 달라졌을 수 있음
-- **문서 대량 생성 후** — 논문 분석/PDF 변환 후 누락 확인
-- **제출 마감 전** — 일정 확인 + 파일 완성도 최종 점검
-- **git pull 직후** — 팀원 변경사항 반영 후 무결성 확인
+1. Claude Code에서 "점검 수동" 입력
+2. Phase 0 실행 → 결과 보고 → **정지**
+3. 사용자가 `/clear` 또는 `/compact` 실행
+4. "Phase N 이어가줘" 입력 → guideline/PHASE_STATE_00_점검.md 읽고 다음 Phase
 
-## 단계별 가이드
+### /clear vs /compact
 
-### Step 1: 빠른 인벤토리 확인
+| | /clear | /compact |
+|---|---|---|
+| 컨텍스트 | 100% 확보 | ~70% 확보 |
+| 이전 맥락 | 완전 삭제 | 요약 유지 |
+| 추천 용도 | **Phase 전환** (추천) | Phase 내부 보조 |
 
-아래 명령어로 현재 파일 수를 한눈에 확인:
+**추천:** Phase 전환마다 `/clear`. Phase 내에서 컨텍스트 부족하면 `/compact`.
 
-```bash
-cd ~/Capstone
-echo "analysis: $(ls research/analysis/*.md | wc -l) md, $(ls research/analysis/*.pdf | wc -l) pdf"
-echo "summaries: $(ls research/summaries/*.md | wc -l) md, $(ls research/summaries/*.pdf | wc -l) pdf"
-echo "papers: $(ls research/papers/*.pdf | wc -l)"
-echo "submission: $(ls submission/ | wc -l)"
+---
+
+## Phase 체크리스트
+
+> Phase 번호는 `00_점검지침_auto.md`와 동일. 상세 스크립트는 auto 참조.
+
+### Phase 0: 인벤토리 수집 (2분)
+- [ ] research/analysis/ — md 수, pdf 수
+- [ ] research/summaries/ — md 수, pdf 수
+- [ ] research/papers/ — 원논문 PDF 수
+- [ ] submission/ — 제출물 파일 수
+- [ ] plans/ — 문서 수 및 파일명 형식 확인
+- [ ] guideline/PHASE_STATE_00_점검.md 생성
+
+✅ Phase 0 완료 → 결과 보고 → 정지
+→ 사용자: `/clear` 후 "Phase 1 이어가줘"
+
+### Phase 1: 2종 세트 완성도 검증 (3분)
+- [ ] analysis/ 내 모든 .md에 대해 동일 이름 .pdf 존재 확인
+- [ ] summaries/ 내 모든 .md에 대해 동일 이름 .pdf 존재 확인
+- [ ] 누락 파일 목록 출력
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 1 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 2 이어가줘"
+
+### Phase 2: PDF 폰트 검증 (3분)
+- [ ] pypdf 설치 확인
+- [ ] analysis/ + summaries/ PDF 폰트 검사
+- [ ] 결과: 정상 수 / 비정상 수 / 비정상 파일 목록
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 2 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 3 이어가줘"
+
+### Phase 3: 파일명 규칙 검증 (2분)
+- [ ] analysis/: `(번호) 제목.확장자` 패턴
+- [ ] summaries/: `[번호] 제목 총정리.확장자` 패턴
+- [ ] 비규격 파일 목록 출력
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 3 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 4 이어가줘"
+
+### Phase 4: orphan 및 중복 검사 (2분)
+- [ ] .tmp, .bak, .swp 파일 탐지
+- [ ] .DS_Store 수 카운트 + .gitignore 포함 확인
+- [ ] papers/ 와 다른 폴더 간 PDF 중복 확인
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 4 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 5 이어가줘"
+
+### Phase 5: 원논문 ↔ 총정리 대응 확인 (2분)
+- [ ] summaries/ 번호 목록 추출
+- [ ] 번호 범위 내 빈 번호(gap) 확인
+- [ ] papers/ 파일 수 vs summaries/ 고유 번호 수 비교
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 5 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 6 이어가줘"
+
+### Phase 6: 일정 + 사이트 점검 (2분)
+- [ ] 캡스톤 사이트 공지사항 확인 → 새 항목 유무
+- [ ] CLAUDE.md 일정표에서 다음 마감 + D-day 계산
+- [ ] 메모리와 CLAUDE.md 일정 일치 여부 확인
+- [ ] PHASE_STATE 업데이트
+
+✅ Phase 6 완료 → 정지
+→ 사용자: `/clear` 후 "Phase 7 이어가줘"
+
+### Phase 7: 종합 리포트 (1분)
+- [ ] 전 Phase 결과 테이블 생성
+- [ ] 즉시 조치 필요 항목에 담당 지침 안내
+- [ ] PHASE_STATE 최종 업데이트 (완료 시각, 총 발견/수정)
+- [ ] git commit + push (선택)
+
+✅ **점검 완료**
+
+---
+
+## Phase 합치기 가이드
+
+컨텍스트 여유가 있으면 합쳐서 실행:
+- **Phase 0+1**: 인벤토리 + 2종세트 (~5분)
+- **Phase 2+3**: PDF폰트 + 파일명 (~5분)
+- **Phase 4+5**: orphan + 원논문대응 (~4분)
+- **Phase 6+7**: 일정 + 종합 (~3분)
+
+## 지난 실행 이력
+
+| 날짜 | 결과 | 발견/수정 |
+|------|------|-----------|
+| 2026-03-28 | ✅ 전체 완료 (Phase 0~7) | PDF 9건 재생성 (NotoSansKR→AppleSDGothicNeo) |
+
+## 상세 참조
+
+모듈별 상세 스크립트 필요 시:
 ```
-
-md 수와 pdf 수가 동일하면 2종 세트 완성. 불일치 시 Step 2로.
-
-### Step 2: 누락 파일 찾기
-
-```bash
-cd ~/Capstone/research/analysis
-for f in *.md; do [ ! -f "${f%.md}.pdf" ] && echo "누락: ${f%.md}.pdf"; done
-
-cd ~/Capstone/research/summaries
-for f in *.md; do [ ! -f "${f%.md}.pdf" ] && echo "누락: ${f%.md}.pdf"; done
+Read guideline/00_점검지침_auto.md 의 해당 Phase 섹션
 ```
-
-누락된 PDF가 있으면 Claude에게 요청:
-> "research/summaries/[번호] 제목 총정리.md를 PDF로 변환해줘"
-
-이 작업은 **문서생성지침** 범위이므로 해당 지침 참조.
-
-### Step 3: PDF 폰트 확인
-
-pypdf가 설치되어 있어야 한다:
-```bash
-pip3 install pypdf
-```
-
-간단 확인 (Python):
-```python
-import pypdf
-reader = pypdf.PdfReader("파일경로.pdf")
-page = reader.pages[0]
-fonts = page["/Resources"].get("/Font", {})
-for name, font in fonts.items():
-    print(name, font.get("/BaseFont", "Unknown"))
-```
-
-- `AppleSDGothicNeo` 계열 → 정상 (Chrome CDP로 생성)
-- `Unknown`만 있음 → 깨진 파일 (fpdf2 등으로 잘못 생성)
-
-깨진 PDF 발견 시: `python3 scripts/md2pdf.py 해당파일.md`로 재생성.
-
-### Step 4: 파일명 규칙 확인
-
-| 디렉토리 | 패턴 | 예시 |
-|----------|------|------|
-| analysis/ | `(번호) 제목.확장자` | `(01) Exqutor_상세분석.md` |
-| summaries/ | `[번호] 제목 총정리.확장자` | `[0] Exqutor_... 총정리.md` |
-| plans/ | `연구_유형_YYYYMMDD_HHMMSS.확장자` | `연구_설계안_20260328_141451.md` |
-
-비규격 파일은 이름을 수정하거나, 의도적 예외인지 확인.
-
-### Step 5: orphan 파일 정리
-
-```bash
-cd ~/Capstone
-find . -name "*.tmp" -o -name "*.bak" -o -name "*.swp" | grep -v .git
-```
-
-발견되면 내용을 확인한 뒤 삭제. `.DS_Store`는 `.gitignore`에 포함되어 있으면 무시 가능.
-
-### Step 6: 일정 확인
-
-1. 캡스톤 사이트 접속: https://capstone.cs.yonsei.ac.kr/capstone/?page_id=370
-2. CLAUDE.md의 `핵심 일정` 테이블과 비교
-3. 새 일정이 있으면 아래 3곳 동시 업데이트:
-   - CLAUDE.md 일정 테이블
-   - 메모리 `project_schedule.md`
-   - 노션 `캡스톤 일정` DB
-
-Claude에게 요청할 경우:
-> "캡스톤 사이트 일정 확인하고 CLAUDE.md 업데이트해줘"
-
-## 자주 하는 실수
-
-| 실수 | 올바른 방법 |
-|------|------------|
-| fpdf2로 PDF 생성 | Chrome CDP만 사용 (`scripts/md2pdf.py`) |
-| 폰트 깨진 PDF를 그대로 방치 | 발견 즉시 재생성 |
-| summaries 번호가 papers와 1:1이라 가정 | summaries는 82편, papers는 69편 — 일부 논문은 PDF 없이 분석 |
-| .DS_Store를 커밋 | .gitignore에 포함 확인 |
-| 일정을 한 곳만 업데이트 | 반드시 3곳(CLAUDE.md, 메모리, 노션) 동시 |
-| 점검 중 파일 수정 시도 | 점검은 읽기 전용 — 수정은 담당 지침으로 |
 
 ## 관련 지침
 

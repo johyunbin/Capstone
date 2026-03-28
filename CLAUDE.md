@@ -54,23 +54,47 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ## 지침 시스템
 
 guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로 존재.
-사용자가 아래 키워드를 입력하면 해당 지침의 auto.md를 읽고 Phase 순서대로 자동 실행.
 
-| 키워드 | 지침 파일 |
-|--------|-----------|
-| "점검", "헬스체크", "무결성" | guideline/00_점검지침_auto.md |
-| "논문 분석", "총정리", "시리즈" | guideline/01_논문분석지침_auto.md |
-| "실험", "벤치마크", "EXPLAIN" | guideline/02_실험지침_auto.md |
-| "제출", "보고서", "마감", "연구제안서" | guideline/03_제출물지침_auto.md |
-| "PDF", "문서 변환", "md2pdf" | guideline/04_문서생성지침_auto.md |
-| "주간", "보고", "이번 주" | guideline/05_주간보고지침_auto.md |
-| "미팅", "회의", "브리핑", "카톡" | guideline/06_미팅지침_auto.md |
-| "발표", "PPT", "포스터", "슬라이드" | guideline/07_발표지침_auto.md |
-| "설계", "기획", "연구 방향" | guideline/08_연구설계지침_auto.md |
-| "학습 정리", "스크립트 분석", "learning" | guideline/09_학습정리지침_auto.md |
-| "활용", "CC 팁", "CC 점검" | guideline/10_클로드코드활용지침_auto.md |
+### 실행 모드
 
-수동 실행: `{지침명} 자동` 또는 `./guideline/NN_{지침명}_실행.sh`
+| 모드 | 트리거 | 동작 |
+|------|--------|------|
+| **자동** | `{지침명} 자동` 또는 `.sh` 실행 | auto.md 로드 → Phase 순차 진행 (전권 위임) |
+| **수동** | `{지침명} 수동` | manual.md 로드 → **Phase별 정지**, 사용자 확인 후 진행 |
+
+### 수동 모드 공통 규칙 (필수)
+
+1. Phase 0 실행 → 결과 보고 → **정지**
+2. 사용자가 `/clear` 또는 `/compact` 실행
+3. "Phase N 이어가줘" 또는 "다음 phase 이어가자" 입력 → 다음 Phase 진행
+4. **절대 다음 Phase로 자동 진행하지 않는다** — 사용자 명시적 트리거 필수
+
+| | /clear | /compact |
+|---|---|---|
+| 컨텍스트 | 100% 확보 | ~70% 확보 |
+| 이전 맥락 | 완전 삭제 | 요약 유지 |
+| 추천 용도 | **Phase 전환** (추천) | Phase 내부 보조 |
+
+### PHASE_STATE 파일
+
+각 지침의 진행 상태는 `guideline/PHASE_STATE_NN_{지침명}.md`에 기록.
+수동 모드에서 `/clear` 후 재개 시 이 파일을 읽고 이전 Phase 결과를 확인한다.
+
+### 트리거 키워드
+
+| 키워드 | 자동 | 수동 |
+|--------|------|------|
+| "점검", "헬스체크" | 00_점검지침_auto.md | 00_점검지침_manual.md |
+| "논문 분석", "총정리" | 01_논문분석지침_auto.md | 01_논문분석지침_manual.md |
+| "실험", "벤치마크" | 02_실험지침_auto.md | 02_실험지침_manual.md |
+| "제출", "보고서", "마감" | 03_제출물지침_auto.md | 03_제출물지침_manual.md |
+| "PDF", "문서 변환" | 04_문서생성지침_auto.md | 04_문서생성지침_manual.md |
+| "주간", "보고" | 05_주간보고지침_auto.md | 05_주간보고지침_manual.md |
+| "미팅", "회의", "카톡" | 06_미팅지침_auto.md | 06_미팅지침_manual.md |
+| "발표", "PPT", "포스터" | 07_발표지침_auto.md | 07_발표지침_manual.md |
+| "설계", "기획", "연구 방향" | 08_연구설계지침_auto.md | 08_연구설계지침_manual.md |
+| "학습 정리", "learning" | 09_학습정리지침_auto.md | 09_학습정리지침_manual.md |
+| "활용", "CC 팁" | 10_클로드코드활용지침_auto.md | 10_클로드코드활용지침_manual.md |
 
 ## 디렉토리 구조
 
@@ -89,11 +113,12 @@ guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로
 │   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf)
 │   └── papers/                 # 원논문 PDF 69편
 │
-├── guideline/                  # 9대 지침 시스템
+├── guideline/                  # 11대 지침 시스템
 │   ├── prompts/                # 지침 제작 프롬프트 (원본)
-│   ├── NN_{지침명}_auto.md      # 자동 실행용 (9개, 00~08)
-│   ├── NN_{지침명}_manual.md    # 수동 참조용 (9개, 00~08)
-│   └── NN_{지침명}_실행.sh      # bash 오케스트레이터 (9개, 00~08)
+│   ├── NN_{지침명}_auto.md      # 자동 실행용 (11개, 00~10)
+│   ├── NN_{지침명}_manual.md    # 수동 실행용 — Phase별 정지 (11개, 00~10)
+│   ├── NN_{지침명}_실행.sh      # bash 오케스트레이터 — claude -p 독립 세션 (11개, 00~10)
+│   └── PHASE_STATE_NN_{지침명}.md  # 지침별 Phase 진행 상태
 │
 ├── records/                    # 회의록 + 주간보고
 │   ├── meetings/               # 회의록 (YYYYMMDD_제목.md)

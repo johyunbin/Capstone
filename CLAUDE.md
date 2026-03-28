@@ -57,19 +57,13 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── .gitignore                  # papers/, tmp, bak 등 제외
 │
 ├── plans/                      # 연구 방향 기획 및 설계 문서
-│   ├── 연구_기획안_YYYYMMDD_HHMMSS.md      # 연구 방향 후보 brainstorming (A~J)
+│   ├── 연구_기획안.md/pdf                   # 연구 방향 후보 brainstorming (A~J)
 │   └── 연구_설계안_YYYYMMDD_HHMMSS.md/pdf  # Cascade Decomposition 설계안
 │
 ├── research/                   # 분석 문서 + 원논문
-│   ├── analysis/               # 시리즈 분석 문서
-│   │   ├── (01),(02),(07),(08)  # 핵심 분석 (Exqutor + 81편 종합)
-│   │   └── archive/            # 중간 산출물 (03~06, 09~12)
-│   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf/docx)
+│   ├── analysis/               # 시리즈 분석 (01)~(12) — md+pdf
+│   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf)
 │   └── papers/                 # 원논문 PDF 69편
-│
-├── learning/                   # Claude Code 학습 자료
-│   ├── kr/                     # 한국어 튜토리얼/팁 (유튜브 스크립트 등)
-│   └── us/                     # 영어 튜토리얼/팁
 │
 ├── submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
 │
@@ -136,8 +130,8 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 - EXPLAIN ANALYZE 결과는 반드시 첨부
 
 ### 파일 포맷
-- 분석 문서: .md (원본) + .pdf (배포용) + .docx (제출용)
-- PDF 생성 시 **NanumSquare OTF** 폰트 사용 (한글 임베딩 필수)
+- 분석 문서: .md (원본) + .pdf (배포용)
+- PDF 생성 시 **Apple SD Gothic Neo** 폰트 사용 (Chrome headless 렌더링)
 - 번호 체계: `(번호) 제목_유형.확장자` — 예: `(01) Exqutor_상세분석.md`
 - 연구 방향 문서: `연구_설계안_YYYYMMDD_HHMMSS.md` 형식
 
@@ -150,30 +144,27 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ### MD → PDF 변환 환경
 
-```
-라이브러리: fpdf2 v2.8.7 (pip install fpdf2)
-변환 스크립트: scripts/md2pdf.py
-```
+**중요: fpdf2 사용 금지** — 한글 폰트(TTC/OTF) 서브셋팅 시 글자가 완전히 깨짐. 반드시 Chrome headless 방식 사용.
 
-**사용 가능 폰트 (로컬 확인 완료)**:
-| 폰트 | 경로 | 용도 |
-|------|------|------|
-| Apple SD Gothic Neo | `/System/Library/Fonts/AppleSDGothicNeo.ttc` | 본문 (Regular + Bold, TTC 직접 로드 가능) |
-| NanumSquareOTF | `~/Library/Fonts/NanumSquareOTF_ac*.otf` | 대체 본문 (R/B/EB/L 4종) |
-| NanumSquare | `~/Library/Fonts/NanumSquare*.otf` | 대체 본문 (R/B/EB/L 4종) |
-| D2Coding | **미설치** — 코드 블록용, 필요시 `brew install font-d2coding` |
+```
+방식: md → HTML(markdown 라이브러리) → Chrome headless --print-to-pdf
+변환 스크립트: scripts/md2pdf.py
+의존성: pip install markdown, Google Chrome 설치 필요
+Chrome 경로: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+폰트: Apple SD Gothic Neo (시스템 폰트, Chrome이 직접 렌더링)
+```
 
 **사용법**:
 ```bash
-python3 scripts/md2pdf.py Research/문서이름.md
-# → Research/문서이름.pdf 자동 생성 (NanumSquare OTF 고정)
+python3 scripts/md2pdf.py research/summaries/문서이름.md
+# → research/summaries/문서이름.pdf 자동 생성
 ```
 
-**fpdf2 한글 주의사항**:
-- Courier 등 core font는 한글 불가 → 코드 블록도 한글 폰트 사용
-- TTC 파일 직접 로드 가능 (fpdf2 2.5.1+)
-- `uni=True` 파라미터는 deprecated (자동 처리됨)
-- D2Coding 미설치 시 코드 블록도 본문 폰트 fallback
+**페이지 넘김 규칙**:
+- h2 섹션마다 `page-break-before: always` (섹션 단위 페이지 분리)
+- h1 직후 첫 h2는 같은 페이지 유지 (제목 페이지)
+- 제목(h1~h4) 뒤에는 반드시 본문이 함께 (page-break-after: avoid)
+- 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
 
 ## 팀 운영
 

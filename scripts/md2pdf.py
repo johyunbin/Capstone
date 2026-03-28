@@ -87,6 +87,14 @@ hr {
     color: #718096; font-size: 9.5pt; line-height: 1.6;
     margin-bottom: 24px;
 }
+/* 페이지 구분 */
+.page-break { page-break-before: always; }
+/* 고아 제목 방지: 제목 뒤에 내용이 같이 와야 함 */
+h2, h3, h4 { page-break-after: avoid; }
+/* 블록 내부 짤림 방지 */
+pre, blockquote { page-break-inside: avoid; }
+table { page-break-inside: avoid; }
+li { page-break-inside: avoid; }
 """
 
 

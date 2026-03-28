@@ -3,7 +3,7 @@
 md2pdf.py — Markdown → PDF 변환 스크립트
 사용법: python3 scripts/md2pdf.py plans/문서이름.md
 출력:   plans/문서이름.pdf (같은 디렉토리)
-방식:   Markdown → HTML+CSS → Chrome headless PDF
+방식:   Markdown → HTML+CSS → Chrome CDP (DevTools Protocol) → PDF
 폰트:   Apple SD Gothic Neo (고정)
 """
 
@@ -11,22 +11,21 @@ import markdown
 import subprocess
 import sys
 import os
+import json
+import base64
+import socket
 import tempfile
+import time
+import urllib.request
 from pathlib import Path
+
+import websocket
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
+# CDP에서 마진을 제어하므로 @page에는 size만 지정
 CSS = """
-@page {
-    size: A4;
-    margin: 25mm 20mm 20mm 20mm;
-    @bottom-center {
-        content: counter(page);
-        font-size: 9pt;
-        color: #718096;
-        font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
-    }
-}
+@page { size: A4; }
 body {
     font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
     font-size: 11pt; line-height: 1.7; color: #1a202c;
@@ -106,6 +105,115 @@ table { page-break-inside: avoid; }
 li { page-break-inside: avoid; }
 """
 
+# CDP 꼬리말 템플릿 — 페이지 번호만 가운데 표시
+FOOTER_TEMPLATE = (
+    '<div style="font-size:9pt;color:#718096;width:100%;text-align:center;'
+    "font-family:'Apple SD Gothic Neo',sans-serif;\">"
+    '<span class="pageNumber"></span>'
+    "</div>"
+)
+
+# 빈 헤더 (Chrome은 빈 문자열 무시하므로 최소 태그 필요)
+HEADER_TEMPLATE = "<span></span>"
+
+
+def _find_free_port():
+    with socket.socket() as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
+
+
+def _chrome_cdp_pdf(html_path, out_pdf):
+    """Chrome CDP로 PDF 생성 — 헤더/푸터 완전 제어."""
+    port = _find_free_port()
+
+    proc = subprocess.Popen(
+        [
+            CHROME,
+            "--headless=new",
+            "--disable-gpu",
+            "--no-sandbox",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--remote-allow-origins=*",
+            f"--remote-debugging-port={port}",
+            f"file://{html_path}",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    try:
+        # Chrome 기동 대기
+        ws_url = None
+        for _ in range(20):
+            try:
+                resp = urllib.request.urlopen(f"http://localhost:{port}/json")
+                targets = json.loads(resp.read())
+                for t in targets:
+                    if t.get("type") == "page":
+                        ws_url = t["webSocketDebuggerUrl"]
+                        break
+                if ws_url:
+                    break
+            except Exception:
+                pass
+            time.sleep(0.3)
+
+        if not ws_url:
+            raise RuntimeError("Chrome CDP 연결 실패")
+
+        ws = websocket.create_connection(ws_url, timeout=15)
+
+        def cdp_send(ws, method, params=None, cmd_id=None):
+            """CDP 명령 전송 후 해당 ID의 응답만 반환 (이벤트 무시)."""
+            msg = {"id": cmd_id or 1, "method": method}
+            if params:
+                msg["params"] = params
+            ws.send(json.dumps(msg))
+            while True:
+                resp = json.loads(ws.recv())
+                if resp.get("id") == msg["id"]:
+                    return resp
+
+        # 페이지 로드 완료 대기
+        cdp_send(ws, "Page.enable", cmd_id=1)
+        time.sleep(1)
+
+        # PDF 생성 — 헤더 없음, 꼬리말에 페이지 번호만
+        result = cdp_send(
+            ws,
+            "Page.printToPDF",
+            params={
+                "displayHeaderFooter": True,
+                "headerTemplate": HEADER_TEMPLATE,
+                "footerTemplate": FOOTER_TEMPLATE,
+                "printBackground": True,
+                "paperWidth": 8.27,  # A4 (inches)
+                "paperHeight": 11.69,
+                "marginTop": 0.984,  # 25mm
+                "marginBottom": 0.787,  # 20mm
+                "marginLeft": 0.787,  # 20mm
+                "marginRight": 0.787,
+            },
+            cmd_id=2,
+        )
+
+        if "result" not in result or "data" not in result["result"]:
+            raise RuntimeError(f"PDF 생성 실패: {result}")
+
+        pdf_data = base64.b64decode(result["result"]["data"])
+        with open(out_pdf, "wb") as f:
+            f.write(pdf_data)
+
+        ws.close()
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
 
 def convert(md_path):
     md_path = Path(md_path)
@@ -169,26 +277,13 @@ def convert(md_path):
         f.write(full_html)
         html_path = f.name
 
-    # Chrome headless → PDF
     out_pdf = md_path.with_suffix(".pdf")
-    cmd = [
-        CHROME,
-        "--headless=new",
-        "--disable-gpu",
-        "--no-sandbox",
-        f"--print-to-pdf={out_pdf}",
-        "--print-to-pdf-no-header",
-        f"file://{html_path}",
-    ]
 
     try:
-        subprocess.run(cmd, capture_output=True, timeout=30)
+        _chrome_cdp_pdf(html_path, out_pdf)
         print(f"✓ {out_pdf}")
-    except FileNotFoundError:
-        print(f"Chrome을 찾을 수 없습니다: {CHROME}")
-        sys.exit(1)
-    except subprocess.TimeoutExpired:
-        print("Chrome PDF 변환 타임아웃")
+    except Exception as e:
+        print(f"✗ CDP 실패: {e}")
         sys.exit(1)
     finally:
         os.unlink(html_path)

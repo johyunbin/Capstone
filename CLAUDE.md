@@ -73,11 +73,13 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 |------|--------|------|
 | ~3/26 | 연구지도 확인서 1~4회차 | ✅ |
 | 3/28 | 교수님 미팅 (방향 확정) | ✅ |
-| 4/1 | 세미나 | ⬜ |
-| 4월 초 | 연구제안서 | ⬜ |
-| 4월 중 | 실험 설계 확정 | ⬜ |
-| 5월 | 중간발표 + 중간보고서 | ⬜ |
-| 6월 | 최종발표 + 최종보고서 + 전시회 | ⬜ |
+| 4/1 | 세미나 (초청 강연, 전해곤 교수님) | ⬜ |
+| 4/2 | 연구제안서 + 수행계획서 제출 | ⬜ |
+| ~4/14 | 환경 구축 완료 | ⬜ |
+| ~4/28 | 1단계 실험 (병목 프로파일링) 완료 | ⬜ |
+| ~5/15 | 2단계 실험 (Cascaded Decomposition) 완료 | ⬜ |
+| 5/27 | 중간발표 + 중간보고서 | ⬜ |
+| 6/18 | 최종발표 + 최종보고서 + 전시회 | ⬜ |
 
 ## 본 논문(Exqutor) 핵심 요약
 
@@ -133,30 +135,26 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ### MD → PDF 변환 환경
 
-```
-라이브러리: fpdf2 v2.8.7 (pip install fpdf2)
-변환 스크립트: scripts/md2pdf.py
-```
+**중요: fpdf2 사용 금지** — 한글 폰트(TTC/OTF) 서브셋팅 시 글자가 완전히 깨짐. 반드시 Chrome headless 방식 사용.
 
-**사용 가능 폰트 (로컬 확인 완료)**:
-| 폰트 | 경로 | 용도 |
-|------|------|------|
-| Apple SD Gothic Neo | `/System/Library/Fonts/AppleSDGothicNeo.ttc` | 본문 (Regular + Bold, TTC 직접 로드 가능) |
-| NanumSquareOTF | `~/Library/Fonts/NanumSquareOTF_ac*.otf` | 대체 본문 (R/B/EB/L 4종) |
-| NanumSquare | `~/Library/Fonts/NanumSquare*.otf` | 대체 본문 (R/B/EB/L 4종) |
-| D2Coding | **미설치** — 코드 블록용, 필요시 `brew install font-d2coding` |
+```
+방식: md → HTML(markdown 라이브러리) → Chrome headless --print-to-pdf
+변환 스크립트: scripts/md2pdf.py
+의존성: pip install markdown, Google Chrome 설치 필요
+Chrome 경로: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+폰트: Apple SD Gothic Neo (시스템 폰트, Chrome이 직접 렌더링)
+```
 
 **사용법**:
 ```bash
 python3 scripts/md2pdf.py Research/문서이름.md
-# → Research/문서이름.pdf 자동 생성 (Apple SD Gothic Neo 고정)
+# → Research/문서이름.pdf 자동 생성
 ```
 
-**fpdf2 한글 주의사항**:
-- Courier 등 core font는 한글 불가 → 코드 블록도 한글 폰트 사용
-- TTC 파일 직접 로드 가능 (fpdf2 2.5.1+)
-- `uni=True` 파라미터는 deprecated (자동 처리됨)
-- D2Coding 미설치 시 코드 블록도 본문 폰트 fallback
+**페이지 넘김 규칙**:
+- 제목(h1~h4) 뒤에는 반드시 본문이 함께 올 것 (page-break-after: avoid)
+- 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
+- 테이블 행은 짤리지 않되, 테이블 전체는 페이지를 넘을 수 있음 (thead 반복)
 
 ## 팀 운영
 

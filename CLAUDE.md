@@ -146,12 +146,12 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ### MD → PDF 변환 환경
 
-**중요: fpdf2 사용 금지** — 한글 폰트(TTC/OTF) 서브셋팅 시 글자가 완전히 깨짐. 반드시 Chrome headless 방식 사용.
+**중요: fpdf2 사용 금지** — 한글 폰트 깨짐. Chrome CDP(DevTools Protocol) 방식만 사용.
 
 ```
-방식: md → HTML(markdown 라이브러리) → Chrome headless --print-to-pdf
+방식: md → HTML(markdown) → Chrome CDP (Page.printToPDF) → PDF
 변환 스크립트: scripts/md2pdf.py
-의존성: pip install markdown, Google Chrome 설치 필요
+의존성: pip install markdown websocket-client, Google Chrome 설치 필요
 Chrome 경로: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 폰트: Apple SD Gothic Neo (시스템 폰트, Chrome이 직접 렌더링)
 ```
@@ -163,8 +163,9 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 ```
 
 **PDF 스타일 규칙**:
-- 페이지 번호: 꼬리말 가운데 (`@page @bottom-center { content: counter(page) }`)
-- Chrome 기본 헤더/푸터(URL, 날짜) 제거: `--print-to-pdf-no-header`
+- 헤더: CDP `headerTemplate: "<span></span>"` — 날짜/URL 완전 제거
+- 꼬리말: CDP `footerTemplate`로 페이지 번호만 가운데 표시
+- 페이지 시작 라인 통일: `.page-break + * { margin-top: 0 }`
 - 제목(h1~h4) 뒤에는 반드시 본문이 함께 (page-break-after: avoid)
 - 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
 - 강제 페이지 구분: `<div class="page-break"></div>` (마크다운에 직접 삽입)

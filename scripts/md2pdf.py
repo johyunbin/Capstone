@@ -173,7 +173,7 @@ def convert(md_path):
     out_pdf = md_path.with_suffix(".pdf")
     cmd = [
         CHROME,
-        "--headless",
+        "--headless=new",
         "--disable-gpu",
         "--no-sandbox",
         f"--print-to-pdf={out_pdf}",

@@ -1,11 +1,11 @@
 #!/bin/bash
 # 실험지침 자동 실행 스크립트
-# 사용법: cd ~/Capstone && ./guideline/실험지침_실행.sh
+# 사용법: cd ~/Capstone && ./guideline/02_실험지침_실행.sh
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOG_FILE="${PROJECT_ROOT}/실험지침.log"
+LOG_FILE="${PROJECT_ROOT}/02_실험지침.log"
 
 echo "=== 실험지침 시작: $(date) ===" | tee "$LOG_FILE"
 
@@ -62,7 +62,7 @@ echo "$FAISS_VER" | grep -q "미설치" && NEED_SETUP=true
 echo "" | tee -a "$LOG_FILE"
 if [ "$NEED_SETUP" = true ]; then
   echo "⚠️ 미설치 항목 있음 — Phase 1(환경 구축)이 필요합니다." | tee -a "$LOG_FILE"
-  echo "Claude에게 위임: guideline/실험지침_auto.md Phase 1 실행" | tee -a "$LOG_FILE"
+  echo "Claude에게 위임: guideline/02_실험지침_auto.md Phase 1 실행" | tee -a "$LOG_FILE"
 else
   echo "✅ 환경 구축 완료 — Phase 1 스킵 가능" | tee -a "$LOG_FILE"
 fi
@@ -128,4 +128,4 @@ echo "=== 실험지침 완료: $(date) ===" | tee -a "$LOG_FILE"
 echo "상세 로그: ${LOG_FILE}"
 
 # Claude Code 연동 (전체 Phase를 Claude에게 위임할 경우)
-# claude --print "guideline/실험지침_auto.md 읽고 전체 Phase 실행" 2>&1 | tee -a "$LOG_FILE"
+# claude --print "guideline/02_실험지침_auto.md 읽고 전체 Phase 실행" 2>&1 | tee -a "$LOG_FILE"

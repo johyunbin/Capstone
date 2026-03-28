@@ -1,11 +1,11 @@
 #!/bin/bash
 # 논문분석지침 자동 실행 스크립트
-# 사용법: cd ~/Capstone && ./guideline/논문분석지침_실행.sh [논문PDF경로]
+# 사용법: cd ~/Capstone && ./guideline/01_논문분석지침_실행.sh [논문PDF경로]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOG_FILE="${PROJECT_ROOT}/논문분석지침.log"
+LOG_FILE="${PROJECT_ROOT}/01_논문분석지침.log"
 
 echo "=== 논문분석지침 시작: $(date) ===" | tee "$LOG_FILE"
 
@@ -88,7 +88,7 @@ if [ -n "${1:-}" ]; then
   echo "" | tee -a "$LOG_FILE"
   echo "--- 논문 분석 요청: ${PAPER_PATH} ---" | tee -a "$LOG_FILE"
   echo "Claude Code에 분석 위임..." | tee -a "$LOG_FILE"
-  # claude --print "guideline/논문분석지침_auto.md 읽고 ${PAPER_PATH} 논문 총정리 작성" \
+  # claude --print "guideline/01_논문분석지침_auto.md 읽고 ${PAPER_PATH} 논문 총정리 작성" \
   #   2>&1 | tee -a "$LOG_FILE"
   echo "(claude 명령어 주석 해제하여 실행)"
 fi

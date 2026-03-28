@@ -56,17 +56,17 @@ guideline/ 폴더에 9대 지침이 auto.md + manual.md + .sh 3파일 세트로 
 
 | 키워드 | 지침 파일 |
 |--------|-----------|
-| "점검", "헬스체크", "무결성" | guideline/점검지침_auto.md |
-| "논문 분석", "총정리", "시리즈" | guideline/논문분석지침_auto.md |
-| "실험", "벤치마크", "EXPLAIN" | guideline/실험지침_auto.md |
-| "제출", "보고서", "마감", "연구제안서" | guideline/제출물지침_auto.md |
-| "PDF", "문서 변환", "md2pdf" | guideline/문서생성지침_auto.md |
-| "주간", "보고", "이번 주" | guideline/주간보고지침_auto.md |
-| "미팅", "회의", "브리핑", "카톡" | guideline/미팅지침_auto.md |
-| "발표", "PPT", "포스터", "슬라이드" | guideline/발표지침_auto.md |
-| "설계", "기획", "연구 방향" | guideline/연구설계지침_auto.md |
+| "점검", "헬스체크", "무결성" | guideline/00_점검지침_auto.md |
+| "논문 분석", "총정리", "시리즈" | guideline/01_논문분석지침_auto.md |
+| "실험", "벤치마크", "EXPLAIN" | guideline/02_실험지침_auto.md |
+| "제출", "보고서", "마감", "연구제안서" | guideline/03_제출물지침_auto.md |
+| "PDF", "문서 변환", "md2pdf" | guideline/04_문서생성지침_auto.md |
+| "주간", "보고", "이번 주" | guideline/05_주간보고지침_auto.md |
+| "미팅", "회의", "브리핑", "카톡" | guideline/06_미팅지침_auto.md |
+| "발표", "PPT", "포스터", "슬라이드" | guideline/07_발표지침_auto.md |
+| "설계", "기획", "연구 방향" | guideline/08_연구설계지침_auto.md |
 
-수동 실행: `{지침명} 자동` 또는 `./guideline/{지침명}_실행.sh`
+수동 실행: `{지침명} 자동` 또는 `./guideline/NN_{지침명}_실행.sh`
 
 ## 디렉토리 구조
 
@@ -87,9 +87,9 @@ guideline/ 폴더에 9대 지침이 auto.md + manual.md + .sh 3파일 세트로 
 │
 ├── guideline/                  # 9대 지침 시스템
 │   ├── prompts/                # 지침 제작 프롬프트 (원본)
-│   ├── {지침명}_auto.md        # 자동 실행용 (9개)
-│   ├── {지침명}_manual.md      # 수동 참조용 (9개)
-│   └── {지침명}_실행.sh        # bash 오케스트레이터 (9개)
+│   ├── NN_{지침명}_auto.md      # 자동 실행용 (9개, 00~08)
+│   ├── NN_{지침명}_manual.md    # 수동 참조용 (9개, 00~08)
+│   └── NN_{지침명}_실행.sh      # bash 오케스트레이터 (9개, 00~08)
 │
 ├── submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
 │

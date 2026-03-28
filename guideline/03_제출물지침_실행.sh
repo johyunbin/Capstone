@@ -1,11 +1,11 @@
 #!/bin/bash
 # 제출물지침 자동 실행 스크립트
-# 사용법: cd ~/Capstone && ./guideline/제출물지침_실행.sh
+# 사용법: cd ~/Capstone && ./guideline/03_제출물지침_실행.sh
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOG_FILE="${PROJECT_ROOT}/제출물지침.log"
+LOG_FILE="${PROJECT_ROOT}/03_제출물지침.log"
 
 echo "=== 제출물지침 시작: $(date) ===" | tee "$LOG_FILE"
 
@@ -64,11 +64,11 @@ echo "" | tee -a "$LOG_FILE"
 echo "--- Phase 3~5: Claude Code 위임 ---" | tee -a "$LOG_FILE"
 echo "제출물 작성/검증/일정 동기화는 Claude Code 세션에서 실행합니다." | tee -a "$LOG_FILE"
 echo "아래 명령어로 Claude에게 위임:" | tee -a "$LOG_FILE"
-echo '  claude --print "guideline/제출물지침_auto.md 읽고 전체 Phase 실행"' | tee -a "$LOG_FILE"
+echo '  claude --print "guideline/03_제출물지침_auto.md 읽고 전체 Phase 실행"' | tee -a "$LOG_FILE"
 
 echo "" | tee -a "$LOG_FILE"
 echo "=== 제출물지침 완료: $(date) ===" | tee -a "$LOG_FILE"
 echo "상세 로그: ${LOG_FILE}"
 
 # Claude Code 연동 (전체 Phase를 Claude에게 위임할 경우)
-# claude --print "guideline/제출물지침_auto.md 읽고 전체 Phase 실행" 2>&1 | tee -a "$LOG_FILE"
+# claude --print "guideline/03_제출물지침_auto.md 읽고 전체 Phase 실행" 2>&1 | tee -a "$LOG_FILE"

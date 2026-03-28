@@ -53,7 +53,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 ## 지침 시스템
 
-guideline/ 폴더에 9대 지침이 auto.md + manual.md + .sh 3파일 세트로 존재.
+guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로 존재.
 사용자가 아래 키워드를 입력하면 해당 지침의 auto.md를 읽고 Phase 순서대로 자동 실행.
 
 | 키워드 | 지침 파일 |
@@ -67,6 +67,8 @@ guideline/ 폴더에 9대 지침이 auto.md + manual.md + .sh 3파일 세트로 
 | "미팅", "회의", "브리핑", "카톡" | guideline/06_미팅지침_auto.md |
 | "발표", "PPT", "포스터", "슬라이드" | guideline/07_발표지침_auto.md |
 | "설계", "기획", "연구 방향" | guideline/08_연구설계지침_auto.md |
+| "학습 정리", "스크립트 분석", "learning" | guideline/09_학습정리지침_auto.md |
+| "활용", "CC 팁", "CC 점검" | guideline/10_클로드코드활용지침_auto.md |
 
 수동 실행: `{지침명} 자동` 또는 `./guideline/NN_{지침명}_실행.sh`
 

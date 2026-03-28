@@ -14,10 +14,10 @@ else
 fi
 
 # 기본 상태
-RESEARCH_COUNT=$(ls "$PROJECT_ROOT/Research/"*.md 2>/dev/null | wc -l | tr -d ' ')
-PAPERS_COUNT=$(ls "$PROJECT_ROOT/Research/papers/"*.pdf 2>/dev/null | wc -l | tr -d ' ')
+RESEARCH_COUNT=$(ls "$PROJECT_ROOT/research/summaries/"*.md 2>/dev/null | wc -l | tr -d ' ')
+PAPERS_COUNT=$(ls "$PROJECT_ROOT/research/papers/"*.pdf 2>/dev/null | wc -l | tr -d ' ')
 HAS_TEMPLATES="false"
-[[ -d "$PROJECT_ROOT/Templates/양식" ]] && HAS_TEMPLATES="true"
+[[ -d "$PROJECT_ROOT/templates/forms" ]] && HAS_TEMPLATES="true"
 
 # Git 상태
 BRANCH=$(cd "$PROJECT_ROOT" && git branch --show-current 2>/dev/null || echo "unknown")

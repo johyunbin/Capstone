@@ -11,8 +11,9 @@
 ## 세션 시작 체크리스트
 
 **새 대화를 시작할 때:**
-1. SessionStart hook이 자동으로 프로젝트 상태(브랜치, 미커밋, 문서 수) 출력
-2. 모든 Run/Write/Bash 명령어 확인 프롬프트 없이 자동 실행
+1. `git fetch origin && git status`로 최신 상태 점검 → 뒤처져 있으면 `git pull --no-rebase origin main` 자동 실행
+2. SessionStart hook이 자동으로 프로젝트 상태(브랜치, 미커밋, 문서 수) 출력
+3. 모든 Run/Write/Bash 명령어 확인 프롬프트 없이 자동 실행
 
 ### Git 동기화 명령어
 
@@ -46,7 +47,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 
 **캡스톤 작업 시 매번 확인:**
 1. 캡스톤 홈페이지(https://capstone.cs.yonsei.ac.kr/capstone/) 공지사항 확인 → 새 일정 있으면 노션 일정 DB 업데이트
-2. 일정 변경/추가 시 노션 `캡스톤 일정` DB에 반영
+2. 일정/상태 변경 시 **3곳 동시 업데이트**: CLAUDE.md + 메모리(`project_schedule.md`) + 노션 `캡스톤 일정` DB
 
 ## 디렉토리 구조
 

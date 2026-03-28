@@ -97,6 +97,9 @@ hr {
 }
 /* 페이지 구분 */
 .page-break { page-break-before: always; }
+/* 페이지 시작 라인 통일: page-break 직후 요소의 상단 여백 제거 */
+.page-break + h2, .page-break + h3, .page-break + h4,
+.page-break + p, .page-break + table, .page-break + blockquote { margin-top: 0; }
 /* 고아 제목 방지: 제목 뒤에 내용이 같이 와야 함 */
 h2, h3, h4 { page-break-after: avoid; }
 /* 블록 내부 짤림 방지 */

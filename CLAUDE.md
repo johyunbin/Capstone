@@ -58,7 +58,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 ├── .gitignore                  # papers/, tmp, bak 등 제외
 │
 ├── plans/                      # 연구 방향 기획 및 설계 문서
-│   ├── 연구_기획안.md/pdf                   # 연구 방향 후보 brainstorming (A~J)
+│   ├── 연구_기획안_YYYYMMDD_HHMMSS.md/pdf  # 연구 방향 후보 brainstorming (A~J)
 │   └── 연구_설계안_YYYYMMDD_HHMMSS.md/pdf  # Cascade Decomposition 설계안
 │
 ├── research/                   # 분석 문서 + 원논문
@@ -135,7 +135,7 @@ git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bass
 - 분석 문서: .md (원본) + .pdf (배포용)
 - PDF 생성 시 **Apple SD Gothic Neo** 폰트 사용 (Chrome headless 렌더링)
 - 번호 체계: `(번호) 제목_유형.확장자` — 예: `(01) Exqutor_상세분석.md`
-- 연구 방향 문서: `연구_설계안_YYYYMMDD_HHMMSS.md` 형식
+- 연구 방향 문서: `연구_설계안_YYYYMMDD_HHMMSS.md` / `연구_기획안_YYYYMMDD_HHMMSS.md` 형식 (편집 시 타임스탬프 갱신)
 
 ## 도구
 
@@ -162,11 +162,12 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 # → research/summaries/문서이름.pdf 자동 생성
 ```
 
-**페이지 넘김 규칙**:
-- h2 섹션마다 `page-break-before: always` (섹션 단위 페이지 분리)
-- h1 직후 첫 h2는 같은 페이지 유지 (제목 페이지)
+**PDF 스타일 규칙**:
+- 페이지 번호: 꼬리말 가운데 (`@page @bottom-center { content: counter(page) }`)
+- Chrome 기본 헤더/푸터(URL, 날짜) 제거: `--print-to-pdf-no-header`
 - 제목(h1~h4) 뒤에는 반드시 본문이 함께 (page-break-after: avoid)
 - 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
+- 강제 페이지 구분: `<div class="page-break"></div>` (마크다운에 직접 삽입)
 
 ## 카카오톡 대화 처리
 

@@ -17,7 +17,16 @@ from pathlib import Path
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 CSS = """
-@page { size: A4; margin: 25mm 20mm; }
+@page {
+    size: A4;
+    margin: 25mm 20mm 20mm 20mm;
+    @bottom-center {
+        content: counter(page);
+        font-size: 9pt;
+        color: #718096;
+        font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    }
+}
 body {
     font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
     font-size: 11pt; line-height: 1.7; color: #1a202c;

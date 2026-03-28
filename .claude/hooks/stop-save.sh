@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 
 root = Path('$PROJECT_ROOT')
-research = root / 'Research'
+research = root / 'research' / 'summaries'
 
 state = {
     'timestamp': datetime.now().isoformat(),

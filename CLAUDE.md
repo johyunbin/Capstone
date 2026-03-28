@@ -62,23 +62,10 @@ guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로
 | **자동** | `{지침명} 자동` 또는 `.sh` 실행 | auto.md 로드 → Phase 순차 진행 (전권 위임) |
 | **수동** | `{지침명} 수동` | manual.md 로드 → **Phase별 정지**, 사용자 확인 후 진행 |
 
-### 수동 모드 공통 규칙 (필수)
+### 수동 모드 공통 규칙
 
-1. Phase 0 실행 → 결과 보고 → **정지**
-2. 사용자가 `/clear` 또는 `/compact` 실행
-3. "Phase N 이어가줘" 또는 "다음 phase 이어가자" 입력 → 다음 Phase 진행
-4. **절대 다음 Phase로 자동 진행하지 않는다** — 사용자 명시적 트리거 필수
-
-| | /clear | /compact |
-|---|---|---|
-| 컨텍스트 | 100% 확보 | ~70% 확보 |
-| 이전 맥락 | 완전 삭제 | 요약 유지 |
-| 추천 용도 | **Phase 전환** (추천) | Phase 내부 보조 |
-
-### PHASE_STATE 파일
-
-각 지침의 진행 상태는 `guideline/PHASE_STATE_NN_{지침명}.md`에 기록.
-수동 모드에서 `/clear` 후 재개 시 이 파일을 읽고 이전 Phase 결과를 확인한다.
+Phase 완료 → **정지** → 사용자 `/clear` → "다음 phase 이어가자"로 재개. 절대 자동 진행 금지.
+상태 파일: `guideline/PHASE_STATE_NN_{지침명}.md` — `/clear` 후 재개 시 참조.
 
 ### 트리거 키워드
 
@@ -95,47 +82,6 @@ guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로
 | "설계", "기획", "연구 방향" | 08_연구설계지침_auto.md | 08_연구설계지침_manual.md |
 | "학습 정리", "learning" | 09_학습정리지침_auto.md | 09_학습정리지침_manual.md |
 | "활용", "CC 팁" | 10_클로드코드활용지침_auto.md | 10_클로드코드활용지침_manual.md |
-
-## 디렉토리 구조
-
-```
-/                               # 프로젝트 루트
-├── CLAUDE.md                   # 이 파일
-├── README.md                   # GitHub README
-├── .gitignore                  # papers/, tmp, bak 등 제외
-│
-├── plans/                      # 연구 방향 기획 및 설계 문서
-│   ├── 연구_기획안_YYYYMMDD_HHMMSS.md/pdf  # 연구 방향 후보 brainstorming (A~J)
-│   └── 연구_설계안_YYYYMMDD_HHMMSS.md/pdf  # Cascade Decomposition 설계안
-│
-├── research/                   # 분석 문서 + 원논문
-│   ├── analysis/               # 시리즈 분석 (01)~(12) — md+pdf
-│   ├── summaries/              # 개별 논문 총정리 [0]~[81] (82편 × md/pdf)
-│   └── papers/                 # 원논문 PDF 69편
-│
-├── guideline/                  # 11대 지침 시스템
-│   ├── prompts/                # 지침 제작 프롬프트 (원본)
-│   ├── NN_{지침명}_auto.md      # 자동 실행용 (11개, 00~10)
-│   ├── NN_{지침명}_manual.md    # 수동 실행용 — Phase별 정지 (11개, 00~10)
-│   ├── NN_{지침명}_실행.sh      # bash 오케스트레이터 — claude -p 독립 세션 (11개, 00~10)
-│   └── PHASE_STATE_NN_{지침명}.md  # 지침별 Phase 진행 상태
-│
-├── records/                    # 회의록 + 주간보고
-│   ├── meetings/               # 회의록 (YYYYMMDD_제목.md)
-│   └── weekly/                 # 주간 작업일지 (주간보고_YYYY-MM-DD.md)
-│
-├── submission/                 # 실제 제출물 (자문내역서, 연구지도확인서 등)
-│
-├── templates/                  # 캡스톤 제출물 양식 및 예시
-│   ├── forms/                  # 양식 (연구지도확인서, 결과보고서, 회의록 등)
-│   └── samples/                # 샘플 (중간발표/보고서/포스터/최종보고서)
-│
-└── .claude/                    # Claude Code 설정
-    ├── settings.json           # 권한 + hooks
-    ├── hooks/                  # session-init, save-session-state
-    ├── skills/                 # 6개 (→ guideline/ 지침에 흡수됨, 하위호환용 유지)
-    └── agents/                 # document-validator
-```
 
 ## 핵심 일정 (2026-1학기)
 
@@ -158,24 +104,9 @@ guideline/ 폴더에 11대 지침이 auto.md + manual.md + .sh 3파일 세트로
 - **성과**: pgvector 최대 1000배, VBASE 10000배, DuckDB 1.5~37배 속도 향상
 - **벤치마크**: TPC-H/TPC-DS 확장 VAQ 벤치마크 (range query 기반)
 
-## 실험 설계 (초안 — 미확정)
+## 실험 설계
 
-### 데이터셋 후보
-- Small: SIFT1M, GloVe-100
-- Medium: Deep10M, GIST1M
-- Large: Deep1B (하드웨어 허용 시)
-
-### 평가 지표
-- Recall@k, QPS, latency (p50/p99), 실행 계획 비용 추정 오차
-
-### 비교축
-- 선택도 sweep: 0.1% → 1% → 10% → 50% → 90%
-- 필터 유형: label, range, compound
-- 전략: pre-filter, post-filter, hybrid
-
-### 대상 시스템
-- pgvector (baseline), VBASE, DuckDB
-- Exqutor 적용 전/후 비교
+→ `plans/연구_설계안_20260328_141451.md` 참조 (RQ4개, 데이터셋5, 지표4, 비교축4)
 
 ## 문서 작성 규칙
 
@@ -220,19 +151,14 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 # → research/summaries/문서이름.pdf 자동 생성
 ```
 
-**PDF 스타일 규칙**:
-- 헤더: CDP `headerTemplate: "<span></span>"` — 날짜/URL 완전 제거
-- 꼬리말: CDP `footerTemplate`로 페이지 번호만 가운데 표시
-- 페이지 시작 라인 통일: `.page-break + * { margin-top: 0 }`
-- 제목(h1~h4) 뒤에는 반드시 본문이 함께 (page-break-after: avoid)
-- 문단/리스트/코드 블록 내부 짤림 금지 (page-break-inside: avoid)
-- 강제 페이지 구분: `<div class="page-break"></div>` (마크다운에 직접 삽입)
+## 검증 루프
 
-## 카카오톡 대화 처리
-
-사용자가 카카오톡 대화를 붙여넣으면 `records/meetings/YYYYMMDD_제목.md`에 구조화된 회의록으로 저장:
-- 날짜, 참석자, 주요 논의, 결정사항, 후속 과제
-- 저장 후 Notion 팀 회의록 DB 업데이트 여부 확인
+| 검증 대상 | 명령 |
+|-----------|------|
+| PDF 변환 | `python3 scripts/md2pdf.py <file> && open <output.pdf>` |
+| 문서 정합성 | document-validator 에이전트 |
+| Git 상태 | `git status && git diff --stat` |
+| 실험 환경 | `psql -c "SELECT extversion FROM pg_extension WHERE extname='vector'"` |
 
 ## 팀 운영
 

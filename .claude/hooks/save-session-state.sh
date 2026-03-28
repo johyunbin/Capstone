@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 root = Path('$PROJECT_ROOT')
-research = root / 'Research'
+research = root / 'research' / 'summaries'
 
 state = {
     'timestamp': datetime.now().isoformat(),

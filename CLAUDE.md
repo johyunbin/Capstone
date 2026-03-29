@@ -17,27 +17,26 @@
 
 ### 동기화 명령어
 
-**팀 공유 (git):**
+**"동기화 해줘" / "올려줘" (git push + rsync 보내기):**
 ```bash
 cd ~/Capstone && git add -A && git commit -m "sync: 설명" && git push origin main
-cd ~/Capstone && git pull --no-rebase origin main
+rsync -avz --delete ~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} macmini:~/Capstone/
 ```
 
-**개인 파일 (rsync) — 맥북에서 실행:**
+**"받아줘" / "당겨줘" (git pull + rsync 가져오기):**
 ```bash
-# 맥북 → 맥미니
-rsync -avz --delete ~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} macmini:~/Capstone/
-
-# 맥미니 → 맥북
+cd ~/Capstone && git pull --no-rebase origin main
 rsync -avz --delete macmini:~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} ~/Capstone/
 ```
 
+> "동기화"라 하면 git + rsync 둘 다 실행. 하나만 필요하면 "git만" / "rsync만" 명시.
+
 ### 두 PC 동기화 규칙
 
-- **팀 공유 파일** (research, records, plans, submission, templates, scripts): git push/pull
+- **팀 공유 파일** (research, records, plans, submission, templates, scripts): git
 - **개인 파일** (.claude, guideline, learning, PHASE_STATE.json, session_state.json): rsync
-- 작업 PC 전환 시: git pull + rsync 당겨오기 → 작업 → rsync 보내기 + git push
-- SSH 설정: `~/.ssh/config`에 `Host macmini` 등록 (IP: 192.168.123.105)
+- **"동기화"** = git + rsync 항상 함께 실행
+- rsync는 맥북 터미널에서 실행 (macmini SSH config 등록, IP: 192.168.123.105)
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
 ## 현재 단계

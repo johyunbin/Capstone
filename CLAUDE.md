@@ -165,13 +165,12 @@ python3 scripts/md2pdf.py research/summaries/문서이름.md
 - 4인 팀, 2명×2그룹 편성 가능
 - 주 단위 진행 공유
 - 논문 리딩은 팀원 분담 체계
-- 조현빈: 코디네이터 역할
 
 | 이름 | 역할 | GitHub |
 |------|------|--------|
-| 조현빈 | 코디네이터 | johyunbin |
-| 박세은 | 팀원 | triangle-park |
+| 박세은 | 팀장 | triangle-park |
 | 강재현 | 팀원 | newagency |
+| 조현빈 | 팀원 | johyunbin |
 | 이동욱 | 팀원 | dlee004 |
 
 ## 참고 링크

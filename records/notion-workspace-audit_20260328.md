@@ -25,8 +25,8 @@ GitHub_레포: https://github.com/johyunbin/Capstone
 자문위원: 박성원
 
 팀원:
-  - 조현빈 (코디네이터) — GitHub: johyunbin
-  - 박세은 — GitHub: triangle-park
+  - 박세은 (팀장) — GitHub: triangle-park
+  - 조현빈 — GitHub: johyunbin
   - 강재현 — GitHub: newagency
   - 이동욱 — GitHub: dlee004
 ```

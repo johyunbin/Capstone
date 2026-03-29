@@ -17,26 +17,18 @@
 
 ### 동기화 명령어
 
-**"동기화 해줘" / "올려줘" (git push + rsync 보내기):**
-```bash
-cd ~/Capstone && git add -A && git commit -m "sync: 설명" && git push origin main
-rsync -avz --delete ~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} macmini:~/Capstone/
-```
+> "동기화"라 하면 **git + rsync + Claude 세팅** 전부 실행. 상세는 글로벌 CLAUDE.md 참조.
+> 현재 PC에 따라 `OTHER=macmini` 또는 `OTHER=macbook`으로 방향 결정.
 
-**"받아줘" / "당겨줘" (git pull + rsync 가져오기):**
-```bash
-cd ~/Capstone && git pull --no-rebase origin main
-rsync -avz --delete macmini:~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} ~/Capstone/
-```
-
-> "동기화"라 하면 git + rsync 둘 다 실행. 하나만 필요하면 "git만" / "rsync만" 명시.
+**"동기화 해줘"**: git push + rsync 프로젝트 개인파일 + `~/.claude/` 전체
+**"받아줘"**: git pull + rsync 가져오기 + `~/.claude/` 전체
 
 ### 두 PC 동기화 규칙
 
 - **팀 공유 파일** (research, records, plans, submission, templates, scripts): git
 - **개인 파일** (.claude, guideline, learning, PHASE_STATE.json, session_state.json): rsync
-- **"동기화"** = git + rsync 항상 함께 실행
-- rsync는 맥북 터미널에서 실행 (macmini SSH config 등록, IP: 192.168.123.105)
+- **Claude 세팅** (~/.claude/ 전체 — 글로벌 지침, 메모리, 설정): rsync
+- **"동기화"** = 위 3가지 항상 함께 실행
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
 ## 현재 단계

@@ -15,23 +15,30 @@
 2. SessionStart hook이 자동으로 프로젝트 상태(브랜치, 미커밋, 문서 수) 출력
 3. 모든 Run/Write/Bash 명령어 확인 프롬프트 없이 자동 실행
 
-### Git 동기화 명령어
+### 동기화 명령어
 
-**"git에 올려줘" (commit + push):**
+**팀 공유 (git):**
 ```bash
 cd ~/Capstone && git add -A && git commit -m "sync: 설명" && git push origin main
-```
-
-**"git에서 받아줘" (pull):**
-```bash
 cd ~/Capstone && git pull --no-rebase origin main
 ```
 
-**워크트리에서 작업 후:**
+**개인 파일 (rsync) — 맥북에서 실행:**
 ```bash
-# 워크트리에서 commit → push branch → 메인레포에서 merge
-git push origin claude/nice-bassi && cd ~/Capstone && git merge claude/nice-bassi && git push origin main
+# 맥북 → 맥미니
+rsync -avz --delete ~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} macmini:~/Capstone/
+
+# 맥미니 → 맥북
+rsync -avz --delete macmini:~/Capstone/{.claude,guideline,learning,PHASE_STATE.json,session_state.json} ~/Capstone/
 ```
+
+### 두 PC 동기화 규칙
+
+- **팀 공유 파일** (research, records, plans, submission, templates, scripts): git push/pull
+- **개인 파일** (.claude, guideline, learning, PHASE_STATE.json, session_state.json): rsync
+- 작업 PC 전환 시: git pull + rsync 당겨오기 → 작업 → rsync 보내기 + git push
+- SSH 설정: `~/.ssh/config`에 `Host macmini` 등록 (IP: 192.168.123.105)
+- .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
 ## 현재 단계
 

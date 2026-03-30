@@ -26,7 +26,7 @@ research/
   papers/       # 원논문 PDF (69편)
   summaries/    # 논문별 총정리 (md + pdf)
   analysis/     # 심층분석 문서
-plans/            # 연구 설계안, 기획안, 제안서/계획서 초안 (md + pdf + docx)
+plans/            # 연구 설계안, 기획안, 제안서/계획서 초안 (md + pdf)
 records/
   meetings/     # 회의록 (일자별)
   weekly/       # 주간보고

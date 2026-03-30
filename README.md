@@ -4,9 +4,9 @@
 
 ## 연구 주제
 
-**Query Optimizer for Vector Database**
+**Cascaded Vector Similarity Decomposition for Vector-Augmented Analytical Queries**
 
-Exqutor 논문 기반 벡터 증강 분석 쿼리(VAQ) 최적화 연구
+Exqutor 논문 기반 VAQ 최적화 연구 — 벡터 유사도 조건을 느슨/엄격 두 단계로 분해하여 카디널리티 추정 오차의 영향을 구조적으로 최소화하는 접근
 
 ## 팀원
 
@@ -26,7 +26,7 @@ research/
   papers/       # 원논문 PDF (69편)
   summaries/    # 논문별 총정리 (md + pdf)
   analysis/     # 심층분석 문서
-plans/            # 연구 설계안, 기획안
+plans/            # 연구 설계안, 기획안, 제안서/계획서 초안
 records/
   meetings/     # 회의록 (일자별)
   weekly/       # 주간보고

@@ -106,6 +106,11 @@ h2, h3, h4 { page-break-after: avoid; }
 pre, blockquote { page-break-inside: avoid; }
 table { page-break-inside: avoid; }
 li { page-break-inside: avoid; }
+p { page-break-inside: avoid; }
+/* inline HTML 블록(Figure, diagram 등) 짤림 방지 */
+div { page-break-inside: avoid; }
+/* 제목 + 직후 내용을 함께 유지 */
+h2 + *, h3 + *, h4 + * { page-break-before: avoid; }
 """
 
 # CDP 꼬리말 템플릿 — 페이지 번호만 가운데 표시
@@ -258,7 +263,7 @@ def convert(md_path):
     # Markdown → HTML
     html_body = markdown.markdown(
         "\n".join(body_lines),
-        extensions=["tables", "fenced_code", "codehilite", "toc"],
+        extensions=["tables", "fenced_code", "codehilite", "toc", "md_in_html"],
     )
 
     # 제목 뒤에 메타 삽입

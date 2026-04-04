@@ -1,0 +1,47 @@
+# Experiment Parameters — Skew-Aware Sampling
+# 실험 시작 시 이 파일의 값을 기준으로 실행
+
+datasets:
+  - name: SIFT1M
+    dim: 128
+    size: 1_000_000
+    path: null  # 수령 후 경로 설정
+  - name: GloVe-100
+    dim: 100
+    size: 1_183_514
+    path: null
+  - name: Deep10M
+    dim: 96
+    size: 10_000_000
+    path: null
+  - name: GIST1M
+    dim: 960
+    size: 1_000_000
+    path: null
+
+selectivity_ranges: [0.001, 0.01, 0.05, 0.10, 0.30, 0.50]
+
+query_count: 100  # query vectors per dataset
+
+skewness_bins:
+  symmetric: [0, 0.5]
+  moderate: [0.5, 1.0]
+  skewed: [1.0, 2.0]
+  extreme: [2.0, null]
+
+rq1_motivation:
+  method: exqutor_adaptive_sampling
+  metrics: [q_error, skewness]
+  success_criterion: "skewed group Q-error >= 2x symmetric group"
+
+rq2_aware:
+  method: stratified_sampling
+  strata_strategies: [equal_width, equal_freq, optimal_neyman]
+  metrics: [q_error, sample_count, overhead_ms]
+  success_criterion: "Q-error reduction >= 50% vs adaptive"
+
+rq3_agnostic:
+  method: kde_pilot_stratification
+  pilot_ratios: [0.01, 0.02, 0.05]
+  metrics: [q_error, total_overhead_ms, pilot_accuracy]
+  success_criterion: "Q-error reduction >= 30%, overhead < 20%"

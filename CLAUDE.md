@@ -115,10 +115,27 @@ guideline/ 폴더에 11대 지침, 각 3파일 세트 (auto.md + manual.md + .sh
 
 - **한국어** 기본, 학술 용어 영어 병기
 - 서사적 학술 산문 (bullet 나열 지양)
-- 파일명: `(번호) 제목_유형.확장자` (시리즈) / `연구_설계안_YYYYMMDD_HHMMSS.md` (연구 방향)
 - PDF: Chrome CDP만 사용 (**fpdf2 금지** — 한글 깨짐)
 - 변환: `python3 scripts/md2pdf.py <file.md>` → 같은 위치에 .pdf 생성
 - 폰트: Apple SD Gothic Neo (Chrome 렌더링)
+
+### 파일명 규칙
+
+**핵심 원칙**: 구조적 경계는 `_`, 제목 내부는 공백
+
+| 디렉토리 | 패턴 | 예시 |
+|----------|------|------|
+| `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구 설계안_20260403_162818.md` |
+| `records/meetings/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
+| `records/weekly/` | `주간보고_YYYY-MM-DD.md` | `주간보고_2026-03-28.md` |
+| `research/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |
+| `research/summaries/` | `[N] Title Case 논문제목 총정리.ext` | `[13] pgvector Open-Source ... 총정리.md` |
+| `submission/` | `팀명_문서명.ext` | `속도는벡터_연구제안서.docx` |
+
+- `_` 용도: 이름↔날짜, 날짜↔시간, 팀명↔문서명 등 **논리적 경계**
+- 공백 용도: 제목·문서명 내 자연어 띄어쓰기
+- 영문 논문 제목: **Title Case** (관사·전치사·접속사 소문자, 약어 대문자)
+- 시스템/약어: 원표기 유지 (`pgvector`, `DuckDB`, `HNSW`, `GPU`, `LSH`)
 
 ## 도구
 

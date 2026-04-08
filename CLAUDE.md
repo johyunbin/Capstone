@@ -68,26 +68,22 @@ Capstone/
 ├── submission/            실제 제출물
 ├── templates/             양식+샘플
 ├── scripts/               md2pdf.py, md2docx.py
-└── guideline/             11대 지침 (auto.md + manual.md + .sh × 11)
+└── guideline/             활성 5 + archive/ 보관 6 (각 auto.md + manual.md + .sh)
 ```
 
 ## 지침 시스템
 
-guideline/ 폴더에 11대 지침, 각 3파일 세트 (auto.md + manual.md + .sh).
+guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md + .sh).
 
 | 키워드 | 지침 | 용도 |
 |--------|------|------|
-| "점검" | 00_점검지침 | 파일/폰트/중복/디스크 무결성 |
-| "논문 분석" | 01_논문분석지침 | 논문 → md+pdf 3종 생성 |
 | "실험" | 02_실험지침 | 벤치마크/EXPLAIN ANALYZE |
 | "제출" | 03_제출물지침 | 마감별 제출물 생성 |
 | "PDF" | 04_문서생성지침 | md → HTML → Chrome CDP → PDF |
-| "주간" | 05_주간보고지침 | git이력+문서변경 종합 |
 | "미팅" | 06_미팅지침 | 카톡 회의록 + 노션 업데이트 |
 | "발표" | 07_발표지침 | PPT/포스터/슬라이드 |
-| "설계" | 08_연구설계지침 | 연구 방향 기획·설계안 |
-| "학습" | 09_학습정리지침 | 스터디 자료 정리 |
-| "활용" | 10_클로드코드활용지침 | CC 환경 진단+최적화 |
+
+보관 (guideline/archive/): 00점검→skill, 01논문분석(완료), 05주간보고→skill, 08설계(완료), 09학습(완료), 10CC활용(완료)
 
 **실행**: `{키워드}` (자동) / `{키워드} 수동` (Phase별 정지) / `./guideline/NN_*_실행.sh`
 **수동 모드**: Phase 완료 → 정지 → `/clear` → "다음 phase 이어가자"로 재개. 절대 자동 진행 금지.

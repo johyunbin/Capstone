@@ -15,7 +15,7 @@
 - **연구 방향**: Skew-Aware Sampling — skewed 거리 분포에서 카디널리티 추정 정확도 개선
   - Track A (Distribution-Aware): 분포를 알 때 → 층화 샘플링
   - Track B (Distribution-Agnostic): 분포를 모를 때 → KDE-pilot 기반 자동 층화
-- **설계안**: `plans/연구_설계안_20260403_162818.md` (v3)
+- **설계안**: `plans/연구 설계안 20260403 162818.md` (v3)
 - **실험 파라미터**: `experiments/config/experiment_params.yaml`
 - **대기 중**: 랩서버 접근 + Exqutor 코드/데이터 (4/7 주 수령 예정)
 - **완료**: 논문 분석 82/82편 (100%) + 시리즈 12편 + 연구제안서/수행계획서 제출

@@ -18,7 +18,6 @@
 - **설계안**: `plans/연구 설계안_20260403_162818.md` (v3)
 - **실험 파라미터**: `experiments/config/experiment_params.yaml`
 - **대기 중**: 랩서버 접근 + Exqutor 코드/데이터 (4/7 주 수령 예정)
-- **완료**: 논문 분석 82/82편 (100%) + 시리즈 12편 + 연구제안서/수행계획서 제출
 
 ### 실행 로드맵
 
@@ -45,7 +44,7 @@
 > "동기화" = git + rsync + Claude 세팅 전부 실행. 상세는 글로벌 CLAUDE.md 참조.
 
 - **팀 공유 파일** (research, records, plans, experiments, submission, templates, scripts): git
-- **개인 파일** (.claude, guideline, PHASE_STATE.json, session_state.json): rsync
+- **개인 파일** (.claude, guideline): rsync
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
 ## 디렉토리 구조
@@ -63,7 +62,7 @@ Capstone/
 │   └── summaries/         논문 총정리 82편 — 완료
 ├── plans/                 연구 설계안/제안서/수행계획서
 ├── records/
-│   ├── meetings/          회의록
+│   ├── kakaotalk/         카카오톡 회의록
 │   └── weekly/            주간보고
 ├── submission/            실제 제출물
 ├── templates/             양식+샘플
@@ -92,13 +91,15 @@ guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md
 
 | 마감 | 제출물 | 상태 |
 |------|--------|------|
-| 4/3 | 교수님 미팅 — Skew-Aware Sampling 방향 확정 | ✅ |
-| 4/2 | 연구제안서 + 수행계획서 제출 | ✅ |
 | 4/7~ | Exqutor 코드·데이터 수령 + 환경 세팅 | ⬜ |
 | **4/28** | **중간발표 + 중간보고서 제출** | ⬜ |
 | 5/27~5/29 | 최종발표 + 전시회 마감 | ⬜ |
 | 6/5 | 전시회 | ⬜ |
 | **6/11** | **최종보고서 제출** | ⬜ |
+
+## 카카오톡 회의록
+
+카톡 대화 → `records/kakaotalk/YYYYMMDD_제목.md`
 
 ## Exqutor 핵심
 
@@ -122,7 +123,7 @@ guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md
 | 디렉토리 | 패턴 | 예시 |
 |----------|------|------|
 | `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구 설계안_20260403_162818.md` |
-| `records/meetings/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
+| `records/kakaotalk/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
 | `records/weekly/` | `주간보고_YYYY-MM-DD.md` | `주간보고_2026-03-28.md` |
 | `research/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |
 | `research/summaries/` | `[N] Title Case 논문제목 총정리.ext` | `[13] pgvector Open-Source ... 총정리.md` |

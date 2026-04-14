@@ -1,39 +1,113 @@
 # Experiment Parameters — Skew-Aware Sampling
-# 실험 시작 시 이 파일의 값을 기준으로 실행
+# 2026-04-14 16:28 KST: RQ1 파이프라인 문서화 시점에 서버 실상 반영
+# 의존: experiments/plans/RQ1_motivation_pipeline_20260414_162857.md
 
+# ---------------------------------------------------------------
+# 서버 컨텍스트 (2026-04-14 Deep Review 결과)
+# ---------------------------------------------------------------
+server_context:
+  host: 165.132.140.240
+  account: capstone2026
+  pg_port: 55435
+  pg_db: wns41559
+  pg_user: wns41559
+  pg_bin: /mnt/hdd0/home/capstone2026/Exqutor/PostgreSQL/pgvector/psql/bin
+  data_dir: /mnt/hdd0/home/capstone2026/vanilla_sf100
+  exqutor_repo: /mnt/hdd0/home/capstone2026/Exqutor
+  cache_dir: /mnt/hdd0/home/capstone2026/cache
+
+# ---------------------------------------------------------------
+# 데이터셋 — 서버 DB에 실존하는 테이블로 고정
+# ---------------------------------------------------------------
 datasets:
-  - name: SIFT1M
-    dim: 128
-    size: 1_000_000
-    path: null  # 수령 후 경로 설정
-  - name: GloVe-100
-    dim: 100
-    size: 1_183_514
-    path: null
-  - name: Deep10M
-    dim: 96
-    size: 10_000_000
-    path: null
-  - name: GIST1M
-    dim: 960
-    size: 1_000_000
-    path: null
+  - name: partsupp_deep_10       # RQ1 주력
+    source: server
+    table: partsupp_deep_10
+    column: ps_embedding
+    dim: 96                        # DEEP96
+    rows: 8_000_371
+    hnsw_indexes:
+      - deep_hnsw_10               # L2
+      - deep_hnsw_10_cos           # cosine
+    distance_op: "<->"             # L2
+    rq1_primary: true
+  - name: customer_sift_10        # 예비 (RQ1 failback)
+    source: server
+    table: customer_sift_10
+    column: c_embedding
+    dim: 128                       # SIFT
+    rows: 1_500_093
+    hnsw_indexes: [customer_sift_hnsw]
+    distance_op: "<->"
+  - name: part_wiki_10            # 예비 (고차원 확인용)
+    source: server
+    table: part_wiki_10
+    column: p_embedding
+    dim: 768                       # WIKI
+    rows: 1_999_824
+    hnsw_indexes: [wiki_hnsw_10, wiki_hnsw_l2_10]
+    distance_op: "<->"
 
+# ---------------------------------------------------------------
+# 공통 파라미터
+# ---------------------------------------------------------------
 selectivity_ranges: [0.001, 0.01, 0.05, 0.10, 0.30, 0.50]
-
-query_count: 100  # query vectors per dataset
+query_count: 100                  # 2 cycle(sample_update_cycle=50) 보장
+query_seed: 0.42                  # SELECT setseed(0.42)
+subset_rows: 1_000_000            # D1 기본 제안 — 8M 대신 1M 서브셋
+repeats: 5                        # D2 기본 제안
 
 skewness_bins:
-  symmetric: [0, 0.5]
-  moderate: [0.5, 1.0]
-  skewed: [1.0, 2.0]
-  extreme: [2.0, null]
+  symmetric: [0.0, 0.5]
+  moderate:  [0.5, 1.0]
+  skewed:    [1.0, 2.0]
+  extreme:   [2.0, null]
 
+# ---------------------------------------------------------------
+# Exqutor Adaptive Sampling 파라미터 (Deep Review에서 소스 추출)
+# 출처: pgvector_Exqutor.patch L442~455
+# ---------------------------------------------------------------
+adaptive_params:
+  sample_size_initial: 385        # 수식 1: z=1.96, P=0.5, e=0.05 → 385
+  sample_update_cycle: 50         # 50 쿼리마다 갱신
+  learning_rate_initial: 0.1
+  lr_lambda: 0.99                 # 매 갱신마다 lr *= 0.99
+  momentum: 0.9
+  alpha: 50                       # grad = α·(med_q - β) - (100-α)·(sample/total)
+  beta: 1.5                       # Q-error 수렴 타겟
+  # GUC 이름 (세션별 재설정용)
+  guc_sample_size: "vector.sample_size"
+  guc_update_enable: "vector.update_sample_size"
+  guc_update_cycle: "vector.sample_update_cycle"
+
+# ---------------------------------------------------------------
+# RQ1 Motivation — Python 재구현 주력 + 서버 equivalence check
+# ---------------------------------------------------------------
 rq1_motivation:
-  method: exqutor_adaptive_sampling
-  metrics: [q_error, skewness]
-  success_criterion: "skewed group Q-error >= 2x symmetric group"
+  method: python_reimpl           # 과거: exqutor_adaptive_sampling (서버 직접)
+  sampling_modes:
+    - bernoulli                   # 행 단위 랜덤 — Exqutor 수식만
+    - block_system                # PG TABLESAMPLE SYSTEM 근사 — 블록 효과 ablation
+  metrics:
+    - q_error
+    - skewness
+    - final_sample_size
+    - sample_size_trajectory
+  success_criterion: "skewed group median Q-error >= 2x symmetric group"
+  statistical_test: mann_whitney_u
+  equivalence_check:              # Stage 4.5
+    enabled: true
+    table: partsupp_deep_10
+    guc_overrides:
+      enable_indexscan: off
+      enable_indexonlyscan: off
+      enable_bitmapscan: off
+      vector.sample_size: 385
+      vector.update_sample_size: on
 
+# ---------------------------------------------------------------
+# RQ2/RQ3 — RQ1 통과 후 구체화 (현재는 설계안 v3 원안 유지)
+# ---------------------------------------------------------------
 rq2_aware:
   method: stratified_sampling
   strata_strategies: [equal_width, equal_freq, optimal_neyman]

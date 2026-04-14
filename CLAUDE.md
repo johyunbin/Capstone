@@ -10,14 +10,14 @@
 
 ## 현재 단계
 
-> **실험 준비 단계** — 설계안 v3 확정 (4/3), 환경 수령 대기, 4/28 중간발표까지 24일
+> **환경 세팅 단계** — 서버 수령 (4/13, 임채림), Exqutor 빌드 중, 4/28 중간발표까지 15일
 
 - **연구 방향**: Skew-Aware Sampling — skewed 거리 분포에서 카디널리티 추정 정확도 개선
   - Track A (Distribution-Aware): 분포를 알 때 → 층화 샘플링
   - Track B (Distribution-Agnostic): 분포를 모를 때 → KDE-pilot 기반 자동 층화
 - **설계안**: `plans/연구 설계안_20260403_162818.md` (v3)
 - **실험 파라미터**: `experiments/config/experiment_params.yaml`
-- **대기 중**: 랩서버 접근 + Exqutor 코드/데이터 (4/7 주 수령 예정)
+- **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 
 ### 실행 로드맵
 

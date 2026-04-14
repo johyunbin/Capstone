@@ -159,25 +159,36 @@ def setup_sift_subset(conn, args) -> dict:
         n_rows = cur.fetchone()[0]
         log(f"    n_rows = {n_rows}")
 
-    # 2. 128d 벡터 로드
-    log("  [2/6] loading 128d embeddings")
+    # 2. 128d 벡터 로드 (server-side cursor + fetchmany)
+    log("  [2/6] loading 128d embeddings via server-side cursor + fetchmany")
     t0 = time.time()
     vecs = np.empty((n_rows, 128), dtype=np.float32)
     pks = np.empty(n_rows, dtype=np.int64)
     i = 0
-    with conn.cursor().copy(
-        f"COPY (SELECT c_custkey, c_embedding::text FROM {table_name}) TO STDOUT"
-    ) as copy:
-        for row_bytes in copy:
-            line = row_bytes.decode("utf-8", errors="replace").rstrip("\n")
-            pk_s, vec_s = line.split("\t", 1)
-            pks[i] = int(pk_s)
-            vec_s = vec_s.strip().strip("[]")
-            vecs[i] = np.fromstring(vec_s, sep=",", dtype=np.float32)
-            i += 1
-            if i % 200000 == 0:
-                log(f"    loaded {i}/{n_rows} ({time.time() - t0:.0f}s)")
-    log(f"    done ({time.time() - t0:.1f}s, shape={vecs.shape})")
+    old_autocommit = conn.autocommit
+    conn.autocommit = False
+    try:
+        with conn.cursor(name="sift_load_cursor") as cur:
+            cur.itersize = 50000
+            cur.execute(f"SELECT c_custkey, c_embedding FROM {table_name}")
+            while True:
+                rows = cur.fetchmany(50000)
+                if not rows:
+                    break
+                for pk, vec in rows:
+                    pks[i] = int(pk)
+                    if isinstance(vec, str):
+                        s = vec.strip().strip("[]")
+                        vecs[i] = np.fromstring(s, sep=",", dtype=np.float32)
+                    else:
+                        vecs[i] = np.asarray(vec, dtype=np.float32)
+                    i += 1
+                if i % 200000 == 0:
+                    log(f"    loaded {i}/{n_rows} ({time.time() - t0:.0f}s)")
+        conn.commit()
+    finally:
+        conn.autocommit = old_autocommit
+    log(f"    done ({time.time() - t0:.1f}s, shape={vecs.shape}, loaded {i})")
 
     # 3. k-means KM20 학습
     log(f"  [3/6] k-means K={args.k} (seed={args.seed}) on 128d")
@@ -304,6 +315,21 @@ def measure_mode(conn, args, mode: str) -> tuple[pd.DataFrame, dict]:
     qs_500 = qs[qs.query_id < args.n_queries].reset_index(drop=True)
     log(f"  filtered to {len(qs_500)} query")
 
+    # IMPORTANT 1: GUC 를 true_cardinality 계산 전에 미리 설정해서 Adaptive update 경로 차단.
+    # IMPORTANT 2: pre-1 에서는 sampling_method 를 항상 'bernoulli' 로 강제 set.
+    #   STRAT mode 면 ground truth SELECT count(*) 가 hook 의 stratified 분기를 거치는데,
+    #   이게 normal SELECT count() 의 plan 을 깨뜨려 'unsupported format code' 발생.
+    #   bernoulli mode 는 sample-scan 으로 가는 hook 분기지만 update_sample_size=off 라
+    #   sample 자체는 추출되어도 update SQL 안 호출되어 안전.
+    #   측정 단계 [measure 2/3] 에서 sampling_method 를 mode 로 다시 set.
+    log("  [measure pre-1] disable Adaptive update + force bernoulli for ground truth")
+    with conn.cursor() as cur:
+        cur.execute("SET vector.sample_size = 385")
+        cur.execute("SET vector.update_sample_size = off")
+        cur.execute("SET vector.sample_update_cycle = 50")
+        cur.execute("SET vector.sampling_method = 'bernoulli'")
+        cur.execute("TRUNCATE TABLE exqutor_qerror")
+
     # 실측 true_cardinality 를 SQL 로 재계산
     log("  [measure 1/3] re-computing true_cardinality via SQL")
     true_cards = {}
@@ -330,9 +356,7 @@ def measure_mode(conn, args, mode: str) -> tuple[pd.DataFrame, dict]:
     results = []
     t0 = time.time()
     with conn.cursor() as cur:
-        cur.execute("SET vector.sample_size = 385")
-        cur.execute("SET vector.update_sample_size = off")
-        cur.execute("SET vector.sample_update_cycle = 50")
+        # 측정 모드로 sampling_method 변경 (위 pre-1 에서는 항상 bernoulli)
         cur.execute(f"SET vector.sampling_method = '{mode}'")
         if mode == "stratified":
             cur.execute("SET vector.stratum_column = 'stratum_id'")
@@ -505,9 +529,10 @@ def main() -> int:
         merged = bern.merge(
             strat, on=["query_id", "selectivity"], suffixes=("_bern", "_strat")
         )
-        mask = merged["q_error_hook_bern"].notna() & merged["q_error_hook_strat"].notna()
-        b = merged.loc[mask, "q_error_hook_bern"].values
-        s = merged.loc[mask, "q_error_hook_strat"].values
+        # q_error (plan_rows 기준) 사용. q_error_hook 은 hook call 횟수 align 이 깨지기 쉬움.
+        mask = merged["q_error_bern"].notna() & merged["q_error_strat"].notna()
+        b = merged.loc[mask, "q_error_bern"].values
+        s = merged.loc[mask, "q_error_strat"].values
         if len(b) >= 10:
             median_b = float(np.median(b))
             median_s = float(np.median(s))

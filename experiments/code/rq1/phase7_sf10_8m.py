@@ -169,26 +169,38 @@ def setup_8m_subset(conn, args) -> dict:
 
     # 2. k-means 학습 (서버에서 8M × 96d float32 로드)
     # NOTE: 8M × 96 × 4 byte = 3.07 GB. 서버 64 GB RAM 충분.
-    log("  [2/5] loading 8M embeddings via COPY TO stdout + numpy")
+    # server-side cursor 를 위해 일시적으로 autocommit 끄기 (named cursor 는 transaction 안에서만 동작)
+    log("  [2/5] loading 8M embeddings via server-side cursor + fetchmany")
     t0 = time.time()
     vecs = np.empty((n_rows, 96), dtype=np.float32)
     pks = np.empty(n_rows, dtype=np.int64)
     i = 0
-    with conn.cursor().copy(
-        f"COPY (SELECT ps_partkey, ps_embedding::text FROM {table_name}) TO STDOUT"
-    ) as copy:
-        for row_bytes in copy:
-            # bytes row 는 \t 구분, newline 으로 cut
-            line = row_bytes.decode("utf-8", errors="replace").rstrip("\n")
-            pk_s, vec_s = line.split("\t", 1)
-            pks[i] = int(pk_s)
-            # vec_s 는 "[0.1,0.2,...,0.96]" 형태
-            vec_s = vec_s.strip().strip("[]")
-            vecs[i] = np.fromstring(vec_s, sep=",", dtype=np.float32)
-            i += 1
-            if i % 500000 == 0:
-                log(f"    loaded {i}/{n_rows} ({time.time() - t0:.0f}s)")
-    log(f"    done ({time.time() - t0:.1f}s, shape={vecs.shape})")
+    old_autocommit = conn.autocommit
+    conn.autocommit = False
+    try:
+        with conn.cursor(name="ps_load_cursor") as cur:
+            cur.itersize = 50000
+            cur.execute(f"SELECT ps_partkey, ps_embedding FROM {table_name}")
+            while True:
+                rows = cur.fetchmany(50000)
+                if not rows:
+                    break
+                for pk, vec in rows:
+                    pks[i] = int(pk)
+                    if isinstance(vec, str):
+                        # text fallback: "[0.1,0.2,...]" 형태
+                        s = vec.strip().strip("[]")
+                        vecs[i] = np.fromstring(s, sep=",", dtype=np.float32)
+                    else:
+                        # pgvector Vector 객체 또는 list-like
+                        vecs[i] = np.asarray(vec, dtype=np.float32)
+                    i += 1
+                if i % 500000 == 0:
+                    log(f"    loaded {i}/{n_rows} ({time.time() - t0:.0f}s)")
+        conn.commit()
+    finally:
+        conn.autocommit = old_autocommit
+    log(f"    done ({time.time() - t0:.1f}s, shape={vecs.shape}, loaded {i})")
 
     log(f"  [3/5] k-means K={args.k} (seed={args.seed}, iter={args.kmeans_iter})")
     t0 = time.time()
@@ -292,6 +304,19 @@ def measure_mode(conn, args, mode: str, setup_info: dict) -> tuple[pd.DataFrame,
     )
     log(f"  filtered to s=0.500 × {len(qs_500)} query")
 
+    # IMPORTANT 1: GUC 를 true_cardinality 계산 전에 미리 설정해서 Adaptive update 경로 차단.
+    # IMPORTANT 2: pre-1 에서는 sampling_method 를 항상 'bernoulli' 로 강제 set.
+    #   STRAT mode 면 ground truth SELECT count(*) 가 hook 의 stratified 분기를 거치는데,
+    #   이게 normal SELECT count() 의 plan 을 깨뜨려 'unsupported format code' 발생.
+    #   측정 단계 [measure 2/3] 에서 sampling_method 를 mode 로 다시 set.
+    log("  [measure pre-1] disable Adaptive update + force bernoulli for ground truth")
+    with conn.cursor() as cur:
+        cur.execute("SET vector.sample_size = 385")
+        cur.execute("SET vector.update_sample_size = off")
+        cur.execute("SET vector.sample_update_cycle = 50")
+        cur.execute("SET vector.sampling_method = 'bernoulli'")
+        cur.execute("TRUNCATE TABLE exqutor_qerror")
+
     # 8M true_cardinality 재계산
     log("  [measure 1/3] re-computing true_cardinality for 8M (full scan)")
     true_cards_8m = {}
@@ -319,9 +344,7 @@ def measure_mode(conn, args, mode: str, setup_info: dict) -> tuple[pd.DataFrame,
     results = []
     t0 = time.time()
     with conn.cursor() as cur:
-        cur.execute("SET vector.sample_size = 385")
-        cur.execute("SET vector.update_sample_size = off")
-        cur.execute("SET vector.sample_update_cycle = 50")
+        # 측정 모드로 sampling_method 변경 (위 pre-1 에서는 항상 bernoulli)
         cur.execute(f"SET vector.sampling_method = '{mode}'")
         if mode == "stratified":
             cur.execute("SET vector.stratum_column = 'stratum_id'")
@@ -513,10 +536,12 @@ def main() -> int:
             on=["query_id", "selectivity"],
             suffixes=("_bern", "_strat"),
         )
-        # hook_est 기준 비교 (plan_rows 대신)
-        mask = merged["q_error_hook_bern"].notna() & merged["q_error_hook_strat"].notna()
-        b = merged.loc[mask, "q_error_hook_bern"].values
-        s = merged.loc[mask, "q_error_hook_strat"].values
+        # q_error (plan_rows 기준) 사용. q_error_hook 은 EXPLAIN ANALYZE 의 hook
+        # call 횟수가 query 당 1 회가 아닐 수 있어 align 이 깨지기 쉬움.
+        # plan_rows 는 EXPLAIN 의 Plan Rows 에서 직접 추출하므로 query 와 1:1 보장.
+        mask = merged["q_error_bern"].notna() & merged["q_error_strat"].notna()
+        b = merged.loc[mask, "q_error_bern"].values
+        s = merged.loc[mask, "q_error_strat"].values
         if len(b) >= 10:
             median_b = float(np.median(b))
             median_s = float(np.median(s))

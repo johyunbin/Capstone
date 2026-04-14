@@ -227,13 +227,21 @@ def figure_3_phase6_step3prime_compare(results_dir: Path, out_dir: Path) -> None
     with open(compare_path) as f:
         data = json.load(f)
 
-    # compare.json 구조: {"paired": [{"mode": ..., "selectivity": ..., "diff_pct": ..., "p_less": ...}, ...]}
-    paired = data.get("paired") or data.get("paired_vs_bern") or []
+    # compare.json 실제 구조: {"pairs_vs_bernoulli": [{"mode": ..., "selectivity": ..., "diff_pct_med": ..., "wilcoxon_p_less": ..., ...}]}
+    paired = data.get("pairs_vs_bernoulli") or data.get("paired") or []
     if not paired:
         log(f"  SKIP Figure 3 — no paired data in compare.json")
         return
 
     df = pd.DataFrame(paired)
+    # 컬럼 이름 정규화: diff_pct_med -> diff_pct, wilcoxon_p_less -> p_less
+    if "diff_pct_med" in df.columns:
+        df["diff_pct"] = df["diff_pct_med"]
+    if "wilcoxon_p_less" in df.columns:
+        df["p_less"] = df["wilcoxon_p_less"]
+    elif "p_less" not in df.columns and "p_value" in df.columns:
+        df["p_less"] = df["p_value"]
+
     modes = [m for m in ["pca_decile", "kmeans_k10", "kmeans_k20"] if m in df["mode"].unique()]
     if not modes:
         log("  SKIP Figure 3 — no mode data")
@@ -466,22 +474,24 @@ def figure_6_phase5_local_skew_heatmap(results_dir: Path, out_dir: Path) -> None
     with open(p5_path) as f:
         data = json.load(f)
 
-    # 구조: {"metrics": {"knn_distance_entropy": {"0.001": {"rho": ..., "p": ...}, ...}, ...}}
-    metrics = data.get("metrics") or data
-    metric_names = list(metrics.keys())
-    sels_raw = set()
-    for m in metric_names:
-        sels_raw.update(metrics[m].keys())
-    sels = sorted(sels_raw, key=lambda x: float(x))
+    # 실제 구조: {"all_combos": [{"metric": ..., "selectivity": ..., "spearman_rho": ..., "p_value": ...}, ...]}
+    all_combos = data.get("all_combos") or []
+    if not all_combos:
+        log(f"  SKIP Figure 6 — no all_combos in JSON")
+        return
+    df_all = pd.DataFrame(all_combos)
+    metric_names = sorted(df_all["metric"].unique())
+    sels_list = sorted(df_all["selectivity"].unique())
+    sels = [str(s) for s in sels_list]
 
     mat = np.full((len(metric_names), len(sels)), np.nan)
     p_mat = np.full((len(metric_names), len(sels)), np.nan)
     for i, m in enumerate(metric_names):
-        for j, s in enumerate(sels):
-            cell = metrics[m].get(s)
-            if cell is not None:
-                mat[i, j] = cell.get("rho")
-                p_mat[i, j] = cell.get("p", 1.0) if isinstance(cell, dict) else 1.0
+        for j, s in enumerate(sels_list):
+            row = df_all[(df_all["metric"] == m) & (df_all["selectivity"] == s)]
+            if len(row) > 0:
+                mat[i, j] = float(row.iloc[0]["spearman_rho"])
+                p_mat[i, j] = float(row.iloc[0].get("p_value", 1.0))
 
     fig, ax = plt.subplots(figsize=(8, 0.8 + 0.6 * len(metric_names)))
     im = ax.imshow(mat, cmap="RdBu_r", vmin=-0.3, vmax=0.3, aspect="auto")

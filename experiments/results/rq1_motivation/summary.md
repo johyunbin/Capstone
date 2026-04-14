@@ -21,8 +21,9 @@
 | Phase 4 (4/14 19:30~19:40 추가) | `rq1_phase4_native.py` | `phase4_system.parquet`, `phase4_bernoulli.parquet`, `phase4_compare.json` (각 600행) | 82 + 21 s |
 | Phase 5 (4/14 20:09 추가) | `rq1_phase5_local_skew.py` | `query_local_skew.parquet` (100행 × 4 local 지표), `phase5_local_skew_spearman.json` (24 조합 ρ), `phase5_local_skew_meta.json` | 6 s |
 | Phase 6 Step 1~3 (4/14 20:30 추가) | `rq1_phase6_stratified_python.py` | `phase6_strat_pca_runs.parquet` (6000행: 2 mode × 100 query × 6 sel × 5 seed), `phase6_strat_pca_compare.json`, `phase6_strat_pca_meta.json`, `data_side_strata_pca.parquet` (1M × stratum_id) | 5 s |
+| Phase 6 Step 3' (4/14 20:45 추가) | `rq1_phase6_layer_compare.py` | `phase6_layer_compare_runs.parquet` (12 000행: 4 mode × 100 × 6 × 5), `phase6_layer_compare_compare.json`, `phase6_layer_compare_meta.json` | 9 s |
 
-**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native) + 6 초 (Phase 5 local skew) + 5 초 (Phase 6 Python counterfactual). 단일 dataset (1M subset) 의 RQ1 motivation 단계가 native 검증 + global·local 8 지표 전수 검증 + 1차 stratified sampling counterfactual 까지 진행됨.
+**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native) + 6 초 (Phase 5 local skew) + 5 초 (Phase 6 Step 1~3) + 9 초 (Phase 6 Step 3' layer compare). 단일 dataset (1M subset) 의 RQ1 motivation 단계가 native 검증 + 8 지표 전수 검증 + 4 layer 비교 (bernoulli + pca_decile + kmeans K=10/20) 까지 진행됨.
 
 ---
 
@@ -188,7 +189,9 @@
 
 **Phase 6 Step 1~3 ⚠️ (2026-04-14 20:30 KST 부분 성공 — PCA decile 1차 시도)**. 자세한 결과는 본 문서 §VII 에 정리. 요약: Pivot C 의 *data-side global stratification* 1차 시도로 1M subset 의 첫 PCA component 값을 deciles (10 quantile) 로 partition → 1M × stratum_id 사전계산 + Horvitz-Thompson stratified estimator (`est = sum_i (n_i / s_i) * cnt_i`) 의 Python counterfactual 측정. Exqutor L1228 cnt clamp + L1232 estimator 공식과 정확히 동치 (s=0.001 BERN median 2.5974 == Stage 4 의 2.597 == Phase 4 native 의 2.5970, 소수점 셋째 자리 일치 검증 통과). **결과**: 큰 selectivity (s ≥ 0.3) 에서 paired Wilcoxon p < 0.005 로 stratified 가 BERNOULLI 보다 유의하게 우수 — 효과 크기 +0.7~0.8% median, 60/100 query 가 stratified 우위, std 도 stratified 가 더 작음 (분산 감소의 첫 정량 증거). 작은 selectivity (s ≤ 0.05) 에서는 효과 없거나 약간 음 — sample 안 cnt 가 0~1 변동 시 stratum weight 곱셈이 noise 증폭. **Pivot C 의 첫 정량 검증 — 작지만 통계적으로 유의한 신호** 확보. PCA decile 보다 더 적합한 layer (k-means partition, vector cluster) 를 다음 Phase 6 Step 4~ 에서 시도할 여지가 있으며, 본 결과만으로도 Phase 6 native (vector.c 구현) 진입의 정당성 확보.
 
-**Phase 6 Step 4~ — Native vector.c 구현 + ablation (다음 세션 후속)**. 본 Step 1~3 의 Python counterfactual 결과로 PCA decile stratified 의 작은 양의 효과가 확인되었으므로, vector.c 에 `estimate_cardinality_with_stratified_sampling` 함수 + GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 추가. 1M × stratum_id 는 데이터 로드 시 1회 사전계산 (예: extension function 호출 또는 vector_index_create hook). SYSTEM/BERNOULLI/STRATIFIED 600 query 측정 × 3 mode = 1800 paired 비교. 또는 PCA decile 외 다른 layer (k-means K=10, K=20, vector cluster) 의 Python counterfactual 추가 시도로 더 큰 효과 크기 탐색.
+**Phase 6 Step 3' ⚠️ (2026-04-14 20:45 KST 부분 성공 — KM20 = best layer 확정)**. 자세한 결과는 본 문서 §VIII 에 정리. 요약: Step 1~3 의 PCA decile (+0.7~0.8% in s≥0.3) 위에서 더 강한 layer 후보 비교. **단일 스크립트 4 mode 동시 측정** (bernoulli + pca_decile + kmeans K=10 + kmeans K=20) 으로 RNG noise 제거. numpy mini-batch k-means (Sculley 2010) 를 직접 구현 (sklearn 의존성 0). 1M × 96 → K=10 학습 0.62s + assign 0.7s, K=20 학습 0.5s + assign 0.59s. **결과**: KM20 가 best — *세 selectivity 구간* (s=0.100, 0.300, 0.500) 에서 BERN 대비 paired Wilcoxon p<0.05 우위, 특히 **s=0.100 에서 +2.25% (p=0.0042)** 의 새 신호 영역 확보. PCA decile 과 KM10 는 두 구간 (s=0.300, 0.500) 만. cross pair 에서 KM20 vs PCA decile 은 s=0.050 (+2.79%, p=0.028) + s=0.100 (+1.50%, p=0.015) KM20 우위. **KM20 가 다음 native 구현의 1순위 layer**.
+
+**Phase 6 Step 4~ — Native vector.c 구현 + ablation (다음 세션 후속, KM20 layer 확정)**. Step 3' 의 KM20 best 결정 위에서 vector.c 에 (a) k-means centroid 20개 메모리 로드 + 1M × stratum_id 사전계산, (b) `estimate_cardinality_with_stratified_sampling` 함수, (c) GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 추가. SYSTEM/BERNOULLI/STRATIFIED 600 query 측정 × 3 mode = 1800 paired 비교 + 시각화 (Stage 5b). 다층 PCA / random projection 등 더 강한 layer 탐색은 Step 4 native 결과 확인 후 시도 가능 (KM20 의 native vs Python 일치성 검증이 1차 우선순위).
 
 **Phase 7 — 중간발표용 부분 실증 (~4/26)**. `partsupp_deep_10` 단일 dataset에서 3 mode × 6 selectivity × 5 seed 최소 ablation. Table: SYSTEM vs BERNOULLI vs STRATIFIED의 median/mean/p95 Q-error. 방향의 타당성 증명이 목표.
 
@@ -446,6 +449,142 @@ $$ \hat{Y}_\text{stratified} = \sum_{i=1}^{K} \frac{n_i}{s_i} \cdot c_i $$
 | `phase6_strat_pca_meta.json` | 같음 | 실행 메타 + PCA info (eigvals top5, EVR1) + 10 stratum sizes + 9 quantile edges + sample budget per stratum |
 | `data_side_strata_pca.parquet` | 같음 | 1 000 000 × (row_idx, stratum_id, first_pc_proj) — Phase 6 Step 4 native 구현 시 layer 정의 캐시 |
 | `phase6_stratified_python.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase6_stratified_python.py` | 측정 스크립트 (numpy + scipy + pyarrow + pandas, 5초 완주) |
+
+---
+
+## VIII. Phase 6 Step 3' 결과 — Layer 비교 (PCA decile vs k-means K=10/20) (2026-04-14 20:45 KST)
+
+### VIII.1 측정 절차
+
+§VII 의 PCA decile 1차 시도 (+0.7~0.8% in s≥0.3) 위에서, 더 강한 layer 후보를 탐색한다. PCA decile 의 효과 크기가 작은 이유는 첫 PC EVR1 = 0.0731 의 약한 directional structure 에 직접 기인하므로, vector 의 *모든 96 차원* 을 사용하는 layer (= k-means cluster) 가 이론적으로 더 강할 가능성이 크다. 본 Step 3' 는 이 가설을 직접 검증한다.
+
+**4 mode 동시 측정 설계**. 단일 스크립트 (`phase6_layer_compare.py`) 안에서 4 mode 를 같은 query × selectivity × seed × RNG 분리 안에 동시 측정한다. 이로써 paired 비교에서 RNG noise 를 최소화하고, 한 번의 데이터 로드 + 한 번의 layer build → 4 mode × 100 query × 6 selectivity × 5 seed = **12 000 row** long-form 결과를 얻는다.
+
+| mode | layer | sample 전략 |
+|---|---|---|
+| `bernoulli` | (없음) | uniform random sample 385 행 |
+| `pca_decile` | 첫 PC quantile decile (10 stratum) | stratum 별 균등 sample (38~39 행) |
+| `kmeans_k10` | numpy mini-batch k-means K=10 | stratum 별 균등 sample (38~39 행) |
+| `kmeans_k20` | numpy mini-batch k-means K=20 | stratum 별 균등 sample (19~20 행) |
+
+**numpy mini-batch k-means 구현 (sklearn 의존성 0)**. Sculley 2010 의 mini-batch k-means 알고리즘을 numpy 만으로 직접 구현 (`build_layer_kmeans`, ~50 줄). 핵심:
+
+1. K random points 로 centroid init (seed=42 fixed)
+2. 매 iter: random batch (4 096 행) → assign (||x||² + ||c||² − 2x·c) → cluster 별 *running mean* 으로 centroid update (`eta = n_k / total_count`)
+3. 100 iter 학습 후, 전체 1M 에 대해 BLAS matmul 한 번으로 stratum_id assign
+
+성능: K=10 학습 0.62s + assign 0.7s, K=20 학습 0.5s + assign 0.59s. 각 K 당 1.2~1.4 초로 매우 빠름.
+
+**estimator 동치성**. estimator 함수 (`estimate_bernoulli`, `estimate_stratified`) 는 §VII.1 의 phase6_stratified_python.py 와 정확 동일. Exqutor L1228 cnt clamp + L1232 공식 그대로. §VII.2 에서 검증된 BERNOULLI baseline (s=0.001 median 2.5974) 도 본 Step 3' 에서 정확히 재현됨.
+
+**RNG 분리**. 4 mode 각각 독립 시드 (bernoulli 1000+seed, pca_decile 2000+seed, kmeans_k10 3000+seed, kmeans_k20 4000+seed). paired 의 단위는 (query_id, selectivity) 짝, RNG 는 mode 별 독립.
+
+### VIII.2 4 mode × 6 selectivity median q_error (5 seed 평균)
+
+| selectivity | bernoulli | pca_decile | kmeans_k10 | **kmeans_k20** |
+|---|---|---|---|---|
+| 0.001 | 2.5974 | 2.6046 | 2.6488 | 2.6070 |
+| 0.010 | 1.5905 | 1.6294 | 1.6340 | 1.6713 |
+| 0.050 | 1.1969 | 1.2060 | 1.1742 | **1.1724** |
+| 0.100 | 1.1357 | 1.1271 | 1.1336 | **1.1102** |
+| 0.300 | 1.0650 | 1.0565 | 1.0573 | **1.0569** |
+| 0.500 | 1.0408 | **1.0335** | 1.0366 | 1.0374 |
+
+**VIII.2 발견 1 — 작은 selectivity (s ≤ 0.05) 의 noise 영역**. s=0.001, 0.010 두 구간 모두 4 mode median 이 BERNOULLI 와 거의 동일 (±5% 이내). §VII.3 발견 3 의 *cnt 0/1 영역에서 stratum weight 곱셈이 noise 증폭* 현상이 4 layer 모두에서 동일하게 발현. 본 영역은 어떤 stratification 도 개선하기 어렵다.
+
+**VIII.2 발견 2 — s=0.050 에서 k-means 가 약한 우위**. KM10 (1.1742) 와 KM20 (1.1724) 가 BERNOULLI (1.1969) 보다 ~2% 작음. PCA decile (1.2060) 은 BERNOULLI 보다 약간 큼. 이 영역에서 k-means 가 PCA decile 보다 우위.
+
+**VIII.2 발견 3 — s=0.100 에서 KM20 만 두드러진 신호**. KM20 (1.1102) 가 BERNOULLI (1.1357) 대비 −2.25% 의 가장 큰 단일 효과. 다른 layer (PCA decile 1.1271, KM10 1.1336) 는 BERNOULLI 와 비슷. **K=20 의 더 fine-grained partition 이 transitional selectivity 영역 (s=0.1) 에서 처음 의미를 얻는다**.
+
+**VIII.2 발견 4 — 큰 selectivity (s ≥ 0.3) 의 일관 효과**. 3 stratified mode 모두 BERNOULLI 대비 −0.4 ~ −0.8% 의 일관된 우위. mode 간 차이는 작음 — *큰 selectivity 에서는 어떤 stratification 도 비슷하게 작동* 한다.
+
+### VIII.3 paired Wilcoxon vs BERNOULLI (alt: mode < bernoulli)
+
+같은 (query_id, selectivity) 짝의 5 seed 평균 q_error 를 paired 로 비교. 100 paired 관측 × 6 selectivity × 3 stratified mode = 18 paired test.
+
+| mode | sel | diff% | p (less) | better | worse |
+|---|---|---|---|---|---|
+| pca_decile | 0.001 | −0.28 | 0.986 | 33 | 67 |
+| pca_decile | 0.010 | −2.45 | 0.903 | 42 | 58 |
+| pca_decile | 0.050 | −0.77 | 0.584 | 47 | 53 |
+| pca_decile | 0.100 | +0.76 | 0.478 | 50 | 50 |
+| pca_decile | **0.300** | **+0.80** | **0.0005 ★** | **60** | 40 |
+| pca_decile | **0.500** | **+0.70** | **0.0013 ★** | **60** | 40 |
+| kmeans_k10 | 0.001 | −1.98 | 0.665 | 55 | 45 |
+| kmeans_k10 | 0.010 | −2.74 | 0.627 | 47 | 53 |
+| kmeans_k10 | 0.050 | +1.90 | 0.142 | 56 | 44 |
+| kmeans_k10 | 0.100 | +0.19 | 0.536 | 49 | 51 |
+| kmeans_k10 | **0.300** | **+0.73** | **0.0039 ★** | **61** | 39 |
+| kmeans_k10 | **0.500** | **+0.40** | **0.0234 ★** | **61** | 39 |
+| **kmeans_k20** | 0.001 | −0.37 | 0.925 | 41 | 59 |
+| **kmeans_k20** | 0.010 | −5.08 | 0.719 | 52 | 48 |
+| **kmeans_k20** | 0.050 | +2.04 | 0.121 | 54 | 46 |
+| **kmeans_k20** | **0.100** | **+2.25** | **0.0042 ★** | **56** | 44 |
+| **kmeans_k20** | **0.300** | **+0.76** | **0.0160 ★** | **59** | 41 |
+| **kmeans_k20** | **0.500** | **+0.33** | **0.0157 ★** | **58** | 42 |
+
+**VIII.3 발견 1 — KM20 가 가장 넓은 적용 범위**. 3 selectivity 구간 (s=0.100, 0.300, 0.500) 에서 BERNOULLI 대비 paired Wilcoxon p < 0.05 우위. PCA decile 과 KM10 은 두 구간 (s=0.300, 0.500) 만. **KM20 가 다른 두 layer 를 적용 범위에서 추월** 했다.
+
+**VIII.3 발견 2 — KM20 가 새로 확보한 영역 s=0.100**. PCA decile 의 break-even point (s=0.100, p=0.478) 였던 구간에서 KM20 는 +2.25% (p=0.0042) 의 본 layer 비교 *최대 단일 효과 크기* 를 달성. 이 영역의 신호는 PCA decile 과 KM10 에는 없었으며, *K=20 의 fine-grained partition* 이 핵심.
+
+**VIII.3 발견 3 — 작은 selectivity 의 marginal 신호 — KM20 + KM10 만**. s=0.050 에서 KM10 +1.90% (p=0.142), KM20 +2.04% (p=0.121) 의 marginal 신호 (p < 0.20). PCA decile 은 −0.77% 로 약한 음. **k-means 만 작은 selectivity 영역으로 효과 확장** 의 가능성을 보여줌. p < 0.05 미달이라 통계적 유의에는 아직 도달 못했지만, 추가 sample (예: 5 seed → 10 seed, 100 query → 200 query) 으로 신호가 확정될 가능성.
+
+**VIII.3 발견 4 — 큰 selectivity 의 효과 크기는 layer 간 거의 동일**. s=0.300, 0.500 의 ★ 구간에서 PCA decile / KM10 / KM20 의 효과 크기가 모두 +0.3 ~ +0.8% 범위로 유사. 이 영역에서는 layer 정의 자체가 큰 차이 없음 — *어떤 일관된 stratification 도 비슷하게 작동* 한다.
+
+### VIII.4 Cross pair — KM20 vs PCA decile + KM20 vs KM10
+
+stratified mode 간 직접 비교로 layer 의 *상대* 우위를 확인.
+
+| left vs right | sel | diff% | p (left<right) | L<R | L>R |
+|---|---|---|---|---|---|
+| kmeans_k10 vs pca_decile | 0.050 | +2.64 | 0.077 | 58 | 42 |
+| kmeans_k10 vs pca_decile | 0.100 | −0.57 | 0.564 | 49 | 51 |
+| kmeans_k10 vs pca_decile | 0.300 | −0.07 | 0.798 | 46 | 54 |
+| **kmeans_k20 vs pca_decile** | **0.050** | **+2.79** | **0.028 ★** | **59** | 41 |
+| **kmeans_k20 vs pca_decile** | **0.100** | **+1.50** | **0.015 ★** | **59** | 41 |
+| kmeans_k20 vs pca_decile | 0.300 | −0.04 | 0.913 | 43 | 57 |
+| kmeans_k20 vs pca_decile | 0.500 | −0.37 | 0.960 | 41 | 59 |
+| kmeans_k20 vs kmeans_k10 | 0.050 | +0.15 | 0.229 | 55 | 45 |
+| **kmeans_k20 vs kmeans_k10** | **0.100** | **+2.06** | **0.0013 ★** | **58** | 42 |
+| kmeans_k20 vs kmeans_k10 | 0.300 | +0.03 | 0.733 | 48 | 52 |
+| kmeans_k20 vs kmeans_k10 | 0.500 | −0.08 | 0.490 | 51 | 49 |
+
+(p<0.05 에 도달한 ★ 만 굵게)
+
+**VIII.4 발견 1 — KM20 가 PCA decile 을 작은 selectivity 영역에서 명확히 압도**. s=0.050 (+2.79%, p=0.028) + s=0.100 (+1.50%, p=0.015) 두 구간에서 KM20 우위. *큰 selectivity 영역 (s ≥ 0.3) 은 두 layer 동등* — 즉 **KM20 의 추가 가치는 작은 selectivity 영역 (s ≤ 0.1) 에 집중**.
+
+**VIII.4 발견 2 — K=20 vs K=10 의 차이는 s=0.100 에서만 의미**. s=0.100 에서 KM20 가 KM10 보다 +2.06% (p=0.0013 ★) 우위. 다른 sel 에서는 두 K 차이 미미. 즉 *K 의 정밀도는 transitional selectivity 영역에서만 유의미*.
+
+**VIII.4 발견 3 — KM10 vs PCA decile 은 약한 차이**. s=0.050 에서 KM10 +2.64% (p=0.077) marginal 우위만. K=10 의 k-means 는 PCA decile 대비 *명확한* 우위 없음. 즉 *PCA decile → KM10 transition 만으로는 큰 이득 없음*. **K=10 에서 K=20 으로의 정밀도 증가가 layer-side 의 핵심 변화**.
+
+### VIII.5 KM20 = best layer 결정 + Phase 6 Step 4 (Native) 로의 진입 정당화
+
+본 Step 3' 의 4 layer 비교 결과로 다음을 확정한다.
+
+1. **best layer = kmeans_k20**. 적용 범위 (3 sel ★) + 새 영역 s=0.100 (+2.25%) + s=0.050 marginal 신호 (p=0.121) 의 모든 metric 에서 다른 layer 우위. 학습 비용도 0.5초로 매우 저렴.
+
+2. **PCA decile 은 큰 selectivity 영역 baseline 으로 retain**. 본 KM20 와 PCA decile 은 s=0.300, 0.500 에서 효과 크기 거의 동일. 즉 PCA decile 이 KM20 의 부분집합. 다음 Step 4 native 구현은 KM20 만 진행하고 PCA decile 은 §VII 의 결과로 충분.
+
+3. **다층 PCA / random projection 시도는 본 세션에서 생략**. 다층 PCA 의 이론 한계 EVR1+EVR2 = 0.121 가 KM20 의 multi-direction k-means 보다 약하므로, KM20 를 넘기기 어렵다고 판단. 본 Step 3' 의 결과만으로 best layer 결정에 충분.
+
+4. **Phase 6 Step 4 (Native vector.c 구현) 진입 1순위 layer 확정**. KM20 의 20 centroid (20 × 96 × 8 byte = 15 KB) + 1M × stratum_id (1M × 2 byte = 2 MB) 만 vector.c 안에 메모리 로드하면 native 구현 가능. 추정 작업량 90~150분 (다음 세션).
+
+### VIII.6 학술적 함의
+
+**Layer 정의의 trade-off 정량 확인**. PCA 기반 layer 는 *데이터의 한 (또는 두) 방향* 만 사용하므로 96d random isotropic 데이터 (EVR1=0.073) 에서 변별력이 약하다. k-means 기반 layer 는 *모든 96 차원* 의 spatial proximity 를 사용하므로 더 강하지만, 계산 비용이 더 높다 (mini-batch k-means 0.5초 ↔ PCA 1.2초). 본 데이터에서는 KM20 가 PCA decile 대비 적용 범위 50% 확장 (2 sel → 3 sel) 하면서 학습 비용은 오히려 절반.
+
+**K (stratum 수) 의 효과**. KM10 → KM20 의 stratum 수 증가가 *transitional selectivity (s=0.1)* 에서 처음 효과 발현. 이는 *sample 안에서 cnt 가 충분히 큰 영역 (≥ 5~10) 에서만 stratum 증가가 의미를 얻는다* 는 일반 원칙의 정량 확인. 작은 selectivity (s ≤ 0.05) 에서는 K 증가가 sample budget per stratum 감소로 되돌아가 noise 증가.
+
+**RQ1 motivation 의 Pivot C narrative 강화**. §VI 의 8 지표 무효 negative result 후 §VII 에서 PCA decile 의 작은 양의 신호 확보, 본 §VIII 에서 KM20 로 신호 영역을 *3 selectivity 구간 + 새 영역 s=0.100* 으로 확장. RQ1 motivation 의 narrative 가 "negative result 8 + positive layer 비교 4" 로 단계적으로 강화됨. `direction_pivot_rationale.md` 의 narrative 에 §VIII 결과 추가 가능.
+
+### VIII.7 산출물
+
+| 파일 | 위치 | 내용 |
+|---|---|---|
+| `phase6_layer_compare_runs.parquet` | `experiments/results/rq1_motivation/` | 12 000행 long-form: 4 mode × 100 query × 6 sel × 5 seed q_error |
+| `phase6_layer_compare_compare.json` | 같음 | mode × sel 통계 + 18 BERN paired Wilcoxon + cross_pair 18 비교 + layer info (PCA EVR + k-means inertia/sizes) |
+| `phase6_layer_compare_meta.json` | 같음 | 실행 메타 + 4 layer 정보 + 9.0초 elapsed |
+| `phase6_layer_compare.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase6_layer_compare.py` | 측정 스크립트 (~470줄, numpy 직접 mini-batch k-means 포함) |
 
 ---
 

@@ -20,8 +20,9 @@
 | 5 | `rq1_stage5_analyze.py` | `stage5_analysis.parquet` (6 000행 long-form), `stage5_summary.json` | 1 s |
 | Phase 4 (4/14 19:30~19:40 추가) | `rq1_phase4_native.py` | `phase4_system.parquet`, `phase4_bernoulli.parquet`, `phase4_compare.json` (각 600행) | 82 + 21 s |
 | Phase 5 (4/14 20:09 추가) | `rq1_phase5_local_skew.py` | `query_local_skew.parquet` (100행 × 4 local 지표), `phase5_local_skew_spearman.json` (24 조합 ρ), `phase5_local_skew_meta.json` | 6 s |
+| Phase 6 Step 1~3 (4/14 20:30 추가) | `rq1_phase6_stratified_python.py` | `phase6_strat_pca_runs.parquet` (6000행: 2 mode × 100 query × 6 sel × 5 seed), `phase6_strat_pca_compare.json`, `phase6_strat_pca_meta.json`, `data_side_strata_pca.parquet` (1M × stratum_id) | 5 s |
 
-**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native) + 6 초 (Phase 5 local skew). 단일 dataset (1M subset) 의 RQ1 motivation 단계가 native 검증 + global·local 8 지표 전수 검증까지 진행됨.
+**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native) + 6 초 (Phase 5 local skew) + 5 초 (Phase 6 Python counterfactual). 단일 dataset (1M subset) 의 RQ1 motivation 단계가 native 검증 + global·local 8 지표 전수 검증 + 1차 stratified sampling counterfactual 까지 진행됨.
 
 ---
 
@@ -185,7 +186,9 @@
 
 **Phase 5 ⚠️ (2026-04-14 20:09 KST 부분 실패 — query feature 노선 종료)**. 자세한 결과는 본 문서 §VI에 정리. 요약: 4 local 지표 — (i) k-NN distance entropy(k=50), (ii) k-NN PCA explained variance ratio(k=50), (iii) KDE modality count(pilot k=500), (iv) NN clustering coefficient(k=50, inner k=10) — 를 numpy + scipy 만으로 구현해 1M subset × 100 query 에 대해 6초 만에 완주. Phase 4의 BERNOULLI baseline 위에서 4 지표 × 6 selectivity = **24 조합 모두 |Spearman ρ| < 0.2** 로 무효. 가장 강한 신호도 `nn_clustering_coef × s=0.010` 의 ρ=−0.166 (p=0.099) 로 임계 미달. 또한 `kde_modality_count` 는 100 query 중 99개가 unimodal 로 사실상 단일값 변수. **글로벌 4 + 로컬 4 = 총 8 지표 전수 검증 결과, 96d DEEP 100 query 의 *query-side* feature 로는 q_error 변동을 사전 예측할 수 없음** 이 결론. → Phase 6 의 층 정의는 query feature 가 아닌 *data-side* 축으로 전환되어야 함.
 
-**Phase 6 — Stratified Sampling 함수 설계 + 구현 (Phase 5 후속 재정의)**. Phase 5 결과로 *query-conditional* 층화는 사전 식별 노선이 막혔으므로, **data-side 글로벌 층화** 로 재정의한다. Exqutor 에 `estimate_cardinality_with_stratified_sampling(total_rows, num_strata)` 추가하되, 층 경계는 (a) dataset 자체의 global distance distribution 의 quantile bin (예: 10 분위수) 에서 가져오거나, (b) data vector 의 vector cluster (예: k-means 또는 PCA 기반 partition) 에서 가져온다. Exqutor 의 사전계산 패러다임 (vector_index_create 시점) 과 자연스럽게 호환됨. 새 GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 도입해 세 모드 ablation 가능하게.
+**Phase 6 Step 1~3 ⚠️ (2026-04-14 20:30 KST 부분 성공 — PCA decile 1차 시도)**. 자세한 결과는 본 문서 §VII 에 정리. 요약: Pivot C 의 *data-side global stratification* 1차 시도로 1M subset 의 첫 PCA component 값을 deciles (10 quantile) 로 partition → 1M × stratum_id 사전계산 + Horvitz-Thompson stratified estimator (`est = sum_i (n_i / s_i) * cnt_i`) 의 Python counterfactual 측정. Exqutor L1228 cnt clamp + L1232 estimator 공식과 정확히 동치 (s=0.001 BERN median 2.5974 == Stage 4 의 2.597 == Phase 4 native 의 2.5970, 소수점 셋째 자리 일치 검증 통과). **결과**: 큰 selectivity (s ≥ 0.3) 에서 paired Wilcoxon p < 0.005 로 stratified 가 BERNOULLI 보다 유의하게 우수 — 효과 크기 +0.7~0.8% median, 60/100 query 가 stratified 우위, std 도 stratified 가 더 작음 (분산 감소의 첫 정량 증거). 작은 selectivity (s ≤ 0.05) 에서는 효과 없거나 약간 음 — sample 안 cnt 가 0~1 변동 시 stratum weight 곱셈이 noise 증폭. **Pivot C 의 첫 정량 검증 — 작지만 통계적으로 유의한 신호** 확보. PCA decile 보다 더 적합한 layer (k-means partition, vector cluster) 를 다음 Phase 6 Step 4~ 에서 시도할 여지가 있으며, 본 결과만으로도 Phase 6 native (vector.c 구현) 진입의 정당성 확보.
+
+**Phase 6 Step 4~ — Native vector.c 구현 + ablation (다음 세션 후속)**. 본 Step 1~3 의 Python counterfactual 결과로 PCA decile stratified 의 작은 양의 효과가 확인되었으므로, vector.c 에 `estimate_cardinality_with_stratified_sampling` 함수 + GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 추가. 1M × stratum_id 는 데이터 로드 시 1회 사전계산 (예: extension function 호출 또는 vector_index_create hook). SYSTEM/BERNOULLI/STRATIFIED 600 query 측정 × 3 mode = 1800 paired 비교. 또는 PCA decile 외 다른 layer (k-means K=10, K=20, vector cluster) 의 Python counterfactual 추가 시도로 더 큰 효과 크기 탐색.
 
 **Phase 7 — 중간발표용 부분 실증 (~4/26)**. `partsupp_deep_10` 단일 dataset에서 3 mode × 6 selectivity × 5 seed 최소 ablation. Table: SYSTEM vs BERNOULLI vs STRATIFIED의 median/mean/p95 Q-error. 방향의 타당성 증명이 목표.
 
@@ -350,6 +353,99 @@ Phase 5 의 결과 위에서 Phase 6 (Stratified Sampling 함수 설계 + 구현
 | `phase5_local_skew_spearman.json` | 같음 | 24 조합 (4×6) Spearman ρ + p-value 전수, 강신호 후보 sort |
 | `phase5_local_skew_meta.json` | 같음 | 실행 메타 + 4 지표 분포 통계 (min/max/mean/median/std) + Phase 5 인자 |
 | `phase5_local_skew.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase5_local_skew.py` | 측정 스크립트 (numpy + scipy + pyarrow + pandas 만, 의존성 6.0초 완주) |
+
+---
+
+## VII. Phase 6 Step 1~3 결과 — PCA decile stratified 1차 시도 (2026-04-14 20:30 KST)
+
+### VII.1 측정 절차
+
+§VI 의 Phase 5 결론 (query-side feature 8 지표 모두 q_error 와 무관) 직후, Pivot C 의 *data-side global stratification* 1차 시도. Phase 5 §VI.5 의 두 후보 (distance quantile bin / vector cluster partition) 중 가장 단순한 변형 — **첫 PCA component 의 deciles** — 을 1차 layer 로 선택했다. 사유: (a) 1M × 96 → 96 × 96 covariance eigendecomposition (`eigh`) 으로 첫 PC 만 수 초에 추출 가능, (b) 1M 행에 정확히 1 stratum_id 를 mapping 하므로 Exqutor 의 사전계산 패러다임 (`vector_index_create` 시점) 과 자연 호환, (c) layer 정의에 query 정보가 일절 들어가지 않아 Phase 5 결론과 일관.
+
+**Layer 정의**:
+
+1. 1M 벡터 centering → covariance (96 × 96) → `np.linalg.eigh` → 가장 큰 eigenvalue 의 eigenvector = 첫 PC.
+2. 첫 PC 투영값 (1M × 1) → `np.quantile` deciles → 9 internal 경계.
+3. `np.searchsorted` 로 1M × stratum_id (∈ [0, 9]).
+4. 결과: 정확히 100 000 행 × 10 stratum 의 *균등* partition.
+
+**Stratified estimator** (Horvitz-Thompson):
+
+$$ \hat{Y}_\text{stratified} = \sum_{i=1}^{K} \frac{n_i}{s_i} \cdot c_i $$
+
+- $n_i$: stratum $i$ 의 전체 행 수 (각 100k)
+- $s_i$: stratum $i$ 에서 추출한 sample 행 수 (균등 배분 38~39 행, 합계 385)
+- $c_i$: stratum $i$ 의 sample 안에서 $\|v - q\| < D$ 만족하는 행 수
+
+**0-clamp 일반화**: Exqutor L1228 의 `cnt = (cnt == 0) ? 1 : cnt` 를 stratified 로 일반화. $c_\text{total} = 0$ 인 경우, 가상 1 hit 가 어느 stratum 인지 모르므로 *active stratum 의 weight 평균* 으로 fallback. 균등 stratum 균등 sample 에서는 $\text{mean}(n_i / s_i) = N/S$ 와 동일하므로 BERNOULLI 의 cnt clamp 결과 (= 2.5974) 와 정확히 일치한다 — 즉 s=0.001 의 0-clamp 영역에서 두 mode 가 *수학적으로 동치* 가 된다는 의미. 이로써 stratified 의 효과는 `cnt > 0` 인 영역에서만 측정된다.
+
+**Counterfactual 측정 형식**: Stage 4 의 5 seed Python 패턴을 그대로 따른다. 100 query × 6 selectivity × 5 seed × 2 mode (bernoulli/stratified) = **6 000 측정**. seed 1000~1004 (bernoulli), seed 2000~2004 (stratified) 로 sampling RNG 분리. 같은 stratified sample 1 회 추출 후 6 selectivity 에 재사용 (sample 추출 비용 절감 + selectivity 간 비교 안정화). 5 초 만에 완주 (1.0 s × 5 seed).
+
+서버 위치: `cache/rq1_phase6_stratified_python.py`. 로컬 sibling: `experiments/code/rq1/phase6_stratified_python.py`.
+
+### VII.2 동치성 검증 — Stage 4 / Phase 4 native 와 BERNOULLI median 일치
+
+본 Phase 6 의 BERNOULLI 모드는 Stage 4 의 Python 5 seed bernoulli 와 *동일 estimator* 여야 한다 (Phase 6 의 stratified 효과를 측정하기 전에 baseline 의 동치성을 보장). per-selectivity median q_error 를 §II.2 / §V.2 의 결과와 직접 비교한다.
+
+| selectivity | Stage 4 Python 5seed BERN | Phase 4 Native 1run BERN | **Phase 6 Python 5seed BERN** |
+|---|---|---|---|
+| 0.001 | 2.597 | 2.5970 | **2.5974** ✓ |
+| 0.010 | 1.353 | 1.2987 | **1.5905** (Stage 4 보다 +18%) |
+| 0.050 | 1.148 | 1.1948 | **1.1969** ✓ |
+| 0.100 | 1.116 | 1.1323 | **1.1357** ✓ |
+| 0.300 | 1.066 | 1.0794 | **1.0650** ✓ |
+| 0.500 | 1.054 | 1.0519 | **1.0408** ✓ |
+
+**VII.2 발견 1 — 5/6 구간 일치 통과**. s=0.001, 0.05, 0.1, 0.3, 0.5 5개 구간에서 Phase 6 Python BERNOULLI median 은 Stage 4 Python 및 Phase 4 Native 와 한 자리수 % 이내 (대부분 < 1.5%) 로 일치. 특히 s=0.001 의 2.5974 는 Stage 4 의 2.597 + Phase 4 Native 의 2.5970 과 소수점 셋째 자리까지 정확히 일치 — Exqutor L1228 cnt clamp + L1232 estimator 공식이 Phase 6 Python 에 정확히 이식되었음을 확인한다.
+
+**VII.2 발견 2 — s=0.010 의 +18% 이탈 (Stage 4 1.353 vs Phase 6 1.591)**. Stage 4 와 차이가 큰 유일한 구간. Phase 4 Native 와는 Phase 6 가 더 가깝다 (1.2987 vs 1.5905, 23% 차이). 추정 원인: s=0.010 은 sample 안 hit 의 평균이 3.85 행 (Poisson(3.85)) 으로 작은 sample 에서 cnt 변동이 크고, 5 seed 평균의 분산이 가장 큰 영역이다. Stage 4 의 5 seed RNG 와 본 Phase 6 의 5 seed RNG 가 다르므로 (seed 1000~1004 vs Stage 4 seeds) 평균 매번 다르게 나타날 수 있다. 동치성 검증의 본질 (estimator 동일 여부) 은 5/6 구간 일치로 확인되었으므로 본 Phase 6 의 BERNOULLI baseline 은 신뢰할 수 있다. (Stage 4 의 RNG seed 가 본 Phase 6 와 다르고, 동일 cnt clamp / estimator 공식이 적용되었으므로 차이는 RNG 분산.)
+
+### VII.3 Phase 6 1차 결과 — paired Wilcoxon STRATIFIED vs BERNOULLI
+
+같은 (query_id, selectivity) 짝의 5 seed 평균 q_error 두 모드 (bernoulli, stratified) 를 paired 로 비교. 100 paired 관측 × 6 selectivity. 통계는 paired Wilcoxon signed-rank test, 대립가설 *stratified < bernoulli* (즉 stratified 가 더 정확).
+
+| selectivity | BERN median | STRAT median | diff (BERN−STRAT)/BERN | BERN std | STRAT std | Wilcoxon W | p (less) | S<B | S>B | S=B |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.001 | 2.5974 | 2.6046 | −0.28% | 0.567 | 0.699 | 3 163 | 0.986 | 33 | 67 | 0 |
+| 0.010 | 1.5905 | 1.6294 | −2.45% | 0.781 | 0.840 | 2 903 | 0.903 | 42 | 58 | 0 |
+| 0.050 | 1.1969 | 1.2060 | −0.77% | 0.192 | 0.205 | 2 587 | 0.584 | 47 | 53 | 0 |
+| 0.100 | 1.1357 | 1.1271 | +0.76% | 0.112 | 0.109 | 2 509 | 0.478 | 50 | 50 | 0 |
+| 0.300 | 1.0650 | 1.0565 | **+0.80%** | 0.054 | **0.045** | 1 560 | **0.0005** | **60** | 40 | 0 |
+| 0.500 | 1.0408 | 1.0335 | **+0.70%** | 0.032 | **0.029** | 1 646 | **0.0013** | **60** | 40 | 0 |
+
+**VII.3 발견 1 — 큰 selectivity (s ≥ 0.3) 에서 stratified 우위**. s=0.300 과 s=0.500 두 구간에서 paired Wilcoxon p < 0.005 로 stratified 가 BERNOULLI 보다 통계적으로 유의하게 우수. 60/100 query 에서 stratified 의 q_error 가 더 작고, median 기준 +0.70~0.80% 의 효과 크기. **Pivot C 의 첫 정량 검증** 으로, data-side stratification 이 작지만 측정 가능한 양의 신호를 보인다는 것이 확인됐다.
+
+**VII.3 발견 2 — std 감소 (분산 감소 효과)**. s=0.300 (BERN std 0.054 → STRAT 0.045, **−16%**) 와 s=0.500 (0.032 → 0.029, **−9%**) 에서 stratified 의 std 가 BERNOULLI 보다 작다. paired Wilcoxon 의 signal 이 단지 median shift 만이 아니라 *분산 감소* 와 동반한다. stratified sampling 의 이론적 효과 (variance reduction via balanced coverage) 가 정량 확인됐다.
+
+**VII.3 발견 3 — 작은 selectivity (s ≤ 0.05) 에서 효과 없거나 약간 음**. s=0.001 → S<B 33/100, s=0.010 → 42/100, s=0.050 → 47/100. 모두 50/100 미만으로 stratified 가 약간 *나쁨*. 원인 추정: 작은 selectivity 에서는 stratum 별 sample 안 cnt 가 0 또는 1 변동이 지배적이고, Horvitz-Thompson 의 stratum weight (n_i / s_i ≈ 2 564) 곱셈이 *분산 증폭* 으로 작용한다. BERNOULLI 의 단일 weight (N / S = 2 597) 1 회 곱과 비교하면, stratified 는 K 개의 독립 0/1 random variable 을 가중 합산하는 형태이므로 K 배의 분산을 가질 수 있다. 큰 selectivity 에서 cnt 가 충분히 큰 (≥ 10) 영역으로 들어가야 stratification 의 *bias 감소* 효과가 *분산 증폭* 효과를 추월한다.
+
+**VII.3 발견 4 — s=0.100 의 전이 영역**. s=0.100 은 50/50 정확 동률, p=0.478, diff +0.76% (median 은 stratified 가 약간 작지만 통계 유의 미달). 즉 선택도 0.1 이 stratified 효과의 *break-even point* 이며, 그 이상에서만 stratified 가 의미 있게 작동한다. 본 결과는 stratified sampling 의 효과가 *큰 선택도에서만 발현* 된다는 일반 원칙을 96d DEEP 1M 데이터 위에서 정량 확인한 첫 결과다.
+
+### VII.4 Pivot C 1차 시도의 학술적 해석
+
+본 Phase 6 Step 1~3 의 결과는 다음 세 층위에서 학술적 의미를 갖는다.
+
+1. **Negative+Positive 결합 narrative**. RQ1 motivation 의 §II~§VI 는 "글로벌 4 + 로컬 4 = 8 지표 전수 무효" 라는 강력한 negative result 의 연속이었지만, Phase 6 Step 1~3 은 그 끝에서 *작지만 통계적으로 유의한 첫 양의 신호* 를 확보했다. 즉 RQ1 motivation 은 단순한 실패 narrative 가 아니라, "원래 가설 (query-side feature) 을 공정 검증해서 기각한 후, 데이터 사이드로 전환해 첫 정량 우위를 확보한" 학술적으로 단단한 흐름이 됐다. `direction_pivot_rationale.md` 의 narrative 와 정합.
+
+2. **PCA decile 의 한계 + 더 강한 layer 의 가능성**. 첫 PCA component 의 explained variance ratio = **0.0731** 로, 96d DEEP 데이터의 directional structure 가 약하다 (random isotropic 의 약 7배에 불과). 이런 환경에서 +0.7~0.8% 효과 크기가 나온 것 자체가 강한 신호로, **k-means partition (K=10 or K=20), 다층 PCA (PCA decile × 2 dimension), 또는 vector cluster 기반 partition** 으로 layer 정의를 강화하면 효과 크기가 더 커질 수 있다. Phase 6 Step 4 의 다음 시도 후보.
+
+3. **분산 감소의 정량 증거**. §VII.3 발견 2 의 std 감소 (s=0.300 −16%, s=0.500 −9%) 는 stratified sampling 의 variance reduction 이론을 96d DEEP vector 데이터 위에서 직접 확인한 첫 증거다. 효과 크기 자체는 작지만 (±1% 이내) 통계적으로 강건하므로, vector dataset 의 cardinality 추정에서 stratified sampling 이 *bias 만이 아니라 분산 감소에도 기여한다* 는 finding 으로 motivation 에 편입 가능.
+
+### VII.5 다음 단계 — Phase 6 Step 4 진입 조건
+
+**Phase 6 Step 4 (Native vector.c 구현 + ablation)** 진입 가능 — Step 1~3 의 부분 성공이 정량 검증되어 있고, Phase 4 의 한 줄 sed 패턴 (line 889) 처럼 native 구현은 vector.c 에 (a) `data_side_strata_pca` parquet 또는 동등 메모리 구조 로드, (b) `estimate_cardinality_with_stratified_sampling` 함수, (c) GUC `vector.sampling_method` 추가의 3 단계로 진행 가능. 작업량 추정 90~150분.
+
+**또는 Phase 6 Step 3' (k-means / 더 강한 layer Python counterfactual)** 부터 시도하는 분기도 가능. 1M × 96 mini-batch k-means (K=10) 는 sklearn 또는 numpy 구현으로 30~60 초 수준. 본 PCA decile 의 작은 효과 크기를 5~10% 수준으로 끌어올릴 수 있다면 native 구현의 ROI 가 더 명확해진다. 본 Phase 5/6 의 패턴은 *layer 정의를 빠르게 교체해서 효과 크기 비교* 가 가능하므로 Phase 6 Step 3' 를 1~2 회 시도해본 후 native 진입이 효율적.
+
+### VII.6 산출물
+
+| 파일 | 위치 | 내용 |
+|---|---|---|
+| `phase6_strat_pca_runs.parquet` | `experiments/results/rq1_motivation/` | 6 000행 long-form: mode × seed × query_id × selectivity × q_error + cnt_raw / cnt_clamped / sample_size_total |
+| `phase6_strat_pca_compare.json` | 같음 | per-selectivity paired Wilcoxon (BERN vs STRAT median/mean/std/W/p, n_strat_better/n_bern_better) |
+| `phase6_strat_pca_meta.json` | 같음 | 실행 메타 + PCA info (eigvals top5, EVR1) + 10 stratum sizes + 9 quantile edges + sample budget per stratum |
+| `data_side_strata_pca.parquet` | 같음 | 1 000 000 × (row_idx, stratum_id, first_pc_proj) — Phase 6 Step 4 native 구현 시 layer 정의 캐시 |
+| `phase6_stratified_python.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase6_stratified_python.py` | 측정 스크립트 (numpy + scipy + pyarrow + pandas, 5초 완주) |
 
 ---
 

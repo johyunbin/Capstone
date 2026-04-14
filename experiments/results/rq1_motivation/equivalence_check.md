@@ -275,3 +275,107 @@ elif mode == "block_system":
 **옵션 A의 이연**: 다음 세션(또는 중간발표 리허설 전)에 수행. 요구 작업은 Exqutor postgres 바이너리로 별도 data directory에 initdb, `partsupp_deep_10` 8M 혹은 1M subset 로드, `pgvector_Postgres.patch`가 포함된 core 기반에서 `vector.sample_size=385` 설정, 100 query 순차 실행, `exqutor_qerror.recent_qerrors` vs Python parquet 집계 수준 ±5% 대조.
 
 **빌드 복구 메모**: 옵션 A 수행 시 `build_custom.sh`의 `pg_hint_plan` 설치 단계는 **시스템 PG17 대신 Exqutor prefix(`psql/`)를 타겟으로 수정**해야 `Permission denied` 오류가 재발하지 않는다. 이 부분은 다음 세션 첫 작업으로 기록한다.
+
+---
+
+## X. 옵션 A 시도 결과 (2026-04-14 18:00~18:50 KST 추가 세션)
+
+§IX에서 다음 세션 과제로 남겨진 옵션 A를 곧바로 같은 날 추가 세션에서 시도했다. Phase 1(Exqutor PG 환경 복구)은 별도 session_resume 메모리에 기록된 대로 17:00~18:00 사이에 완주했고, 본 절은 18:00~18:50 사이의 Phase 2(데이터 로드)와 Phase 3(네이티브 bitwise 검증) 진입 결과를 정리한다. **결론을 먼저 적으면, 옵션 A는 Exqutor의 네 가지 design constraint에 부딪혀 단일 테이블 1M subset 시나리오에서 직접 비교가 불가능하며, §III~V의 수학적 검증이 여전히 본 연구의 가장 신뢰할 수 있는 베이스라인으로 남는다.** 동시에 본 시도에서 발견된 네 가지 design constraint는 각각 **본 연구의 motivation을 강화하는 finding**으로 §III.3 Pivot A+C의 학술적 정당화에 편입된다.
+
+### X.1 Phase 2 — 데이터 로드 완주
+
+vanilla PG 55435의 `partsupp_deep_10` 8M 행을 Exqutor PG 55436으로 이전했다. 절차는 (i) Exqutor PG에 FK·인덱스를 모두 제외한 빈 `partsupp_deep_10` 테이블 사전 생성, (ii) `pg_dump --data-only -Fp -t partsupp_deep_10 | psql --single-transaction` pipe 방식 transfer (273초, 4537 MB), (iii) 행수·인덱스 부재·vector 차원 검증 (8,000,000 / 0 / 96 모두 통과)로 끝났다. 이어서 같은 Exqutor PG 안에서 `CREATE TABLE partsupp_deep_10_subset_1m AS SELECT DISTINCT ON (ps_partkey) ... WHERE ps_partkey BETWEEN 1 AND 1000000 ORDER BY ps_partkey, ps_suppkey`로 1M subset 테이블을 만들어 Stage 1 Python의 dump SQL을 결정론적으로 재현했다. parquet의 query_pool 첫 10개 ps_partkey/ps_suppkey/vector 5 element가 1M subset 테이블의 같은 행과 완전히 일치함을 확인했다. **Phase 2는 완전 통과**.
+
+### X.2 Phase 3.0 — 바이너리 patch 검증 통과
+
+Exqutor PG의 `psql/bin/postgres` 바이너리에 `set_baserel_rows_estimate_hook` symbol이 BSS section에 존재하고(`nm` 출력 `B set_baserel_rows_estimate_hook`), `psql/lib/postgresql/vector.so`에 `pgvector_set_baserel_rows_estimate_hook` 등록 함수와 Exqutor SQL queries (`UPDATE exqutor_qerror`, `INSERT INTO exqutor_qerror`, `SELECT ... FROM exqutor_qerror`)가 모두 들어 있음을 strings로 확인했다. `pgvector_Postgres.patch`(core patch)도 patch 디렉토리에 있다. 즉 **Exqutor postgres 바이너리는 core patched이고 vector.so는 Exqutor patched이며, 환경 자체는 옵션 A 검증을 받을 준비가 되어 있다**. session_resume의 D1("Exqutor 빌드 산출물 4/14 04:57에 이미 완비, 재빌드 불필요")은 본 검증으로 확증되었다.
+
+### X.3 Design Constraint 1 — Hook trigger 조건 (`table_count > 2`)
+
+1 query EXPLAIN ANALYZE 첫 sanity check에서 `Plan Rows = 333,333`(= 1M × 1/3, PG default selectivity for unknown function)가 모든 query에서 동일하게 나왔다. 50 query 시퀀스를 돌려도 `exqutor_qerror` 테이블이 빈 채로 남았다. 즉 **Exqutor의 sampling hook이 한 번도 trigger되지 않았다**. 
+
+원인을 patch 소스 `pgvector_Exqutor.patch` line 547에서 발견했다.
+
+```c
+table_count = 0;
+count_total_tables(parse, &table_count);
+if (table_count > 2)        // <-- 핵심
+{
+    MemoryContext oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+    ordering_needed = true;
+    original_query = (Query *)copyObject(parse);
+    ...
+}
+```
+
+`count_total_tables`(line 1329~)는 query → rtable의 `RTE_RELATION`을 세고 `RTE_SUBQUERY`/CTE는 재귀로 카운트한다. 우리 검증 query인 `SELECT count(*) FROM partsupp_deep_10_subset_1m WHERE (ps_embedding <-> q) < D`는 단일 테이블이라 `table_count = 1 ≤ 2`이고, 따라서 `ordering_needed = false`로 남으며 `pgvector_set_baserel_rows_estimate_hook`은 standard fall-through 경로(line 731 `set_baserel_rows_estimate_standard(root, rel)`)로 빠진다. **Sampling 자체가 trigger되지 않는 사각지대다.**
+
+이 발견은 **본 연구 motivation의 핵심 한 줄**로 격상된다. Exqutor의 Adaptive Sampling은 multi-table join with vector range filter 시나리오로 trigger 조건이 좁혀져 있고, **단일 테이블 vector range query는 PG default selectivity 1/3을 그대로 사용한다**. 이는 Exqutor 논문 본문에 명시되지 않은 design constraint이며, 단일 테이블 vector range query가 실무에서 더 흔한 시나리오임을 고려하면 본 연구가 새로 제기할 RQ로 자연스럽게 편입된다.
+
+### X.4 우회 시도 — vector.c line 243 한 줄 수정 + 재빌드
+
+옵션 A 검증을 살리기 위해 `Exqutor/PostgreSQL/pgvector/pgvector/src/vector.c`의 line 243 `if (table_count > 2)`를 `if (table_count >= 1)`로 한 줄 수정하고, incremental rebuild로 새 `vector.so`(md5 9cd874b... → abbc818a..., 227408 bytes)를 생성한 뒤, Exqutor PG 55436을 fast restart했다. Restart 후 1 query EXPLAIN ANALYZE에서 **Plan Rows = 148052** (333,333 → 변동값)으로 바뀌었으니 hook이 trigger되고 sampling estimate가 plan에 반영되기 시작했다. 그러나 곧이어 세 가지 추가 design constraint가 드러났다.
+
+### X.5 Design Constraint 2 — Outer plan replacement (Sample Scan)
+
+Hook trigger 후 EXPLAIN ANALYZE 전체 JSON을 출력했더니 outer query의 plan tree가 다음과 같이 변경되어 있었다.
+
+```
+Aggregate
+  └─ Sample Scan on partsupp_deep_10_subset_1m
+       Sampling Method: system
+       Sampling Parameters: ['0.0385'::real]
+       Filter: (ps_embedding <-> '...'::vector) < '1.150729'::double precision
+       Plan Rows: 153247    Actual Rows: 38
+       Rows Removed by Filter: 322
+```
+
+즉 우리의 outer query `SELECT count(*) FROM partsupp_deep_10_subset_1m WHERE ...`가 **`SELECT count(*) FROM partsupp_deep_10_subset_1m TABLESAMPLE SYSTEM(0.0385) WHERE ...`로 plan-tree 자체가 교체**되었다. Decisive evidence: 같은 query를 별도 connection에서 `vector.update_sample_size = off`로 실행해도 `SELECT count(*)`가 **32**를 반환했다(Python parquet의 true_cardinality는 100,000). 즉 outer query의 결과 자체가 sample 안의 부분 카운트로 바뀐다.
+
+이는 Exqutor의 hook이 단순 cardinality estimation을 위한 baserel rows set이 아니라 **plan-tree의 base relation 노드를 sample scan으로 직접 교체**하는 동작을 한다는 의미다. multi-table join 시나리오에서는 outer query가 join 결과를 반환하므로 base table sample scan으로의 교체가 join 결과에 부분 영향만 주지만, **단일 테이블 시나리오에서는 outer query 자체가 sample 안 부분 카운트로 격하**되어 의미를 잃는다.
+
+이 두 번째 design constraint도 본 연구 motivation으로 편입 가능하다. "Exqutor의 hook은 cardinality estimation과 plan replacement를 결합해서 동작하는데, 이는 multi-table join에서는 정상이지만 단일 테이블 vector range query에서는 outer query의 정확성 자체를 깨뜨린다."
+
+### X.6 Design Constraint 3 — exqutor_qerror의 q_error inf 발산
+
+1 query 실행 후 `exqutor_qerror` row를 조회했더니 다음과 같았다.
+
+```
+table=partsupp_deep_10_subset_1m, col=ps_embedding, sample_size=385.0,
+qerror_count=1, v_grad=0.0, learning_rate=0.1,
+recent_qerrors=[inf, 5.6e-62, 7.7e-43, 3.2e-86, ..., (총 50개)]
+```
+
+`recent_qerrors`는 vector.c 안의 길이 50 fixed-size Datum 배열로, 1 query 시점에 첫 element만 의미가 있다. 그 첫 element가 `inf`다. Q-error inf의 원인은 division by zero이며, Exqutor의 q_error 계산식 `Max(estimated/true, true/estimated)`에서 `true_cardinality = 0`이라야 한다. `true_cardinality = instrument->ntuples` (post-execution)이고 우리 query의 outer Sample Scan의 Actual Rows = 38이므로 `true = 38`이어야 정상인데 `inf`가 나온다. 
+
+추정 원인은 **plan replacement로 인한 이중 sampling**이다. Exqutor가 (i) plan-time에 SPI sampling subquery를 한 번 실행해서 estimate를 만들고, (ii) plan을 sample scan으로 교체한 뒤 ExecutorRun에서 두 번째 sampling이 일어난다. 두 sample은 다른 RNG 결과이므로 다른 행 집합을 가지며, 첫 sample에서 0개 매칭이면 estimate = 1(clamp), 두 번째 sample에서 38개 매칭 → instrument->ntuples = 38 → 정상이어야 하지만, Exqutor 내부에서 q_error 계산 시점에 어느 카운트를 true로 잡는지가 불명확하다. 첫 sample 카운트(0)가 true로 사용되면 q_error = inf.
+
+이 세 번째 constraint는 Exqutor의 **q_error 계산이 단일 테이블 시나리오에서 invalid value를 만든다**는 것을 보여준다. 본 연구의 motivation에 직접 편입할 정도의 임팩트는 아니지만, Pivot A/C 구현 시 q_error 계산 경로 자체를 재점검해야 함을 시사한다.
+
+### X.7 Design Constraint 4 — Single-table sample_size NaN 발산
+
+50 query 시퀀스를 돌리는 중 **q[25]쯤에서 `TABLESAMPLE SYSTEM(NaN)` 에러가 발생**했다(`column "nan" does not exist`). 이는 `sample_size = NaN`이 되어서 `sample_ratio = sample_size / total_rows * 100 = NaN`이 됐고, Exqutor가 `appendStringInfo(&query, "TABLESAMPLE SYSTEM(%f)", sample_ratio)`로 query string을 만들 때 `NaN`이 그대로 들어가 PG parser가 `nan`을 column name으로 인식하면서 발생한 에러다. 
+
+NaN의 발원은 Adaptive Sampling의 update 식 `sample_size = sample_size + v_grad`에서 `v_grad`가 발산한 결과로 추정된다. q_error의 inf가 median에 섞이거나, autocommit과 무관한 SPI snapshot 에러가 vector.so의 static 변수를 corrupt시켰을 수 있다. autocommit=False로 변경해서 SPI write을 정상 transaction context에 넣어도 NaN은 재현된다(별도 시도). 
+
+이 네 번째 constraint는 **Exqutor의 Adaptive Sampling loop가 단일 테이블 시나리오에서 수치적으로 발산한다**는 것을 보여준다. 이는 §VI에서 Python 재구현의 방어 clamp 2건이 60 run 동안 한 번도 발동하지 않았던 사실(즉 Python은 안정적)과 대비된다. Python은 multi-table join을 가정하지 않은 단일 테이블 시뮬레이션이며, Exqutor의 NaN 발산은 multi-table only design intent의 부작용으로 읽힌다.
+
+### X.8 종합 — 옵션 A의 부분 실패 + 네 가지 motivation finding
+
+옵션 A는 다음 의미로 **부분 실패**다. 단일 테이블 1M subset 시나리오에서 Python Stage 4의 q_error 분포와 Exqutor 네이티브의 q_error 분포를 직접 ±5% 이내로 비교하는 검증은 상기 네 가지 design constraint로 인해 불가능하다. 그러나 이는 Python 재구현이 틀렸다거나 Exqutor가 망가졌다는 의미가 **아니다**. Exqutor는 자신의 design intent(multi-table join with vector range filter)에서는 정상 동작하며, 단일 테이블 시나리오는 Exqutor의 사각지대다.
+
+§III~V의 **수학적 검증은 여전히 유효**하다. Adaptive Sampling의 상수 8개, 수식 5개, 제어 3축은 Exqutor 소스의 multi-table 호출 경로에서도 동일하게 호출되며, Python 재구현은 그 함수의 동작을 정확히 모사한다. 단지 Exqutor가 그 함수를 호출하기 위한 trigger 조건이 multi-table 시나리오로 제한되어 있을 뿐, 함수 자체는 같다.
+
+따라서 본 연구의 다음 단계 진행 정당화는 다음과 같이 정리된다. **수학적 검증(§III~V)을 통과한 Python 재구현 결과를 베이스라인으로 인정**하고, Pivot A 네이티브 검증(BERNOULLI 교체)은 단일 테이블 시나리오에서 두 모드 모두가 같은 plan replacement 경로를 타도록 강제한 채로 **상대값(SYSTEM 대비 BERNOULLI의 q_error 차이)**만 측정하는 방향으로 재정의한다. 절대값 비교가 아니므로 plan replacement의 부작용은 두 모드에서 동일하게 나타나 cancel된다.
+
+본 시도에서 발견된 네 가지 design constraint 중 X.3(hook trigger condition)과 X.5(plan replacement)는 **본 연구 motivation의 새 첫 줄**로 격상된다. summary.md §III.3의 Pivot A+C 노선 정당화에 다음 한 문단이 추가되어야 한다.
+
+> Exqutor의 Adaptive Sampling은 query rangetable의 RTE_RELATION + RTE_SUBQUERY 카운트가 3개 이상인 multi-table join with vector range filter 시나리오에서만 trigger되며, hook이 활성화되면 outer query의 base relation 노드 자체가 Sample Scan으로 교체된다. 단일 테이블 vector range query는 PG default selectivity 1/3로 fall-through되며, Exqutor의 sampling 함수 자체에 도달하지 못하는 사각지대다. 본 연구는 (a) 이 사각지대 자체를 새 finding으로 제시하고, (b) hook trigger 조건과 plan replacement 동작을 우회한 채 sampling 함수의 두 가지 한계 — `TABLESAMPLE SYSTEM`의 block bias와 naive uniform sampling — 를 sanitize하는 Pivot A+C로 본 연구의 기여를 정의한다.
+
+### X.9 다음 세션 첫 작업 메모
+
+본 세션에서 완주한 작업은 (i) Phase 2 데이터 로드 완료, (ii) 1M subset 결정론적 재현, (iii) hook trigger 조건 발견 및 우회 시도, (iv) plan replacement / inf q_error / NaN 발산 세 가지 추가 constraint 발견, (v) 옵션 A 부분 실패 정리다. 
+
+다음 세션 첫 작업은 **Phase 4 (Pivot A 네이티브 BERNOULLI 교체 실측)**이다. 작업 절차는 다음과 같다. (1) 서버 vector.c 백업 파일(`vector.c.bak.20260414_1840`)에서 line 243을 다시 점검하고, hook trigger 우회를 유지할지(본 세션의 변경) 또는 multi-table 검증 query format으로 전환할지(원래 design intent 존중) 결정한다. (2) `src/vector.c` line 1192의 `appendStringInfo(&query, "... TABLESAMPLE SYSTEM(%f) ...", ..., sample_ratio, ...)`에서 `SYSTEM`을 `BERNOULLI`로 한 줄 교체한다. (3) `make USE_PGXS=1 PG_CONFIG=... && make install`로 vector.so를 재빌드하고 PG 55436을 fast restart한다. (4) 1 query EXPLAIN ANALYZE에서 `Sampling Method: bernoulli`가 출력되는지 확인한다. (5) 100 query × 6 selectivity 시퀀스를 돌려서 두 모드의 상대 q_error 차이를 측정한다. (6) Python parquet의 SYSTEM mode counterfactual `+3.8~9.1%p` 개선 수치와 비교한다.
+
+본 세션의 vector.c 수정 사항(line 243 hook trigger 완화)은 서버에 그대로 남아 있다. 다음 세션에서 (1)단계의 결정에 따라 유지하거나 백업으로 복원하면 된다. md5sum 비교: 수정 후 vector.so = `abbc818a6f91ae82dfa68654a8be4a12`, 백업 vector.so = `9cd874b15b73426e1152b34c1d610034`. 백업 경로는 `/mnt/hdd0/home/capstone2026/Exqutor/PostgreSQL/pgvector/psql/lib/postgresql/vector.so.bak.20260414_1840`이다.

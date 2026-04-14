@@ -496,7 +496,15 @@ v2 개정 시점에 다음 결정들이 self-review로 확정되었다. 팀 피�
 
 선택도가 클수록 블록 편향이 더 뚜렷해진다. Exqutor의 `estimate_cardinality_with_sampling()`이 `TABLESAMPLE SYSTEM`을 사용한다는 사실(§I.1에서 확인) 자체가 카디널리티 추정의 구조적 약점을 만든다는 해석이 가능하다. 이는 설계안 v3에서 예상하지 못한 축이다.
 
-### VIII.4 RQ 구조 pivot 후보 (팀 논의 필요)
+### VIII.4 RQ 구조 pivot — **Pivot A + C 병합 확정** (2026-04-14 17:35 KST)
+
+**결정**: 팀 논의 결과 정확도 기준 최적 노선으로 **Pivot A (fair baseline 도구) + Pivot C 재설계 version (본선 기여)**을 확정. Pivot B(선택도 적응형 β)는 원래 연구 방향(Skew-Aware)과 직교하므로 본선에서 배제, 부차 기여로만 여지 남김. 상세 근거는 `experiments/results/rq1_motivation/summary.md` §III.3 참조.
+
+**2단계 분할 전략**: 중간발표(4/28)는 Phase 1~5(환경 복구 + Pivot A 네이티브 + Local skew 지표 + 단일 dataset 부분 실증)까지, 최종보고서(6/11)는 Phase 6~8(Stratified Sampling 함수 구현 + 3 dataset × 20 seed × 1000 query 전면 ablation + Track B KDE-pilot)로 나눈다.
+
+**정확도 기준 재배치**: 본 세션 결과는 원래 연구의 **전 단계 관찰**에 해당하며, Skew-Aware Stratified Sampling 자체의 정확도는 아직 측정된 바 없다. Pivot C의 "local skew 지표 + stratified 실제 구현"이 본선이며, Pivot A는 그 실험의 block bias 교란을 제거하는 baseline 인프라로 기능한다.
+
+### VIII.4-legacy — 초기 후보 3안 (참고용 보관)
 
 본 실험이 Deep 96차원 1M 서브셋 단일 테이블에서 나온 결과이므로, 즉시 방향을 틀기 전에 equivalence check와 다른 테이블 재현이 필요하다. 그 전제 위에서 세 가지 방향을 제시한다.
 
@@ -515,6 +523,20 @@ v2 개정 시점에 다음 결정들이 self-review로 확정되었다. 팀 피�
 3. **시각화 Stage 5b** — matplotlib 설치 후 4~5개 figure 생성. 수치만으로는 학술 문서에 싣기 어려움.
 4. **팀/사용자 논의** — Pivot A/B/C 중 선택. 늦어도 4/17까지 방향 결정 필요 (중간발표 4/28).
 5. **sf10 원본(8M) 재현** — 1M 서브셋이 원본 대비 편향되지 않았는지 확인. 시간 여유 있으면.
+
+### VIII.6 Stage 4.5 Phase 1 수학적 검증 결과 (2026-04-14 17:00~17:40 KST, 본 세션 이후 추가)
+
+서버 현황 확인 중 **session_resume의 "Exqutor patched" 가정이 실제와 다르다는 사실**이 드러났다. 포트 55435의 PG는 `data_directory = /mnt/hdd0/home/capstone2026/vanilla_sf100`인 vanilla 인스턴스였으며, `SHOW vector.sample_size`가 `unrecognized configuration parameter` 오류를 반환했다. 4/14 04:57의 `build_custom.sh` 실행에서 pgvector 패치 빌드는 성공했으나 이어진 `pg_hint_plan` 설치 단계가 시스템 PG17 디렉토리 쓰기 권한 부족(`/usr/share/postgresql/17/extension/: Permission denied`)으로 실패(`===BUILD_FAIL===`)했고, 그 직후 Python 재구현 노선으로 전환하면서 네이티브 검증 경로가 사실상 차단되어 있었다.
+
+이 블로커 때문에 원래 계획된 "서버 `SET vector.sample_size=385` → 50 query 실행 → `exqutor_qerror.recent_qerrors` 대조"는 수행할 수 없어, 사용자와 합의한 대체 경로인 **옵션 C(책상 위 수학적 검증)**를 진행했다. 세부 절차와 판정은 `experiments/results/rq1_motivation/equivalence_check.md` 참조. 요약하면 다음과 같다.
+
+- **상수 축**: Python 8개 상수(α=50, β=1.5, momentum=0.9, lr_λ=0.99, lr_init=0.1, sample_size_init=385, sample_update_cycle=50, v_grad_init=0)가 Exqutor `src/vector.c` L442~455의 전역 초기값과 전부 일치.
+- **수식 축**: 업데이트 수식(grad / v_grad / lr / sample_size 갱신 4줄)과 추정 공식(`est = cnt × total / sample_size`)이 Exqutor L650~663 및 L1180~1235와 수학적으로 동치.
+- **제어 축**: Q-error circular buffer ↔ append-only 리스트는 메모리 레이아웃 차이일 뿐 매 cycle의 median 계산 대상 50개가 동일. 중앙값 알고리즘도 qsort+middle ↔ `np.median`으로 일치. 업데이트 타이밍(50, 100번째 query)도 동일.
+- **방어 clamp 2건**: Python의 `sample_size<1`과 `true_card<1` 하한은 60 run 전체에서 **한 번도 발동하지 않음**(trajectory 최저값 382.729, q_errors에 inf/nan 0건). 즉 두 구현의 결과는 실측 수준에서 완전히 동일.
+- **Bernoulli mode의 정체 판별**: Exqutor 소스에서 `TABLESAMPLE SYSTEM`만 호출되며 `BERNOULLI`는 단 한 번도 등장하지 않음. Python Stage 4의 `mode="bernoulli"`는 **Exqutor에 존재하지 않는 counterfactual 시뮬레이션**이며, 이 사실은 §VIII.3의 "Block sampling bias" 서술을 "SYSTEM 독점 사용 → Bernoulli 교체 시 3.8~9.1%p 개선 여지"로 재해석해야 함을 뜻한다. `summary.md` §II.5/§III.2/§III.3는 이에 맞게 업데이트 완료.
+
+**판정**: Python 재구현 ≈ Exqutor 네이티브 (수학적 동치 검증 통과). 본 문서 §VIII.2~VIII.4의 결론(H1 기각, 선택도 효과, SYSTEM의 구조적 약점)을 구현 오류 의심 없이 Pivot 논의 근거로 사용 가능. 단, end-to-end 네이티브 재현(옵션 A)은 **다음 세션 과제**로 남으며 `build_custom.sh`의 `pg_hint_plan` 설치 타겟을 Exqutor prefix(`psql/`)로 수정하는 것이 첫 스텝이다. 옵션 A 완료 전까지 본 결과는 "1차 검증 통과, 2차 검증 대기" 상태로 간주한다.
 
 ## 부록 A — 파라미터 요약 (experiment_params.yaml 업데이트 대상)
 

@@ -1,10 +1,11 @@
 # RQ1 Motivation — 1차 실험 결과 요약
 
-**실행 일자**: 2026-04-14 16:46 ~ 16:55 KST
+**실행 일자**: 2026-04-14 16:46 ~ 16:55 KST (Stage 1~5), 17:00 ~ 17:40 KST (Stage 4.5 수학적 검증)
 **실행자**: 조현빈 (Claude Code 보조)
 **파이프라인 문서**: `experiments/plans/RQ1_motivation_pipeline_20260414_162857.md` (v2)
-**실행 환경**: 연세대 BDAI Lab 서버 `capstone2026@165.132.140.240`, PG 16.9 + pgvector 0.7.1 (Exqutor patched)
+**실행 환경**: 연세대 BDAI Lab 서버 `capstone2026@165.132.140.240`, PG 16.9 + pgvector 0.7.1 (**vanilla 인스턴스 — 아래 V 참조**)
 **대상**: `partsupp_deep_10` 의 1M 서브셋 (96d DEEP, `DISTINCT ON (ps_partkey)`)
+**검증 상태**: Stage 4.5 수학적 동치 검증 **통과** (`equivalence_check.md` 참조). 네이티브 bitwise 검증(옵션 A)은 다음 세션 과제.
 
 ---
 
@@ -96,7 +97,9 @@
 
 **발견 6 — Skew 지표와 Q-error 상관 없음**. 24 조합 중 `|ρ| > 0.2`인 조합이 하나도 없다. 4개 지표 모두 Q-error의 설명변수로 작동하지 않는다. Fisher γ, Log γ, Tail ratio, Bowley 네 가지를 모두 교차 확인했는데도 신호 부재.
 
-### II.5 Block vs Bernoulli paired (Wilcoxon signed-rank, 대립가설: block > bernoulli)
+### II.5 SYSTEM vs Bernoulli paired (Wilcoxon signed-rank, 대립가설: SYSTEM > Bernoulli)
+
+> **서술 주의**: Exqutor 네이티브는 오직 `TABLESAMPLE SYSTEM`만 사용하며 Bernoulli sampling은 Exqutor 소스 어디에도 없다 (Stage 4.5 검증 §VII). 따라서 이 표의 `bernoulli` 결과는 "현행 Exqutor가 Bernoulli로 교체되었을 때의 counterfactual"이며, `block > bern` 방향으로의 유의한 차이는 "SYSTEM을 Bernoulli로 바꾸면 Q-error가 이만큼 감소할 수 있다"는 **개선 여지의 실증**으로 읽어야 한다.
 
 | s | median diff | mean diff | W | p | block > bern | bern > block |
 |---|---|---|---|---|---|---|
@@ -107,7 +110,7 @@
 | 0.300 | 0.078 | 0.088 | 4 689.5 | **< 0.001** | 83 | 17 |
 | 0.500 | 0.102 | 0.103 | 4 926.0 | **< 0.001** | 89 | 11 |
 
-**발견 7 — Block bias의 강력한 실증**. 선택도 0.050 이상에서 `TABLESAMPLE SYSTEM`이 Bernoulli 대비 Q-error를 유의하게 키운다. 선택도가 클수록 더 많은 query에서 block > bern 방향으로 이동(s=0.500에서 89/100 query가 block 쪽이 더 큰 Q-error). 설계안 v3에 없던 **새로운 기여축**.
+**발견 7 — SYSTEM의 구조적 열위, Bernoulli 교체의 개선 여지**. 선택도 0.050 이상에서 현재 Exqutor가 사용하는 `TABLESAMPLE SYSTEM`이 (Python 재구현의) counterfactual Bernoulli 대비 Q-error를 유의하게 키운다. 선택도가 클수록 더 많은 query에서 SYSTEM이 불리한 방향으로 움직이며(s=0.500에서 89/100 query), 이는 "SYSTEM을 Bernoulli로 교체하면 median 기준 3.8~9.1%p Q-error 개선"이라는 설계안 v3에 없던 **새로운 기여축**으로 읽힌다. Exqutor 소스 `src/vector.c` L1192에서 쿼리 조립 한 줄을 `TABLESAMPLE SYSTEM → TABLESAMPLE BERNOULLI`로 바꾸는 구현 경로가 구체적으로 식별된다.
 
 ---
 
@@ -124,31 +127,48 @@
 데이터는 두 가지 새로운 서술을 강력하게 뒷받침한다.
 
 1. **선택도 효과**. Exqutor Adaptive Sampling은 극소 선택도(`s ≤ 0.01`)에서 구조적으로 취약하다. `s = 0.001`에서 median Q-error 2.6은 실무 관점에서 의미가 있다(옵티마이저 플랜 선택에 영향을 주는 수준).
-2. **Block sampling bias**. `TABLESAMPLE SYSTEM`이 행 단위 Bernoulli 대비 일관되게 Q-error를 키운다. 가장 큰 효과는 `s = 0.500`에서 89/100 query가 block 방향으로 움직임. 원인은 블록 내부의 행 상관성(physical clustering)으로 추정된다.
+2. **SYSTEM sampling의 구조적 약점**. 현재 Exqutor는 `TABLESAMPLE SYSTEM`만 사용하는데(`src/vector.c` L1192 단일 호출), 이것이 counterfactual Bernoulli 대비 Q-error를 일관되게 키운다. 가장 큰 효과는 `s = 0.500`에서 89/100 query가 SYSTEM 쪽으로 악화. 원인은 블록 내부의 행 상관성(physical clustering)으로 추정된다. 본 논문의 Adaptive Sampling 절이 샘플링 메서드 선택을 근거 없이 SYSTEM으로 고정하고 있다는 점은 **샘플링 메서드 ablation**이라는 단독 기여 가능 영역을 드러낸다.
 
-### III.3 설계안 pivot 후보
+### III.3 설계안 pivot — **Pivot A + C 병합 확정** (2026-04-14 17:35 KST)
 
-세션 종료 시점(2026-04-14 17:00 KST)의 잠정 방향 후보 3가지. **팀/사용자 논의 필요**.
+팀 논의 결과 **정확도 기준 최적 노선으로 Pivot A + Pivot C(재설계 version) 병합을 확정**했다. Pivot A는 기여가 아니라 **fair baseline 구축 도구**로 재정의되고, Pivot C는 **local skew 지표 기반 Stratified Sampling 실제 구현**으로 본선에 배치된다. Pivot B(선택도 적응형 β)는 채택되지 않았다 — Adaptive loop 내부 튜닝은 원래 연구 방향(Skew-Aware)과 직교하므로, 부차 기여로만 여유가 있을 때 붙인다.
 
-- **Pivot A — Block → Bernoulli 단순 교체**. `TABLESAMPLE BERNOULLI` 사용만으로도 Q-error 개선 가능하다는 매우 단순·강력한 주장. 기여의 폭은 좁지만 실용성 높음.
-- **Pivot B — 선택도 적응형 샘플링**. 극소 선택도에서만 샘플을 적극적으로 키우는 변형. 현재 Exqutor의 `grad = α(med_q − β) − (100−α)(sample/total)` 구조는 "Q-error와 비용"을 균형한다. 선택도별 β를 다르게 하는 변형 — 예: `s < 0.01`일 때 β를 낮춰 수렴 타겟을 엄격하게.
-- **Pivot C — 원안 유지 + RQ 확장**. Fisher γ 기반이 아니더라도 skew의 또 다른 정의(예: 거리 분포의 modality, cluster density, local PCA 스펙트럼)를 탐색. 범위 확대이나 일정 리스크 큼.
+**결정 근거**. 본 세션의 Fisher γ 실패는 "skew 자체의 무관성"이 아니라 네 가지 측정 결함(global 지표의 distance concentration 취약, 100 query 규모의 Adaptive loop 미수렴, 1M subset의 통계적 불안정, SYSTEM block bias의 신호 은폐)이 혼재된 결과일 가능성이 크다. 원래 설계안 v3의 "Distribution-Aware Stratified Sampling"은 본 세션에서 **구현조차 되지 않았고 실증도 없었다** — Stage 4 Python 재구현은 naive bernoulli/system 두 mode만 가졌으며 stratified mode는 부재했다. 따라서 본 세션의 H1 기각은 "원래 방향이 틀렸다"는 판결이 아니라 "원래 방향을 검증할 수 있는 실험이 아직 없었다"는 진단이다.
+
+**A+C 병합의 학술적 구조**. Exqutor의 두 가지 암묵 가정을 순차 해체한다. 첫째, "TABLESAMPLE SYSTEM이 적절한 샘플링 메서드"라는 가정을 A로 해체 — `src/vector.c` L1192를 BERNOULLI로 교체해 block bias를 제거한다. 둘째, "naive uniform sampling이 충분"이라는 가정을 C로 해체 — local skew 지표로 층을 정의하고 stratified sampling을 실제 구현해 층화의 정확도 이득을 측정한다. 이 두 해체는 직교적이므로 2×3 ablation table(SYSTEM/BERNOULLI/STRATIFIED × 3 dataset)로 각 개선의 기여를 분리할 수 있다.
+
+**2단계 분할 전략**. 중간발표(4/28)와 최종보고서(6/11) 사이를 두 국면으로 나눈다. **중간발표 국면**에서는 본 노선의 골격 — 옵션 A 세팅, Pivot A 네이티브 실증, local skew 지표 1~2개 구현, partsupp_deep_10 단일 dataset에서 stratified 부분 실증 — 까지 도달해 방향의 타당성을 제시한다. **최종보고서 국면**에서는 3 dataset(deep/sift/wiki) × 1000 query × 20 seed × 3 sampling method의 전면 ablation matrix로 완성형을 낸다. 본 결과의 "Fisher γ 4 지표 실패" 자체도 "global 지표는 고차원에서 관측력을 잃는다"는 부정적 발견으로 motivation에 편입된다.
+
+**결과 해석의 세 가능성**. 전면 ablation 후 (α) stratified가 모든 bin에서 uniform을 유의하게 이기고 `|γ|` 큰 구간에서 효과 최대 — 원래 설계 성공, (β) stratified가 대체로 uniform과 비슷하거나 미세 개선 — skew는 1차 설명변수가 아니고 층화는 block bias 완화에 그친다는 정직한 negative result, (γ) dataset별 조건부 효과 — 차원·데이터 특성의 이론 분석으로 전환. 세 결과 모두 학술적 가치가 있으며, 본 연구는 "원래 가설의 공정한 검증" 자체를 기여로 제시할 수 있다.
 
 ### III.4 현재 결과의 한계
 
 - 1M 서브셋. 원본 sf10(`partsupp_deep_10`, 8M)에서 재현해야 일반화 가능.
 - 단일 테이블. 128d SIFT(`customer_sift_10`)와 768d WIKI(`part_wiki_10`)에서 재현 필수.
-- Python 재구현과 Exqutor 네이티브의 equivalence check(Stage 4.5)가 아직 수행되지 않음. 구현 오류로 인한 false negative 가능성이 남아 있다(우선 순위 최상).
+- **Stage 4.5 수학적 검증은 통과**(`equivalence_check.md`). 상수 8개·수식 5개·제어 3축 모두 Exqutor 소스와 일치하며, Python 방어 clamp 2건은 60 run 전체에서 발동하지 않았다. 다만 네이티브 bitwise 재현(옵션 A — Exqutor 전용 PG 인스턴스 initdb + 데이터 로드 + 100 query 네이티브 실행)은 미완이며, 다음 세션 과제로 기록됨.
 - 시각화(Stage 5b)가 아직 없음. 산점도·박스플롯으로 위 수치가 실제로 어떤 모양인지 확인 필요.
 
 ---
 
-## IV. 다음 세션 우선 작업
+## IV. 다음 세션 우선 작업 — Pivot A+C 8 Phase 로드맵
 
-1. **Equivalence check (Stage 4.5)** — Exqutor 서버 네이티브와 Python 재구현 결과 대조. 우선 순위 최상. 일치하면 본 결과 확정. 불일치하면 원인 파악 후 본 문서 재검증.
-2. **시각화 (Stage 5b)** — matplotlib 설치 + 4개 figure 생성(F1~F5 설계안 기반, 일부 본 결과에 맞게 조정).
-3. **다른 테이블 재현** — `customer_sift_10`(128d)에서 동일 파이프라인 실행. 블록 효과와 선택도 효과가 차원/테이블 독립적인지 확인.
-4. **사용자/팀 논의** — Pivot A/B/C 중 하나 선택. 중간발표 4/28까지 14일 남음, 방향 결정은 늦어도 4/17까지.
+본 세션에서 Pivot A+C 노선이 확정되었으므로, 다음 세션 이후의 작업은 아래 8 Phase로 재조직된다. 중간발표까지 Phase 1~5 커버, 최종보고서까지 Phase 6~8 완주가 목표.
+
+**Phase 1 — Exqutor 환경 복구 (옵션 A 세팅)**. `build_custom.sh`의 `pg_hint_plan` 설치 타겟을 시스템 PG17 대신 Exqutor prefix(`psql/`)로 수정하여 `===BUILD_FAIL===` 재발 차단. Exqutor postgres 바이너리로 별도 data directory에 initdb + 별도 port(예: 55436)에서 기동. GUC(`vector.sample_size`, `vector.update_sample_size`, `vector.sample_update_cycle`) 인식 확인 + `CREATE EXTENSION vector` + `exqutor_qerror` 테이블 자동 생성 검증.
+
+**Phase 2 — 데이터 로드**. `partsupp_deep_10` 8M 우선 로드 (기존 vanilla 인스턴스의 `pg_dump` 또는 원본 재생성). Stage 1의 query_pool.parquet 100 query를 vector 입력으로 재활용. HNSW 인덱스는 제외(Sampling 경로 강제).
+
+**Phase 3 — Stage 4.5 Phase 2 (네이티브 bitwise 검증)**. `vector.sample_size=385` 세팅 후 query_pool 100개 순차 실행 → `exqutor_qerror.recent_qerrors` 조회 → Python Stage 4 parquet과 집계 수준(median/mean/p95) ±5% 대조. 통과 시 본 세션 결과 최종 확증, 불통 시 Python 재구현 재검토.
+
+**Phase 4 — Pivot A 네이티브 실증**. `src/vector.c` L1192의 `TABLESAMPLE SYSTEM(%f)`을 `TABLESAMPLE BERNOULLI(%f)`로 한 줄 교체 + `vector.so` 재빌드 + 동일 100 query 재실행. `exqutor_qerror` 결과로 SYSTEM vs BERNOULLI Q-error 차이를 네이티브 bitwise로 확증. Python counterfactual의 3.8~9.1%p 감소 수치와 일치하는지 확인.
+
+**Phase 5 — Local skew 지표 4종 구현 + 재측정**. global 4 지표 대신 local 지표로 전환: (i) k-NN distance entropy(k=50), (ii) query 주변 k-NN의 PCA explained variance ratio, (iii) KDE modality count(pilot sample n=500), (iv) query-conditional NN clustering coefficient. Python Stage 2 확장으로 구현 → Phase 4의 BERNOULLI baseline 위에서 4 지표 × Q-error Spearman 재측정. 유의 신호 보인 지표 식별이 Phase 6의 층 정의 후보가 된다.
+
+**Phase 6 — Stratified Sampling 함수 설계 + 구현**. Exqutor에 `estimate_cardinality_with_stratified_sampling(total_rows, num_strata)` 추가. 구조는 (a) dataset 전체에 대해 pre-compute된 global distance histogram으로 층 경계(예: 10 분위수) 산출, (b) 층별 균등 샘플 추출, (c) 가중 카디널리티 추정. 새 GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 도입해 세 모드 ablation 가능하게. Phase 5의 유의 지표를 층 정의 기준으로 사용.
+
+**Phase 7 — 중간발표용 부분 실증 (~4/26)**. `partsupp_deep_10` 단일 dataset에서 3 mode × 6 selectivity × 5 seed 최소 ablation. Table: SYSTEM vs BERNOULLI vs STRATIFIED의 median/mean/p95 Q-error. 방향의 타당성 증명이 목표.
+
+**Phase 8 — 최종보고서용 완성 실증 (~6/11)**. 3 dataset(deep 96d/sift 128d/wiki 768d) × 1000 query × 20 seed × 3 mode × 8 selectivity × 4 skew bin 전면 ablation. Track B(KDE-pilot online 층화) 추가 구현. Stage 5b 시각화 7~8 figure 완성.
 
 ---
 

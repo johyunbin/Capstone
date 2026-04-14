@@ -19,8 +19,9 @@
 | 4 | `rq1_stage4_adaptive.py` | `adaptive_runs.parquet` (60 run × 100 q_errors) | 32 s |
 | 5 | `rq1_stage5_analyze.py` | `stage5_analysis.parquet` (6 000행 long-form), `stage5_summary.json` | 1 s |
 | Phase 4 (4/14 19:30~19:40 추가) | `rq1_phase4_native.py` | `phase4_system.parquet`, `phase4_bernoulli.parquet`, `phase4_compare.json` (각 600행) | 82 + 21 s |
+| Phase 5 (4/14 20:09 추가) | `rq1_phase5_local_skew.py` | `query_local_skew.parquet` (100행 × 4 local 지표), `phase5_local_skew_spearman.json` (24 조합 ρ), `phase5_local_skew_meta.json` | 6 s |
 
-**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native). 단일 세션 내 RQ1 전체 파이프라인 + Pivot A 네이티브 검증 완주.
+**총 실행 시간**: 약 3 분 (Stage 1~5) + 1.7 분 (Phase 4 native) + 6 초 (Phase 5 local skew). 단일 dataset (1M subset) 의 RQ1 motivation 단계가 native 검증 + global·local 8 지표 전수 검증까지 진행됨.
 
 ---
 
@@ -182,9 +183,9 @@
 
 **Phase 4 ✅ (2026-04-14 19:30~19:40 KST 완주)** — Pivot A 네이티브 실증. 자세한 결과는 본 문서 §V에 정리. 요약: `src/vector.c` line 889의 `TABLESAMPLE SYSTEM(%f)`을 `TABLESAMPLE BERNOULLI(%f)`로 sed 한 줄 교체 + `vector.so` 재빌드 (md5 abbc818a → 449c1c62) + PG 55436 fast restart. SYSTEM 모드와 BERNOULLI 모드 각각 100 query × 6 selectivity = 600 측정 (각 모드 20~82초 소요). 측정 직전 `vector.update_sample_size = off`로 Adaptive update path를 우회 — 이는 본 Phase 4 시작 시 1 query에서 발견된 다섯 번째 design constraint (update path SIGSEGV) 회피용 (§V.4 참조). **결과**: BERNOULLI가 selectivity 0.05~0.5 모든 구간에서 SYSTEM 대비 median q-error를 일관되게 낮춘다 (paired Wilcoxon p < 0.001). 효과 크기는 median 기준 +0.7%p (s=0.05) ~ +12.0%p (s=0.30). Python counterfactual (§II.5) 의 +3.8~9.1%p 와 방향 일치 + 효과 크기 한 자리수 % 수준 일치. **Pivot A 정량 검증 성공 — Exqutor 소스 한 줄 변경으로 카디널리티 추정 정확도가 통계적으로 유의하게 개선됨**.
 
-**Phase 5 (다음 세션 첫 작업) — Local skew 지표 4종 구현 + 재측정**. global 4 지표 대신 local 지표로 전환: (i) k-NN distance entropy(k=50), (ii) query 주변 k-NN의 PCA explained variance ratio, (iii) KDE modality count(pilot sample n=500), (iv) query-conditional NN clustering coefficient. Python Stage 2 확장으로 구현 → Phase 4의 BERNOULLI baseline 위에서 4 지표 × Q-error Spearman 재측정. 유의 신호 보인 지표 식별이 Phase 6의 층 정의 후보가 된다.
+**Phase 5 ⚠️ (2026-04-14 20:09 KST 부분 실패 — query feature 노선 종료)**. 자세한 결과는 본 문서 §VI에 정리. 요약: 4 local 지표 — (i) k-NN distance entropy(k=50), (ii) k-NN PCA explained variance ratio(k=50), (iii) KDE modality count(pilot k=500), (iv) NN clustering coefficient(k=50, inner k=10) — 를 numpy + scipy 만으로 구현해 1M subset × 100 query 에 대해 6초 만에 완주. Phase 4의 BERNOULLI baseline 위에서 4 지표 × 6 selectivity = **24 조합 모두 |Spearman ρ| < 0.2** 로 무효. 가장 강한 신호도 `nn_clustering_coef × s=0.010` 의 ρ=−0.166 (p=0.099) 로 임계 미달. 또한 `kde_modality_count` 는 100 query 중 99개가 unimodal 로 사실상 단일값 변수. **글로벌 4 + 로컬 4 = 총 8 지표 전수 검증 결과, 96d DEEP 100 query 의 *query-side* feature 로는 q_error 변동을 사전 예측할 수 없음** 이 결론. → Phase 6 의 층 정의는 query feature 가 아닌 *data-side* 축으로 전환되어야 함.
 
-**Phase 6 — Stratified Sampling 함수 설계 + 구현**. Exqutor에 `estimate_cardinality_with_stratified_sampling(total_rows, num_strata)` 추가. 구조는 (a) dataset 전체에 대해 pre-compute된 global distance histogram으로 층 경계(예: 10 분위수) 산출, (b) 층별 균등 샘플 추출, (c) 가중 카디널리티 추정. 새 GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 도입해 세 모드 ablation 가능하게. Phase 5의 유의 지표를 층 정의 기준으로 사용.
+**Phase 6 — Stratified Sampling 함수 설계 + 구현 (Phase 5 후속 재정의)**. Phase 5 결과로 *query-conditional* 층화는 사전 식별 노선이 막혔으므로, **data-side 글로벌 층화** 로 재정의한다. Exqutor 에 `estimate_cardinality_with_stratified_sampling(total_rows, num_strata)` 추가하되, 층 경계는 (a) dataset 자체의 global distance distribution 의 quantile bin (예: 10 분위수) 에서 가져오거나, (b) data vector 의 vector cluster (예: k-means 또는 PCA 기반 partition) 에서 가져온다. Exqutor 의 사전계산 패러다임 (vector_index_create 시점) 과 자연스럽게 호환됨. 새 GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 도입해 세 모드 ablation 가능하게.
 
 **Phase 7 — 중간발표용 부분 실증 (~4/26)**. `partsupp_deep_10` 단일 dataset에서 3 mode × 6 selectivity × 5 seed 최소 ablation. Table: SYSTEM vs BERNOULLI vs STRATIFIED의 median/mean/p95 Q-error. 방향의 타당성 증명이 목표.
 
@@ -261,6 +262,94 @@ q1 (s=0.001) 과 q2 (s=0.010) 은 정상 처리되며 hook 이 estimate 를 set 
 - `vector.c.bak.20260414_1840` — Phase 3 시작 전 (line 243 변경 전, 즉 4/3 합의 시점의 원본)
 - `vector.c.bak.20260414_1934_before_bernoulli` — Phase 4 시작 전 (line 243 변경 후 + line 889 SYSTEM 그대로)
 - 현재 vector.c — line 243 `>= 1` + line 889 `BERNOULLI`
+
+---
+
+## VI. Phase 5 결과 — Local skew 4 지표 전수 무효 (2026-04-14 20:09 KST)
+
+### VI.1 측정 절차
+
+§II.1 의 글로벌 4 지표 (Fisher γ, log-γ, tail ratio P99/P50, Bowley) 가 §III.2 에서 q_error 와 |Spearman ρ| < 0.05 로 무효화된 직후, §III.3 의 Pivot C (query feature 기반 stratified) 노선을 살리기 위한 후속 시도가 본 Phase 5 다. 가설은 *글로벌 분포 통계는 96d 거리집중 효과로 변별력을 잃지만, query 주변의 local geometry 는 여전히 q_error 와 상관할 수 있다* 는 것. 이 가설을 검증하기 위해 4 가지 *local* 지표를 numpy + scipy 만으로 구현했다 (sklearn / networkx 의존성 제거).
+
+| 지표 | 정의 | 가설 |
+|---|---|---|
+| (i) **k-NN distance entropy** (k=50) | 50 nearest neighbor 거리들을 10 bin 히스토그램으로 묶은 Shannon entropy (nat) | compact cluster 면 낮음, isotropic spread 면 높음 |
+| (ii) **k-NN PCA EVR1** (k=50) | 50 NN 벡터 (50×96) centering 후 SVD 의 첫 singular value variance 비율 | 한 방향으로 길게 펴진 cluster 면 높음 (1 에 가까움), isotropic spread 면 낮음 (1/96 ≈ 0.01 근처) |
+| (iii) **KDE modality count** (pilot k=500) | 500 nearest distance 의 1D Gaussian KDE → grid evaluate → `find_peaks` (prominence ≥ 0.05·max) | multi-modal 이면 query 주변이 혼합 cluster, sample 추정 불안정 |
+| (iv) **NN clustering coefficient** (k=50, inner k=10) | 50 NN 사이의 50×50 거리에서 각 노드 inner_k-NN 으로 무방향 그래프 → 평균 local clustering coefficient | 강한 cluster 일수록 높음 |
+
+거리 행렬은 §II.1 의 BLAS matmul 패턴 (`compute_distance_matrix`) 을 stage2 에서 그대로 재활용 — 1M × 96 vs 100 × 96 → (1M, 100) 거리 행렬 (약 400 MB float32) 을 0.9 초에 생성. 각 query 별로 `np.argpartition` 으로 top 500 (= k_pilot) 인덱스 후 거리순 정렬 → top 50 (k_nn) 추출 → 4 지표 계산. 100 query 전체 처리 1.9 초. 데이터 로드 + 거리행렬 + 4 지표 + Spearman 분석 + 출력 합쳐 **6.0 초** 만에 완주.
+
+서버 위치: `cache/rq1_phase5_local_skew.py`. 로컬 sibling: `experiments/code/rq1/phase5_local_skew.py`.
+
+### VI.2 4 local 지표 분포 통계 (100 query)
+
+| 지표 | min | p25 | p50 | p75 | max | std | 변별력 |
+|---|---|---|---|---|---|---|---|
+| knn_distance_entropy | 0.098 | 0.265 | **0.375** | 0.573 | 1.440 | 0.259 | 비교적 큼 (range ratio 14×) |
+| knn_pca_evr1 | 0.091 | 0.110 | **0.126** | 0.152 | 0.317 | 0.038 | 좁음 (range ratio 3.5×) |
+| kde_modality_count | 1 | 1 | **1** | 1 | 2 | 0.100 | **사실상 단일값** (99/100 query unimodal) |
+| nn_clustering_coef | 0.418 | 0.447 | **0.470** | 0.497 | 0.630 | 0.040 | 좁음 (range ratio 1.5×) |
+
+**VI.2 발견 1 — 변별력 부족 3건**. `kde_modality_count` 는 100 query 중 99 개가 unimodal 로 사실상 single-value. `knn_pca_evr1` 과 `nn_clustering_coef` 는 좁은 범위 (각각 0.09~0.32, 0.42~0.63) 에 모여 있어 query 간 변별력이 약하다. 학술적으로는 이것 자체가 *96d DEEP 1M 의 random query 100 개의 local geometry 가 통계적으로 균질* 이라는 발견이다 — 거리집중 (concentration of distance) 효과가 너무 강해서 query 별 local 변동까지 평탄해진다.
+
+**VI.2 발견 2 — knn_pca_evr1 의 isotropic 대비 13×**. 평균 0.137 은 96d random isotropic 의 expected EVR1 (≈ 1/96 = 0.0104) 의 약 13 배다. 즉 50 NN 은 isotropic 보다 한 방향으로 더 길게 spread 되어 있긴 하다. 하지만 query 간 분산이 좁아 변별 변수로는 사용 불가.
+
+**VI.2 발견 3 — knn_distance_entropy 만 변별력 보유**. 0.10~1.44 range, std 0.26 으로 4 지표 중 유일하게 query 간 변별력이 큰 지표. 그러나 §VI.3 에서 q_error 와 무관함이 확인됨.
+
+### VI.3 Spearman ρ — 24 조합 전수 검증 (q_error vs local 지표)
+
+`phase4_bernoulli.parquet` (600행, BERNOULLI baseline q_error 포함) 와 `query_local_skew.parquet` 를 `query_id` 로 inner join → 4 지표 × 6 selectivity = 24 조합 각각 100 query (per-selectivity) 의 Spearman ρ + p-value 계산.
+
+| 지표 \ s | 0.001 | 0.010 | 0.050 | 0.100 | 0.300 | 0.500 | max \|ρ\| |
+|---|---|---|---|---|---|---|---|
+| knn_distance_entropy | +0.030 | −0.113 | +0.026 | +0.101 | +0.020 | +0.078 | 0.113 |
+| knn_pca_evr1 | −0.153 | −0.096 | +0.092 | +0.152 | +0.025 | −0.043 | 0.153 |
+| kde_modality_count | −0.030 | −0.147 | −0.140 | −0.040 | +0.085 | −0.017 | 0.147 |
+| nn_clustering_coef | −0.126 | **−0.166** | +0.070 | −0.054 | +0.019 | +0.057 | **0.166** |
+
+(p-value 모두 0.099 ~ 0.864 — 어떤 조합도 5% 유의수준 도달 못함)
+
+**VI.3 발견 1 — 24 조합 모두 |ρ| < 0.2**. 사전 설정 임계 (`session_resume.md §C.5`) 인 |ρ| > 0.2 를 통과한 조합 0 개. 가장 강한 신호도 `nn_clustering_coef × s=0.010` 의 ρ = −0.166 (p=0.099) 로 임계 미달. *Phase 5 의 가설은 기각된다*.
+
+**VI.3 발견 2 — 부호 일관성 부족**. 같은 지표 안에서도 selectivity 별 부호가 뒤집힌다. 예) `knn_pca_evr1` 은 s=0.001 에서 −0.153, s=0.100 에서 +0.152 로 부호 반전. 부호 안정성이 있어야 weak signal 이라도 의미 있게 해석 가능한데, 이 부호 inconsistency 는 본 ρ 들이 *통계적 노이즈에 가깝다* 는 강한 증거다.
+
+**VI.3 발견 3 — `nn_clustering_coef` 의 약한 negative 일관성**. 4 지표 중 유일하게 작은 selectivity 구간 (s=0.001, 0.010) 에서 약하게 negative 신호 (ρ ≈ −0.13 ~ −0.17). 의미: cluster 가 강하게 묶일수록 q_error 가 *작아진다*. 직관적으로 잘 묶인 cluster 는 sample 안에서 카운트 추정이 안정적이라는 해석이 가능. 그러나 효과 크기가 임계 미달이라 단독 layer 정의 변수로 사용 불가.
+
+### VI.4 학술적 해석 — 글로벌+로컬 8 지표 종합 결론과 Pivot C 노선 재정의
+
+본 Phase 5 의 결과를 §II.1 (글로벌 4 지표) + §III.2 (글로벌 지표 무효화) 와 합치면, **96d DEEP 1M subset 의 100 query 에 대해 query-side feature 8 가지 (글로벌 4 + 로컬 4) 모두 q_error 와 |Spearman ρ| < 0.2** 라는 종합 결론에 도달한다. 이는 다음과 같은 학술적 함의를 가진다.
+
+1. **Distance concentration 의 이중 효과**. §II.1 에서 100 query 모두 Fisher γ ≈ −1.07, tail ratio P99/P50 ≈ 1.07~1.17 의 좁은 범위에 모인 것은 *글로벌* 분포 통계가 96d 에서 변별력을 잃었다는 신호였다. 본 Phase 5 의 *로컬* 지표 3건 (PCA EVR1, KDE modality, clustering coef) 도 좁은 범위에 모여 있어, 거리집중 효과가 글로벌만이 아니라 *local geometry 까지 평탄화* 시킨다는 것이 확인됐다.
+
+2. **Query feature 사전 식별 노선의 종료**. Pivot C 의 원안 (§III.3) 은 "local skew 지표로 층을 정의한다" 였다. 본 Phase 5 결과로 *query-conditional layer 정의는 8 지표 검증 후 사전 식별 불가능* 이 확정됐다. 단, 이는 "skew 자체가 무관" 이 아니라 "skew 가 측정 가능한 형태로 query 별로 변별되지 않는다" 라는 진단 — 같은 finding 이 `direction_pivot_rationale.md` §3 의 글로벌 지표 실패 narrative 에 이미 일관되게 정리되어 있다.
+
+3. **Pivot C 의 data-side 재정의가 자연스러운 다음 단계**. query feature 가 막혔으므로, layer 는 *데이터 사이드* 에서 가져와야 한다. 두 가지 후보:
+   - **(a) Distance quantile bin**: dataset 전체에 대한 global distance distribution (예: 모든 vector 쌍 또는 query-vector 거리의 sample) 을 quantile bin 으로 나눠 stratum 정의. Exqutor 의 사전계산 패러다임 (vector_index_create 시점에 1회 계산) 과 호환.
+   - **(b) Vector cluster partition**: data vector 자체를 k-means 또는 PCA 기반으로 partition 해 stratum 정의. cluster 마다 균등 sample 추출.
+   
+   둘 다 query 와 무관한 *데이터 자체의 구조* 에서 layer 를 가져오므로, query feature 가 변별되지 않는 본 데이터셋에서도 적용 가능하다. Phase 6 는 (a) 부터 시작 — 가장 단순하고 Exqutor 패러다임 호환성이 높음.
+
+4. **Negative result 의 motivation 가치**. 본 8 지표 검증 결과는 그 자체로 *고차원 vector dataset 의 query feature 사전 식별 한계* 를 정량 확인한 finding 이다. 향후 vector DB 의 cardinality 추정 연구에서 *query-side feature 기반 stratified sampling 을 제안하려면 본 검증 결과를 우회해야 한다* 는 부정적 가이드가 된다. RQ1 motivation 의 §IV → §V → §VI 의 narrative 흐름 자체가 "원래 가설을 공정 검증하고, 실패하면 그 실패가 후속 설계의 근거가 된다" 는 학술적 정직성을 보여준다. `direction_pivot_rationale.md` 의 narrative 와 정합.
+
+### VI.5 Phase 6 진입 조건
+
+Phase 5 의 결과 위에서 Phase 6 (Stratified Sampling 함수 설계 + 구현) 의 진입 조건을 다음과 같이 재정의한다.
+
+- **(C1)** Layer 정의는 query feature 가 아닌 *data-side* 에서 가져온다. 본 Phase 5 §VI.4 의 (a) Distance quantile bin 또는 (b) Vector cluster partition 중 (a) 가 1차 후보 — Exqutor 사전계산 호환성이 높고 구현이 단순.
+- **(C2)** Stratified sampling 함수의 추정 공식은 `sum_strata (n_i / N) * (cnt_i / sample_i) * D_i` 형태 — 층별 균등 sample, 가중 카디널리티 추정. Exqutor L1232 의 `est = cnt * total / sample_size` 를 multi-stratum 으로 일반화.
+- **(C3)** GUC `vector.sampling_method` (`system` / `bernoulli` / `stratified`) 도입. 세 모드 ablation 가능하게.
+- **(C4)** Phase 4 의 BERNOULLI baseline + Phase 6 의 STRATIFIED 의 paired 비교를 selectivity 6 구간에서 수행. Pivot A 와 직교적 효과인지 확인.
+- **(C5)** Phase 5 의 negative result 자체를 Phase 6 의 motivation 으로 인용 — *layer 정의를 query-side 에서 시도했으나 실패했고, 따라서 data-side 로 전환했다* 는 narrative 를 코드 + 문서에 명시.
+
+### VI.6 산출물
+
+| 파일 | 위치 | 내용 |
+|---|---|---|
+| `query_local_skew.parquet` | `experiments/results/rq1_motivation/` | 100 query × (4 local 지표 + meta), query_id 인덱스 |
+| `phase5_local_skew_spearman.json` | 같음 | 24 조합 (4×6) Spearman ρ + p-value 전수, 강신호 후보 sort |
+| `phase5_local_skew_meta.json` | 같음 | 실행 메타 + 4 지표 분포 통계 (min/max/mean/median/std) + Phase 5 인자 |
+| `phase5_local_skew.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase5_local_skew.py` | 측정 스크립트 (numpy + scipy + pyarrow + pandas 만, 의존성 6.0초 완주) |
 
 ---
 

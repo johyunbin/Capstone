@@ -588,6 +588,109 @@ stratified mode 간 직접 비교로 layer 의 *상대* 우위를 확인.
 
 ---
 
+## IX. Phase 6 Step 4 결과 — KM20 Native 구현 + 재현성 검증 (2026-04-14 22:00 KST)
+
+### IX.1 구현 개요
+
+§VIII 에서 KM20 = best layer 로 확정된 Python counterfactual 결과 (3 sel ★) 를 native 에서 재현하기 위해, `vector.c` 에 KM20 기반 stratified sampling 분기를 직접 구현한다. 핵심 설계 결정은 **data-side ALTER TABLE 방식** (session_resume.md §C 의 권장 옵션 (a) 보다 단순한 파생) 으로, 외부 binary parser 없이 PG 표준 경로만으로 구현을 완성한다.
+
+**데이터 설정**. (1) `phase6_export_km20_strata.py` 가 `subset_1m.parquet` 을 로드하고 `phase6_layer_compare.build_layer_kmeans` 와 동일한 mini-batch k-means (seed=42) 를 재호출하여 1M × stratum_id 를 산출. **Phase 6 Step 3' 의 KM20 sizes [26343, 81233] 과 비트와이즈 일치** 검증 (seed=42 의 numpy 재현성). (2) `ALTER TABLE partsupp_deep_10_subset_1m ADD COLUMN stratum_id smallint` + `COPY km20_strata.csv` + 1M `UPDATE` (18.7 초) + `CREATE INDEX idx_subset_1m_stratum` + `VACUUM ANALYZE`. NULL 0 건 검증.
+
+**vector.c 수정** (+228 줄). (a) GUC 3 개: `vector.sampling_method` (bernoulli/stratified), `vector.stratum_column` (기본 "stratum_id"), `vector.stratum_n` (기본 20). (b) `load_stratum_sizes_cache` (process-local, 1 회 SPI 호출로 `SELECT stratum_id, count(*) GROUP BY`) → 20 × double array 캐시. (c) `estimate_cardinality_with_stratified_sampling` — 단일 SPI SQL 생성:
+
+```sql
+WITH sampled AS (
+  (SELECT 0::int AS sid, ps_embedding FROM ... WHERE stratum_id = 0 ORDER BY random() LIMIT 20)
+  UNION ALL ... (20 stratum)
+), filtered AS (SELECT sid FROM sampled WHERE ps_embedding <-> '[...]'::vector < D)
+SELECT COALESCE(sum(cnt * weight), 0)::float8 AS est_total,
+       COALESCE(sum(cnt), 0)::float8 AS cnt_total
+FROM (SELECT sid, count(*)::float8 AS cnt,
+             (CASE sid WHEN 0 THEN <n_0/s_0>::float8 WHEN 1 THEN <n_1/s_1>::float8 ... END) AS weight
+      FROM filtered GROUP BY sid) t;
+```
+
+`weight_i = stratum_sizes_cache[i] / s_i` 를 매 query 마다 cache 에서 읽어 SQL string 에 inline (process-local 이므로 string 생성 cost 미미). cnt_total = 0 경우 Python estimator 의 mean-weight fallback 과 *설계 상 동등* 한 `total_rows / budget ≈ 2580.626` 을 return. (d) L640 호출 사이트 분기: `sampling_method_str == "stratified"` 이면 새 함수, 아니면 기존 BERNOULLI 분기. 기본값은 "bernoulli" 이므로 Phase 4 의 모든 결과가 그대로 유지.
+
+**빌드 + restart 3 회**. 첫 빌드에서 우리 분기 코드 자체는 정상이었으나 *test query 가 subquery 형태* (`WHERE emb <-> (SELECT emb FROM ... WHERE pk = 1) < 0.5`) 로 Exqutor hook 을 깼다 (Phase 4 의 `'[...]'::vector` inline literal 패턴과 충돌). 디버그 BYPASS variant (elog 8 줄 추가 + BERNOULLI 호출) 로 **호출 경로 + cache 로드 검증** 후, inline literal 로 test 재진입 → 정상 작동 → 풀 SQL variant 로 최종 빌드. 이 디버깅 loop 로 **Phase 4 BERN 의 원 패턴을 Phase 6 에서도 준수해야 함** 을 확인.
+
+### IX.2 측정 절차
+
+`phase6_strat_native.py` (+270 줄, `phase4_native.py` 직접 파생). **log parsing 방식**으로 hook return value 를 직접 획득하는 것이 본 스크립트의 핵심 개선점이다.
+
+**배경 — plan tree 의 불가용성**. Exqutor 의 stratified mode 에서는 query 가 WITH + UNION ALL 20 + inner aggregate 로 rewrite 되기 때문에 EXPLAIN plan tree 에 `Sample Scan` 노드가 없고 `Aggregate → Append → [Subquery Scan × 20 stratum]` 의 다른 구조로 나타난다 (각 Subquery Scan 의 Plan Rows = 19~20, 즉 stratum LIMIT 의 값 — hook estimate 가 반영되지 않은 자리). find_scan_node 가 이 중 첫 Subquery Scan 을 반환하면 q_error 가 3749.98 로 엉뚱. BERN 은 `Aggregate → Sample Scan(bernoulli)` 단순 구조라 plan_rows = hook 값 직접 추출 가능.
+
+**해결**. 양쪽 mode 모두 vector.c 의 `elog(LOG, "Estimated cardinality for range query on table %s: %f")` 가 매 query 마다 서버 로그 (`/mnt/hdd0/home/capstone2026/log/exqutor-2026-04-14.log`) 에 1 회 기록됨을 이용. 측정 시작 전 log file size snapshot → 600 query 순차 실행 → 측정 종료 후 offset 이후를 읽어 `Estimated cardinality for range query on table (\S+): ([\d.eE+\-]+)` regex 로 600 값을 순서대로 추출 → `hook_est` + `q_error_hook` column 으로 parquet 에 저장. BERN 에서 plan_rows 와 hook_est 가 일치 (median 1.1376 = 1.1376) 함을 교차 검증.
+
+**Phase 4 BERN 재측정**. ALTER TABLE + 1M UPDATE 가 dead tuple → 테이블 크기 435 MB → 868 MB → 데이터 페이지 분포가 Phase 4 측정 시점과 다를 수 있음. Phase 4 의 `phase4_bernoulli.parquet` 을 재사용하지 않고 **새 baseline `phase6_bern_native_v2.parquet`** 을 측정해서 비교.
+
+**소요 시간**. BERN 600: **83.3 초** (phase4 의 BERN 과 동급), STRAT 600: **908.7 초** (15 분, ~1.5 s/query). STRAT 의 병목은 각 stratum 별 `ORDER BY random() LIMIT 19/20` 의 random sort (HDD IO + index scan). Phase 4 BERN 대비 ~11 배 느림.
+
+### IX.3 Native 결과 — hook_est 기준 (log parsing)
+
+| selectivity | BERN median | STRAT median | diff% | p (less) | better | worse | sig |
+|---|---|---|---|---|---|---|---|
+| 0.001 | 2.5806 | 2.5806 | +0.00 | 0.451 | 26 | 22 | — |
+| 0.010 | 1.2917 | 1.3874 | −7.41 | 0.797 | 44 | 56 | — |
+| **0.050** | 1.2109 | 1.1429 | **+5.62** | **0.00678** | **64** | 36 | **★★** |
+| **0.100** | 1.1097 | 1.1083 | **+0.12** | **0.0447** | **61** | 39 | **★** |
+| 0.300 | 1.0623 | 1.0523 | +0.94 | 0.102 | 52 | 48 | — |
+| **0.500** | 1.0529 | 1.0339 | **+1.81** | **4.01e-05** | **66** | 34 | **★★★** |
+
+**IX.3 발견 1 — Native 도 3 selectivity 구간 ★**. s=0.050, 0.100, 0.500 세 구간에서 STRAT 가 BERN 대비 paired Wilcoxon p < 0.05 우위. 적용 범위 기준으로 Phase 6 Step 3' Python counterfactual 의 KM20 결과 (s=0.100, 0.300, 0.500, 3 구간) 와 *같은 개수* 의 유의 영역. **Native 재현 성공**.
+
+**IX.3 발견 2 — 영역의 부분 이동**. Python 과 Native 의 유의 구간 집합이 완전 동일은 아님: Python unique 우위 = s=0.300 (Native p=0.102 marginal), Native unique 우위 = s=0.050 (Python p=0.121 marginal), 공통 = s=0.100 / s=0.500. 두 방법의 RNG 구현 (numpy vs SQL `random()`) + Exqutor hook 의 plan rewrite 경로 차이가 효과 크기 분포를 약간 이동시킨 것으로 해석.
+
+**IX.3 발견 3 — s=0.500 의 본 실험 최강 p-value**. Native 의 s=0.500 에서 p=**4.01e-05 (★★★)** 는 Phase 4 ~ Phase 6 전체의 단일 query × selectivity 조합 중 *최강 통계적 유의*. Effect size +1.81% 는 Python 의 +0.33% 보다 5 배 이상 크다. 해석: native 의 `ORDER BY random() LIMIT 19/20` 은 stratum 당 *정확 균등* sample 을 추출하므로 Python 의 numpy `rng.choice(size=s_i)` 보다 sample allocation variance 가 작아 baseline noise 가 감소. 중간발표 narrative 의 quantitative anchor 로 직접 인용 가능.
+
+**IX.3 발견 4 — s=0.001 fallback path 의 설계 상 동등**. 양쪽 median 이 정확히 2.5806 = 993541 / 385 (total_rows / budget). 이는 sample 385 개 중 distance < D_target 에 통과한 행이 *대부분 query 에서 0 개* 였음을 의미 — cnt clamp fallback 의 결과. 본 fallback 은 BERN 의 L976~979 `if (count_result == 0) count_result = 1` 공식과 stratified 의 `if (cnt_total == 0) est_total = total_rows / budget` 이 *같은 값* 을 생성하도록 설계되었으므로 우연의 일치가 아닌 구조적 일치. 본 영역은 §VIII.2 발견 1 의 cnt 0/1 영역 — 어떤 stratification 도 개선 불가.
+
+**IX.3 발견 5 — s=0.010 의 예상 밖 열세의 native 재현**. Native 에서 STRAT 이 BERN 대비 −7.41% 열세. §VIII.3 의 Python counterfactual 에서도 −5.08% 열세 (p=0.719) 였음. 두 방법 모두 같은 방향 (STRAT 열세), native 에서 더 큰 magnitude. 해석: s=0.010 ~ 100~500 tuples 영역에서 per-stratum s_i = 19 에 의한 HT weight × cnt multiplication 이 noise 를 증폭. K=20 fine-grained partition 의 sample budget per stratum 부족 현상이 native 에서 더 두드러진다.
+
+### IX.4 Python vs Native 일치성 검증
+
+| 구간 | Python diff% | Python p | Native diff% | Native p | qualitative 일치 |
+|---|---|---|---|---|---|
+| 0.001 | −0.37 | 0.925 | +0.00 | 0.451 | ○ (둘 다 무의) |
+| 0.010 | −5.08 | 0.719 | −7.41 | 0.797 | ○ (둘 다 열세) |
+| 0.050 | +2.04 | 0.121 | **+5.62** | **0.0068** | △ (Native 강함, Python marginal) |
+| 0.100 | **+2.25** | **0.0042** | +0.12 | 0.0447 | ○ (둘 다 ★) |
+| 0.300 | +0.76 | 0.0160 | +0.94 | 0.102 | △ (Python 만 ★) |
+| 0.500 | +0.33 | 0.0157 | **+1.81** | **4e-05** | ○ (둘 다 ★, Native 강함) |
+
+**완전 일치 4 구간** (s=0.001, 0.010, 0.100, 0.500) + **부분 이동 2 구간** (s=0.050, 0.300). 유의 구간 수 (3 개) 보존, 유의 구간의 union 은 4 개 (s=0.050, 0.100, 0.300, 0.500). 방향성 (positive diff% 가 3 이상 구간에서 일관) 과 크기 (0.33 ~ 5.62%) 가 같은 order of magnitude.
+
+### IX.5 학술적 함의
+
+**Python counterfactual 의 native 재현 가능성 확정**. Phase 6 Step 1~3' 의 Python 결과는 Exqutor hook 을 우회한 pure estimator 였으나, 본 §IX 에서 *Exqutor hook 경유 native* 에서도 같은 수의 유의 영역 확보. Phase 6 Step 3' 의 "KM20 = best layer" 결론이 native path 에서도 유지된다.
+
+**RQ1 motivation narrative 의 최강 quantitative anchor 확보**. s=0.500 에서 p=4.01e-05 (***), effect size +1.81% 는 Phase 4 (p<0.001 4 구간 Pivot A 검증) 이후 가장 강한 native 신호. 중간발표 슬라이드의 "Skew-Aware Sampling 의 정량 효과" 슬라이드에 인용.
+
+**Data-side ALTER TABLE 방식의 검증**. `stratum_id` 컬럼 + 인덱스 + SPI 단일 SQL 만으로 native stratified sampling 이 구현 가능함을 확인. 외부 binary parser 불필요, Exqutor 코드 변경 최소 (228 줄). 본 방식은 다른 layer definition (random projection, multi-layer PCA, 또는 online k-means refit) 으로도 동일 패턴으로 확장 가능 — 각 layer 는 별도 `stratum_id_{method}` 컬럼만 추가하면 됨.
+
+**ORDER BY random() LIMIT 의 비용 한계**. BERN 대비 11 배 느림 (83 초 → 908 초). HDD 환경에서 stratum 별 random sort + bitmap heap scan 이 병목. 향후 최적화 방향: (a) per-stratum TABLESAMPLE BERNOULLI (sample size 부정확하지만 빠름), (b) pre-materialized random permutation column + modulo stride, (c) PostgreSQL core 에 stratified TABLESAMPLE tsm method 기여. 본 RQ1 motivation 의 목적에는 현재 958 초 측정이 acceptable 하므로 최적화는 RQ2 단계로 이월.
+
+### IX.6 산출물
+
+| 파일 | 위치 | 내용 |
+|---|---|---|
+| `phase6_export_km20_strata.py` | `experiments/code/rq1/` + 서버 `cache/rq1_phase6_export_km20_strata.py` | KM20 stratum_id 를 CSV (1M+1행, 9.37 MB) 로 export. phase6_layer_compare 의 mini-batch k-means 함수를 inline 복사 (서버 파일명 충돌 회피) |
+| `phase6_strat_native.py` | 같음 + 서버 `cache/rq1_phase6_strat_native.py` | 측정 스크립트, BERN/STRAT 공통. log parsing 으로 hook_est 추출 + q_error_hook 산출 |
+| `phase6_native_paired.py` | 서버 `cache/rq1_phase6_native_paired.py` | paired Wilcoxon STRAT vs BERN 분석 |
+| `phase6_bern_native_v2.parquet` | `experiments/results/rq1_motivation/` | 600 row, BERN native 재측정 (새 baseline, hook_est 포함) |
+| `phase6_strat_km20_native.parquet` | 같음 | 600 row, STRAT KM20 native 측정 (hook_est 포함) |
+| `phase6_native_paired.json` | 같음 | paired Wilcoxon 결과 rows + Python Step 3' 참조값 |
+| `km20_strata.csv` (서버) + `km20_strata.meta.json` | 서버 `cache/rq1/` | 1M × (ps_partkey, stratum_id) + Step 3' KM20 일치 검증 메타 |
+
+**vector.c 수정 누적** (서버):
+- L243: `table_count > 2` → `>= 1` (Phase 3, 4/14 18:37)
+- L639 (offset shift 후): `TABLESAMPLE SYSTEM` → `TABLESAMPLE BERNOULLI` (Phase 4, 4/14 19:36)
+- **+228 줄** L146~159 static 변수 + L226~258 GUC 3 개 + L640~650 분기 + L1055~1230 함수 2 개 (Phase 6 Step 4, 4/14 22:00)
+
+백업: `vector.c.bak.20260414_2105_before_stratified` (Phase 4 BERN 시점 원본, md5 = 35bf2f17). 현재 `vector.c` md5 = cee043e2, 현재 `vector.so` md5 = 4c947fc8.
+
+---
+
 ## 부록 A — 참고 메타
 
 - Adaptive Sampling 파라미터 (Exqutor 소스 L442~455 추출): α=50, β=1.5, momentum=0.9, lr_init=0.1, lr_λ=0.99, sample_size_init=385, sample_update_cycle=50

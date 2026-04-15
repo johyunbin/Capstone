@@ -245,7 +245,7 @@ Phase 7: 8M + sift 128d 로 외적 확장 시도 → **cnt-clamp fallback 영역
 | `records/kakaotalk/20260415_톡방공유 요약본.md` | ③ 핵심 수치 | "2168×, 409×" | 새 commit 에서 수정 |
 | `experiments/results/rq1_motivation/summary.md` | Phase 7 (있다면) | - | 확인 후 수정 |
 | `experiments/results/rq1_motivation/direction_pivot_rationale.md` | Phase 7 (있다면) | - | 확인 후 수정 |
-| `plans/수정 연구 설계안_20260415_001500.md` | §V, §VIII 기여, §IX | 2168× / 양대 anchor | §V Phase 7 재작성 + §VIII 기여 수정 + §IX 일정에 Phase 7 재실행 추가 |
+| `plans/수정연구설계안_20260415_001500.md` | §V, §VIII 기여, §IX | 2168× / 양대 anchor | §V Phase 7 재작성 + §VIII 기여 수정 + §IX 일정에 Phase 7 재실행 추가 |
 
 ## 6. 본 검증의 학술적 의미
 

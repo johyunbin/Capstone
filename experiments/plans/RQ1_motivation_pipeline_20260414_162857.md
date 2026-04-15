@@ -3,7 +3,7 @@
 **작성일**: 2026-04-14 16:28 KST (v1) / 16:40 KST (v2 교정) / 17:00 KST (v2.1 실측 결과 반영)
 **버전**: v2.1 — v2 파이프라인 단일 세션 완주 후 실측 결과를 §VIII로 요약. RQ1 가설 H1은 기각, Block bias는 실증. 설계안 pivot 후보 3개 제시 (팀 논의 필요)
 **의존 문서**:
-- `plans/연구 설계안_20260403_162818.md` (v3, 상위 연구 방향)
+- `plans/연구설계안_20260403_162818.md` (v3, 상위 연구 방향)
 - `research/analysis/(01) Exqutor 상세분석.md` (논문 구조)
 - `memory/reference_server.md` (서버 상태)
 - `experiments/config/experiment_params.yaml` (파라미터 초안)
@@ -554,6 +554,6 @@ v2 개정 시점에 다음 결정들이 self-review로 확정되었다. 팀 피�
 ## 부록 B — 참고 지점
 
 - **Exqutor 소스 경로**: `/mnt/hdd0/home/capstone2026/Exqutor/PostgreSQL/pgvector/patch/pgvector_Exqutor.patch` — `estimate_cardinality_with_sampling()` L1180~, `pgvector_set_baserel_rows_estimate_hook()` L693~, adaptive update L650~670
-- **설계안 v3**: `plans/연구 설계안_20260403_162818.md` §III.1 RQ1 판단 기준 부분 복사 인용
+- **설계안 v3**: `plans/연구설계안_20260403_162818.md` §III.1 RQ1 판단 기준 부분 복사 인용
 - **서버 접속**: `memory/reference_server.md` §접속·§제약·§함정 3건
 - **이전 실험 흔적 해석 원 계산**: 본 문서 §I.2

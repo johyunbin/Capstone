@@ -15,7 +15,7 @@
 - **연구 방향**: Skew-Aware Sampling — skewed 거리 분포에서 카디널리티 추정 정확도 개선
   - Track A (Distribution-Aware): 분포를 알 때 → 층화 샘플링
   - Track B (Distribution-Agnostic): 분포를 모를 때 → KDE-pilot 기반 자동 층화
-- **설계안**: `plans/연구 설계안_20260403_162818.md` (v3)
+- **설계안**: `plans/연구설계안_20260403_162818.md` (v3)
 - **실험 파라미터**: `experiments/config/experiment_params.yaml`
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 
@@ -122,7 +122,7 @@ guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md
 
 | 디렉토리 | 패턴 | 예시 |
 |----------|------|------|
-| `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구 설계안_20260403_162818.md` |
+| `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구설계안_20260403_162818.md` |
 | `records/kakaotalk/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
 | `records/weekly/` | `주간보고_YYYY-MM-DD.md` | `주간보고_2026-03-28.md` |
 | `research/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |

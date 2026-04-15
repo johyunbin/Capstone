@@ -2,7 +2,7 @@
 
 **작성**: 조현빈 (+ Claude Opus 4.6)
 **일시**: 2026-04-15 (수) 10:30 KST
-**범위**: `plans/수정 연구 설계안_20260415_001500.md` (v4), `experiments/results/rq1_motivation/{summary.md, direction_pivot_rationale.md}`, Phase 1~7 측정 스크립트 + JSON 결과, `submission/{자문이메일_20260415, 중간보고서, 중간발표}.md`
+**범위**: `plans/수정연구설계안_20260415_001500.md` (v4), `experiments/results/rq1_motivation/{summary.md, direction_pivot_rationale.md}`, Phase 1~7 측정 스크립트 + JSON 결과, `submission/{자문이메일_20260415, 중간보고서, 중간발표}.md`
 **방법**: 3 축 병렬 agent 딥리뷰 (연구 계획 / Phase 실험 / narrative 일관성) → 본 문서에서 통합 + 긴급도 재배치
 **목적**: 자문 이메일 발송 + 중간보고서 v2 편집 + 중간발표 준비 방향 결정 근거
 

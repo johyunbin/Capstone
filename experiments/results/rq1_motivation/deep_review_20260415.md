@@ -12,9 +12,19 @@
 
 본 딥리뷰의 가장 중요한 발견은 **축 B (Phase 1~7 실험)**에서 도출된 Phase 7 의 결과 해석에 대한 구조적 의심이다. 본 의심은 단순한 표현 수정이나 narrative 조정 수준이 아니라 *중간발표의 핵심 주장 자체를 철회해야 할 가능성*을 내포한다. 축 A (연구 계획 v4) 와 축 C (세 문서 narrative) 는 상대적으로 경미한 수준의 수정으로 정합성이 확보 가능하다.
 
-### 🚨 긴급도 1 (최우선 — 발송/제출 전 필수 검증)
+### 🚨🚨 긴급도 1 (검증 완료 — **artifact 확정**, 즉시 narrative 철회 필요)
 
-**Phase 7 의 `q_error = 9.6` 이 estimator 품질이 아니라 stratified plan tree 의 `Aggregate → Append → [Subquery Scan × 20]` 구조에서 첫 Subquery Scan 의 `Plan Rows = 20` (= stratum LIMIT 값) 과 `true_card ≈ 193` 의 비율 artifact 일 가능성이 결정적**. 본 의심이 확정되면 Phase 7 의 "양대 anchor" 주장과 "2168× / 409× 단일 최강 신호" 는 철회되어야 한다. 검증 방법: `phase7_8m_strat.parquet` 의 `plan_rows` 열이 대부분 20 근처인지 직접 조회 + `phase7_*_paired.json` (hook_est 기반, 현재 "garbage" 로 배제됨) 과 `phase7_*_paired_qerror.json` (plan_rows 기반) 사이의 결과 방향 대조.
+**2026-04-15 10:50 KST 에 artifact 가설이 경험적으로 확정됨**. 검증 결과는 `experiments/results/rq1_motivation/phase7_artifact_verification_20260415.md` 에 공식 기록. 핵심 결과:
+
+- `phase7_8m_strat.parquet` 의 `plan_rows` 열: **100/100 row 가 정확히 20** (min=20, max=20, std=0, unique=1)
+- `phase7_sift_strat.parquet` 의 `plan_rows` 열: **100/100 row 가 정확히 20** (동일 패턴)
+- hook_est 기반 `phase7_8m_paired.json`: **STRAT median 21111 vs BERN median 16687, diff −26.5%, n_better 26/100, p_less=0.9999** → STRAT 가 BERN 보다 **26.5% 나쁨**
+- hook_est 기반 `phase7_sift_paired.json`: **STRAT 16867 vs BERN 3968, diff −325%, n_better 37/100** → STRAT 가 BERN 보다 **325% 나쁨**
+- q_error 9.6 = `193 (true_card median) / 20 (plan_rows 상수)` 정확히 일치 — stratum LIMIT 상수의 수학적 귀결
+
+**즉시 철회 대상**: "Phase 7-1 2168× / Phase 7-2 409× 양대 anchor", "100/100 query win p<1e-18", "Phase 7 단일 최강 신호", "Pivot C 가 정상/small selectivity 양쪽에서 보완적으로 확인".
+
+**새 narrative**: "Phase 7 의 외적 확장은 D_target 재계산 부재로 극극소 sel 영역 (actual ≈ 0.0001) 으로 이동했으며, hook_est 기반 분석에서 KM20 stratification 은 이 fallback 영역에서 효과 없음. 이는 Phase 4 s=0.001 tie 패턴 + Phase 6 Step 4 s=0.001 동률과 일관. RQ2 본선의 유효 anchor 는 Phase 6 Step 4 s=0.500 +1.81% p=4.01e-05 **단일**로 축소."
 
 ### ⚠️ 긴급도 2 (중간보고서 v2 필수 수정 — 약 90 분 편집)
 
@@ -109,7 +119,9 @@ v4 §I 이 주장하는 "큰 3 단계 구조와 핵심 동기는 그대로 유�
 
 ## B. Phase 1~7 실험 심층 리뷰 (축 B) — 🚨 긴급 이슈 포함
 
-### B.1 🚨 치명적 발견: Phase 7 의 `q_error = 9.6` 은 stratum LIMIT 20 artifact 의심
+> **2026-04-15 10:50 KST 업데이트**: §B.1 의 "artifact 의심" 은 경험적으로 확정되었다. `phase7_{8m,sift}_strat.parquet` 의 `plan_rows` 열이 100/100 row 모두 정확히 20 (std=0) 임이 확인되었고, hook_est 기반 `phase7_*_paired.json` 에서 STRAT 가 BERN 대비 8M 에서 26.5%, sift 에서 325% 나쁘다는 완전 반전 결과를 얻었다. 상세는 `phase7_artifact_verification_20260415.md` 참조. 이하 §B.1 은 검증 전 원문이며, 검증 후 결론은 §0 긴급도 1 및 검증 문서에서 확인할 것.
+
+### B.1 🚨 치명적 발견: Phase 7 의 `q_error = 9.6` 은 stratum LIMIT 20 artifact (확정)
 
 **핵심 주장**: `phase7_8m_paired_qerror.json` 의 `strat_median = 9.6` 과 `phase7_sift_paired_qerror.json` 의 `strat_median = 9.48` 은 stratified sampling 의 estimator 품질이 아니라 *Aggregate → Append → [Subquery Scan × 20] plan tree 의 첫 Subquery Scan Plan Rows (= stratum LIMIT 값 19~20) 와 true_card (193/192) 의 비율 artifact* 일 가능성이 결정적이다.
 

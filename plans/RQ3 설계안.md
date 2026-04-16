@@ -160,6 +160,53 @@ Weight-based         └── H. Importance Sampling (비분할)
 
 ---
 
+## RQ1/RQ2와의 연결
+
+RQ3의 모든 방법은 RQ1/RQ2에서 발견한 문제를 해결하는 연장선:
+
+- **RQ1**: 밀도가 비균일하다 → uniform sampling이 나쁘다
+- **RQ2**: 밀도 비균일을 **파티션으로 교정** (KM20 층화)
+- **RQ3 파티션 방법 (A/C/E/F)**: KM20과 같은 교정을 사전 학습 없이 달성
+- **RQ3 적응형 (B/G)**: 쿼리 시점에 동적으로 교정
+- **RQ3 가중치 (H)**: 같은 문제를 **다른 메커니즘(가중치)으로 교정** — 밀도가 높은 영역을 "덜 세고" 낮은 영역을 "더 세는" 효과
+
+H(Importance Sampling)는 Control Variate 기법의 상위 개념이며, 층화와는 근본적으로 다른 분산 감소 경로. 둘 다 보여줘야 "밀도 비균일 교정"이라는 상위 프레이밍이 완성됨.
+
+## Exqutor Adaptive Sampling과의 관계
+
+Exqutor 논문의 기존 Adaptive Sampling은 "이전 쿼리 결과로 sample_size를 모멘텀 기반 조정"하는 feedback 기반 학습. 이는 우리 RQ3의 Online Adaptive 패러다임에 해당하나:
+
+1. Phase 7에서 Adaptive update path가 SIGSEGV 크래시 (design constraint #5)
+2. 크래시 회피(update_sample_size=off)해도 hook_est 기반 STRAT가 BERN보다 나쁜 negative finding
+3. Adaptive가 조정하는 건 sample_size(표본 크기)이지 sample_allocation(표본 배분)이 아님
+
+따라서 우리 RQ3는 "Exqutor Adaptive의 한계를 인식하고, sample_allocation 차원의 대안을 제시"하는 positioning.
+
+## 탈락 후보 상세
+
+| 후보 | 탈락 이유 |
+|------|----------|
+| I. Density-Inverse Pre-weighting | H(Importance)의 offline 변형. 구현이 거의 동일하므로 독립 항목 불필요 |
+| J. Query-Adaptive Projection | G(Distance-Shell)의 열등 버전. 쿼리 방향 1D 사영 < 유클리드 거리 전체 |
+| K. Mini-batch PCA + Projection | C(RandProj)의 변형. 약간의 사전 학습으로 사영 방향 최적화. C 실험 시 비교 1줄로 처리 |
+| Latin Hypercube Sampling | 고차원(96d+)에서 K^d 셀 폭발 → 차원 축소 필수 → C와 동치 |
+| Tree-based (VP/KD/Ball) | 구축 비용이 k-means와 비슷. KM20과 차별 없음 |
+| Balanced Sampling (Cube) | 이론적이나 구현 극난. 학부 캡스톤 범위 초과 |
+| Coreset Construction | 샘플링이 아닌 부분집합 선택 문제. RQ3 범위 밖 |
+| Multi-armed Bandit | 반복 쿼리 학습. 단일 쿼리 기준인 우리 세팅에 부적합 |
+| Optimal Transport | Wasserstein 기반. 이론적이나 구현 비현실적 |
+| Control Variate | H(Importance)의 특수 케이스. H에 통합 |
+
+## 방법 분류 교차표 (정보 시점 × 포착 방식)
+
+|  | 직접 분할 | 좌표 변환 | 거리 기반 | 가중치 조정 |
+|---|---|---|---|---|
+| **Offline** | F (MiniBatch) | C (RandProj), A (LSH), E (Hilbert) | — | — |
+| **Online** | — | — | G (DistShell), B (KDE) | H (Importance) |
+| **None** | RANDOM20 | — | — | BERNOULLI |
+
+빈 셀(Offline×거리, Offline×가중치, Online×분할, Online×변환)은 기존 방법의 변형이거나 논리적으로 다른 셀에 귀결됨을 확인 완료.
+
 ## 맹점 점검 완료 사항
 
 - 층화 프레임 갇힘 → H(가중치)로 커버

@@ -241,6 +241,16 @@ Exqutor 논문의 기존 Adaptive Sampling은 "이전 쿼리 결과로 sample_si
 
 빈 셀(Offline×거리, Offline×가중치, Online×분할, Online×변환)은 기존 방법의 변형이거나 논리적으로 다른 셀에 귀결됨을 확인 완료.
 
+## 핵심 구현 인사이트
+
+7가지 방법의 차이는 **stratum_id를 어떻게 할당하느냐**뿐이다. 측정 파이프라인(multiseed_paired, D_target numpy 계산, Exqutor 로그 파싱, paired Wilcoxon)은 RQ2에서 완성된 것을 그대로 재활용. 각 방법마다:
+
+1. Python으로 stratum_id 계산 (50~100줄)
+2. DB에 `UPDATE table SET stratum_id = 새값`
+3. 기존 파이프라인으로 측정
+
+H(Importance)만 예외 — hook_est 반환 공식을 가중 평균으로 수정해야 함. 나머지 6개는 stratum_id 할당 코드만 다르고 실험 코드는 동일.
+
 ## 맹점 점검 완료 사항
 
 - 층화 프레임 갇힘 → H(가중치)로 커버
@@ -249,3 +259,5 @@ Exqutor 논문의 기존 Adaptive Sampling은 "이전 쿼리 결과로 sample_si
 - 기대 효과 과대평가 → Hilbert/RandProj는 고차원 한계 가능, negative도 기여
 - Feedback 기반 → Exqutor Adaptive가 커버, Phase 7 negative로 제외 근거
 - 7가지 외 독립 방법 부재 확인 (I/J/K/LHS/Tree/Balanced/Coreset/MAB 전부 기존 7가지의 변형 또는 범위 밖)
+- 정보 이론(엔트로피 분할) → Neyman allocation(B)과 동치
+- 신호 처리(FFT/Wavelet 사영) → 벡터에 주파수 구조 없어 근거 없음. C의 열등 변형

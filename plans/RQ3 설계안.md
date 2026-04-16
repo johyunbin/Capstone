@@ -261,3 +261,10 @@ H(Importance)만 예외 — hook_est 반환 공식을 가중 평균으로 수정
 - 7가지 외 독립 방법 부재 확인 (I/J/K/LHS/Tree/Balanced/Coreset/MAB 전부 기존 7가지의 변형 또는 범위 밖)
 - 정보 이론(엔트로피 분할) → Neyman allocation(B)과 동치
 - 신호 처리(FFT/Wavelet 사영) → 벡터에 주파수 구조 없어 근거 없음. C의 열등 변형
+- Balanced Sampling (Cube Method) → Exqutor BERNOULLI/STRATIFIED 경로와 프레임워크 불일치. 표본 선택을 직접 지정해야 하므로 hook_est 로그 파싱 불가, 7-way 동일 조건 비교 불가
+- Random Voronoi (K개 랜덤 시드 최근접) → F(MiniBatch)의 learning_fraction=0% 케이스. F 실험에서 파라미터 변화로 커버
+- Random Partition Tree (계층적 랜덤 사영) → C(RandProj)의 hierarchical 변형. 메커니즘 원리 동일
+- Graph Partition (k-NN 그래프 컷) → 구축 비용 O(N·k·d)로 KM20 동급. RQ3 목적 불부합
+- Spectral Clustering → O(N²) 유사도 행렬 필요. 1M 규모 비현실적
+- Anchor-based Distance Profile → M차원 프로필에 A/C/E/F 중 하나 적용하므로 독립 방법 아님
+- Ensemble (다중 방법 투표) → LSH(A)가 정확히 이것 (p개 하이퍼플레인 조합)

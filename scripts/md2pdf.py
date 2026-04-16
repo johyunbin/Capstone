@@ -95,6 +95,14 @@ hr {
     color: #718096; font-size: 9.5pt; line-height: 1.6;
     margin-bottom: 24px;
 }
+/* 이미지 — 페이지 폭 넘지 않도록 + 중간 분할 방지 */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 14px auto;
+    page-break-inside: avoid;
+}
 /* 페이지 구분 */
 .page-break { page-break-before: always; }
 /* 페이지 시작 라인 통일: page-break 직후 요소의 상단 여백 제거 */

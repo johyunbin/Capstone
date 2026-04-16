@@ -2,7 +2,7 @@
 
 **작업자**: Claude (자율 실행)
 **시작**: 2026-04-17 00:25 KST
-**완료**: 2026-04-17 01:05 KST (약 40분, 당초 목표 08:00 대비 조기 완료)
+**완료**: 2026-04-17 01:18 KST (약 53분, 당초 목표 08:00 대비 조기 완료. PPT 제작이 추가됨)
 **사용자 상태**: 수면 중
 **목표**: 4/28 중간발표·중간보고서 제출물을 4/17 최신 분석(5-seed CI, Two-Level Decomposition, SIFT/8M 외적 타당성, RQ3 7-way 설계안)까지 반영한 v2로 격상
 **사용자 지시**: 시간 제한 해제, 출판 수준 xhigh 퀄리티
@@ -19,9 +19,12 @@
 | 3 | 보고서 PDF/DOCX 변환 + v1 archive + md2pdf 개선 | ✅ | 00:56 | 004770f |
 | 4+5 | 중간발표 v2 슬라이드 작성 + PDF/DOCX 변환 + v1 archive | ✅ | 01:01 | a830308 |
 | 6 | RQ3 §6 보강 + 크로스링크 | ✅ (통합) | — | (29fa440 + a830308에 반영) |
-| 7 | RUN_LOG 완성 + CLAUDE.md 갱신 | 🔄 | — | (본 commit) |
+| 7 | RUN_LOG 완성 + CLAUDE.md 갱신 | ✅ | 01:05 | b556e0d |
+| 8 | 중간발표 PPT 제작 (15 슬라이드, figure 5 + 표 5) | 🔄 | — | (본 commit 예정) |
 
 Phase 6는 계획상 별도 commit이었으나, Phase 2 보고서 작성 시점에 §6 W7 2문단 + 7행 RQ3 표, Phase 4 발표 Slide 13/15에 7-way 설계 narrative를 **전면 반영**하여 별도 commit 없이 통합 완료.
+
+Phase 8은 사용자 추가 요청으로 overnight 종료 후 이어서 수행. 동시에 판단 보류 2건(Phase 7 서술 · RQ3 §6 분량)을 사용자 전권 위임으로 **A안 유지** 결정, 발표자 분담을 **강재현 주 발표자 / 조현빈 Q&A 기술 백업**으로 확정.
 
 ---
 
@@ -153,7 +156,7 @@ S1 (0:15) + S2 (0:20) + S3 (0:35) + S4 (0:25) + S5 (0:50) + S6 (1:00) + S7 (0:50
 
 ## 산출물 리스트 (최종)
 
-**신규 생성 (12)**:
+**신규 생성 (14)**:
 1. `scripts/rq2_figures.py` — figure 4종 generator
 2. `experiments/figures/rq2_aware/figure_7_selectivity_gradient.png`
 3. `experiments/figures/rq2_aware/figure_8_cross_dataset_bar.png`
@@ -166,6 +169,8 @@ S1 (0:15) + S2 (0:20) + S3 (0:35) + S4 (0:25) + S5 (0:50) + S6 (1:00) + S7 (0:50
 10. `submission/속도는벡터_중간발표_20260417_0000.pdf`
 11. `submission/속도는벡터_중간발표_20260417_0000.docx`
 12. `records/weekly/overnight_20260417.md` (본 파일)
+13. `scripts/build_midterm_pptx.py` — 중간발표 PPT generator (python-pptx)
+14. `submission/속도는벡터_중간발표_20260417_0000.pptx` — 15 슬라이드 16:9 + figure 5 + 표 5 + speaker notes
 
 **수정**:
 - `scripts/md2pdf.py` (img CSS 추가)

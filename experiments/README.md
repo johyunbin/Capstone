@@ -111,5 +111,5 @@ cat cache/rq1/random20_control_summary.json | python3 -m json.tool
 ## 참조
 
 - Exqutor 논문: arXiv:2512.09695v2
-- 연구 재설계안: `plans/연구재설계안_20260415.md`
+- 연구 재설계안: `plans/연구재설계안_20260415_131400.md`
 - 통합 분석: `experiments/results/rq1_motivation/unified_random20_analysis.md`

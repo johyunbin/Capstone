@@ -36,9 +36,9 @@ Phase 8은 사용자 추가 요청으로 overnight 종료 후 이어서 수행. 
 - `experiments/results/RQ1_RQ2 실험 결과 정리.md` (291줄, 진실 소스)
 - `submission/속도는벡터_중간보고서.md` (v1, 226줄)
 - `submission/속도는벡터_중간발표.md` (v1, 331줄)
-- `plans/RQ3 설계안.md` (270줄)
+- `plans/RQ3설계안_20260416_213500.md` (270줄)
 - `experiments/results/rq2_aware/sift_1m_mid_summary.json` (수치 정합 확인)
-- `experiments/results/rq2_aware/8m_km20_s0500_5seed.json` (8M 5-seed mean +1.76% [+1.10, +2.39] 확정)
+- `experiments/results/rq2_aware/8m_km20_s0500_5seed.json` (8M 5-seed mean +1.76% — bootstrap CI [+1.10, +2.39] 는 JSON 내부 보조값, 보고서·발표 공식 CI 는 sample-std t-CI [+0.65, +2.86] 을 사용)
 - `experiments/results/rq2_aware/cluster_distribution.md` (HHI/CV 수치)
 - `experiments/results/rq2_aware/anomaly_analysis.md` (Anomaly 3건 설명)
 - `scripts/md2pdf.py` + `scripts/md2docx.py` (변환 파이프라인 검증)
@@ -49,7 +49,7 @@ Phase 8은 사용자 추가 요청으로 overnight 종료 후 이어서 수행. 
 
 **작업**:
 - `submission/archive/` 기존 v1 pdf/docx 4개에 `_v1_20260415` 접미사 추가 (이름 충돌 방지)
-- `records/weekly/overnight_20260417.md` 스캐폴드 생성
+- `records/weekly/overnight_2026-04-17.md` 스캐폴드 생성
 
 ### Phase 1 (figure 4장, 8분)
 
@@ -168,7 +168,7 @@ S1 (0:15) + S2 (0:20) + S3 (0:35) + S4 (0:25) + S5 (0:50) + S6 (1:00) + S7 (0:50
 9. `submission/속도는벡터_중간발표_20260417_0000.md`
 10. `submission/속도는벡터_중간발표_20260417_0000.pdf`
 11. `submission/속도는벡터_중간발표_20260417_0000.docx`
-12. `records/weekly/overnight_20260417.md` (본 파일)
+12. `records/weekly/overnight_2026-04-17.md` (본 파일)
 13. `scripts/build_midterm_pptx.py` — 중간발표 PPT generator (python-pptx)
 14. `submission/속도는벡터_중간발표_20260417_0000.pptx` — 15 슬라이드 16:9 + figure 5 + 표 5 + speaker notes
 

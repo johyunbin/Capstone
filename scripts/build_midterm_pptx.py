@@ -545,8 +545,12 @@ def build_presentation():
         [("→ ", {"size": 15}),
          ("본 연구 motivation 의 새 첫 줄", {"size": 15, "bold": True, "color": C_GREEN})],
     ]
-    add_bullet_list(slide, Inches(0.7), Inches(1.4), Inches(12), Inches(5.8),
-                    items, body_size=14)
+    add_bullet_list(slide, Inches(0.5), Inches(1.4), Inches(7.0), Inches(5.8),
+                    items, body_size=13)
+
+    # vector.c 스니펫 이미지 (오른쪽)
+    add_picture(slide, FIG_RQ1 / "slide6_vector_c_snippet.png",
+                Inches(7.7), Inches(1.5), width=Inches(5.5))
 
     set_notes(slide,
         "저희는 Python 재구현과 Exqutor 네이티브의 동치성을 검증하려는 과정에서 두 가지 design constraint 를 "

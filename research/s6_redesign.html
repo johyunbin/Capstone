@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>S6: Spatial Audio Research Overview — Redesign</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: #1a1a2e; padding: 40px; }
+  h1 { color: #3D7DDE; font-size: 20px; margin-bottom: 30px; text-align: center; }
+
+  .slide {
+    width: 960px; height: 540px; margin: 0 auto 50px;
+    border-radius: 6px; overflow: hidden; position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  /* ====== Version A: Hub-and-Spoke Flow ====== */
+  .v-a { background: #FAFBFD; }
+  .v-a .accent-top { height: 3px; background: linear-gradient(90deg, #0B1D6F, #13289F, #3D7DDE, #0689D8); }
+  .v-a .header { padding: 14px 36px 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .v-a .header h3 { font-size: 18px; color: #13289F; font-weight: 700; }
+  .v-a .header .sub { font-size: 10px; color: #5B718D; }
+
+  .v-a .hub {
+    position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #0B1D6F, #13289F);
+    border-radius: 30px; padding: 8px 28px;
+    color: #fff; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    z-index: 10;
+  }
+
+  .v-a .cards-row {
+    display: flex; gap: 10px; padding: 0 24px;
+    position: absolute; width: 100%;
+  }
+  .v-a .cards-row.top { top: 105px; }
+  .v-a .cards-row.bottom { top: 320px; }
+
+  .v-a .axis-card {
+    flex: 1; background: #fff; border-radius: 8px;
+    border: 1px solid #E7E6E2; padding: 12px;
+    position: relative; transition: all 0.2s;
+  }
+  .v-a .axis-card:hover { border-color: #3D7DDE; box-shadow: 0 2px 12px rgba(19,40,159,0.12); }
+  .v-a .axis-card .num-badge {
+    position: absolute; top: -8px; left: 12px;
+    background: #13289F; color: #fff; font-size: 9px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px;
+  }
+  .v-a .axis-card .title { font-size: 12px; font-weight: 700; color: #1A1A2E; margin: 8px 0 4px; }
+  .v-a .axis-card .metric {
+    font-size: 22px; font-weight: 800; color: #13289F; margin: 4px 0;
+  }
+  .v-a .axis-card .metric-label { font-size: 8px; color: #75787B; }
+  .v-a .axis-card .finding { font-size: 8px; color: #5B718D; line-height: 1.4; margin-top: 4px; }
+  .v-a .axis-card .journal { font-size: 7px; color: #3D7DDE; margin-top: 6px; font-weight: 600; }
+
+  .v-a .connector {
+    position: absolute; width: 1px; background: #E7E6E2; z-index: 5;
+  }
+
+  .v-a .eclipsa-strip {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(90deg, #0B1D6F, #13289F);
+    padding: 8px 36px; display: flex; gap: 20px;
+    font-size: 9px; color: rgba(255,255,255,0.9);
+  }
+  .v-a .eclipsa-strip .tag { color: #3D7DDE; font-weight: 700; }
+
+  /* ====== Version B: Timeline Flow ====== */
+  .v-b { background: #FAFBFD; }
+  .v-b .accent-top { height: 3px; background: linear-gradient(90deg, #0B1D6F, #13289F, #3D7DDE, #0689D8); }
+  .v-b .header { padding: 14px 36px 6px; }
+  .v-b .header h3 { font-size: 18px; color: #13289F; font-weight: 700; }
+  .v-b .header .sub { font-size: 10px; color: #5B718D; margin-top: 2px; }
+
+  .v-b .flow-area {
+    padding: 0 36px; margin-top: 10px;
+    position: relative;
+  }
+
+  /* Central flow line */
+  .v-b .flow-line {
+    position: absolute; top: 155px; left: 60px; right: 60px;
+    height: 3px; background: linear-gradient(90deg, #3D7DDE, #13289F, #3D7DDE);
+    z-index: 1;
+  }
+
+  .v-b .axes-grid {
+    display: flex; gap: 8px; position: relative; z-index: 2;
+  }
+
+  .v-b .axis-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+
+  .v-b .axis-top {
+    background: #fff; border-radius: 8px; border: 1px solid #E7E6E2;
+    padding: 10px; width: 100%; min-height: 130px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .v-b .axis-top .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .v-b .axis-top .ax-badge {
+    background: #13289F; color: #fff; font-size: 8px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px;
+  }
+  .v-b .axis-top .journal-tag { font-size: 7px; color: #3D7DDE; font-weight: 600; }
+  .v-b .axis-top .ax-title { font-size: 11px; font-weight: 700; color: #1A1A2E; margin-bottom: 4px; }
+  .v-b .axis-top .ax-desc { font-size: 8px; color: #5B718D; line-height: 1.5; }
+
+  .v-b .node {
+    width: 14px; height: 14px; border-radius: 50%; background: #13289F;
+    border: 3px solid #3D7DDE; margin: 8px 0; z-index: 3;
+  }
+
+  .v-b .axis-bottom {
+    background: linear-gradient(135deg, #F0F4F8, #fff);
+    border-radius: 8px; border: 1px solid #E7E6E2;
+    padding: 8px; width: 100%; text-align: center;
+    min-height: 100px;
+  }
+  .v-b .axis-bottom .big-num { font-size: 24px; font-weight: 800; color: #13289F; }
+  .v-b .axis-bottom .num-label { font-size: 7px; color: #75787B; margin-bottom: 4px; }
+  .v-b .axis-bottom .impl { font-size: 7px; color: #5B718D; line-height: 1.4; margin-top: 4px; }
+  .v-b .axis-bottom .impl strong { color: #13289F; }
+
+  .v-b .bottom-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: #13289F; padding: 8px 36px;
+    display: flex; justify-content: center; gap: 30px;
+    font-size: 9px; color: rgba(255,255,255,0.9);
+  }
+  .v-b .bottom-bar .tag { color: #3D7DDE; font-weight: 700; }
+
+  .label { text-align: center; color: #999; font-size: 13px; margin-bottom: 15px; }
+</style>
+</head>
+<body>
+
+<h1>S6: Spatial Audio 연구 체계도 — 리디자인 옵션</h1>
+
+<!-- ====== VERSION A: Hub-and-Spoke ====== -->
+<p class="label">Version A: Hub-and-Spoke (중심 허브에서 5개 축으로 확산)</p>
+<div class="slide v-a">
+  <div class="accent-top"></div>
+  <div class="header">
+    <h3>Part I. Spatial Audio 기술 역량</h3>
+    <span class="sub">5개 기술 축 연구 체계도 — 9편 SCI(E) 논문 기반</span>
+  </div>
+
+  <div class="hub">Spatial Audio Perception Research</div>
+
+  <!-- Top row: 3 cards -->
+  <div class="cards-row top">
+    <div style="width:24px"></div>
+    <div class="axis-card">
+      <div class="num-badge">축1</div>
+      <div class="title">시각 재현 방식</div>
+      <div class="metric">p<0.05</div>
+      <div class="metric-label">HMD에서 더 민감한 인식</div>
+      <div class="finding">같은 Spatial Audio라도 HMD vs 모니터에 따라 사용자 지각이 유의하게 달라짐</div>
+      <div class="journal">APAC 2022 · Applied Acoustics · IF 3.4</div>
+    </div>
+    <div class="axis-card">
+      <div class="num-badge">축2</div>
+      <div class="title">헤드폰 vs 스피커</div>
+      <div class="metric">2.2 dBA</div>
+      <div class="metric-label">50% 성가심 SPL 차이</div>
+      <div class="finding">스피커+HMD 조합이 실제 환경에 가장 근접하는 평가 결과</div>
+      <div class="journal">APAC 2019 · Applied Acoustics · IF 3.4</div>
+    </div>
+    <div class="axis-card">
+      <div class="num-badge">축3</div>
+      <div class="title">바이노럴-비주얼 상호작용</div>
+      <div class="metric">77%</div>
+      <div class="metric-label">HRTF 공간감 기여도</div>
+      <div class="finding">2×2 요인설계로 HRTF(77%) vs HMD(23%) 기여도 정량 분리</div>
+      <div class="journal">B&E 2019 ×2 · IF 7.4</div>
+    </div>
+    <div style="width:24px"></div>
+  </div>
+
+  <!-- Bottom row: 2 cards -->
+  <div class="cards-row bottom">
+    <div style="width:24px"></div>
+    <div style="flex:0.5"></div>
+    <div class="axis-card">
+      <div class="num-badge">축4</div>
+      <div class="title">시청각 정보의 지각 영향</div>
+      <div class="metric">76%</div>
+      <div class="metric-label">시각 → 만족도 기여</div>
+      <div class="finding">Audio 24% vs Visual 76% — Display+Audio 통합 설계 필수</div>
+      <div class="journal">B&E 2020 · IF 7.4</div>
+    </div>
+    <div class="axis-card">
+      <div class="num-badge">축5</div>
+      <div class="title">생태학적 타당성</div>
+      <div class="metric">VR ≈ In-situ</div>
+      <div class="metric-label">50명×10환경 검증</div>
+      <div class="finding">VR 실험실 결과 = 현장 결과, FOA 바이노럴의 높은 생태학적 타당성</div>
+      <div class="journal">SCS 2021 · IF 11.7</div>
+    </div>
+    <div style="flex:0.5"></div>
+    <div style="width:24px"></div>
+  </div>
+
+  <div class="eclipsa-strip">
+    <span><span class="tag">→ Eclipsa Audio</span> HRTF 개인화 (77%) + 바이노럴 렌더러 최적화</span>
+    <span><span class="tag">→ Display 시너지</span> A-V 통합 설계 (시각 76% 기여)</span>
+    <span><span class="tag">→ 품질 검증</span> VR 기반 평가 파이프라인 (생태학적 타당성 실증)</span>
+  </div>
+</div>
+
+<!-- ====== VERSION B: Timeline Flow ====== -->
+<p class="label">Version B: Timeline Flow (5개 축이 좌→우 흐름으로 연결)</p>
+<div class="slide v-b">
+  <div class="accent-top"></div>
+  <div class="header">
+    <h3>Part I. Spatial Audio 기술 역량</h3>
+    <div class="sub">5개 기술 축 연구 체계도 — 9편 SCI(E) 논문 기반</div>
+  </div>
+
+  <div class="flow-area">
+    <div class="flow-line"></div>
+
+    <div class="axes-grid">
+      <!-- Axis 1 -->
+      <div class="axis-col">
+        <div class="axis-top">
+          <div class="badge-row">
+            <span class="ax-badge">축1</span>
+            <span class="journal-tag">APAC'22 · IF 3.4</span>
+          </div>
+          <div class="ax-title">시각 재현 방식</div>
+          <div class="ax-desc">
+            HMD vs 모니터<br>
+            40명 × 8환경<br>
+            HMD에서 긍정·부정 요소 모두 더 민감하게 인식
+          </div>
+        </div>
+        <div class="node"></div>
+        <div class="axis-bottom">
+          <div class="big-num">p<0.05</div>
+          <div class="num-label">유의한 지각 차이</div>
+          <div class="impl"><strong>→ XR</strong> 디바이스 품질 평가 시 시각 조건 통제 필수</div>
+        </div>
+      </div>
+
+      <!-- Axis 2 -->
+      <div class="axis-col">
+        <div class="axis-top">
+          <div class="badge-row">
+            <span class="ax-badge">축2</span>
+            <span class="journal-tag">APAC'19 · IF 3.4</span>
+          </div>
+          <div class="ax-title">헤드폰 vs 스피커</div>
+          <div class="ax-desc">
+            4가지 재생 환경<br>
+            LAeq 40-65 dB<br>
+            허용한계 6%, 성가심 8% 차이
+          </div>
+        </div>
+        <div class="node"></div>
+        <div class="axis-bottom">
+          <div class="big-num">2.2 dBA</div>
+          <div class="num-label">50% 성가심 SPL 차이</div>
+          <div class="impl"><strong>→ Eclipsa</strong> 헤드폰/스피커 지각 차이 정량화</div>
+        </div>
+      </div>
+
+      <!-- Axis 3 -->
+      <div class="axis-col">
+        <div class="axis-top">
+          <div class="badge-row">
+            <span class="ax-badge">축3</span>
+            <span class="journal-tag">B&E'19 ×2 · IF 7.4</span>
+          </div>
+          <div class="ax-title">바이노럴-비주얼</div>
+          <div class="ax-desc">
+            2×2 HRTF×HMD<br>
+            40명 × 320 데이터<br>
+            HD-650 + VIVE Pro
+          </div>
+        </div>
+        <div class="node"></div>
+        <div class="axis-bottom">
+          <div class="big-num">77%</div>
+          <div class="num-label">HRTF 공간감 기여도</div>
+          <div class="impl"><strong>→ HRTF</strong> 개인화 = 렌더러 최적화 최우선</div>
+        </div>
+      </div>
+
+      <!-- Axis 4 -->
+      <div class="axis-col">
+        <div class="axis-top">
+          <div class="badge-row">
+            <span class="ax-badge">축4</span>
+            <span class="journal-tag">B&E'20 · IF 7.4</span>
+          </div>
+          <div class="ax-title">시청각 정보 영향</div>
+          <div class="ax-desc">
+            A-only / V-only / AV<br>
+            8개 도시 환경<br>
+            만족도 모델 R²=51%
+          </div>
+        </div>
+        <div class="node"></div>
+        <div class="axis-bottom">
+          <div class="big-num">76%</div>
+          <div class="num-label">시각 → 만족도 기여</div>
+          <div class="impl"><strong>→ Holo</strong> Display+Audio 통합 설계 근거</div>
+        </div>
+      </div>
+
+      <!-- Axis 5 -->
+      <div class="axis-col">
+        <div class="axis-top">
+          <div class="badge-row">
+            <span class="ax-badge">축5</span>
+            <span class="journal-tag">SCS'21 · IF 11.7</span>
+          </div>
+          <div class="ax-title">생태학적 타당성</div>
+          <div class="ax-desc">
+            50명 × 10환경<br>
+            ISO 12913-2 A/B/C<br>
+            VR vs In-situ 교차 검증
+          </div>
+        </div>
+        <div class="node"></div>
+        <div class="axis-bottom">
+          <div class="big-num" style="font-size:16px;">VR≈In-situ</div>
+          <div class="num-label">생태학적 타당성 확인</div>
+          <div class="impl"><strong>→ 검증</strong> VR 기반 품질 평가 파이프라인</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <span><span class="tag">→ Eclipsa Audio 렌더러 최적화</span></span>
+    <span><span class="tag">→ Holographic Displays 파트 시너지</span></span>
+    <span><span class="tag">→ VR 기반 품질 검증 파이프라인</span></span>
+  </div>
+</div>
+
+</body>
+</html>

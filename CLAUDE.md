@@ -49,32 +49,45 @@
 - **개인 파일** (.claude, guideline): rsync
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
-## 디렉토리 구조
+## 디렉토리 구조 (2026-04-27 재정비)
+
+루트는 **팀원 핵심 5개 + 도구·양식 2개 + 내부용 1개** 로 정리됨. 팀원 진입 가이드는 루트 `README.md` 참조.
 
 ```
 Capstone/
-├── CLAUDE.md              이 파일
-├── experiments/           실험 코드/결과/분석
-│   ├── config/            실험 파라미터
-│   ├── results/           RQ별 결과 (rq1_motivation, rq2_aware, rq3_agnostic)
-│   └── figures/           시각화
-├── research/
-│   ├── analysis/          시리즈 분석 (01)~(12) — 완료
-│   ├── papers/            원논문 PDF 69편
-│   └── summaries/         논문 총정리 82편 — 완료
-├── plans/                 연구 설계안/제안서/수행계획서
-├── records/
-│   ├── kakaotalk/         카카오톡 회의록
-│   └── weekly/            주간보고
-├── submission/            실제 제출물
-├── templates/             양식+샘플
-├── scripts/               md2pdf.py, md2docx.py
-└── guideline/             활성 5 + archive/ 보관 6 (각 auto.md + manual.md + .sh)
+├── README.md              팀원 진입점
+├── CLAUDE.md              이 파일 (Claude Code 컨텍스트)
+│
+├── submission/            ⭐ 우리 팀의 모든 공식 문서 — README 있음
+│   ├── _drafts/           ⭐ 팀 공유 최신본 + archive — README 있음
+│   │   ├── 속도는벡터_중간보고서_*.{docx,pdf}    4/28 마감 후보 (4/27 빌드, 17p)
+│   │   ├── 속도는벡터_중간발표_*.{docx,pdf,pptx}  발표 자료 (4/17 v2)
+│   │   ├── 팀원 온보딩_*.{md,pdf}                새 팀원 진입 자료
+│   │   └── archive/       이전 버전 모음
+│   └── 제출완료/          외부에 보낸 자료 (학교 공식 + 멘토 자문)
+│
+├── experiments/           ⭐ 실험 — README 있음
+│   ├── code/rq1/          서버 실험 스크립트
+│   ├── code/local_analysis/  로컬 분석 스크립트
+│   ├── results/rq1_motivation, rq2_aware/
+│   ├── figures/           시각화
+│   └── config/            파라미터
+│
+├── plans/                 연구 설계안 (RQ3설계안 + 재설계안 + archive)
+├── reference/              참고 자료 (papers 69편 + summaries 82편 + analysis)
+├── templates/             캡스톤 학교 양식 샘플
+│
+└── _internal/             ⛔ 조현빈 개인 작업 (팀원 무시 OK)
+    ├── records/           회의록 (kakaotalk + weekly)
+    ├── scripts/           문서 빌드 도구 (md2pdf, _build_docx_v0 등)
+    ├── guideline/         Claude Code 자동화 지침 (활성 5 + archive 6)
+    ├── learning/          학습 자료
+    └── session_state.json 세션 상태
 ```
 
 ## 지침 시스템
 
-guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md + .sh).
+`_internal/guideline/` 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md + .sh).
 
 | 키워드 | 지침 | 용도 |
 |--------|------|------|
@@ -84,9 +97,9 @@ guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md
 | "미팅" | 04_미팅지침 | 카톡 회의록 + 노션 업데이트 |
 | "발표" | 05_발표지침 | PPT/포스터/슬라이드 |
 
-보관 (guideline/archive/): 00점검→skill, 01논문분석(완료), 05주간보고→skill, 08설계(완료), 09학습(완료), 10CC활용(완료)
+보관 (`_internal/guideline/archive/`): 00점검→skill, 01논문분석(완료), 05주간보고→skill, 08설계(완료), 09학습(완료), 10CC활용(완료)
 
-**실행**: `{키워드}` (자동) / `{키워드} 수동` (Phase별 정지) / `./guideline/NN_*_실행.sh`
+**실행**: `{키워드}` (자동) / `{키워드} 수동` (Phase별 정지) / `./_internal/guideline/NN_*_실행.sh`
 **수동 모드**: Phase 완료 → 정지 → `/clear` → "다음 phase 이어가자"로 재개. 절대 자동 진행 금지.
 
 ## 핵심 일정 (2026-1학기)
@@ -128,8 +141,8 @@ guideline/ 폴더에 활성 지침 5개, 각 3파일 세트 (auto.md + manual.md
 | `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구설계안_20260403_162818.md` |
 | `records/kakaotalk/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
 | `records/weekly/` | `주간보고_YYYY-MM-DD.md` | `주간보고_2026-03-28.md` |
-| `research/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |
-| `research/summaries/` | `[N] Title Case 논문제목 총정리.ext` | `[13] pgvector Open-Source ... 총정리.md` |
+| `reference/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |
+| `reference/summaries/` | `[N] Title Case 논문제목 총정리.ext` | `[13] pgvector Open-Source ... 총정리.md` |
 | `submission/` | `팀명_문서명.ext` | `속도는벡터_연구제안서.docx` |
 
 - `_` 용도: 이름↔날짜, 날짜↔시간, 팀명↔문서명 등 **논리적 경계**

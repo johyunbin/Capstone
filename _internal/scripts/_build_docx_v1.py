@@ -114,6 +114,16 @@ def add_page_break(doc):
     p.add_run().add_break(WD_BREAK.PAGE)
 
 
+def set_table_widths(t, widths_cm):
+    """python-docx 의 columns[i].width 만으로는 Word 가 자동 layout 으로 무시할 수 있어
+    모든 row 의 cell width 까지 명시해야 적용된다."""
+    for col, w in zip(t.columns, widths_cm):
+        col.width = Cm(w)
+    for row in t.rows:
+        for cell, w in zip(row.cells, widths_cm):
+            cell.width = Cm(w)
+
+
 def add_figure(doc, path, width_inches=5.5, caption=None):
     if not os.path.exists(path):
         add_p(doc, f"[그림 누락: {path}]", size=9, align=WD_ALIGN_PARAGRAPH.CENTER)
@@ -228,6 +238,9 @@ fill_cell(t.rows[3].cells[0], "팀원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11
 fill_cell(t.rows[3].cells[1], "이동욱", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t.rows[4].cells[0], "팀원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t.rows[4].cells[1], "조현빈", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
+# 모든 row height 0.85cm (헤더 ↔ 데이터 row spacing 확보, 사용자 "팀장 박세은이 회색박스와 너무 가까이" 해소)
+for row in t.rows:
+    row.height = Cm(0.85)
 
 doc.add_paragraph()
 
@@ -238,6 +251,11 @@ fill_cell(t2.rows[0].cells[0], "지도교수", align=WD_ALIGN_PARAGRAPH.CENTER, 
 fill_cell(t2.rows[0].cells[1], "박광현 교수님", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t2.rows[1].cells[0], "지도 연구원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t2.rows[1].cells[1], "임채림 석사", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
+for row in t2.rows:
+    row.height = Cm(0.85)
+
+# 지도교수 표 ↔ "2026 년 4 월" 사이 빈 단락 추가 (사용자: 팀원/지도교수 사이 spacing 과 동일하게)
+doc.add_paragraph()
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -267,9 +285,14 @@ contents = [
     ("4.  현재 진행 상황", 1),
     ("5.  일정 및 역할 배분", 1),
 ]
-for text, lv in contents:
+for i, (text, lv) in enumerate(contents):
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(11 if lv == 1 else 7)
+    # Ⅳ. 다음 4. 사이 spacing 을 lv=1 → lv=2 의 spacing 과 일치 (사용자 명시)
+    next_lv = contents[i + 1][1] if i + 1 < len(contents) else None
+    if lv == 2 and next_lv == 1:
+        p.paragraph_format.space_after = Pt(14)
+    else:
+        p.paragraph_format.space_after = Pt(11 if lv == 1 else 7)
     add_run(p, text, size=14 if lv == 1 else 12, bold=(lv == 1))
 
 # ═════════════════════════════════════════════════
@@ -416,6 +439,7 @@ add_mixed_p(doc, [
 
 t1 = doc.add_table(rows=7, cols=6)
 t1.style = "Light Grid Accent 1"
+t1.autofit = False
 hdrs = ["Selectivity", "SYSTEM median", "BERNOULLI median", "개선율", "p-value", "승리 (SYS<BERN)"]
 for i, h in enumerate(hdrs):
     fill_cell(t1.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
@@ -430,6 +454,7 @@ rows = [
 for ri, row in enumerate(rows, start=1):
     for ci, val in enumerate(row):
         fill_cell(t1.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER)
+set_table_widths(t1, [2.5, 2.7, 2.7, 1.8, 2.0, 4.3])
 
 add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교 (DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
@@ -461,6 +486,7 @@ add_mixed_p(doc, [
 
 t2 = doc.add_table(rows=4, cols=4)
 t2.style = "Light Grid Accent 1"
+t2.autofit = False
 hdrs2 = ["데이터셋", "s = 0.500", "s = 0.050", "s = 0.010"]
 for i, h in enumerate(hdrs2):
     fill_cell(t2.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
@@ -472,6 +498,8 @@ rows2 = [
 for ri, row in enumerate(rows2, start=1):
     for ci, val in enumerate(row):
         fill_cell(t2.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER)
+# 데이터셋(좁게) + 3 selectivity 컬럼(넓게) — 두 줄 wrap 회피
+set_table_widths(t2, [2.5, 4.5, 4.5, 4.5])
 
 add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간 (native vector.c 측정)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
@@ -526,9 +554,7 @@ add_mixed_p(doc, [
 
 t_rq3 = doc.add_table(rows=8, cols=3)
 t_rq3.style = "Light Grid Accent 1"
-t_rq3.columns[0].width = Cm(3.5)
-t_rq3.columns[1].width = Cm(4.0)
-t_rq3.columns[2].width = Cm(8.5)
+t_rq3.autofit = False
 hdrs_rq3 = ["패러다임", "이름", "핵심 아이디어"]
 for i, h in enumerate(hdrs_rq3):
     fill_cell(t_rq3.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
@@ -544,6 +570,8 @@ rq3_rows = [
 for ri, row in enumerate(rq3_rows, start=1):
     for ci, val in enumerate(row):
         fill_cell(t_rq3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci != 2 else WD_ALIGN_PARAGRAPH.LEFT)
+# 패러다임(좁게) · 이름(중간) · 핵심 아이디어(넓게) — 사용자 명시
+set_table_widths(t_rq3, [4.5, 5.0, 6.5])
 
 add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
@@ -580,8 +608,7 @@ add_heading_custom(doc, "5.  일정 및 역할 배분", level=1, page_break_befo
 
 t3 = doc.add_table(rows=8, cols=2)
 t3.style = "Light Grid Accent 1"
-t3.columns[0].width = Cm(3.5)
-t3.columns[1].width = Cm(12.5)
+t3.autofit = False
 for i, h in enumerate(["주차 / 기간", "핵심 작업"]):
     fill_cell(t3.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 sched = [
@@ -596,6 +623,7 @@ sched = [
 for ri, row in enumerate(sched, start=1):
     for ci, val in enumerate(row):
         fill_cell(t3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
+set_table_widths(t3, [4.8, 11.2])
 
 add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
@@ -604,8 +632,7 @@ add_p(doc, "")
 
 t4 = doc.add_table(rows=5, cols=2)
 t4.style = "Light Grid Accent 1"
-t4.columns[0].width = Cm(3.0)
-t4.columns[1].width = Cm(13.0)
+t4.autofit = False
 for i, h in enumerate(["팀원", "주요 역할"]):
     fill_cell(t4.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 roles = [
@@ -617,6 +644,7 @@ roles = [
 for ri, row in enumerate(roles, start=1):
     for ci, val in enumerate(row):
         fill_cell(t4.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
+set_table_widths(t4, [3.5, 12.5])
 
 add_p(doc, "표 5. 팀원별 역할 배분",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)

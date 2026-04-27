@@ -47,7 +47,7 @@ def force_kr_font(run, font_name: str):
 def add_text(slide, x, y, w, h, text, *,
              size=14, bold=False, color: Optional[RGBColor] = None,
              align=PP_ALIGN.LEFT, font="Apple SD Gothic Neo",
-             anchor=MSO_ANCHOR.TOP, line_spacing=1.2):
+             anchor=MSO_ANCHOR.MIDDLE, line_spacing=1.2):
     """텍스트 박스 추가 — 단일 paragraph."""
     box = slide.shapes.add_textbox(x, y, w, h)
     tf = box.text_frame

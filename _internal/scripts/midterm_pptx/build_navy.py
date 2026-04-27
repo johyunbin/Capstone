@@ -22,20 +22,20 @@ def content_header(slide, title, subtitle=None):
     set_bg(slide, TH.bg_light)
     # 상단 얇은 컬러 바
     add_rect(slide, Inches(0), Inches(0), SLIDE_W, Pt(5), TH.primary)
-    # 좌측 vertical bar (제목·부제 영역의 왼쪽 align 라인) — 위/아래 정렬 문제 해결
-    add_rect(slide, Inches(0.4), Inches(0.30), Pt(3), Inches(0.85), TH.primary)
-    # 제목 (vertical anchor middle 로 박스 가운데 정렬)
-    add_text(slide, Inches(0.6), Inches(0.20), Inches(11.5), Inches(0.55),
+    # 좌측 vertical bar — 제목 상단 ↔ 부제 하단 = bar 양 끝 (사용자 명시)
+    # bar y_start = 0.25 (제목 y), y_end = 1.10 (부제 y_end). height = 0.85
+    add_rect(slide, Inches(0.4), Inches(0.25), Pt(3), Inches(0.85), TH.primary)
+    # 제목 — 박스 시작 y = bar y, height = 0.50
+    add_text(slide, Inches(0.6), Inches(0.25), Inches(11.5), Inches(0.50),
              title, size=22, bold=True, color=TH.primary, font=TH.font_main,
              anchor=MSO_ANCHOR.MIDDLE)
-    # 부제
+    # 부제 — 박스 시작 y = 0.75, height = 0.35 → y_end = 1.10 (bar 와 일치)
     if subtitle:
-        add_text(slide, Inches(0.6), Inches(0.78), Inches(12.0), Inches(0.35),
+        add_text(slide, Inches(0.6), Inches(0.75), Inches(12.0), Inches(0.35),
                  subtitle, size=11, color=TH.text_dim, font=TH.font_main,
                  anchor=MSO_ANCHOR.MIDDLE)
-    # 헤더 하단 분리선 — y=1.25 → 1.20 (제목/부제와 0.07 spacing 확보)
+    # 헤더 하단 분리선 — bar 끝 + 0.10 inch 아래
     add_rect(slide, Inches(0.6), Inches(1.20), Inches(12.1), Pt(1), TH.border)
-    # 분리선 ↔ 본문 spacing 0.20 inch — 본문 함수는 y=1.45 부터 시작
 
 
 # ─────────────────────────────────────────

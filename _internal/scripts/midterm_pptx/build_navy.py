@@ -846,7 +846,7 @@ def s15_conclusion(prs):
                  Inches(0.55), f["metric"], size=22, bold=True,
                  color=TH.primary, align=PP_ALIGN.CENTER, font=TH.font_main)
         add_text(s, x + Inches(0.2), y + Inches(2.25), Inches(2.55),
-                 Inches(0.4), f["metric_label"], size=8, color=TH.text_dim,
+                 Inches(0.45), f["metric_label"], size=9, color=TH.text_dim,
                  align=PP_ALIGN.CENTER, font=TH.font_main, line_spacing=1.3)
         # 디테일
         add_text(s, x + Inches(0.2), y + Inches(2.85), Inches(2.6),

@@ -482,7 +482,7 @@ add_mixed_p(doc, [
 ])
 
 add_figure(doc, f"{FIG_DIR}/rq1_motivation/figure_2_phase6_box.png", width_inches=5.6,
-           caption="그림 4.  Phase 6 Step 4 — BERNOULLI vs STRATIFIED (KM20) 100 query × 6 selectivity boxplot (DEEP 1M, native vector.c 측정)")
+           caption="그림 4.  Phase 6 Step 4 — BERNOULLI vs STRATIFIED (KM20) 100 query × 6 selectivity boxplot (DEEP 1M, native vector.c 측정, y 축 log scale)")
 
 add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_8_cross_dataset_bar.png", width_inches=5.6,
            caption="그림 5.  외적 타당성 — DEEP 1M / DEEP 8M / SIFT 1.5M 의 KM20 s = 0.500 효과 (5-seed 95 % CI)")
@@ -528,17 +528,17 @@ add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
 
 t_rq3 = doc.add_table(rows=8, cols=4)
 t_rq3.style = "Light Grid Accent 1"
-hdrs_rq3 = ["패러다임", "번호", "방법 이름", "핵심 아이디어"]
+hdrs_rq3 = ["패러다임", "방법 ID", "이름", "핵심 아이디어"]
 for i, h in enumerate(hdrs_rq3):
     fill_cell(t_rq3.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 rq3_rows = [
-    ["Offline Partition",     "1", "LSH Random Hyperplane",  "랜덤 하이퍼플레인으로 K = 20 분할"],
-    ["Offline Partition",     "2", "Random Projection",      "Johnson-Lindenstrauss lemma 기반 저차원 사영"],
-    ["Offline Partition",     "3", "Hilbert Curve",          "공간 데이터베이스의 space-filling 을 벡터 영역에 적용"],
-    ["Offline Partition",     "4", "Mini-batch K-means",     "1 ~ 5 % 데이터만으로 근사 학습"],
-    ["Online Query-Adaptive", "5", "Distance-Shell",         "쿼리 벡터 중심의 동심원 stratification"],
-    ["Online Query-Adaptive", "6", "KDE-pilot (Neyman)",     "Pilot sample 로 stratum size 의 최적 배분 추정"],
-    ["Weight-based",          "7", "Importance Sampling",    "파티션 없이 가중치만으로 분산 축소"],
+    ["Offline Partition",     "(A)", "LSH Random Hyperplane",  "랜덤 하이퍼플레인으로 K = 20 분할"],
+    ["Offline Partition",     "(C)", "Random Projection",      "Johnson-Lindenstrauss lemma 기반 저차원 사영"],
+    ["Offline Partition",     "(E)", "Hilbert Curve",          "공간 데이터베이스의 space-filling 을 벡터 영역에 적용"],
+    ["Offline Partition",     "(F)", "Mini-batch K-means",     "1 ~ 5 % 데이터만으로 근사 학습"],
+    ["Online Query-Adaptive", "(G)", "Distance-Shell",         "쿼리 벡터 중심의 동심원 stratification"],
+    ["Online Query-Adaptive", "(B)", "KDE-pilot (Neyman)",     "Pilot sample 로 stratum size 의 최적 배분 추정"],
+    ["Weight-based",          "(H)", "Importance Sampling",    "파티션 없이 가중치만으로 분산 축소"],
 ]
 for ri, row in enumerate(rq3_rows, start=1):
     for ci, val in enumerate(row):
@@ -618,33 +618,6 @@ add_p(doc, "")
 add_mixed_p(doc, [
     ("중간발표 이후의 5 월은 RQ3 의 일곱 가지 sampling 방법을 동일한 측정 파이프라인에서 비교하는 작업에 집중하며, 6 월에는 최종발표·전시회·최종보고서 작성을 마무리한다.", {})
 ])
-
-# ═════════════════════════════════════════════════
-# 6. 참고문헌
-# ═════════════════════════════════════════════════
-add_heading_custom(doc, "6.  참고문헌", level=1, page_break_before=True)
-
-references = [
-    ("[1] ", "Han, et al. (2024). ", "Exqutor: Extended Query Optimizer for Vector-augmented Analytical Queries. ", "arXiv:2512.09695v2."),
-    ("[2] ", "Cohen, J. (1988). ", "Statistical Power Analysis for the Behavioral Sciences (2nd ed.). ", "Lawrence Erlbaum Associates."),
-    ("[3] ", "Horvitz, D. G., & Thompson, D. J. (1952). ", "A Generalization of Sampling Without Replacement from a Finite Universe. ", "Journal of the American Statistical Association, 47(260), 663–685."),
-    ("[4] ", "Neyman, J. (1934). ", "On the Two Different Aspects of the Representative Method: The Method of Stratified Sampling and the Method of Purposive Selection. ", "Journal of the Royal Statistical Society, 97(4), 558–625."),
-    ("[5] ", "Wilcoxon, F. (1945). ", "Individual Comparisons by Ranking Methods. ", "Biometrics Bulletin, 1(6), 80–83."),
-    ("[6] ", "Indyk, P., & Motwani, R. (1998). ", "Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality. ", "Proceedings of the 30th Annual ACM Symposium on Theory of Computing (STOC), 604–613."),
-    ("[7] ", "Johnson, W. B., & Lindenstrauss, J. (1984). ", "Extensions of Lipschitz Mappings into a Hilbert Space. ", "Contemporary Mathematics, 26, 189–206."),
-    ("[8] ", "Acharya, S., Gibbons, P. B., Poosala, V., & Ramaswamy, S. (1999). ", "Join Synopses for Approximate Query Answering. ", "ACM SIGMOD Record, 28(2), 275–286."),
-]
-for prefix, author, title, source in references:
-    p = doc.add_paragraph()
-    pf = p.paragraph_format
-    pf.space_after = Pt(6)
-    pf.line_spacing = 1.4
-    pf.left_indent = Cm(0.8)
-    pf.first_line_indent = Cm(-0.8)
-    add_run(p, prefix, size=10, bold=True)
-    add_run(p, author, size=10)
-    add_run(p, title, size=10, italic=True)
-    add_run(p, source, size=10)
 
 # ═════════════════════════════════════════════════
 add_page_numbers(doc)

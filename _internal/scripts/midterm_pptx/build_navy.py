@@ -12,7 +12,7 @@ from common import (
 import content as C
 from theme import NAVY as TH
 
-TOTAL = 16
+TOTAL = 17
 
 
 # ─────────────────────────────────────────
@@ -369,12 +369,12 @@ def s8_rq2_bernoulli(prs):
     n_rows = len(rows) + 1
     n_cols = len(headers)
     table_x, table_y = Inches(0.6), Inches(1.55)
-    # 표 더 컴팩트하게 (행 높이 줄임)
-    table_w, table_h = Inches(8.0), Inches(0.32 * n_rows + 0.2)
+    # 표 (좌측 6.8 inch) + figure (우측 5.4 inch) 분할 layout
+    table_w, table_h = Inches(6.8), Inches(0.36 * n_rows + 0.2)
     tbl_shape = s.shapes.add_table(n_rows, n_cols, table_x, table_y, table_w, table_h)
     tbl = tbl_shape.table
 
-    col_widths = [1.0, 1.4, 1.4, 1.0, 1.6, 1.6]
+    col_widths = [0.85, 1.2, 1.2, 0.85, 1.35, 1.35]
     for i, w in enumerate(col_widths):
         tbl.columns[i].width = Inches(w)
 
@@ -404,25 +404,24 @@ def s8_rq2_bernoulli(prs):
             run.font.bold = (c == 5 and is_sig) or (c == 0)
             run.font.color.rgb = TH.text_white if (c == 5 and is_sig) else TH.text
 
-    # 우측: takeaways (작게)
-    add_text(s, Inches(8.85), Inches(1.55), Inches(4.0), Inches(0.35),
-             "Takeaways", size=11, bold=True, color=TH.primary, font=TH.font_main)
-    add_round_rect(s, Inches(8.85), Inches(1.9), Inches(3.95), Inches(2.0),
-                   TH.card, border=TH.border)
-    tf = add_text(s, Inches(9.0), Inches(2.0), Inches(3.7), Inches(0.4),
-                  "①  " + C.S8_RQ2_BERNOULLI["takeaways"][0],
-                  size=9, color=TH.text, font=TH.font_main, line_spacing=1.4)
-    for i, t in enumerate(C.S8_RQ2_BERNOULLI["takeaways"][1:], start=2):
-        prefix = "②" if i == 2 else "③"
-        add_paragraph(tf, f"{prefix}  {t}", size=9, color=TH.text,
-                      font=TH.font_main, space_after=5)
-
-    # 하단: figure (phase4 scatter 4 panel) — 비율 3.69, max 12.1×3.4
-    # 표 영역 축소 (행간 줄임)
-    add_figure(s, C.FIGURES["phase4_scatter"], Inches(0.6), Inches(4.5),
-               Inches(12.1), Inches(2.3),
+    # 우측: figure (phase4 scatter 2x2 grid) — 새 비율 1.18, max 5.4×4.6
+    add_figure(s, C.FIGURES["phase4_scatter"], Inches(7.5), Inches(1.55),
+               Inches(5.3), Inches(4.5),
                caption=C.FIGURE_CAPTIONS["phase4_scatter"],
                caption_color=TH.text_dim, font=TH.font_main)
+
+    # 하단: takeaways (왼쪽 표 아래)
+    add_text(s, Inches(0.6), Inches(4.50), Inches(6.9), Inches(0.32),
+             "Takeaways", size=11, bold=True, color=TH.primary, font=TH.font_main)
+    add_round_rect(s, Inches(0.6), Inches(4.85), Inches(6.85), Inches(1.85),
+                   TH.card, border=TH.border)
+    tf = add_text(s, Inches(0.78), Inches(4.95), Inches(6.65), Inches(0.4),
+                  "①  " + C.S8_RQ2_BERNOULLI["takeaways"][0],
+                  size=10, color=TH.text, font=TH.font_main, line_spacing=1.4)
+    for i, t in enumerate(C.S8_RQ2_BERNOULLI["takeaways"][1:], start=2):
+        prefix = "②" if i == 2 else "③"
+        add_paragraph(tf, f"{prefix}  {t}", size=10, color=TH.text,
+                      font=TH.font_main, space_after=6)
 
 
 # ─────────────────────────────────────────
@@ -760,51 +759,111 @@ def s13_plan(prs):
 # S14. Roles
 # ─────────────────────────────────────────
 def s14_roles(prs):
+    """4-step 카드 형태 (Portfolio About Me 변형) — 각자 핵심 산출물 강조."""
     s = blank_slide(prs)
     content_header(s, C.S14_ROLES["title"])
     slide_number(s, 15, TOTAL, TH.text_dim)
 
-    rows = C.S14_ROLES["rows"]
-    n_rows = len(rows) + 1
-    tbl_shape = s.shapes.add_table(n_rows, 3, Inches(0.6), Inches(1.65),
-                                   Inches(12.1), Inches(0.7 * n_rows))
-    tbl = tbl_shape.table
-    widths = [1.5, 1.8, 8.8]
-    for i, w in enumerate(widths):
-        tbl.columns[i].width = Inches(w)
-
-    for j, h in enumerate(["이름", "역할", "담당"]):
-        cell = tbl.cell(0, j)
-        cell.fill.solid(); cell.fill.fore_color.rgb = TH.primary
-        tf = cell.text_frame; tf.clear()
-        p = tf.paragraphs[0]; p.alignment = PP_ALIGN.LEFT
-        run = p.add_run(); run.text = h
-        run.font.name = TH.font_main; run.font.size = Pt(12)
-        run.font.bold = True; run.font.color.rgb = TH.text_white
-
-    for r, row in enumerate(rows, start=1):
-        for c, v in enumerate(row):
-            cell = tbl.cell(r, c)
-            cell.fill.solid()
-            cell.fill.fore_color.rgb = TH.card if r % 2 else TH.bg_light
-            tf = cell.text_frame; tf.clear()
-            p = tf.paragraphs[0]; p.alignment = PP_ALIGN.LEFT
-            run = p.add_run(); run.text = v
-            run.font.name = TH.font_main; run.font.size = Pt(11)
-            run.font.bold = (c <= 1)
-            run.font.color.rgb = TH.text
+    members = C.S14_ROLES["members"]
+    for i, m in enumerate(members):
+        x = Inches(0.6 + i * 3.05)
+        y = Inches(1.6)
+        # 카드
+        add_round_rect(s, x, y, Inches(2.95), Inches(4.4),
+                       TH.card, border=TH.border)
+        # 상단 컬러 바
+        add_rect(s, x, y, Inches(2.95), Inches(0.5), TH.primary)
+        # 번호 배지 (좌상단 흰색 원)
+        add_oval(s, x + Inches(0.15), y + Inches(0.13), Inches(0.27),
+                 Inches(0.27), TH.text_white)
+        add_text(s, x + Inches(0.15), y + Inches(0.13), Inches(0.27),
+                 Inches(0.27), str(i+1), size=11, bold=True, color=TH.primary,
+                 align=PP_ALIGN.CENTER, font=TH.font_main)
+        # 역할 (상단 바 안)
+        add_text(s, x + Inches(0.55), y + Inches(0.10), Inches(2.3),
+                 Inches(0.32), m["role"], size=12, bold=True,
+                 color=TH.text_white, font=TH.font_main)
+        # 이름 (큰 글씨)
+        add_text(s, x + Inches(0.2), y + Inches(0.65), Inches(2.6),
+                 Inches(0.55), m["name"], size=22, bold=True,
+                 color=TH.primary, font=TH.font_main)
+        # 분리선
+        add_rect(s, x + Inches(0.2), y + Inches(1.30), Inches(1.2), Pt(2),
+                 TH.accent)
+        # 담당
+        add_text(s, x + Inches(0.2), y + Inches(1.45), Inches(2.6),
+                 Inches(1.55), m["duty"], size=10, color=TH.text,
+                 font=TH.font_main, line_spacing=1.4)
+        # Highlight 라벨
+        add_text(s, x + Inches(0.2), y + Inches(3.15), Inches(2.6),
+                 Inches(0.3), "HIGHLIGHT", size=8, bold=True,
+                 color=TH.accent, font=TH.font_main)
+        # Highlight 박스
+        add_round_rect(s, x + Inches(0.2), y + Inches(3.45), Inches(2.55),
+                       Inches(0.85), TH.bg_light, border=TH.accent,
+                       border_width=0.75)
+        add_text(s, x + Inches(0.3), y + Inches(3.50), Inches(2.4),
+                 Inches(0.75), m["highlight"], size=10, bold=True,
+                 color=TH.text, font=TH.font_main, line_spacing=1.35)
 
     # 공유 원칙
-    add_round_rect(s, Inches(0.6), Inches(6.0), Inches(12.1), Inches(0.55),
+    add_round_rect(s, Inches(0.6), Inches(6.15), Inches(12.1), Inches(0.55),
                    TH.bg_dark)
-    add_text(s, Inches(0.85), Inches(6.05), Inches(11.5), Inches(0.45),
+    add_text(s, Inches(0.85), Inches(6.20), Inches(11.5), Inches(0.45),
              "▣  " + C.S14_ROLES["shared"],
+             size=10, bold=True, color=TH.accent,
+             anchor=MSO_ANCHOR.MIDDLE, font=TH.font_main)
+
+
+# ─────────────────────────────────────────
+# S16 (신규) — Conclusion (4 핵심 발견)
+# ─────────────────────────────────────────
+def s15_conclusion(prs):
+    s = blank_slide(prs)
+    content_header(s, C.S15_CONCLUSION["title"], C.S15_CONCLUSION["subtitle"])
+    slide_number(s, 16, TOTAL, TH.text_dim)
+
+    findings = C.S15_CONCLUSION["findings"]
+    for i, f in enumerate(findings):
+        x = Inches(0.6 + i * 3.05)
+        y = Inches(1.55)
+        add_round_rect(s, x, y, Inches(2.95), Inches(4.5),
+                       TH.card, border=TH.border)
+        # 상단 컬러 바
+        add_rect(s, x, y, Inches(2.95), Inches(0.55), TH.primary)
+        add_text(s, x + Inches(0.2), y + Inches(0.10), Inches(2.6),
+                 Inches(0.4), f["tag"], size=14, bold=True,
+                 color=TH.text_white, font=TH.font_main)
+        # 헤드라인
+        add_text(s, x + Inches(0.2), y + Inches(0.7), Inches(2.6),
+                 Inches(0.85), f["headline"], size=12, bold=True,
+                 color=TH.text, font=TH.font_main, line_spacing=1.3)
+        # 큰 메트릭 (강조 박스)
+        add_round_rect(s, x + Inches(0.2), y + Inches(1.65),
+                       Inches(2.55), Inches(1.05), TH.bg_light,
+                       border=TH.accent, border_width=1.5)
+        add_text(s, x + Inches(0.2), y + Inches(1.70), Inches(2.55),
+                 Inches(0.55), f["metric"], size=22, bold=True,
+                 color=TH.primary, align=PP_ALIGN.CENTER, font=TH.font_main)
+        add_text(s, x + Inches(0.2), y + Inches(2.25), Inches(2.55),
+                 Inches(0.4), f["metric_label"], size=8, color=TH.text_dim,
+                 align=PP_ALIGN.CENTER, font=TH.font_main, line_spacing=1.3)
+        # 디테일
+        add_text(s, x + Inches(0.2), y + Inches(2.85), Inches(2.6),
+                 Inches(1.55), f["detail"], size=9, color=TH.text,
+                 font=TH.font_main, line_spacing=1.4)
+
+    # 하단 tagline + References footer
+    add_round_rect(s, Inches(0.6), Inches(6.20), Inches(12.1), Inches(0.55),
+                   TH.bg_dark)
+    add_text(s, Inches(0.85), Inches(6.25), Inches(11.5), Inches(0.45),
+             "★  " + C.S15_CONCLUSION["tagline"],
              size=11, bold=True, color=TH.accent,
              anchor=MSO_ANCHOR.MIDDLE, font=TH.font_main)
 
 
 # ─────────────────────────────────────────
-# S15. Thanks
+# S17. Thanks
 # ─────────────────────────────────────────
 def s15_thanks(prs):
     s = blank_slide(prs)
@@ -812,16 +871,16 @@ def s15_thanks(prs):
 
     add_rect(s, Inches(5.5), Inches(2.6), Inches(2.4), Pt(3), TH.accent)
     add_text(s, Inches(0), Inches(2.85), SLIDE_W, Inches(1.2),
-             C.S15_THANKS["title"], size=58, bold=True, color=TH.text_white,
+             C.S16_THANKS["title"], size=58, bold=True, color=TH.text_white,
              align=PP_ALIGN.CENTER, font=TH.font_main)
     add_text(s, Inches(0), Inches(4.1), SLIDE_W, Inches(0.6),
-             C.S15_THANKS["subtitle"], size=18, color=TH.accent,
+             C.S16_THANKS["subtitle"], size=18, color=TH.accent,
              align=PP_ALIGN.CENTER, font=TH.font_main)
     add_text(s, Inches(0), Inches(5.5), SLIDE_W, Inches(0.4),
-             C.S15_THANKS["team"], size=15, bold=True, color=TH.text_white,
+             C.S16_THANKS["team"], size=15, bold=True, color=TH.text_white,
              align=PP_ALIGN.CENTER, font=TH.font_main)
     add_text(s, Inches(0), Inches(5.95), SLIDE_W, Inches(0.4),
-             " · ".join(C.S15_THANKS["members"]),
+             " · ".join(C.S16_THANKS["members"]),
              size=11, color=TH.text_dim,
              align=PP_ALIGN.CENTER, font=TH.font_main)
 
@@ -846,6 +905,7 @@ def build():
     s12_progress(prs)
     s13_plan(prs)
     s14_roles(prs)
+    s15_conclusion(prs)
     s15_thanks(prs)
     return prs
 

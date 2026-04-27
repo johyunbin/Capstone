@@ -69,7 +69,7 @@ S3_PROBLEM = {
     ],
     "reality": [
         "실제 선택도는 query 에 따라 0.001% ~ 90% 의 광범위한 분포",
-        "옵티마이저가 잘못된 실행 계획 선택 → nested loop ↔ hash join, index 사용 여부",
+        "옵티마이저가 잘못된 실행 계획 선택 → nested loop vs hash join, index 사용 여부",
         "이미지 검색 / 추천 / RAG retrieval 등 단일 테이블 vector range query 에서 빈번",
     ],
     "tagline": "\"기술적으로 좋은 추정\" vs \"실행 계획에 진짜 도움 되는 추정\" — 이 간극을 어떻게 메울 것인가?",
@@ -212,7 +212,7 @@ S10_EXTERNAL_VALIDITY = {
         {"label": "SIFT 1.5M (128d)","value": "+3.07%", "ci": "CI [+2.66, +3.48]", "cv": "CV 0.394", "color": "orange"},
     ],
     "key_findings": [
-        "DEEP 1M ↔ 8M : CI 겹침 (CONSISTENT) — 8 배 규모에서 동일 효과 재현",
+        "DEEP 1M vs 8M : CI 겹침 (CONSISTENT) — 8 배 규모에서 동일 효과 재현",
         "SIFT 1.5M : CI 가 DEEP 과 겹치지 않음 (~2 배 효과) — 통계적 구별",
         "쏠림도 (CV) DEEP 0.234 vs SIFT 0.394 (68% 높음) — 쏠림 ↑ ⇒ 공간 인식 가치 ↑",
     ],
@@ -252,21 +252,21 @@ S11_RQ3_DESIGN = {
     "paradigms": [
         {
             "name": "Offline Partition (4 방법)",
-            "methods": ["A. LSH Random Hyperplane",
-                        "C. Random Projection (JL)",
-                        "E. Hilbert Curve",
-                        "F. Mini-batch K-means"],
+            "methods": ["1. LSH Random Hyperplane",
+                        "2. Random Projection (JL)",
+                        "3. Hilbert Curve",
+                        "4. Mini-batch K-means"],
             "rationale": "1회 사전 처리 — KM20 와 비용 동등",
         },
         {
             "name": "Online Query-Adaptive (2 방법)",
-            "methods": ["G. Distance-Shell",
-                        "B. KDE-pilot (Neyman)"],
+            "methods": ["5. Distance-Shell",
+                        "6. KDE-pilot (Neyman)"],
             "rationale": "Query 도착 시점 학습 — D_target 의존성 제거",
         },
         {
             "name": "Weight-based (1 방법)",
-            "methods": ["H. Importance Sampling"],
+            "methods": ["7. Importance Sampling"],
             "rationale": "Sample 후 재가중 — partition 자체 불필요",
         },
     ],
@@ -320,26 +320,89 @@ S13_PLAN = {
 
 S14_ROLES = {
     "title": "5-Ⅲ. 팀원별 역할 분담",
-    "rows": [
-        ("박세은", "팀장", "전체 일정 관리 · 자문 회신 정리 · 발표·보고서 총괄"),
-        ("강재현", "주 발표자", "중간발표 주 발표 · 슬라이드 검수 · Q&A 사회"),
-        ("조현빈", "실험·문서화", "RQ1/RQ2 실험 · vector.c native 구현 · 보고서 작성"),
-        ("이동욱", "분석·작도", "통계 분석 (CI · Two-Level) · 그림 작성 · RQ3 설계"),
+    "members": [
+        {
+            "name": "박세은", "role": "팀장",
+            "duty": "전체 일정 관리 · 자문 회신 정리 · 발표·보고서 총괄",
+            "highlight": "자문 컨택 정리 · 4 인 합의 주재",
+        },
+        {
+            "name": "강재현", "role": "주 발표자",
+            "duty": "중간발표 주 발표 · 슬라이드 검수 · Q&A 사회",
+            "highlight": "16 슬라이드 검수 · 리허설 2회",
+        },
+        {
+            "name": "조현빈", "role": "실험·문서화",
+            "duty": "RQ1/RQ2 실험 · vector.c native 구현 · 보고서 작성",
+            "highlight": "vector.c +228 줄 native 구현",
+        },
+        {
+            "name": "이동욱", "role": "분석·작도",
+            "duty": "통계 분석 (CI·Two-Level) · 그림 작성 · RQ3 설계",
+            "highlight": "Two-Level +19.6%p 분해 · 그림 8 종",
+        },
     ],
     "shared": "Q&A 응답 — 통계·CI 는 이동욱, 실험 디테일은 조현빈, 일정·체크포인트는 박세은 분담 (4 인 합의 후 진행)",
 }
 
-S15_THANKS = {
+
+S15_CONCLUSION = {
+    "title": "결론 — 본 발표의 4 핵심 발견",
+    "subtitle": "RQ1 negative · RQ2 외적 타당성 · Two-Level 분해 · RQ3 설계",
+    "findings": [
+        {
+            "tag": "RQ1",
+            "headline": "Skew 지표는 Q-error 를 예측하지 못한다",
+            "metric": "48 / 48",
+            "metric_label": "조합 모두 |ρ| < 0.2",
+            "detail": "글로벌 4 + 로컬 4 = 48 조합 모두 negative — query-side feature 사전 layer 정의 불가능성을 정량 증명 (Cohen 1988)",
+        },
+        {
+            "tag": "RQ2",
+            "headline": "Skew-Aware Sampling 의 외적 타당성",
+            "metric": "+1.64 ~ +3.07%",
+            "metric_label": "DEEP 1M / 8M / SIFT 5-seed 95% CI",
+            "detail": "3 데이터셋 모두 BERN 위에서 추가 개선 — DEEP 1M vs 8M CI 겹침 (CONSISTENT) · SIFT 1.5M 약 2배 효과 (CV 0.394, 통계적 구별)",
+        },
+        {
+            "tag": "Two-Level",
+            "headline": "공간 인식 단독 효과 정량화",
+            "metric": "+19.6 %p",
+            "metric_label": "Level 2 단독 (DEEP 1M, s=0.010)",
+            "detail": "KM20 +8.93%, RANDOM20 −10.67% — 비례 배분 (Level 1) 과 공간 인식 (Level 2) 분해, 가설 단조 관계 재확인 (Horvitz-Thompson 1952)",
+        },
+        {
+            "tag": "RQ3",
+            "headline": "Recovery Rate 프레임워크 설계 완료",
+            "metric": "3 × 7",
+            "metric_label": "패러다임 × 방법 (W5~W7 실험)",
+            "detail": "Offline (LSH/RP/Hilbert/MiniBatch) + Online (Shell/KDE-pilot) + Weight (IS) — 분포 미지 시 KM20 의 절반 효과 회수 목표 (Neyman 1934)",
+        },
+    ],
+    "tagline": "skewed 거리 분포에서 카디널리티 추정 정확도 — 본 연구의 단계적 sanitize 가 측정 가능한 개선을 정량 확보",
+}
+
+
+S16_THANKS = {
     "title": "감사합니다",
     "subtitle": "질문 부탁드립니다",
     "team": TEAM,
     "members": MEMBERS,
 }
 
+
+REFERENCES = [
+    "Han, et al. (2024). Exqutor: Extended Query Optimizer for Vector-augmented Analytical Queries. arXiv:2512.09695v2.",
+    "Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences (2nd ed.). Lawrence Erlbaum Associates.",
+    "Horvitz, D. G., & Thompson, D. J. (1952). A Generalization of Sampling Without Replacement from a Finite Universe. JASA 47(260), 663–685.",
+    "Neyman, J. (1934). On the Two Different Aspects of the Representative Method. JRSS 97(4), 558–625.",
+    "Wilcoxon, F. (1945). Individual Comparisons by Ranking Methods. Biometrics Bulletin 1(6), 80–83.",
+]
+
 ALL_SLIDES = [
     S1_COVER, S2_TOC, S3_PROBLEM, S4_BACKGROUND, S5_LIMITATION, S6_DIFFERENTIATOR,
     S7_RQ1, S8_RQ2_BERNOULLI, S9_RQ2_KM20, S10_EXTERNAL_VALIDITY, S11_RQ3_DESIGN,
-    S12_PROGRESS, S13_PLAN, S14_ROLES, S15_THANKS,
+    S12_PROGRESS, S13_PLAN, S14_ROLES, S15_CONCLUSION, S16_THANKS,
 ]
 
 

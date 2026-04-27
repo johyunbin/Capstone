@@ -138,10 +138,17 @@ def add_figure(doc, path, width_inches=5.5, caption=None):
     img_run = p.add_run()
     img_run.add_picture(path, width=Inches(width_inches))
     if caption:
-        br_run = p.add_run()
-        br_run.add_break()
-        cap_run = p.add_run(caption)
-        set_run_font(cap_run, size=9.5)
+        # figure ↔ caption 사이 빈 줄 1개 (사용자 명시: 캡션이 그림에 너무 붙음)
+        spacer_run = p.add_run()
+        spacer_run.add_break()
+        spacer_run.add_break()
+        # caption 안 \n 은 line break 로 처리 (사용자 명시: 두 줄 분리)
+        for i, part in enumerate(caption.split("\n")):
+            if i > 0:
+                br = p.add_run()
+                br.add_break()
+            cap_run = p.add_run(part)
+            set_run_font(cap_run, size=9.5)
 
 
 def add_page_numbers(doc):
@@ -469,7 +476,7 @@ set_table_widths(t1, [2.5, 2.7, 2.7, 1.8, 2.0, 4.3])
 
 cap1 = add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교\n(DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-cap1.paragraph_format.space_before = Pt(8)
+cap1.paragraph_format.space_before = Pt(14)
 
 add_p(doc, "")
 
@@ -515,7 +522,7 @@ set_table_widths(t2, [2.5, 4.5, 4.5, 4.5])
 
 cap2 = add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간\n(native vector.c 측정)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-cap2.paragraph_format.space_before = Pt(8)
+cap2.paragraph_format.space_before = Pt(14)
 
 add_p(doc, "")
 
@@ -524,13 +531,13 @@ add_mixed_p(doc, [
 ])
 
 add_figure(doc, f"{FIG_DIR}/rq1_motivation/figure_2_phase6_box.png", width_inches=5.6,
-           caption="그림 4.  Phase 6 Step 4 — BERNOULLI vs STRATIFIED (KM20) 100 query × 6 selectivity boxplot (DEEP 1M, native vector.c 측정, y 축 log scale)")
+           caption="그림 4.  Phase 6 Step 4 — BERNOULLI vs STRATIFIED (KM20) 100 query × 6 selectivity boxplot\n(DEEP 1M, native vector.c 측정, y 축 log scale)")
 
 add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_8_cross_dataset_bar.png", width_inches=5.6,
            caption="그림 5.  외적 타당성 — DEEP 1M / DEEP 8M / SIFT 1.5M 의 KM20 s = 0.500 효과 (5-seed 95 % CI)")
 
 add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_7_selectivity_gradient.png", width_inches=5.4,
-           caption="그림 6. 세 데이터셋의 selectivity 별 KM20 vs BERN 개선율 (5-seed 95 % CI). X 축은 selectivity 의 로그 스케일 내림차순 (좌측 0.5, 우측 0.01)")
+           caption="그림 6. 세 데이터셋의 selectivity 별 KM20 vs BERN 개선율 (5-seed 95 % CI).\nX 축은 selectivity 의 로그 스케일 내림차순 (좌측 0.5, 우측 0.01)")
 
 add_heading_custom(doc, "(3)  Two-Level Decomposition — 표본 안정화와 공간 인식의 분리", level=3, page_break_before=True)
 
@@ -588,7 +595,7 @@ set_table_widths(t_rq3, [4.5, 5.0, 6.5])
 
 cap3 = add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-cap3.paragraph_format.space_before = Pt(8)
+cap3.paragraph_format.space_before = Pt(14)
 
 add_p(doc, "")
 
@@ -641,7 +648,7 @@ set_table_widths(t3, [4.8, 11.2])
 
 cap4 = add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-cap4.paragraph_format.space_before = Pt(8)
+cap4.paragraph_format.space_before = Pt(14)
 
 add_p(doc, "")
 
@@ -663,7 +670,7 @@ set_table_widths(t4, [3.5, 12.5])
 
 cap5 = add_p(doc, "표 5. 팀원별 역할 배분",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-cap5.paragraph_format.space_before = Pt(8)
+cap5.paragraph_format.space_before = Pt(14)
 
 add_p(doc, "")
 

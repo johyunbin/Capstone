@@ -22,15 +22,20 @@ def content_header(slide, title, subtitle=None):
     set_bg(slide, TH.bg_light)
     # 상단 얇은 컬러 바
     add_rect(slide, Inches(0), Inches(0), SLIDE_W, Pt(5), TH.primary)
-    # 제목
-    add_text(slide, Inches(0.6), Inches(0.25), Inches(11.5), Inches(0.65),
-             title, size=22, bold=True, color=TH.primary, font=TH.font_main)
+    # 좌측 vertical bar (제목·부제 영역의 왼쪽 align 라인) — 위/아래 정렬 문제 해결
+    add_rect(slide, Inches(0.4), Inches(0.30), Pt(3), Inches(0.85), TH.primary)
+    # 제목 (vertical anchor middle 로 박스 가운데 정렬)
+    add_text(slide, Inches(0.6), Inches(0.20), Inches(11.5), Inches(0.55),
+             title, size=22, bold=True, color=TH.primary, font=TH.font_main,
+             anchor=MSO_ANCHOR.MIDDLE)
     # 부제
     if subtitle:
-        add_text(slide, Inches(0.6), Inches(0.85), Inches(12.0), Inches(0.4),
-                 subtitle, size=11, color=TH.text_dim, font=TH.font_main)
-    # 헤더 하단 분리선
-    add_rect(slide, Inches(0.6), Inches(1.25), Inches(12.1), Pt(1), TH.border)
+        add_text(slide, Inches(0.6), Inches(0.78), Inches(12.0), Inches(0.35),
+                 subtitle, size=11, color=TH.text_dim, font=TH.font_main,
+                 anchor=MSO_ANCHOR.MIDDLE)
+    # 헤더 하단 분리선 — y=1.25 → 1.20 (제목/부제와 0.07 spacing 확보)
+    add_rect(slide, Inches(0.6), Inches(1.20), Inches(12.1), Pt(1), TH.border)
+    # 분리선 ↔ 본문 spacing 0.20 inch — 본문 함수는 y=1.45 부터 시작
 
 
 # ─────────────────────────────────────────
@@ -281,17 +286,17 @@ def s6_differentiator(prs):
                  font=TH.font_main)
 
     # 직교성 메시지
-    add_round_rect(s, Inches(0.6), Inches(4.1), Inches(12.1), Inches(0.6),
+    add_round_rect(s, Inches(0.6), Inches(4.1), Inches(12.1), Inches(0.55),
                    TH.bg_dark)
-    add_text(s, Inches(0.85), Inches(4.16), Inches(11.5), Inches(0.5),
+    add_text(s, Inches(0.85), Inches(4.13), Inches(11.5), Inches(0.5),
              "✦  " + C.S6_DIFFERENTIATOR["tagline"], size=11, bold=True,
              color=TH.accent, anchor=MSO_ANCHOR.MIDDLE, font=TH.font_main)
 
-    # 본 연구 기여 3 줄 (좌측 4.7 inch 로 축소) + Two-Level figure (우측 확대)
-    add_text(s, Inches(0.6), Inches(4.85), Inches(4.6), Inches(0.35),
+    # 본 연구 기여 3 줄 (좌측) + Two-Level figure (우측) — 검은 띠와 figure 사이 spacing 0.3 inch 확보
+    add_text(s, Inches(0.6), Inches(4.95), Inches(4.6), Inches(0.35),
              "본 연구의 핵심 기여", size=12, bold=True, color=TH.primary,
              font=TH.font_main)
-    contrib_y = Inches(5.25)
+    contrib_y = Inches(5.35)
     for i, c in enumerate(C.S6_DIFFERENTIATOR["contribution"]):
         y = contrib_y + Inches(i * 0.5)
         add_oval(s, Inches(0.7), y + Inches(0.09), Inches(0.13),
@@ -299,9 +304,9 @@ def s6_differentiator(prs):
         add_text(s, Inches(0.95), y, Inches(4.4), Inches(0.45),
                  c, size=9, color=TH.text, font=TH.font_main, line_spacing=1.3)
 
-    # 우측: Two-Level decomposition figure — 비율 1.76, max 7.3×2.7 (대폭 확대)
-    add_figure(s, C.FIGURES["two_level"], Inches(5.4), Inches(4.6),
-               Inches(7.3), Inches(2.7),
+    # 우측: Two-Level decomposition figure — y 4.6→4.95 (검은 띠와 0.30 inch spacing), height 2.7→2.4
+    add_figure(s, C.FIGURES["two_level"], Inches(5.4), Inches(4.95),
+               Inches(7.3), Inches(2.4),
                caption=C.FIGURE_CAPTIONS["two_level"],
                caption_color=TH.text_dim, font=TH.font_main)
 

@@ -246,27 +246,27 @@ S10B_INTERPRETATION = {
 
 
 S11_RQ3_DESIGN = {
-    "title": "4-Ⅴ. RQ3 (설계) — 분포를 모를 때의 Recovery Rate 프레임워크",
+    "title": "4-Ⅵ. RQ3 (설계) — 분포를 모를 때의 Recovery Rate 프레임워크",
     "subtitle": "3 패러다임 × 7 방법 — W5~W7 실험 예정",
     "framework": "Recovery Rate = (방법X − RANDOM20) / (KM20 − RANDOM20)",
     "paradigms": [
         {
             "name": "Offline Partition (4 방법)",
-            "methods": ["1. LSH Random Hyperplane",
-                        "2. Random Projection (JL)",
-                        "3. Hilbert Curve",
-                        "4. Mini-batch K-means"],
+            "methods": ["LSH Random Hyperplane",
+                        "Random Projection (JL)",
+                        "Hilbert Curve",
+                        "Mini-batch K-means"],
             "rationale": "1회 사전 처리 — KM20 와 비용 동등",
         },
         {
             "name": "Online Query-Adaptive (2 방법)",
-            "methods": ["5. Distance-Shell",
-                        "6. KDE-pilot (Neyman)"],
+            "methods": ["Distance-Shell",
+                        "KDE-pilot (Neyman)"],
             "rationale": "Query 도착 시점 학습 — D_target 의존성 제거",
         },
         {
             "name": "Weight-based (1 방법)",
-            "methods": ["7. Importance Sampling"],
+            "methods": ["Importance Sampling"],
             "rationale": "Sample 후 재가중 — partition 자체 불필요",
         },
     ],
@@ -275,28 +275,28 @@ S11_RQ3_DESIGN = {
 }
 
 S12_PROGRESS = {
-    "title": "5-Ⅰ. 현재 진행 상황 (W1~W4)",
+    "title": "5-Ⅰ. 현재 진행 상황 (W1~W9, 보고서 표 4 와 일치)",
     "weeks": [
         {
-            "id": "W1",  "period": "3/2~4/4",
+            "id": "W1~W6",  "period": "3/2~4/12",
             "status": "✓",
             "title": "Scope · 환경 세팅",
-            "items": ["주제 확정 (3/3)", "Exqutor 채택 (4/3)", "서버 수령 + Docker (4/14)", "코드·데이터 수령 (4/7~)"],
+            "items": ["주제 확정 (3/3)", "Exqutor 채택 (4/3)", "코드·데이터 수령 (4/7~)", "서버 권한 + Docker (4/14)"],
         },
         {
-            "id": "W2", "period": "4/11~4/15",
+            "id": "W7", "period": "4/13~4/19",
             "status": "✓",
             "title": "RQ1 Motivation",
             "items": ["Phase 1 가설 H1 기각 (4/14)", "Phase 5 로컬 4 지표 negative (4/15)", "Design Constraint 발견 (4/14)"],
         },
         {
-            "id": "W3", "period": "4/15~4/16",
+            "id": "W8", "period": "4/20~4/26",
             "status": "✓",
             "title": "RQ2 Aware",
             "items": ["Phase 4 Pivot A native (4/14~15)", "Phase 6 Step 4 KM20 1-seed (4/15)", "5-seed CI · DEEP 1M/8M/SIFT (4/16)"],
         },
         {
-            "id": "W4", "period": "4/17~4/28",
+            "id": "W9", "period": "4/27~5/3",
             "status": "▶",
             "title": "보강 + 발표",
             "items": ["Two-Level 분해 +19.6%p (4/16)", "HHI/CV 정량 (4/17)", "RQ3 7-way 설계 (4/16)", "중간보고서 + 발표 (4/28)"],

@@ -39,9 +39,11 @@ def add_run(p, text, **kw):
     return r
 
 
-def add_p(doc, text="", size=11, bold=False, align=None, space_after=4, line_spacing=1.4, indent_first=False):
+def add_p(doc, text="", size=11, bold=False, align=None, space_after=4, line_spacing=1.4, indent_first=False, page_break_before=False):
     p = doc.add_paragraph()
     pf = p.paragraph_format
+    if page_break_before:
+        pf.page_break_before = True
     pf.space_after = Pt(space_after)
     pf.line_spacing = line_spacing
     if indent_first:
@@ -53,9 +55,11 @@ def add_p(doc, text="", size=11, bold=False, align=None, space_after=4, line_spa
     return p
 
 
-def add_mixed_p(doc, runs, align=None, space_after=4, line_spacing=1.5, indent_first=True):
+def add_mixed_p(doc, runs, align=None, space_after=4, line_spacing=1.5, indent_first=True, page_break_before=False):
     p = doc.add_paragraph()
     pf = p.paragraph_format
+    if page_break_before:
+        pf.page_break_before = True
     pf.space_after = Pt(space_after)
     pf.line_spacing = line_spacing
     if align is not None:
@@ -114,18 +118,20 @@ def add_figure(doc, path, width_inches=5.5, caption=None):
     if not os.path.exists(path):
         add_p(doc, f"[그림 누락: {path}]", size=9, align=WD_ALIGN_PARAGRAPH.CENTER)
         return
+    # figure 와 caption 을 동일 paragraph 에 넣고 keep_together=True 로 페이지 분리 차단
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pf = p.paragraph_format
     pf.space_before = Pt(8)
-    pf.space_after = Pt(2)
-    run = p.add_run()
-    run.add_picture(path, width=Inches(width_inches))
+    pf.space_after = Pt(12)
+    pf.keep_together = True
+    img_run = p.add_run()
+    img_run.add_picture(path, width=Inches(width_inches))
     if caption:
-        cp = doc.add_paragraph()
-        cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        cp.paragraph_format.space_after = Pt(12)
-        add_run(cp, caption, size=9.5)
+        br_run = p.add_run()
+        br_run.add_break()
+        cap_run = p.add_run(caption)
+        set_run_font(cap_run, size=9.5)
 
 
 def add_page_numbers(doc):
@@ -187,7 +193,7 @@ section.right_margin = Cm(2.8)
 # 표지
 # ═════════════════════════════════════════════════
 
-for _ in range(6):
+for _ in range(2):
     doc.add_paragraph()
 
 p = doc.add_paragraph()
@@ -195,20 +201,18 @@ p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 add_run(p, "Skew-Aware Stratified Sampling 을 이용한", size=22, bold=True)
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-p.paragraph_format.space_after = Pt(40)
+p.paragraph_format.space_after = Pt(22)
 add_run(p, "벡터 카디널리티 추정 정확도 개선 연구", size=22, bold=True)
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-p.paragraph_format.space_after = Pt(28)
+p.paragraph_format.space_after = Pt(16)
 add_run(p, "인종설 중간보고서", size=16)
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+p.paragraph_format.space_after = Pt(12)
 add_run(p, "팀명 :  속도는벡터", size=14)
-
-for _ in range(3):
-    doc.add_paragraph()
 
 t = doc.add_table(rows=5, cols=2)
 t.columns[0].width = Cm(3.5)
@@ -234,9 +238,6 @@ fill_cell(t2.rows[0].cells[0], "지도교수", align=WD_ALIGN_PARAGRAPH.CENTER, 
 fill_cell(t2.rows[0].cells[1], "박광현 교수님", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t2.rows[1].cells[0], "지도 연구원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t2.rows[1].cells[1], "임채림 석사", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
-
-for _ in range(2):
-    doc.add_paragraph()
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -335,7 +336,7 @@ add_mixed_p(doc, [
 
 add_mixed_p(doc, [
     ("이 사각지대를 다음 세 단계의 연구 질문으로 분석·개선한다. RQ1 에서는 사각지대의 구조적 한계와 설계상의 제약을 직접 소스 검증으로 정량화한다. RQ2 에서는 데이터의 분포를 알 수 있을 때 두 가지 직교적인 sanitize, 즉 block sampling bias 제거 (BERNOULLI 교체) 와 data-side k-means 기반 stratified sampling 의 native 구현이 카디널리티 추정 정확도를 어느 정도 개선하는지를 측정한다. RQ3 에서는 데이터의 분포를 사전에 모르는 상황에서 RQ2 의 공간 인식 효과를 어느 정도 회수할 수 있는지를 Recovery Rate 라는 프레임워크로 평가한다. 본 보고서는 RQ1 과 RQ2 의 결과를 보고하고, RQ3 는 설계 안만을 제시한다.", {})
-])
+], page_break_before=True)
 
 add_figure(doc, f"{FIG_DIR}/rq1_motivation/slide6_vector_c_snippet.png", width_inches=6.4,
            caption="그림 1.  vector.c L243 의 hook trigger 사각지대와 본 연구의 두 sanitize 패치 (Pivot A: BERNOULLI 교체, Pivot C: KM20 stratified branch +228 lines)")
@@ -383,7 +384,7 @@ add_mixed_p(doc, [
     ("넷째, ", {}),
     ("query feature 를 사전에 식별하기 어렵다", {"bold": True}),
     (" 는 점이 확인되었다. 4 가지 글로벌 skewness 지표 (Fisher γ, log-Fisher γ, tail ratio P99/P50, Bowley skew) 와 query 별 median Q-error 의 Spearman 상관을 96 차원 DEEP 1M subset 의 6,000 측정에서 검증한 결과, 글로벌 4 지표 × 6 selectivity = 24 조합과 그림 2 의 로컬 4 지표 × 6 selectivity = 24 조합을 합한 총 48 조합 모두에서 절대값 0.2 미만으로 가설이 강하게 기각되었다. 100 query 모두가 Fisher γ < 0 (left-skewed) 이며 tail ratio 도 좁은 범위에 모여 있는 점에서, 고차원 벡터의 거리 집중 현상이 글로벌 지표의 변별력을 평탄화시킨 것으로 해석된다. 이 결과는 query 시점에 분포를 사전 식별하는 단순 휴리스틱이 작동하지 않음을 의미하며, 이번 연구가 RQ2 (distribution-aware) 와 RQ3 (distribution-agnostic) 두 트랙을 모두 다루어야 하는 핵심 근거가 된다. 한편 hook 을 강제 활성화한 직후의 update 경로에서는 q-error 발산, sample_size NaN, SIGSEGV 같은 추가 발산이 관찰되었으며, 본 측정에서는 update 경로를 차단하여 sampling method 자체의 효과만을 분리해서 측정하였다.", {})
-])
+], page_break_before=True)
 
 add_figure(doc, f"{FIG_DIR}/rq1_motivation/figure_6_phase5_heatmap.png", width_inches=5.6,
            caption="그림 2.  Phase 5 — 로컬 4 지표 × 6 selectivity = 24 조합 (글로벌 24 조합과 합산하면 총 48 조합) 의 Spearman ρ heatmap (모든 조합에서 |ρ| < 0.2)")
@@ -413,9 +414,6 @@ add_mixed_p(doc, [
     (" 한 줄 교체로 측정한 같은 비교에서도 + 3.8 ~ + 9.6 % 의 같은 자릿수 개선이 확인되어 두 측정의 방향이 일치한다.", {})
 ])
 
-add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교 (DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
-      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-
 t1 = doc.add_table(rows=7, cols=6)
 t1.style = "Light Grid Accent 1"
 hdrs = ["Selectivity", "SYSTEM median", "BERNOULLI median", "개선율", "p-value", "승리 (SYS<BERN)"]
@@ -433,6 +431,9 @@ for ri, row in enumerate(rows, start=1):
     for ci, val in enumerate(row):
         fill_cell(t1.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER)
 
+add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교 (DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
+      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+
 add_p(doc, "")
 
 add_mixed_p(doc, [
@@ -441,12 +442,12 @@ add_mixed_p(doc, [
     (" 한 줄 교체만으로 카디널리티 추정 정확도가 측정 가능한 수준으로 개선됨을 보여 준다. 반면 매우 낮은 구간 (s = 0.001, 0.010) 에서는 결과 행 수가 작아 ", {}),
     ("plan_rows", {"eng": MONO, "kor": MONO}),
     (" 의 정수 양자화가 분해능을 제한하기 때문에 통계적 차이가 뚜렷하지 않으며, 이 영역의 효과는 RQ2-2 의 stratified sampling 에서 별도로 다룬다.", {})
-])
+], page_break_before=True)
 
 add_figure(doc, f"{FIG_DIR}/rq1_motivation/figure_1_phase4_scatter.png", width_inches=5.5,
            caption="그림 3.  SYSTEM vs BERNOULLI paired Q-error 의 4 selectivity panel (s = 0.05 / 0.10 / 0.30 / 0.50, 2×2 격자)")
 
-add_heading_custom(doc, "(2)  RQ2-2 검증 — Stratified sampling 의 5-seed 평가", level=3)
+add_heading_custom(doc, "(2)  RQ2-2 검증 — Stratified sampling 의 5-seed 평가", level=3, page_break_before=True)
 
 add_mixed_p(doc, [
     ("KM20 stratified sampling 의 BERN 대비 추가 효과를 5 개 seed (setseed 0.1 ~ 0.5) 의 반복 측정으로 검증하였다. 표 2 는 세 데이터셋 (DEEP 1M, DEEP 8M, SIFT 1.5M) 의 selectivity 0.500 / 0.050 / 0.010 구간에 대한 5-seed 평균 개선율과 95 % 신뢰구간이다. 측정은 모두 native ", {}),
@@ -457,9 +458,6 @@ add_mixed_p(doc, [
     ("hook_est", {"eng": MONO, "kor": MONO}),
     (" 를 기준으로 사용하였다.", {})
 ])
-
-add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간 (native vector.c 측정)",
-      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
 
 t2 = doc.add_table(rows=4, cols=4)
 t2.style = "Light Grid Accent 1"
@@ -474,6 +472,9 @@ rows2 = [
 for ri, row in enumerate(rows2, start=1):
     for ci, val in enumerate(row):
         fill_cell(t2.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER)
+
+add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간 (native vector.c 측정)",
+      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
 
 add_p(doc, "")
 
@@ -490,7 +491,7 @@ add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_8_cross_dataset_bar.png", width_inc
 add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_7_selectivity_gradient.png", width_inches=5.4,
            caption="그림 6. 세 데이터셋의 selectivity 별 KM20 vs BERN 개선율 (5-seed 95 % CI). X 축은 selectivity 의 로그 스케일 내림차순 (좌측 0.5, 우측 0.01)")
 
-add_heading_custom(doc, "(3)  Two-Level Decomposition — 표본 안정화와 공간 인식의 분리", level=3)
+add_heading_custom(doc, "(3)  Two-Level Decomposition — 표본 안정화와 공간 인식의 분리", level=3, page_break_before=True)
 
 add_mixed_p(doc, [
     ("KM20 의 개선분이 어떤 메커니즘에서 비롯되는지를 알아보기 위해 우리는 두 수준으로 분해하였다. ", {}),
@@ -505,7 +506,7 @@ add_mixed_p(doc, [
 add_figure(doc, f"{FIG_DIR}/rq2_aware/figure_9_two_level_decomposition.png", width_inches=5.4,
            caption="그림 7. Two-Level Decomposition — Level 1 (표본 안정화) 과 Level 2 (공간 인식) 의 분리")
 
-add_heading_custom(doc, "(4)  HHI 와 CV — 데이터셋별 효과 격차의 사전 예측", level=3)
+add_heading_custom(doc, "(4)  HHI 와 CV — 데이터셋별 효과 격차의 사전 예측", level=3, page_break_before=True)
 
 add_mixed_p(doc, [
     ("SIFT 의 KM20 효과가 DEEP 의 약 두 배에 달하는 이유를 정량적으로 설명하기 위해 우리는 각 데이터셋의 K = 20 cluster 크기 분포를 HHI (Herfindahl-Hirschman Index) 와 CV (변동계수) 로 측정하였다. HHI 는 각 cluster 비율의 제곱합으로, 균일할 때 1/K = 0.05 이며 한 cluster 에 집중될수록 1.0 에 가까워진다. 측정 결과 DEEP 1M 의 cluster 크기 CV 는 0.234 였고 SIFT 1.5M 은 0.394 로 약 68 % 더 쏠려 있었으며, 이러한 쏠림 격차가 KM20 효과의 약 두 배 격차와 함께 커지는 경향을 보였다. 즉 KM20 의 효과는 데이터셋이 가지고 있는 고유한 cluster 쏠림 분포로부터 어느 정도 사전에 예측할 수 있으며, 이는 RQ3 (distribution-agnostic) 단계에서의 비교 baseline 으로도 활용된다.", {})
@@ -523,26 +524,29 @@ add_mixed_p(doc, [
     (" 로 정의하고, 다음 세 패러다임의 일곱 가지 방법을 동일한 metric 으로 비교하는 프레임워크를 설계하였다.", {})
 ])
 
-add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
-      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-
-t_rq3 = doc.add_table(rows=8, cols=4)
+t_rq3 = doc.add_table(rows=8, cols=3)
 t_rq3.style = "Light Grid Accent 1"
-hdrs_rq3 = ["패러다임", "방법 ID", "이름", "핵심 아이디어"]
+t_rq3.columns[0].width = Cm(3.5)
+t_rq3.columns[1].width = Cm(4.0)
+t_rq3.columns[2].width = Cm(8.5)
+hdrs_rq3 = ["패러다임", "이름", "핵심 아이디어"]
 for i, h in enumerate(hdrs_rq3):
     fill_cell(t_rq3.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 rq3_rows = [
-    ["Offline Partition",     "(A)", "LSH Random Hyperplane",  "랜덤 하이퍼플레인으로 K = 20 분할"],
-    ["Offline Partition",     "(C)", "Random Projection",      "Johnson-Lindenstrauss lemma 기반 저차원 사영"],
-    ["Offline Partition",     "(E)", "Hilbert Curve",          "공간 데이터베이스의 space-filling 을 벡터 영역에 적용"],
-    ["Offline Partition",     "(F)", "Mini-batch K-means",     "1 ~ 5 % 데이터만으로 근사 학습"],
-    ["Online Query-Adaptive", "(G)", "Distance-Shell",         "쿼리 벡터 중심의 동심원 stratification"],
-    ["Online Query-Adaptive", "(B)", "KDE-pilot (Neyman)",     "Pilot sample 로 stratum size 의 최적 배분 추정"],
-    ["Weight-based",          "(H)", "Importance Sampling",    "파티션 없이 가중치만으로 분산 축소"],
+    ["Offline Partition",     "LSH Random Hyperplane",  "랜덤 하이퍼플레인으로 K = 20 분할"],
+    ["Offline Partition",     "Random Projection",      "Johnson-Lindenstrauss lemma 기반 저차원 사영"],
+    ["Offline Partition",     "Hilbert Curve",          "공간 데이터베이스의 space-filling 을 벡터 영역에 적용"],
+    ["Offline Partition",     "Mini-batch K-means",     "1 ~ 5 % 데이터만으로 근사 학습"],
+    ["Online Query-Adaptive", "Distance-Shell",         "쿼리 벡터 중심의 동심원 stratification"],
+    ["Online Query-Adaptive", "KDE-pilot (Neyman)",     "Pilot sample 로 stratum size 의 최적 배분 추정"],
+    ["Weight-based",          "Importance Sampling",    "파티션 없이 가중치만으로 분산 축소"],
 ]
 for ri, row in enumerate(rq3_rows, start=1):
     for ci, val in enumerate(row):
-        fill_cell(t_rq3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci != 3 else WD_ALIGN_PARAGRAPH.LEFT)
+        fill_cell(t_rq3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci != 2 else WD_ALIGN_PARAGRAPH.LEFT)
+
+add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
+      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
 
 add_p(doc, "")
 
@@ -574,44 +578,48 @@ add_mixed_p(doc, [
 # ═════════════════════════════════════════════════
 add_heading_custom(doc, "5.  일정 및 역할 배분", level=1, page_break_before=True)
 
-add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
-      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-
-t3 = doc.add_table(rows=8, cols=3)
+t3 = doc.add_table(rows=8, cols=2)
 t3.style = "Light Grid Accent 1"
-for i, h in enumerate(["주차 / 기간", "핵심 작업", "상태"]):
+t3.columns[0].width = Cm(3.5)
+t3.columns[1].width = Cm(12.5)
+for i, h in enumerate(["주차 / 기간", "핵심 작업"]):
     fill_cell(t3.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 sched = [
-    ["W1 ~ W5  (3/2 ~ 4/5)",     "팀 구성, 논문 리딩, 1차 자문, 연구제안서·수행계획서 작성·제출, 연구 방향 확정",                          "완료"],
-    ["W6  (4/6 ~ 4/12)",         "실험 서버 권한 인계 및 Exqutor 환경 세팅",                                                              "완료"],
-    ["W7  (4/13 ~ 4/19)",        "vector.c 빌드 완료, RQ1 motivation 발견, RQ2-1·RQ2-2 실험 수행",                                       "완료"],
-    ["W8  (4/20 ~ 4/26)",        "외적 타당성 실험 (DEEP 8M, SIFT 1.5M), 2차 자문 회신 반영",                                              "완료"],
-    ["W9  (4/27 ~ 5/3)",         "중간보고서 및 중간발표 자료 작성·제출",                                                                  "진행"],
-    ["W10 ~ W12  (5/4 ~ 5/24)",  "RQ3 일곱 가지 sampling 방법 비교 실험 수행 및 결과 분석",                                                "예정"],
-    ["W13 ~ W15  (5/25 ~ 6/14)", "최종발표 (5/27 ~ 5/29), 전시회 (6/5), 최종보고서 작성·제출 (6/11)",                                       "예정"],
+    ["W1 ~ W5  (3/2 ~ 4/5)",     "팀 구성, 논문 리딩, 1차 자문, 연구제안서·수행계획서 작성·제출, 연구 방향 확정"],
+    ["W6  (4/6 ~ 4/12)",         "실험 서버 권한 인계 및 Exqutor 환경 세팅"],
+    ["W7  (4/13 ~ 4/19)",        "vector.c 빌드 완료, RQ1 motivation 발견, RQ2-1·RQ2-2 실험 수행"],
+    ["W8  (4/20 ~ 4/26)",        "외적 타당성 실험 (DEEP 8M, SIFT 1.5M), 2차 자문 회신 반영"],
+    ["W9  (4/27 ~ 5/3)",         "중간보고서 및 중간발표 자료 작성·제출"],
+    ["W10 ~ W12  (5/4 ~ 5/24)",  "RQ3 일곱 가지 sampling 방법 비교 실험 수행 및 결과 분석"],
+    ["W13 ~ W15  (5/25 ~ 6/14)", "최종발표 (5/27 ~ 5/29), 전시회 (6/5), 최종보고서 작성·제출 (6/11)"],
 ]
 for ri, row in enumerate(sched, start=1):
     for ci, val in enumerate(row):
-        fill_cell(t3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci != 1 else WD_ALIGN_PARAGRAPH.LEFT)
+        fill_cell(t3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
+
+add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
+      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
 
 add_p(doc, "")
 
-add_p(doc, "표 5. 팀원별 역할 배분",
-      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
-
 t4 = doc.add_table(rows=5, cols=2)
 t4.style = "Light Grid Accent 1"
+t4.columns[0].width = Cm(3.0)
+t4.columns[1].width = Cm(13.0)
 for i, h in enumerate(["팀원", "주요 역할"]):
     fill_cell(t4.rows[0].cells[i], h, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, fill="E7EBF2")
 roles = [
-    ["박세은 (팀장)", "팀 일정·문서 관리, 자문 컨택, 회의 주재"],
-    ["강재현",        "발표 자료 작성, 발표 담당, 시각화 제작"],
-    ["조현빈",        "Exqutor 코드 분석, 실험 구현, 통계 분석"],
-    ["이동욱",        "보고서 작성, 실험 결과 검증, 자문 회신 정리"],
+    ["박세은 (팀장)",       "전체 일정 관리, 자문 회신 정리, 4 인 합의 주재"],
+    ["강재현 (주 발표자)",   "중간발표 슬라이드 검수, 리허설 진행, Q&A 사회"],
+    ["조현빈 (실험·문서화)", "RQ1/RQ2 실험 구현, vector.c native 구현 (228 줄), 보고서 작성"],
+    ["이동욱 (분석·작도)",   "통계 분석 (CI·Two-Level), 그림 작성, RQ3 설계"],
 ]
 for ri, row in enumerate(roles, start=1):
     for ci, val in enumerate(row):
         fill_cell(t4.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
+
+add_p(doc, "표 5. 팀원별 역할 배분",
+      bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
 
 add_p(doc, "")
 

@@ -33,11 +33,8 @@ for c in data["all_combos"]:
     if mi is not None:
         M[mi, si] = c["spearman_rho"]
 
-fig, ax = plt.subplots(figsize=(9.5, 3.9))
-fig.suptitle(
-    "Figure 6 · Phase 5 Local Skew × Q-error Spearman ρ  —  모든 조합 |ρ| < 0.2 (negative result)",
-    fontsize=11.0, fontweight="bold", y=0.985,
-)
+fig, ax = plt.subplots(figsize=(9.5, 3.5))
+# inner suptitle 제거 — 보고서 캡션 "그림 2. Phase 5 ..." 와 중복 회피
 
 VMAX = 0.20
 im = ax.imshow(M, cmap="RdBu_r", vmin=-VMAX, vmax=VMAX, aspect="auto")
@@ -66,13 +63,13 @@ for s in ax.spines.values():
     s.set_visible(False)
 
 fig.text(
-    0.5, 0.02,
-    "주: |ρ| ≥ 0.2 를 strong correlation 임계로 정의. 24 조합 모두 임계 미만 (n_strong = 0). "
+    0.5, 0.04,
+    "주: |ρ| ≥ 0.2 를 strong correlation 임계로 정의. 24 조합 모두 임계 미만 (n_strong = 0).\n"
     "global 24 조합과 합산 시 총 48 조합 모두 |ρ| < 0.2 ⇒ Local skew 가 Q-error 의 단일 원인이 아님 (RQ1 Phase 5 negative result).",
-    ha="center", fontsize=8, color="#444",
+    ha="center", fontsize=11, color="#222", linespacing=1.55,
 )
 
-plt.subplots_adjust(top=0.88, bottom=0.16, left=0.18, right=1.02)
+plt.subplots_adjust(top=0.95, bottom=0.27, left=0.18, right=1.02)
 plt.savefig(OUT, dpi=170, bbox_inches="tight", pad_inches=0.15)
 plt.close()
 print(f"saved: {OUT}")

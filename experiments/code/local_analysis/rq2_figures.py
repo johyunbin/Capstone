@@ -59,7 +59,7 @@ C_ORANGE = "#e07a00"  # Level 1 (비례 배분), SIFT highlight
 C_GRAY = "#9aa0a6"  # neutral fills
 C_GREEN_DARK = "#2e7d32"  # positive highlight
 
-OUT = Path(__file__).resolve().parent.parent / "experiments" / "figures" / "rq2_aware"
+OUT = Path("/Users/hyunbin/Capstone/experiments/figures/rq2_aware")
 OUT.mkdir(parents=True, exist_ok=True)
 
 # --------------------------------------------------------------------------
@@ -194,10 +194,7 @@ def figure_7_selectivity_gradient():
     ax.set_xscale("log")
     ax.set_xlabel("Selectivity (로그 스케일)")
     ax.set_ylabel("Q-error 개선폭 (%, 대조군 BERNOULLI 대비)")
-    ax.set_title(
-        "Figure 7 · DEEP 1M Selectivity Gradient — KM20 vs RANDOM20 (95% CI)",
-        fontweight="bold", pad=14,
-    )
+    # inner title 제거 — 보고서/발표 외부 캡션과 중복 회피
 
     # x축 눈금 라벨 (실제 selectivity 값)
     ax.set_xticks(sel)
@@ -265,10 +262,7 @@ def figure_8_cross_dataset_bar():
     ax.set_xticks(x)
     ax.set_xticklabels(datasets)
     ax.set_ylabel("KM20 Q-error 개선폭 (%, BERNOULLI 대비, s=0.500, 5-seed mean)")
-    ax.set_title(
-        "Figure 8 · 외적 타당성 — 3 데이터셋에서 KM20 s=0.500 효과 (95% CI)",
-        fontweight="bold", pad=14,
-    )
+    # inner title 제거 — 보고서/발표 외부 캡션과 중복 회피
     ax.set_ylim(-1.0, 5.3)
 
     # 강조 텍스트 박스: 막대 수치 위쪽 여유 공간에 배치 (겹침 방지)

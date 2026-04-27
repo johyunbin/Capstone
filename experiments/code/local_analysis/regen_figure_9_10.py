@@ -42,12 +42,9 @@ def fig9_two_level_decomposition():
         "Total": [+3.07, +4.39, -0.53],
     }
 
-    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.7),
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.5),
                              gridspec_kw=dict(width_ratios=[5, 3], wspace=0.28))
-    fig.suptitle(
-        "Figure 9 · Two-Level Decomposition — KM20 개선을 비례 배분(L1)과 공간 인식(L2)으로 분해",
-        fontsize=11.5, fontweight="bold", y=0.985
-    )
+    # inner suptitle 제거 — 보고서 캡션 "그림 7. Two-Level Decomposition ..." 와 중복 회피
 
     for ax, ds, title in [(axes[0], deep, "DEEP 1M (96d)"),
                           (axes[1], sift, "SIFT 1.5M (128d)")]:
@@ -69,49 +66,61 @@ def fig9_two_level_decomposition():
                          color=C_L2, edgecolor="white", linewidth=0.8,
                          label="Level 2 — 공간 인식", zorder=3)
 
-        # Total ◆ marker — 별도 x offset 으로 라벨 충돌 회피
-        ax.scatter(marker_x, T, marker="D", s=80, color=C_TOTAL, zorder=5,
+        # Total ◆ marker
+        ax.scatter(marker_x, T, marker="D", s=85, color=C_TOTAL, zorder=5,
                    edgecolor="white", linewidth=1.2, label="Total (KM20)")
-        # Total 라벨 — ◆ 옆 또는 위에
-        for xi, t in zip(marker_x, T):
-            sign = "+" if t >= 0 else ""
-            ax.annotate(f"{sign}{t:.2f}", (xi, t),
-                        xytext=(0, 11 if t >= 0 else -14), textcoords="offset points",
-                        ha="center", fontsize=8.5, fontweight="bold",
-                        color=C_TOTAL)
 
-        # L1, L2 라벨 — 막대 안 또는 위/아래
-        for xi, l1, l2 in zip(bar_x, L1, L2):
-            # L1 라벨: 막대 sign 에 따라
-            if l1 >= 0:
-                ax.annotate(f"L1 {l1:+.2f}", (xi, l1),
-                            xytext=(0, -12 if l1 < 1.5 else -2),
+        # Total 라벨 + 분해 정보 통합 (작은 막대는 L1/L2 라벨이 막대 안에서 겹치므로 Total 옆에 표시)
+        # 큰 막대 (abs(l1) ≥ 4 또는 abs(l2) ≥ 4) 만 막대 내부 라벨, 그 외는 Total 옆 sub-line
+        for xi, t, l1, l2 in zip(marker_x, T, L1, L2):
+            sign_t = "+" if t >= 0 else ""
+            big_l1 = abs(l1) >= 4.0
+            big_l2 = abs(l2) >= 4.0
+            if big_l1 or big_l2:
+                # 막대가 충분히 큼 → Total 라벨만
+                ax.annotate(f"{sign_t}{t:.2f}", (xi, t),
+                            xytext=(0, 12 if t >= 0 else -16),
                             textcoords="offset points",
-                            ha="center", va="top",
-                            fontsize=7.5, color="black",
-                            fontweight="medium")
+                            ha="center", fontsize=10, fontweight="bold",
+                            color=C_TOTAL)
             else:
-                ax.annotate(f"L1 {l1:+.2f}", (xi, l1),
-                            xytext=(0, -2), textcoords="offset points",
-                            ha="center", va="top",
-                            fontsize=7.5, color="black",
-                            fontweight="medium")
-            # L2 라벨: 양수면 막대 정상 위, 음수면 막대 아래 (라벨 겹침 회피)
-            l2_top = max(0, l1) + l2 if l1 > 0 else l2
-            if abs(l2) > 0.2:
-                if l2 > 0:
-                    ax.annotate(f"L2 {l2:+.2f}", (xi, l2_top),
-                                xytext=(0, 4), textcoords="offset points",
-                                ha="center", va="bottom",
-                                fontsize=7.5, color="white" if l2 > 4 else "black",
-                                fontweight="medium")
-                else:
-                    # L2 음수 → 막대 하단 (L1 양수 위에 stack 된 음수 L2)
-                    ax.annotate(f"L2 {l2:+.2f}", (xi, l2_top),
-                                xytext=(0, -4), textcoords="offset points",
+                # 작은 막대 → Total + (L1, L2) 통합 라벨
+                label = f"{sign_t}{t:.2f}\nL1 {l1:+.1f} · L2 {l2:+.1f}"
+                ax.annotate(label, (xi, t),
+                            xytext=(0, 10 if t >= 0 else -32),
+                            textcoords="offset points",
+                            ha="center", fontsize=8.5, fontweight="medium",
+                            color=C_TOTAL, linespacing=1.3)
+
+        # L1, L2 라벨은 큰 막대에서만 (작은 막대는 위에서 Total 옆 통합 처리)
+        for xi, l1, l2 in zip(bar_x, L1, L2):
+            big_l1 = abs(l1) >= 4.0
+            big_l2 = abs(l2) >= 4.0
+            if big_l1:
+                # L1 음수 큰 막대 (예: -10.67) — 막대 끝 아래
+                if l1 < 0:
+                    ax.annotate(f"L1 {l1:+.2f}", (xi, l1),
+                                xytext=(0, -6), textcoords="offset points",
                                 ha="center", va="top",
-                                fontsize=7.5, color="black",
-                                fontweight="medium")
+                                fontsize=9, color="black", fontweight="medium")
+                else:
+                    ax.annotate(f"L1 {l1:+.2f}", (xi, l1 / 2),
+                                xytext=(0, 0), textcoords="offset points",
+                                ha="center", va="center",
+                                fontsize=9, color="white", fontweight="medium")
+            if big_l2:
+                # L2 큰 막대 — 막대 정상 위 또는 막대 안 (white)
+                l2_top = max(0, l1) + l2 if l1 > 0 else l2
+                if l2 > 0:
+                    ax.annotate(f"L2 {l2:+.2f}", (xi, l2_top / 2 if l1 <= 0 else (max(0, l1) + l2_top) / 2),
+                                xytext=(0, 0), textcoords="offset points",
+                                ha="center", va="center",
+                                fontsize=9, color="white", fontweight="medium")
+                else:
+                    ax.annotate(f"L2 {l2:+.2f}", (xi, l2_top),
+                                xytext=(0, -6), textcoords="offset points",
+                                ha="center", va="top",
+                                fontsize=9, color="black", fontweight="medium")
 
         ax.axhline(0, color="black", linewidth=0.6, zorder=2)
         ax.set_xticks(x)
@@ -137,12 +146,12 @@ def fig9_two_level_decomposition():
     axes[0].legend(handles=handles, loc="upper left", fontsize=8.5,
                    frameon=True, fancybox=False, edgecolor="gray", framealpha=0.95)
 
-    fig.text(0.5, 0.02,
-             "주: Level 1 은 RANDOM20 의 개선분(파티션 품질 무관). Level 2 는 KM20 − RANDOM20 격차(공간 인식 추가 이득). "
+    fig.text(0.5, 0.04,
+             "주: Level 1 은 RANDOM20 의 개선분 (파티션 품질 무관). Level 2 는 KM20 vs RANDOM20 격차 (공간 인식 추가 이득).\n"
              "DEEP 1M s = 0.01 에서 Level 2 = +19.60. SIFT 는 s = 0.50 부터 Level 2 가 +2.06 으로 이미 발현.",
-             ha="center", fontsize=8, color="#444")
+             ha="center", fontsize=11, color="#222", linespacing=1.55)
 
-    plt.subplots_adjust(top=0.91, bottom=0.13, left=0.07, right=0.985)
+    plt.subplots_adjust(top=0.95, bottom=0.22, left=0.07, right=0.985)
     out = f"{OUT_DIR}/figure_9_two_level_decomposition.png"
     plt.savefig(out, dpi=170, bbox_inches="tight", pad_inches=0.15)
     plt.close()
@@ -162,12 +171,9 @@ def fig10_cluster_skew():
     deep_hhi, sift_hhi, uni_hhi = 0.0527, 0.0578, 0.0500
     deep_cv, sift_cv, uni_cv = 0.234, 0.394, 0.000
 
-    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.6),
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.5),
                              gridspec_kw=dict(width_ratios=[1.05, 1], wspace=0.26))
-    fig.suptitle(
-        "Figure 10 · 데이터셋 클러스터 쏠림 — DEEP 1M vs SIFT 1.5M",
-        fontsize=11.5, fontweight="bold", y=0.985
-    )
+    # inner suptitle 제거 — 보고서 캡션 "그림 8. DEEP 1M 과 SIFT 1.5M ..." 와 중복 회피
 
     # ── (a) 클러스터 크기 범위 — K-means K=20
     ax = axes[0]
@@ -262,13 +268,12 @@ def fig10_cluster_skew():
     ax.spines["right"].set_visible(False)
     ax.set_ylim(0, 0.62)
 
-    fig.text(0.5, 0.02,
-             "주: HHI 는 각 클러스터 비율의 제곱합(균일=1/K=0.05). CV 는 표준편차/평균(균일=0). "
-             "SIFT 는 클러스터 14 만행 이상 7 개로 전체의 약 19 % (기대 10 %). "
-             "쏠림 정량 격차가 Figure 8 의 KM20 효과 2 배 격차의 직접 원인.",
-             ha="center", fontsize=8, color="#444")
+    fig.text(0.5, 0.04,
+             "주: HHI 는 각 클러스터 비율의 제곱합 (균일 = 1/K = 0.05). CV 는 표준편차 / 평균 (균일 = 0).\n"
+             "SIFT 는 클러스터 14 만행 이상 7 개로 전체의 약 19 % (기대 10 %). 쏠림 정량 격차가 KM20 효과 2 배 격차의 직접 원인.",
+             ha="center", fontsize=11, color="#222", linespacing=1.55)
 
-    plt.subplots_adjust(top=0.91, bottom=0.13, left=0.06, right=0.985)
+    plt.subplots_adjust(top=0.95, bottom=0.22, left=0.06, right=0.985)
     out = f"{OUT_DIR}/figure_10_cluster_skew.png"
     plt.savefig(out, dpi=170, bbox_inches="tight", pad_inches=0.15)
     plt.close()

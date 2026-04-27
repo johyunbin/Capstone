@@ -238,9 +238,15 @@ fill_cell(t.rows[3].cells[0], "팀원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11
 fill_cell(t.rows[3].cells[1], "이동욱", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t.rows[4].cells[0], "팀원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t.rows[4].cells[1], "조현빈", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
-# 모든 row height 0.85cm (헤더 ↔ 데이터 row spacing 확보, 사용자 "팀장 박세은이 회색박스와 너무 가까이" 해소)
+# 모든 row height 1.0cm + paragraph space — 헤더 ↔ 데이터 row 사이 답답함 해소
+from docx.enum.table import WD_ROW_HEIGHT_RULE
 for row in t.rows:
-    row.height = Cm(0.85)
+    row.height = Cm(1.0)
+    row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+    for cell in row.cells:
+        for cp in cell.paragraphs:
+            cp.paragraph_format.space_before = Pt(4)
+            cp.paragraph_format.space_after = Pt(4)
 
 doc.add_paragraph()
 
@@ -252,7 +258,12 @@ fill_cell(t2.rows[0].cells[1], "박광현 교수님", align=WD_ALIGN_PARAGRAPH.C
 fill_cell(t2.rows[1].cells[0], "지도 연구원", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 fill_cell(t2.rows[1].cells[1], "임채림 석사", align=WD_ALIGN_PARAGRAPH.CENTER, size=11)
 for row in t2.rows:
-    row.height = Cm(0.85)
+    row.height = Cm(1.0)
+    row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+    for cell in row.cells:
+        for cp in cell.paragraphs:
+            cp.paragraph_format.space_before = Pt(4)
+            cp.paragraph_format.space_after = Pt(4)
 
 # 지도교수 표 ↔ "2026 년 4 월" 사이 빈 단락 추가 (사용자: 팀원/지도교수 사이 spacing 과 동일하게)
 doc.add_paragraph()
@@ -456,8 +467,9 @@ for ri, row in enumerate(rows, start=1):
         fill_cell(t1.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER)
 set_table_widths(t1, [2.5, 2.7, 2.7, 1.8, 2.0, 4.3])
 
-add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교 (DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
+cap1 = add_p(doc, "표 1. Selectivity 별 SYSTEM 과 BERNOULLI 의 median Q-error 비교\n(DEEP 1M, 100 query, plan_rows 기반 Python counterfactual)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+cap1.paragraph_format.space_before = Pt(8)
 
 add_p(doc, "")
 
@@ -501,8 +513,9 @@ for ri, row in enumerate(rows2, start=1):
 # 데이터셋(좁게) + 3 selectivity 컬럼(넓게) — 두 줄 wrap 회피
 set_table_widths(t2, [2.5, 4.5, 4.5, 4.5])
 
-add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간 (native vector.c 측정)",
+cap2 = add_p(doc, "표 2. KM20 vs BERN 의 5-seed 평균 개선율과 95 % 신뢰구간\n(native vector.c 측정)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+cap2.paragraph_format.space_before = Pt(8)
 
 add_p(doc, "")
 
@@ -573,8 +586,9 @@ for ri, row in enumerate(rq3_rows, start=1):
 # 패러다임(좁게) · 이름(중간) · 핵심 아이디어(넓게) — 사용자 명시
 set_table_widths(t_rq3, [4.5, 5.0, 6.5])
 
-add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
+cap3 = add_p(doc, "표 3. RQ3 의 7 가지 비교 baseline (3 패러다임)",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+cap3.paragraph_format.space_before = Pt(8)
 
 add_p(doc, "")
 
@@ -625,8 +639,9 @@ for ri, row in enumerate(sched, start=1):
         fill_cell(t3.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
 set_table_widths(t3, [4.8, 11.2])
 
-add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
+cap4 = add_p(doc, "표 4. 캡스톤 2026-1 학기 전체 일정",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+cap4.paragraph_format.space_before = Pt(8)
 
 add_p(doc, "")
 
@@ -646,8 +661,9 @@ for ri, row in enumerate(roles, start=1):
         fill_cell(t4.rows[ri].cells[ci], val, align=WD_ALIGN_PARAGRAPH.CENTER if ci == 0 else WD_ALIGN_PARAGRAPH.LEFT)
 set_table_widths(t4, [3.5, 12.5])
 
-add_p(doc, "표 5. 팀원별 역할 배분",
+cap5 = add_p(doc, "표 5. 팀원별 역할 배분",
       bold=False, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+cap5.paragraph_format.space_before = Pt(8)
 
 add_p(doc, "")
 

@@ -10,7 +10,7 @@
 
 ## 현재 단계
 
-> **중간발표 준비 단계 (4/19 10 축 ultrareview 반영)** — RQ1/RQ2 실험 전체 완료, **중간보고서·중간발표 v2+ (4/19 보강)** — 5-seed CI + Two-Level + SIFT 2배 + DEEP 8M CONSISTENT + RQ3 7-way 설계 + Recovery Rate 분모 붕괴 규칙 + H 2×2 factorial + 참고문헌 확장 (Neyman/Acharya/Chaudhuri/Babcock/Wang/Chen/Schuirmann/BH/Cohen) 반영. 주 발표자 **강재현** (4/17 확정). 팀 리뷰 4/22, 리허설 4/24·4/26, **중간발표 4/28 (D-9)**. 보충 실험 5 건 (per-stratum BERN 최적화 / Layer K sweep / wiki 768d / SIFT mid-sel / sample_size sensitivity) 모두 W5 에서 해소, 출판 급 검정력 (10 seed × 500 query + BH-FDR + TOST + Cohen's d) 은 W6 에서 확보.
+> **중간발표 준비 단계 (4/19 10 축 ultrareview 반영 + 4/27 cheat sheet ultrareview)** — RQ1/RQ2 실험 전체 완료, **중간보고서·중간발표 v2+ (4/19 보강)** — 5-seed CI + Two-Level + SIFT 2배 + DEEP 8M CONSISTENT + RQ3 7-way 설계 + Recovery Rate 분모 붕괴 규칙 + H 2×2 factorial + 참고문헌 확장 (Neyman/Acharya/Chaudhuri/Babcock/Wang/Chen/Schuirmann/BH/Cohen) 반영. 주 발표자 **강재현** (4/17 확정). 팀 리뷰 4/22, 리허설 4/24·4/26 완료, **PDF 제출 4/28 23:59 (LearnUs)**, **중간발표 4/30 19:00 인종 A428 (D-3)**, 4/29 최종 리허설 1 회 예정. 보충 실험 5 건 (per-stratum BERN 최적화 / Layer K sweep / wiki 768d / SIFT mid-sel / sample_size sensitivity) 모두 W5 에서 해소, 출판 급 검정력 (10 seed × 500 query + BH-FDR + TOST + Cohen's d) 은 W6 에서 확보.
 
 - **연구 방향**: Skew-Aware Sampling — skewed 거리 분포에서 카디널리티 추정 정확도 개선
   - Track A (Distribution-Aware): 분포를 알 때 → 층화 샘플링 — **RQ1/RQ2 완료**
@@ -27,8 +27,9 @@
 | W1 | 4/4-4/11 | 환경 수령 + 세팅 + Baseline 재현 | ✅ |
 | W2-3 | 4/11-4/16 | RQ1 Motivation + RQ2 Aware 실험 | ✅ |
 | W3-4 | 4/17-4/22 | v2+ (4/19 10 축 ultrareview 반영: 보고서 8 Edit, RQ3 2 Edit, 발표 1 Edit, 노션 URGENT 4 + 보강 9 + 회의록 3) · 자문 회신 반영 대기 · 4/22 팀 리뷰 | ← 현재 |
-| W4 | 4/22-4/28 | 1차 팀 리뷰 → 리허설 2 회 → **★ 중간발표 + 중간보고서** (강재현 주 발표자) | ⬜ |
-| W5-8 | 4/28-5/27 | RQ3 Agnostic 실험 + 심화 + 최종발표 | ⬜ |
+| W4 | 4/22-4/28 | 1차 팀 리뷰 → 리허설 2 회 (4/24·4/26 완료) → **★ 4/28 23:59 PDF 제출 (LearnUs)** | ⬜ |
+| W4-5 | 4/28-4/30 | 4/29 최종 리허설 → **★ 4/30 19:00 발표 (인종 A428, 강재현)** | ⬜ |
+| W5-8 | 5/1-5/27 | RQ3 Agnostic 실험 + 심화 + 최종발표 | ⬜ |
 | W9-10 | 5/27-6/11 | **최종보고서** | ⬜ |
 
 ## 세션 시작 체크리스트
@@ -108,7 +109,8 @@ Capstone/
 |------|--------|------|
 | 4/7~ | Exqutor 코드·데이터 수령 + 환경 세팅 | ✅ (4/14) |
 | 4/16 | RQ1/RQ2 실험 완료 | ✅ |
-| **4/28** | **중간발표 + 중간보고서 제출** | ⬜ ← 다음 마감 |
+| **4/28 23:59** | **중간보고서·발표 PDF 제출 (LearnUs)** | ⬜ ← 다음 마감 |
+| **4/30 19:00** | **중간발표 (인종 A428, 강재현 주 발표자)** | ⬜ |
 | 5/27~5/29 | 최종발표 + 전시회 마감 | ⬜ |
 | 6/5 | 전시회 | ⬜ |
 | **6/11** | **최종보고서 제출** | ⬜ |

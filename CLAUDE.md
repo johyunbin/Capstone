@@ -10,13 +10,23 @@
 
 ## 현재 단계
 
-> **중간발표 준비 단계 (4/19 10 축 ultrareview 반영 + 4/27 cheat sheet ultrareview)** — RQ1/RQ2 실험 전체 완료, **중간보고서·중간발표 v2+ (4/19 보강)** — 5-seed CI + Two-Level + SIFT 2배 + DEEP 8M CONSISTENT + RQ3 7-way 설계 + Recovery Rate 분모 붕괴 규칙 + H 2×2 factorial + 참고문헌 확장 (Neyman/Acharya/Chaudhuri/Babcock/Wang/Chen/Schuirmann/BH/Cohen) 반영. 주 발표자 **강재현** (4/17 확정). 팀 리뷰 4/22, 리허설 4/24·4/26 완료, **PDF 제출 4/28 23:59 (LearnUs)**, **중간발표 4/30 19:00 인종 A428 (D-3)**, 4/29 최종 리허설 1 회 예정. 보충 실험 5 건 (per-stratum BERN 최적화 / Layer K sweep / wiki 768d / SIFT mid-sel / sample_size sensitivity) 모두 W5 에서 해소, 출판 급 검정력 (10 seed × 500 query + BH-FDR + TOST + Cohen's d) 은 W6 에서 확보.
+> **4/30 중간발표 완료 + 5/5 RQ 전면 재정립 + W1 (5/5~5/11) 보강 실험 시작 단계.**
+> 5/5 비대면 회의 (20:00~21:22, 전원) 에서 박세은 팀장 제안으로 RQ 구조 전면 재정립. 새 설계안: `plans/RQ재정립_20260505_2122.md`. 채림 석사 메일 보고용 연구지도확인서: `submission/_drafts/속도는벡터_연구지도확인서_20260505.md`. 5/5 회의록: `_internal/records/kakaotalk/20260505_RQ재정립_회의.md`. 다음 회의 5/12 또는 5/13 (W1 결과 공유 + W2 분담), 최종발표 5/27 (D-22), 최종보고서 6/11 (D-37).
 
-- **연구 방향**: Skew-Aware Sampling — skewed 거리 분포에서 카디널리티 추정 정확도 개선
-  - Track A (Distribution-Aware): 분포를 알 때 → 층화 샘플링 — **RQ1/RQ2 완료**
-  - Track B (Distribution-Agnostic): 분포를 모를 때 → RQ3 설계안 확정 (7가지 방법, 3 paradigms)
-- **핵심 결과**: DEEP 1M gradient 19.6%p, SIFT +3~4% (DEEP 2배), 8M +1.76% CONSISTENT
-- **설계안 히스토리**: v3 `plans/archive/연구제안서_20260403_162818.md` → v4 `plans/연구재설계안_20260415_131400.md` → v5 (4/17 v2 통합 + 4/19 ultrareview) `submission/속도는벡터_중간보고서_20260417_0000.md §1~§7` + `plans/RQ3설계안_20260416_213500.md`
+- **연구 방향**: Exqutor 가 미작동하는 단일 테이블 영역에 대한 분포 정보의 가치 정량화. (단일 → 멀티 일반화는 future work, 단일 정확성은 멀티 정확성의 *필요조건*만 성립.)
+
+### 새 RQ 구조 (5/5 확정)
+
+| RQ | 질문 | 메인 실험 |
+|---|---|---|
+| **RQ1** | 기존 random sampling 이 skew 데이터셋에서 얼마나 부정확한가? | 2x2 (Block vs Row × Normal vs Skew) — DEEP/SIFT |
+| **RQ2** | 분포 아는 상황에서 어떤 방식이 최적? | KM20 + Proportional / **Neyman** / **Anti-Neyman** 3-way ablation |
+| **RQ3** | 분포 모르는 상황에서 어떤 방식이 최적? | 7-way 비교 (Offline 4 / Online 2 / Weight 1), Recovery Rate metric |
+
+- **핵심 결과** (RQ1/RQ2 측정 완료분): DEEP 1M selectivity gradient 19.6%p (s=1%), SIFT +3.07~4.39% (DEEP 2배+), 8M +1.76% CONSISTENT
+- **본 연구 contribution**: (1) Normal/Skew × Block/Row 정량 비교 (2) Selectivity Gradient (3) Two-Level Decomposition (4) Recovery Rate Framework
+- **Limitation 4가지**: KM20 oracle (production X) / 사전 계산 one-time cost / OLTP 범위 외 / 단일→멀티 future work
+- **설계안 히스토리**: v3 `plans/archive/연구제안서_20260403_162818.md` → v4 `plans/연구재설계안_20260415_131400.md` → v5 `submission/속도는벡터_중간보고서_20260417_0000.md` + `plans/RQ3설계안_20260416_213500.md` → **v6 (5/5) `plans/RQ재정립_20260505_2122.md`**
 - **실험 정리**: `experiments/results/RQ1_RQ2 실험 결과 정리.md`
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 
@@ -24,13 +34,20 @@
 
 | 주차 | 기간 | 핵심 작업 | 상태 |
 |------|------|----------|------|
-| W1 | 4/4-4/11 | 환경 수령 + 세팅 + Baseline 재현 | ✅ |
-| W2-3 | 4/11-4/16 | RQ1 Motivation + RQ2 Aware 실험 | ✅ |
-| W3-4 | 4/17-4/22 | v2+ (4/19 10 축 ultrareview 반영: 보고서 8 Edit, RQ3 2 Edit, 발표 1 Edit, 노션 URGENT 4 + 보강 9 + 회의록 3) · 자문 회신 반영 대기 · 4/22 팀 리뷰 | ← 현재 |
-| W4 | 4/22-4/28 | 1차 팀 리뷰 → 리허설 2 회 (4/24·4/26 완료) → **★ 4/28 23:59 PDF 제출 (LearnUs)** | ⬜ |
-| W4-5 | 4/28-4/30 | 4/29 최종 리허설 → **★ 4/30 19:00 발표 (인종 A428, 강재현)** | ⬜ |
-| W5-8 | 5/1-5/27 | RQ3 Agnostic 실험 + 심화 + 최종발표 | ⬜ |
-| W9-10 | 5/27-6/11 | **최종보고서** | ⬜ |
+| W0 | 4/4-4/16 | 환경 + RQ1/RQ2 실험 완료 | ✅ |
+| 중간 | 4/17-4/30 | 중간보고서·발표 + 4/28 LearnUs 제출 + 4/30 발표 | ✅ |
+| **W1** | **5/5-5/11** | **RQ1 SIFT SYSTEM + RQ2 Neyman/Anti-Neyman + sample size sensitivity + RQ3 Offline 4종** | ← 현재 |
+| W2 | 5/12-5/18 | RQ3 Online 2종 + Weight 1종 (H 2×2 factorial) | ⬜ |
+| W3 | 5/19-5/22 | Recovery Rate 비교 + 패러다임 cross-analysis | ⬜ |
+| W4 | 5/22-5/27 | 최종 발표 자료 → **★ 5/27 최종발표** | ⬜ |
+| W5 | 5/28-6/11 | **★ 6/11 최종보고서** | ⬜ |
+
+### W1 작업 분담 (5/5~5/11) — 5/6 카톡 조율 예정
+
+- **RQ1 보강 (~2h)**: SIFT × SYSTEM(block) baseline 측정 (4 cell 중 마지막 1 cell)
+- **RQ2 보강 (~7h)**: Neyman Allocation + Anti-Neyman ablation + sample size sensitivity (100/385/1000/3000)
+- **RQ3 W1 (~11h)**: C(RandProj) + A(LSH) + E(Hilbert) + F(MiniBatch K-means)
+- 4명 × 2~3 항목 분담
 
 ## 세션 시작 체크리스트
 
@@ -109,7 +126,10 @@ Capstone/
 |------|--------|------|
 | 4/7~ | Exqutor 코드·데이터 수령 + 환경 세팅 | ✅ (4/14) |
 | 4/16 | RQ1/RQ2 실험 완료 | ✅ |
-| **4/28 23:59** | **중간보고서·발표 PDF 제출 (LearnUs)** | ⬜ ← 다음 마감 |
+| 4/28 23:59 | 중간보고서·발표 PDF 제출 (LearnUs) | ✅ (21:44 박세은) |
+| 4/30 19:00 | 중간발표 (인종 A428, 강재현 단독) | ✅ |
+| 5/5 20:00 | RQ 재정립 회의 (전원 비대면) | ✅ |
+| **5/12 또는 5/13** | **다음 비대면 회의 (W1 결과 + W2 분담) ← 다음** | ⬜ |
 | **4/30 19:00** | **중간발표 (인종 A428, 강재현 주 발표자)** | ⬜ |
 | 5/27~5/29 | 최종발표 + 전시회 마감 | ⬜ |
 | 6/5 | 전시회 | ⬜ |

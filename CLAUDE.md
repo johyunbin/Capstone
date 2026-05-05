@@ -30,24 +30,40 @@
 - **실험 정리**: `experiments/results/RQ1_RQ2 실험 결과 정리.md`
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 
-### 실행 로드맵
+### 실행 로드맵 (5/5 회의에서 압축 일정 확정)
 
-| 주차 | 기간 | 핵심 작업 | 상태 |
+| 단계 | 기간 | 핵심 작업 | 상태 |
 |------|------|----------|------|
 | W0 | 4/4-4/16 | 환경 + RQ1/RQ2 실험 완료 | ✅ |
 | 중간 | 4/17-4/30 | 중간보고서·발표 + 4/28 LearnUs 제출 + 4/30 발표 | ✅ |
-| **W1** | **5/5-5/11** | **RQ1 SIFT SYSTEM + RQ2 Neyman/Anti-Neyman + sample size sensitivity + RQ3 Offline 4종** | ← 현재 |
-| W2 | 5/12-5/18 | RQ3 Online 2종 + Weight 1종 (H 2×2 factorial) | ⬜ |
-| W3 | 5/19-5/22 | Recovery Rate 비교 + 패러다임 cross-analysis | ⬜ |
-| W4 | 5/22-5/27 | 최종 발표 자료 → **★ 5/27 최종발표** | ⬜ |
-| W5 | 5/28-6/11 | **★ 6/11 최종보고서** | ⬜ |
+| **Sprint** | **5/6-5/8 19:00** | **RQ1 + RQ2 + RQ3 모든 실험 마감 (11종)** | ← 현재 |
+| 회의 | 5/8 19:00 | 비대면 회의 — 실험 결과 종합 + 자문 요청 초안 합의 | ⬜ |
+| 자문 | ~5/15 | 자문 요청 발송 (채림 석사 + 지도교수님) | ⬜ |
+| 초안 | ~5/21 | 발표자료 초안 마감 | ⬜ |
+| 미팅 | 5/22 | 교수님 미팅 | ⬜ |
+| 발표 | 5/26 | 발표자료 최종 마감 → **★ 5/27 최종발표** | ⬜ |
+| 전시 | 5/28 | 전시회 자료 마감 | ⬜ |
+| 보고 | ~6/11 | **★ 6/11 최종보고서** | ⬜ |
 
-### W1 작업 분담 (5/5~5/11) — 5/6 카톡 조율 예정
+### Sprint 작업 (5/6~5/8 19:00) — 11종, 사용자 주도 진행
 
-- **RQ1 보강 (~2h)**: SIFT × SYSTEM(block) baseline 측정 (4 cell 중 마지막 1 cell)
-- **RQ2 보강 (~7h)**: Neyman Allocation + Anti-Neyman ablation + sample size sensitivity (100/385/1000/3000)
-- **RQ3 W1 (~11h)**: C(RandProj) + A(LSH) + E(Hilbert) + F(MiniBatch K-means)
-- 4명 × 2~3 항목 분담
+총 ~26시간. 사용자(조현빈)가 모든 실험을 직접 진행, 각 실험 완료 시마다 브리핑 + 상세 설명 프롬프트로 정리.
+
+| # | 실험 | RQ | 예상 시간 | 비고 |
+|---|---|---|---|---|
+| 1 | SIFT × SYSTEM(block) baseline | RQ1 | ~2h | 가장 짧음, 2x2 표 즉시 완성 |
+| 2 | Neyman Allocation | RQ2 | ~4h | variance-optimal |
+| 3 | Anti-Neyman ablation | RQ2 | ~포함 | Neyman 과 묶음 |
+| 4 | Sample size sensitivity (100/385/1000/3000) | RQ2 | ~3h | KM20 효과 sample_size 의존성 |
+| 5 | C. Random Projection | RQ3 | ~2h | Johnson-Lindenstrauss |
+| 6 | A. LSH | RQ3 | ~4h | Locality-Sensitive Hashing |
+| 7 | E. Hilbert Curve | RQ3 | ~4h | space-filling curve |
+| 8 | F. MiniBatch K-means | RQ3 | ~1h | sklearn 한 줄 |
+| 9 | G. Distance-Shell | RQ3 | ~4h | pilot 기반 |
+| 10 | B. KDE-pilot | RQ3 | ~6h | Neyman + KDE |
+| 11 | H. Importance Sampling (+2x2 factorial) | RQ3 | ~6h | 분할 X, 가중치만 |
+
+→ **새 세션 진행 가이드**: `_internal/실험_진행_프롬프트_템플릿.md`
 
 ## 세션 시작 체크리스트
 
@@ -129,7 +145,14 @@ Capstone/
 | 4/28 23:59 | 중간보고서·발표 PDF 제출 (LearnUs) | ✅ (21:44 박세은) |
 | 4/30 19:00 | 중간발표 (인종 A428, 강재현 단독) | ✅ |
 | 5/5 20:00 | RQ 재정립 회의 (전원 비대면) | ✅ |
-| **5/12 또는 5/13** | **다음 비대면 회의 (W1 결과 + W2 분담) ← 다음** | ⬜ |
+| **5/8 19:00** | **★ RQ1+RQ2+RQ3 실험 마감 + 비대면 회의 ← 다음** | ⬜ |
+| ~5/15 | 자문 요청 발송 (채림 석사 + 교수님) | ⬜ |
+| ~5/21 | 발표자료 초안 마감 | ⬜ |
+| 5/22 | 교수님 미팅 | ⬜ |
+| 5/26 | 발표자료 최종 마감 | ⬜ |
+| **5/27** | **★ 최종 발표 (D-22)** | ⬜ |
+| 5/28 | 전시회 자료 마감 | ⬜ |
+| **6/11** | **★ 최종 보고서 (D-37)** | ⬜ |
 | **4/30 19:00** | **중간발표 (인종 A428, 강재현 주 발표자)** | ⬜ |
 | 5/27~5/29 | 최종발표 + 전시회 마감 | ⬜ |
 | 6/5 | 전시회 | ⬜ |

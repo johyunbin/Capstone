@@ -115,10 +115,11 @@ def discover_8m_midsel_files(
     파일명 인코딩 안 되어 있으면 parquet 안 의 selectivity 컬럼으로 추론.
     """
     if search_dirs is None:
+        # rq1_motivation, rq2_aware 의 직접 자식 + 모든 sub-directory (rglob)
+        # measure.py 산출 위치 (예: rq1_motivation/2026_05_06_8m_midsel/) 도 포함.
         search_dirs = [
             RESULTS_DIR / "rq1_motivation",
             RESULTS_DIR / "rq2_aware",
-            RESULTS_DIR / "rq2_aware" / "2026_05_06_alloc",
         ]
 
     found: list[MeasurementFile] = []
@@ -131,7 +132,7 @@ def discover_8m_midsel_files(
         if not d.is_dir():
             continue
         for ext in ("parquet", "json"):
-            for p in sorted(d.glob(f"*.{ext}")):
+            for p in sorted(d.rglob(f"*.{ext}")):
                 name = p.name.lower()
                 if not eight_m_marker.search(name):
                     continue
@@ -251,6 +252,108 @@ def load_summary_json(path: Path) -> dict[str, CellMeasurement]:
             cell.bern_med_per_seed.append(float(ps.get("bern_med", float("nan"))))
             cell.strat_med_per_seed.append(float(ps.get("strat_med", float("nan"))))
         out[f"{mode}_s{sel:.2f}"] = cell
+    elif "per_cell_stats" in raw:
+        # 형식 C: phase7_8m_midsel_meta.json (measure.py 산출).
+        #   {"per_cell_stats": [
+        #       {"sel_target": 0.10, "comparison": "system vs bernoulli", ...},
+        #       {"sel_target": 0.10, "comparison": "stratified vs bernoulli", ...},
+        #       ...
+        #   ]}
+        # comparison "stratified vs bernoulli" → km20 cell (RAND20 측정 없음)
+        # comparison "system vs bernoulli" → RQ1 SYSTEM-block (별도 추적, sys20 mode)
+        for stat in raw["per_cell_stats"]:
+            sel = float(stat["sel_target"])
+            comp = stat.get("comparison", "")
+            if "stratified" in comp:
+                mode = "km20"
+            elif "system" in comp:
+                mode = "sys20"  # 별도 — RQ1 narrative 용
+            else:
+                continue
+            cell = CellMeasurement(dataset="DEEP_8M", sel=sel, mode=mode)
+            for ps in stat.get("per_seed", []):
+                cell.diff_pct_per_seed.append(float(ps["diff_pct"]))
+                cell.p_per_seed.append(float(ps.get("p", float("nan"))))
+                # phase7 meta 의 키는 med_a (mode_a=stratified), med_b (mode_b=bernoulli)
+                cell.bern_med_per_seed.append(float(ps.get("med_b", float("nan"))))
+                cell.strat_med_per_seed.append(float(ps.get("med_a", float("nan"))))
+            out[f"{mode}_s{sel:.2f}"] = cell
+    return out
+
+
+def load_phase7_midsel_parquet(path: Path) -> dict[str, CellMeasurement]:
+    """measure.py 의 단일 parquet (`phase7_8m_midsel.parquet`) 분해.
+
+    Schema: ['query_id', 'true_card', 'plan_rows', 'q_error', 'hook_est',
+             'q_error_hook', 'sel_target', 'mode', 'seed', 'actual_sel_med', 'error']
+    mode ∈ {'system', 'bernoulli', 'stratified'}
+    sel_target ∈ {0.10, 0.30}
+    seed ∈ {0.1, 0.2, 0.3, 0.4, 0.5}
+
+    paired Wilcoxon: (mode_a, bernoulli) per (sel, seed) → cell 의 5-seed diff_pct.
+    q_error_hook 컬럼 우선 사용 (phase7 의 hook 추정 q-error).
+    """
+    try:
+        import pyarrow.parquet as pq
+        from scipy.stats import wilcoxon
+    except ImportError as e:
+        log(f"  ! 의존성 미설치 — {e}")
+        return {}
+
+    df = pq.read_table(path).to_pandas()
+    if "mode" not in df.columns or "sel_target" not in df.columns:
+        log(f"  ! {path.name}: schema 미일치 (mode/sel_target 컬럼 없음)")
+        return {}
+
+    qcol = "q_error_hook" if "q_error_hook" in df.columns else "q_error"
+    out: dict[str, CellMeasurement] = {}
+    sel_targets = sorted(df["sel_target"].dropna().unique())
+    seeds = sorted(df["seed"].dropna().unique()) if "seed" in df.columns else [None]
+
+    for sel in sel_targets:
+        sub = df[df["sel_target"] == sel]
+        bern = sub[sub["mode"] == "bernoulli"]
+        if len(bern) == 0:
+            continue
+        for mode_a, cell_mode in (("stratified", "km20"), ("system", "sys20")):
+            mode_a_df = sub[sub["mode"] == mode_a]
+            if len(mode_a_df) == 0:
+                continue
+            cell = CellMeasurement(dataset="DEEP_8M", sel=float(sel), mode=cell_mode)
+            for sd in seeds:
+                if sd is None:
+                    a = mode_a_df[[ "query_id", qcol]].rename(columns={qcol: "qa"})
+                    b = bern[[ "query_id", qcol]].rename(columns={qcol: "qb"})
+                else:
+                    a = mode_a_df[mode_a_df["seed"] == sd][["query_id", qcol]].rename(
+                        columns={qcol: "qa"}
+                    )
+                    b = bern[bern["seed"] == sd][["query_id", qcol]].rename(
+                        columns={qcol: "qb"}
+                    )
+                pair = a.merge(b, on="query_id").dropna()
+                if len(pair) == 0:
+                    continue
+                ma = float(np.median(pair["qa"]))
+                mb = float(np.median(pair["qb"]))
+                diff = (mb - ma) / mb * 100.0 if mb > 0 else 0.0
+                try:
+                    p = float(
+                        wilcoxon(
+                            pair["qa"].values,
+                            pair["qb"].values,
+                            alternative="less",
+                            zero_method="wilcox",
+                        ).pvalue
+                    )
+                except Exception:
+                    p = float("nan")
+                cell.diff_pct_per_seed.append(diff)
+                cell.p_per_seed.append(p)
+                cell.bern_med_per_seed.append(mb)
+                cell.strat_med_per_seed.append(ma)
+            if cell.diff_pct_per_seed:
+                out[f"{cell_mode}_s{float(sel):.2f}"] = cell
     return out
 
 
@@ -333,9 +436,28 @@ def load_all_8m_midsel(files: list[MeasurementFile]) -> dict[str, CellMeasuremen
         except Exception as e:
             log(f"  ! {jf.path.name} 로드 실패: {e}")
 
-    # parquet pair (bern + strat) 매칭
+    # parquet 처리 — 우선 phase7 단일 parquet 인지 확인 (mode 컬럼 자동 분해)
+    handled_paths: set[Path] = set()
+    for pf in parquet_files:
+        # phase7_8m_midsel.parquet 패턴 (mode + sel_target 컬럼 보유)
+        try:
+            import pyarrow.parquet as pq
+
+            schema = pq.read_schema(pf.path)
+            cols = {f.name for f in schema}
+            if "mode" in cols and "sel_target" in cols:
+                partial = load_phase7_midsel_parquet(pf.path)
+                log(f"  + {pf.path.name} (phase7-style): {len(partial)} cell")
+                cells.update(partial)
+                handled_paths.add(pf.path)
+        except Exception as e:
+            log(f"  ! {pf.path.name} schema 확인 실패: {e}")
+
+    # 나머지 parquet — 기존 BERN/STRAT pair 패턴 (selectivity 단일 컬럼)
     by_sel: dict[float, dict[str, list[Path]]] = {}
     for pf in parquet_files:
+        if pf.path in handled_paths:
+            continue
         sel_key = pf.sel
         by_sel.setdefault(sel_key, {}).setdefault(pf.mode, []).append(pf.path)
 
@@ -401,6 +523,9 @@ def build_gradient_matrix(
         matrix["DEEP_8M"][sel] = GradientCell("DEEP_8M", sel, km, rd)
     for key, cell in new_8m.items():
         sel = cell.sel
+        # phase7 measure.py 산출: km20 / sys20 만 있고 rand20 측정 없음.
+        # 따라서 mid-sel (s=0.10, 0.30) 의 RAND20 은 NaN 으로 두고,
+        # Two-Level Decomposition 의 Level 1 자리는 "(미측정)" 으로 표시.
         if cell.mode == "km20":
             existing = matrix["DEEP_8M"].get(sel)
             rd = existing.rand20_diff if existing else float("nan")
@@ -413,8 +538,56 @@ def build_gradient_matrix(
             matrix["DEEP_8M"][sel] = GradientCell(
                 "DEEP_8M", sel, km, cell.mean_diff_pct
             )
+        # sys20 (system vs bernoulli) 는 RQ1 narrative 영역 — gradient matrix 에는 X.
 
     return matrix
+
+
+def collect_sys20_cells(new_8m: dict[str, CellMeasurement]) -> dict[float, CellMeasurement]:
+    """phase7 measure.py 의 'system vs bernoulli' (sys20) cell 만 추출.
+
+    8M 의 SYSTEM-block sampling 효과 — RQ1 cross-dataset narrative 보강용.
+    sel → CellMeasurement 매핑. 기존 8M (s=0.50) phase7_8m_bern/strat parquet 측정에는
+    SYSTEM mode 가 없으므로 mid-sel (s=0.10, 0.30) 만.
+    """
+    out: dict[float, CellMeasurement] = {}
+    for key, cell in new_8m.items():
+        if cell.mode == "sys20":
+            out[cell.sel] = cell
+    return out
+
+
+def check_km20_monotonicity(
+    matrix: dict[str, dict[float, GradientCell]],
+) -> dict[str, dict[str, Any]]:
+    """KM20 only gradient 단조성 (RAND20 부재시 fallback).
+
+    KM20 의 BERN 대비 개선 % 가 sel 좁아질수록 커지는가? — 8M mid-sel 구간만 측정된
+    경우에 사용. gap 기반 단조성 (check_gradient_monotonicity) 의 대체 metric.
+    """
+    out: dict[str, dict[str, Any]] = {}
+    for ds, cells in matrix.items():
+        sels = sorted(cells.keys(), reverse=True)
+        kms = [cells[s].km20_diff for s in sels]
+        valid = [(s, k) for s, k in zip(sels, kms) if not (np.isnan(s) or np.isnan(k))]
+        if len(valid) < 2:
+            out[ds] = {"valid_n": len(valid), "monotonic": None}
+            continue
+        vsels, vkms = zip(*valid)
+        diffs = [vkms[i + 1] - vkms[i] for i in range(len(vkms) - 1)]
+        n_inc = sum(1 for d in diffs if d > 0)
+        n_dec = sum(1 for d in diffs if d < 0)
+        out[ds] = {
+            "valid_n": len(valid),
+            "sels_desc": list(vsels),
+            "km20_pcts": list(vkms),
+            "diffs": diffs,
+            "n_increase": n_inc,
+            "n_decrease": n_dec,
+            "monotonic_strict": all(d > 0 for d in diffs),
+            "monotonic_weak": all(d >= 0 for d in diffs),
+        }
+    return out
 
 
 def check_gradient_monotonicity(
@@ -422,16 +595,15 @@ def check_gradient_monotonicity(
 ) -> dict[str, dict[str, Any]]:
     """gradient 단조성 (sel 작을수록 KM-RAND gap 커지는가) 검증.
 
-    각 dataset 에 대해:
-      - sel 내림차순으로 gap (= km20_diff - rand20_diff) 산출
-      - "넓은 sel → 좁은 sel" 방향으로 단조 증가 여부
-      - 부분 단조 (반례 1~2개) 도 기록
+    DEEP 8M mid-sel (s=0.10, 0.30) 은 RAND20 미측정 → gap 산출 불가 (NaN) →
+    valid 에서 자동 제외. 따라서 8M 단조성은 측정된 sel (0.50, 0.05, 0.01) 만
+    기준으로 평가됨. mid-sel 보강은 KM20 only gradient 의 단조성으로 별도 평가.
     """
     out: dict[str, dict[str, Any]] = {}
     for ds, cells in matrix.items():
         sels = sorted(cells.keys(), reverse=True)  # 0.5 → 0.01
         gaps = [cells[s].gap for s in sels]
-        # NaN 제외
+        # NaN 제외 (RAND20 미측정 영역)
         valid = [(s, g) for s, g in zip(sels, gaps) if not (np.isnan(s) or np.isnan(g))]
         if len(valid) < 2:
             out[ds] = {"valid_n": len(valid), "monotonic": None}
@@ -538,18 +710,53 @@ def render_8m_km_vs_rand_table(
 def render_8m_two_level_table(
     matrix: dict[str, dict[float, GradientCell]],
 ) -> str:
-    """실험 6 의 'DEEP 8M 수치 분해' Two-Level 표."""
+    """실험 6 의 'DEEP 8M 수치 분해' Two-Level 표.
+
+    measure.py 산출에는 RANDOM20 mid-sel 측정이 없으므로 mid-sel (0.10, 0.30) 의
+    Level 1/Level 2 는 NaN → '(RAND20 미측정)' 표시. 학술적 한계 명시 차원.
+    """
     rows_dec = build_decomposition(matrix, "DEEP_8M")
     rows = []
     for r in rows_dec:
+        if np.isnan(r.level_1):
+            l1 = "(RAND20 미측정)"
+            l2 = "(분해 불가)"
+        else:
+            l1 = fmt_pct(r.level_1)
+            l2 = fmt_pct(r.level_2)
         rows.append(
-            f"| {r.sel*100:.0f}% | {fmt_pct(r.level_1)} | {fmt_pct(r.level_2)} | {fmt_pct(r.total)} |"
+            f"| {r.sel*100:.0f}% | {l1} | {l2} | {fmt_pct(r.total)} |"
         )
     header = (
         "| selectivity | Level 1 (비례 배분) | Level 2 (공간 인식) | Total (KM20) |\n"
         "|-------------|--------------------|--------------------|-------------|\n"
     )
     return header + "\n".join(rows)
+
+
+def render_sys20_8m_block(
+    sys20: dict[float, CellMeasurement],
+) -> str:
+    """8M 의 SYSTEM-block sampling 효과 (sys20 cell) — RQ1 cross-dataset narrative 보강.
+
+    1M/SIFT 의 RQ1 SYSTEM-BERN 격차 (실험 #1 결과) 와 동일 metric 으로 비교 가능.
+    """
+    if not sys20:
+        return ""
+    lines = ["### DEEP 8M × SYSTEM-block 효과 (RQ1 cross-dataset 보강)\n"]
+    lines.append(
+        "phase7 8M mid-sel 측정에서 같이 산출된 SYSTEM-block sampling 효과 "
+        "(BERN 대비 격차) — RQ1 의 cross-dataset 비교 (1M/SIFT/8M) 에 활용.\n"
+    )
+    lines.append("| sel | DEEP 8M Δ% (SYS−BERN) | 95% CI | 유의 seed |")
+    lines.append("|---|---|---|---|")
+    for sel in sorted(sys20.keys()):
+        c = sys20[sel]
+        ci_lo, ci_hi = c.ci_t_based
+        ci_str = fmt_ci(ci_lo, ci_hi)
+        sig = f"{c.n_significant_seeds}/{len(c.diff_pct_per_seed)}"
+        lines.append(f"| {sel*100:.0f}% | **{fmt_pct(c.mean_diff_pct)}** | {ci_str} | {sig} |")
+    return "\n".join(lines)
 
 
 def render_gradient_consistency_block(
@@ -843,9 +1050,30 @@ def main(argv: list[str] | None = None) -> int:
     log("Phase 3 — Gradient 매트릭스 + 단조성 검증")
     matrix = build_gradient_matrix(cells)
     monotonicity = check_gradient_monotonicity(matrix)
+    km_monotonicity = check_km20_monotonicity(matrix)
+    sys20 = collect_sys20_cells(cells)
+    log(f"  sys20 (8M SYSTEM-block) cell: {len(sys20)} sel")
 
     log("Phase 4 — 리포트 출력")
     print_report(files, cells, matrix, monotonicity)
+    log("  --- KM20-only 단조성 (RAND20 부재 fallback) ---")
+    for ds, m in km_monotonicity.items():
+        if m.get("monotonic_strict"):
+            v = "✓ 엄격 단조"
+        elif m.get("monotonic_weak"):
+            v = "○ 약 단조"
+        else:
+            v = f"~ inc={m.get('n_increase', 0)}/dec={m.get('n_decrease', 0)}"
+        log(f"    {ds}: n={m.get('valid_n', 0)} {v}")
+    if sys20:
+        log("  --- 8M SYS20 (RQ1 cross-dataset 보강) ---")
+        for sel in sorted(sys20.keys()):
+            c = sys20[sel]
+            ci_lo, ci_hi = c.ci_t_based
+            log(
+                f"    s={sel}: {fmt_pct(c.mean_diff_pct)} {fmt_ci(ci_lo, ci_hi)} "
+                f"sig={c.n_significant_seeds}/{len(c.diff_pct_per_seed)}"
+            )
 
     log("Phase 5 — 정리.md 갱신")
     changed = update_summary_md(

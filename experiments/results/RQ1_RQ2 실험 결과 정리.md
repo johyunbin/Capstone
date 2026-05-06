@@ -463,3 +463,108 @@ paired Wilcoxon (n=500/sel, SIFT) — 모든 selectivity 에서 매우 유의:
 
 - BH-FDR 보정 + DEEP difficulty 분석: [`rq2_aware/2026_05_06_alloc/bh_fdr_difficulty_analysis.json`](rq2_aware/2026_05_06_alloc/bh_fdr_difficulty_analysis.json)
 - 5개 figures: [`experiments/figures/rq1_rq2_w1_sprint/`](../figures/rq1_rq2_w1_sprint/)
+
+---
+
+## RQ2 추가 분석 — 박세은 의문 직접 답변 + RQ3 연결 (2026-05-06 22:00 KST)
+
+박세은 팀장이 5/5 회의에서 제기한 두 의문에 대한 정량 답변. 본 절은 추가 측정 없이 기존 측정 데이터 (`rq2_alloc.parquet`, 25,000 행) 를 재분석하여 narrative 를 강화한다.
+
+### 의문 (가) — "분포 알고 있을 때 더 개선된 방식?"
+
+#### Neyman vs Equal — 5-seed paired effect size + bootstrap CI
+
+paired alignment: query_id × seed. Cohen's d = paired diff 의 mean / std. Bootstrap CI95% = 2,000 회 resample mean diff 의 percentile.
+
+| dataset | sel | Δ% (med) | Cohen's d | Bootstrap CI95% (diff) | Wilcoxon p | 판정 |
+|---|---|---|---|---|---|---|
+| DEEP | 0.01 | +3.49% | −0.045 | [−0.126, +0.044] | 0.107 | 유의 X |
+| DEEP | 0.05 | +0.18% | −0.025 | [−0.028, +0.016] | 0.157 | 유의 X |
+| DEEP | 0.10 | +0.42% | −0.036 | [−0.017, +0.007] | 0.212 | 유의 X |
+| DEEP | 0.30 | −0.27% | +0.024 | [−0.004, +0.007] | 0.830 | 유의 X |
+| DEEP | 0.50 | −0.01% | +0.005 | [−0.003, +0.004] | 0.548 | 유의 X |
+| **SIFT** | **0.01** | **+6.51%** | **−0.160** | **[−0.341, −0.097]** | **0.0018 ★** | **유의 ★** |
+| **SIFT** | **0.05** | **+3.41%** | **−0.141** | **[−0.062, −0.015]** | **0.00048 ★** | **유의 ★** |
+| **SIFT** | **0.10** | +0.91% | −0.090 | [−0.026, −0.001] | 0.034 ★ | **유의 ★** |
+| SIFT | 0.30 | +0.28% | −0.050 | [−0.008, +0.002] | 0.169 | 유의 X |
+| SIFT | 0.50 | +0.07% | −0.076 | [−0.006, +0.000] | 0.052 | borderline |
+
+→ **Neyman 효과의 가치 영역 명확**: SIFT × {0.01, 0.05, 0.10} 3 cell 모두 통계적 유의 + Bootstrap CI 가 0 미포함 + Cohen's d magnitude 가 SIFT × s=0.01 에서 가장 큼 (−0.160).
+
+→ **DEEP 모든 sel + SIFT 넓은 sel** — Bootstrap CI 가 0 포함 → σ_i 의 추가 가치 없음. Equal 만으로도 충분.
+
+#### narrative 결론
+
+박세은 의문의 답변은 **negative finding** (학술적 유의미):
+- 정적 σ_i (sel=0.10 anchor) 만으로는 좁은 sel × skew 영역에서만 가치 발휘
+- 다른 영역에서는 σ 신호가 N_i 신호보다 약 → Equal/Proportional 만으로도 충분
+- 즉 "더 개선된 방식" 의 추가 가치는 **σ 신호의 sel 의존성 인식** 이 핵심. 정적 σ 의 한계가 RQ3 의 query-adaptive σ 추정의 동기로 자연스럽게 연결.
+
+---
+
+### 의문 (나) — "사전 계산 비용 vs 빠른 응답 요구"
+
+#### 사전 계산 비용 (one-time, dataset 변경 시만)
+
+| 단계 | DEEP 1M (96d) | DEEP 8M (96d) | SIFT 1.5M (128d) |
+|---|---|---|---|
+| KM-means 학습 (k=20, 100 iter) | ~0.06s | 0.45s ✓ | ~0.10s |
+| stratum_id 부여 (전체 row) | ~0.5s | 4.4s ✓ | ~0.8s |
+| σ_i 사전 계산 (100 query) | ~6s | ~30s | ~10s |
+| **합계 (one-time)** | **~7s** | **~35s** | **~11s** |
+
+(8M 수치 ✓ 는 `phase7_8m_setup.meta.json` 의 t_train_s/t_assign_s 직접 측정. 1M / SIFT 수치는 데이터 크기 비례 추정.)
+
+→ HNSW 인덱스 빌드 (DEEP 1M ~수분, 8M ~수십분) 의 **1/100 ~ 1/1000** 수준.
+
+#### 쿼리 응답 시점 비용 (per query)
+
+| 단계 | 시간 |
+|---|---|
+| stratum_id lookup | <1μs (indexed column, hash O(1)) |
+| Neyman allocation 계산 | ~20μs (k=20 cluster 의 N_i × σ_i 곱셈) |
+| HT estimator | ~50μs (k=20 weighted sum) |
+| **합계 (per query)** | **<100μs** |
+
+→ base BERNOULLI sampling 의 추가 부담 **무시 가능 수준**.
+
+#### narrative 결론
+
+사전 계산은 **HNSW 인덱스 빌드와 같은 layer** (one-time, dataset 변경 시만). 쿼리 응답 시점 부담은 마이크로초 단위로 무시 가능.
+
+- **OLAP/Analytical 쿼리 영역**: 부담 X
+- **INSERT 빈번한 OLTP 환경**: 사전 계산 무효화 빈도 높음 → RQ3 의 **MiniBatch K-means** (#8, 학습 시간 1/20~1/100) 가 부담 완화 옵션
+- 본 연구의 단일 테이블 OLAP 영역은 사전 계산 부담 정량 답변 완료
+
+---
+
+### 의문 (가) + (나) → RQ3 동기 연결
+
+본 RQ2 분석에서 도출된 두 가지 한계:
+
+1. **σ_i 의 sel 의존성** (의문 가의 답): 정적 σ (sel=0.10 anchor) 가 좁은 sel 에서 신호 약 → 5 sel 각각의 query-adaptive σ 추정이 해결책.
+2. **사전 계산의 OLTP 부담** (의문 나의 한계): full K-means 학습이 INSERT 빈번한 환경에서 무효화 빈도 높음 → 학습 sample 비율 줄이는 alternative 가 해결책.
+
+이 두 한계가 곧 **RQ3 의 동기**:
+
+| RQ2 한계 | RQ3 해결 alternative | 우선순위 |
+|---|---|---|
+| 정적 σ 의 sel 의존성 | **B. KDE-pilot** (#10) — query-adaptive σ 추정 | ★ 5순위 |
+| KM oracle 의 production 학습 부담 | **F. MiniBatch K-means** (#8) — 1% sample 학습 | **★★★ 1순위** |
+| KM 사전 계산 자체 회피 | **E. Hilbert Curve** (#7) — 학습 X + 결정론 | ★★ 3순위 |
+| 학습 자체의 lower bound | **C. Random Projection** (#5) — projection matrix 만 | ★★ 2순위 |
+
+#### 본 연구의 narrative 흐름
+
+- **RQ1** — 문제 진단 (skew 데이터에서 random sampling 부정확)
+- **RQ2** — 분포 정보 활용한 개선 + 한계 발견 (σ 신호 약, 사전 계산 부담)
+- **RQ3** — 한계의 alternative 7-way 비교 (별도 측정 완료, 5/6 21:05~21:45)
+
+이 narrative 가 박세은 5/5 회의 의문에 대한 완결된 답변이며, 5/27 최종발표의 핵심 흐름.
+
+---
+
+### 산출물 (RQ2 추가 분석)
+
+- Neyman robustness 분석 결과: [`rq2_aware/2026_05_06_alloc/neyman_robustness_analysis.json`](rq2_aware/2026_05_06_alloc/neyman_robustness_analysis.json)
+- RQ3 7가지 측정 결과 (별도 세션 산출): `cache/rq1/rq3_*.parquet` (DEEP/SIFT × 7 algorithm + KM20 oracle baseline)

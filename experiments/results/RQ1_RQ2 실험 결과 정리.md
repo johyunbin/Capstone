@@ -329,3 +329,51 @@ paired Wilcoxon (n=500/sel, SIFT) — 모든 selectivity 에서 매우 유의:
 - 4 단계 narrative + 통계 표 + sanity 분석 전체: [`sift_rq1_2026_05_06/실험1_결과정리_20260506.md`](rq1_motivation/sift_rq1_2026_05_06/실험1_결과정리_20260506.md)
 - raw 측정 데이터: `sift_rq1_2026_05_06/sift_rq1_system.parquet` (2500 rows) + meta json
 - BERN 측정 (5/6 오전): `sift_rq1_2026_05_06/sift_rq1_bernoulli.parquet`
+
+---
+
+## W1 Sprint 추가 측정 — 실험 #2 + #3 RQ2 Allocation method 비교 (2026-05-06)
+
+5/5 비대면 회의에서 박세은 팀장이 제안한 두 가지 보강 사안 중 RQ2 영역. 기존 KM20 stratified 가 사실상 **Equal Allocation** 이었음을 vector.c 코드 점검으로 확인하고, 그 위에 **Proportional / Neyman / Anti-Neyman** 3 mode 를 추가하여 5-way 비교 (BERN baseline 포함). DEEP 1M + SIFT 1.5M × 5 sel × 5 seed × 100 query × 5 mode = 25,000 rows. 17:10:38 시작 → 17:10:55 종료 (Python 시뮬레이션, 17.1 초).
+
+### σ_i 사전 계산 (vector_stratum_sigma 테이블)
+
+각 cluster 의 σ_i 를 sel=0.10 D_target 기준 query 100 개 평균 Bernoulli SD 로 정의 — `σ_i² = mean_q[ p_{i,q} × (1-p_{i,q}) ]`. 결과:
+
+| 데이터셋 | σ_i 범위 (변동) | N_i 범위 (변동) |
+|---|---|---|
+| DEEP 1M | [0.1925, 0.2936] (1.5x) | [26K, 81K] (3.1x) |
+| SIFT 1.5M | [0.1232, 0.3211] (2.6x) | [33K, 148K] (4.4x) |
+
+→ **SIFT 가 cluster 비균질성 더 큼**. 그러나 σ_i 변동이 N_i 변동보다 작아서, Neyman vs Anti-Neyman 의 ablation 신호가 약할 것으로 예측된다.
+
+### 핵심 결과 — 모든 stratified > BERN, Neyman 의 가치는 SIFT × 좁은 sel 에서만
+
+**A) 모든 stratified mode > BERN baseline** (paired Wilcoxon, n=500/cell): DEEP -1.3% ~ -7.0%, SIFT -3.7% ~ -10.5% 개선. p ≤ 1e-7 ~ 1e-50 까지. SIFT 의 effect size (Cohen's d) 가 DEEP 의 2 배 이상 — cluster 비균질성에서 stratified 의 가치 정통 통계와 일치.
+
+**B) Neyman vs Equal** (KM20 의 기존 Equal 대비 Neyman 이 추가 가치를 만드는가):
+
+| 데이터셋 | sel=0.01 Δ% | sel=0.05 Δ% | sel=0.10 Δ% | sel=0.30 Δ% | sel=0.50 Δ% |
+|---|---|---|---|---|---|
+| DEEP | -3.08% (p=0.11) | -0.51% | -0.44% | +0.14% | +0.02% |
+| **SIFT** | **-11.91% (p=0.005)** ★ | **-3.07% (p=0.001)** ★ | -1.17% | -0.29% | -0.25% |
+
+→ DEEP 에서는 Neyman 효과 통계적 유의 X. **SIFT 좁은 sel 에서만 매우 강한 Neyman 효과** (s=0.01 -11.9%, s=0.05 -3.1%). H2-N (Neyman 우월성) **부분 입증**.
+
+**C) Anti-Neyman vs Proportional** (H2-AN 검증):
+
+| 데이터셋 | 모든 5 sel 의 p-value 범위 | 판정 |
+|---|---|---|
+| DEEP | 0.193 ~ 0.846 | 모두 통계적 유의 X |
+| SIFT | 0.205 ~ 0.994 | 모두 통계적 유의 X |
+
+→ **H2-AN 반증** (또는 효과 없음). 모든 case 에서 Anti-Neyman 과 Proportional 의 차이가 통계 noise 안. σ_i 신호가 N_i 보다 약해 ablation 효과가 통계적으로 검출 안 됨. RQ3 의 query-aware Online σ_i 영역으로 미룸.
+
+**D) SIFT × Equal × s=0.01 anomaly — 새 발견**: Equal Allocation 의 q_error (1.8463) 가 BERN baseline (1.6925) 보다도 부정확. cluster 크기 변동이 큰 SIFT 에서 Equal 의 균등 배분 (385/20 ≈ 19 표본/cluster) 이 큰 cluster (148K) 에서 sample 부족 → 부정확. Proportional/Neyman 이 해결. **"Equal 은 normal 데이터엔 OK, skew 에서는 Proportional 이상 필요"** narrative 의 직접 증거.
+
+### 산출물 + 상세 narrative
+
+- 4 단계 narrative + 통계 표 + 4-way 순위 + Limitation: [`rq2_aware/2026_05_06_alloc/실험2_3_결과정리_20260506.md`](rq2_aware/2026_05_06_alloc/실험2_3_결과정리_20260506.md)
+- raw 측정 데이터: `rq2_aware/2026_05_06_alloc/rq2_alloc.parquet` (25,000 rows) + meta json
+- σ_i 사전 계산 스크립트: `experiments/code/rq2/compute_stratum_sigma.py`
+- 측정 스크립트: `experiments/code/rq2/rq2_alloc_python.py`

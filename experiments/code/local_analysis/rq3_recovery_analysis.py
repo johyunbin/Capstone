@@ -23,7 +23,8 @@ from recovery_rate import (  # noqa: E402
 )
 
 RESULTS = Path("/Users/hyunbin/Capstone/experiments/results/rq3_agnostic")
-METHODS = ["minibatch", "random_proj", "hilbert", "lsh"]
+METHODS = ["minibatch", "random_proj", "hilbert", "lsh", "kde_pilot", "distance_shell",
+           "is_p50_noclip", "is_p50_clip", "is_p200_noclip", "is_p200_clip"]
 
 
 def load_all() -> pd.DataFrame:
@@ -37,6 +38,9 @@ def load_all() -> pd.DataFrame:
         "rq3_random_proj.parquet": None,
         "rq3_hilbert.parquet": None,
         "rq3_lsh.parquet": None,
+        "rq3_kde_pilot.parquet": None,
+        "rq3_distance_shell.parquet": None,
+        "rq3_importance_sampling.parquet": None,
     }
     for fname in files:
         path = RESULTS / fname

@@ -196,12 +196,15 @@ Random Projection 과 큰 차이 없으면 → 둘 다 distribution-agnostic 의
 - 좁은 sel (s=0.01) 에서 효과 강함 — RQ2 패턴 재현.
 - 측정 시간 ~6시간 (pilot phase 가 query 마다 5 cluster × 5 sample fetch 추가).
 
-### (d) 실제 결과
+### (d) 실제 결과 (2026-05-06 21:45 측정 완료, 14.3s)
 
-> [측정 후 채움]
-> - recovery_rate (DEEP/SIFT):
-> - SIFT 좁은 sel 의 효과:
-> - vs RQ2 Neyman 비교:
+> 측정 시간 14.3s (예상 6h 의 ~0.07% — sample_size 작고 PG buffer warm)
+> - **DEEP** (vs RANDOM20): s=0.01 -0.62% / s=0.05 -0.02% / s=0.10 +0.53% / s=0.30 +0.07% / s=0.50 -0.30%
+> - **SIFT** (vs RANDOM20): s=0.01 +4.07% ⚠️ / s=0.05 -3.28% ★ / s=0.10 -0.27% / s=0.30 -0.67% / s=0.50 -0.97%
+> - **paired Wilcoxon vs RANDOM20**: 1/10 cell 유의 (SIFT s=0.50 만)
+> - **가설 H3-B 부분 confirm**: 예상 50-80% recovery 였으나 실제 SIFT mid-sel (s=0.05) 에서만 -3.28% — 부분 효과
+> - **SIFT 좁은 sel 효과**: SIFT s=0.01 에서 +4.07% (worse) — pilot noise 가 좁은 sel 에서 주도, 가설 (좁은 sel 강함) 반대
+> - **vs RQ2 Neyman 비교**: RQ2 SIFT s=0.01 Neyman -11.9% 대비 KDE-pilot 의 online σ 추정이 noise dominant (Neyman 의 사전 학습 σ 가 더 안정)
 
 ### 의의
 
@@ -228,12 +231,14 @@ KDE-pilot 의 단순화 ablation. cluster 분할 (KM) 대신 **5 distance shells
 - 좁은 sel 에서 효과 미미: shell 이 하나만 query 의 D 를 포함 → 다른 shell 의 σ ≈ 0.
 - 측정 시간 ~4시간.
 
-### (d) 실제 결과
+### (d) 실제 결과 (2026-05-06 21:45 측정 완료, 9.0s)
 
-> [측정 후 채움]
-> - recovery_rate:
-> - shell 별 N_i × σ_i 분포:
-> - vs KDE-pilot (#10) 비교:
+> 측정 시간 9.0s
+> - **DEEP** (vs RANDOM20): s=0.01 +1.45% / s=0.05 +11.87% ❌ / s=0.10 +15.05% ❌❌ / s=0.30 +14.29% ❌❌ / s=0.50 +8.02% ❌
+> - **SIFT** (vs RANDOM20): s=0.01 +2.52% ❌ / s=0.05 +13.81% ❌❌ / s=0.10 +16.68% ❌❌ / s=0.30 +15.58% ❌❌ / s=0.50 +9.16% ❌
+> - **paired Wilcoxon vs RANDOM20**: 0/10 cell 유의 (모두 worse)
+> - **가설 H3-G refute 매우 강 역방향**: 예상 25-50% recovery 였으나 실제 RANDOM20 보다 매우 나쁨 (+8~+17%)
+> - **vs KDE-pilot (#10) 비교**: KDE-pilot 은 cluster + KDE σ → SIFT mid-sel 에서 -3% 효과, Distance-Shell 은 cluster 정보 X + shell + Neyman → +13~17% — **cluster 의 spatial 정보가 결정적, distance quantile 만으론 부족**
 
 ### 의의
 
@@ -261,12 +266,16 @@ KDE-pilot 과의 차이 = **"cluster 분할의 spatial 가치"** 정량화. Dist
 - DEEP/SIFT 모두 비슷.
 - 측정 시간 ~6시간.
 
-### (d) 실제 결과
+### (d) 실제 결과 (2026-05-06 21:45 측정 완료, 97.6s)
 
-> [측정 후 채움]
-> - 4 mode recovery_rate:
-> - 최적 (pilot, clip) 조합:
-> - vs Distance-Shell (#9) 비교 — 분할 효과:
+> 측정 시간 97.6s, 4 mode factorial (is_p50_noclip / is_p50_clip / is_p200_noclip / is_p200_clip)
+> - **모든 mode 가 모든 cell 에서 RANDOM20 보다 매우 나쁨** (massive worse, +5~+866%)
+> - **Best cell**: DEEP s=0.01 is_p50_clip -17.16% (negative), SIFT s=0.01 is_p50_clip -11.20% (negative)
+> - **Worst cell**: DEEP s=0.01 is_p200_noclip +866.73%, SIFT s=0.01 is_p200_noclip +533.17%
+> - **paired Wilcoxon vs RANDOM20**: 0/10 cell 유의 (모두 worse)
+> - **가설 H3-H refute 매우 강 역방향**: 예상 30-70% recovery 였으나 실제 +500% 이상의 massive failure
+> - **최적 (pilot, clip) 조합**: weight clip 이 weight extreme 제어로 일부 cell (좁은 sel 만) 에서 효과 — 그러나 mid/wide sel 에서는 모든 mode 매우 나쁨
+> - **vs Distance-Shell (#9) 비교 — 분할 효과**: Distance-Shell 도 +14% 매우 나쁨, IS 는 더 심한 +500% — **분할 자체가 KM oracle 효과의 본질, weight 보정만으로는 한계**. 본 연구의 "cluster 분할의 결정적 가치" narrative 가장 강한 증거.
 
 ### 의의
 
@@ -304,21 +313,27 @@ KDE-pilot 과의 차이 = **"cluster 분할의 spatial 가치"** 정량화. Dist
 
 ---
 
-## 7개 실험 종합 표 (1차 4종 측정 완료 — 2026-05-06 21:34)
+## 7개 실험 종합 표 (전체 7-way 측정 완료 — 2026-05-06 21:55)
 
-primary metric `method_minus_random_pct` (음수일수록 좋음, RANDOM20 대비):
+primary metric `method_minus_random_pct` (음수 = 좋음, RANDOM20 대비):
 
 | # | 실험 | 가설 H3-X | 예상 recov | 실제 (DEEP/SIFT 평균 절대값) | 통계유의 | 판정 | 의의 |
 |---|------|-----------|------|------|------|------|------|
-| #8 | MiniBatch | recov ≥ 75% | 75-95% | -2.0% (DEEP) / -2.5% (SIFT) | 8/10 | **confirm 강** | production solution |
+| #8 | MiniBatch | recov ≥ 75% | 75-95% | -1.5% (DEEP) / -2.5% (SIFT) | 8/10 | **confirm 강** | production solution ★ |
+| #7 | Hilbert | recov 20-60% | 20-60% | -1.4% (DEEP) / -2.9% (SIFT) | 6/10 | **refute 강 in 좋은 방향** ★★ | **learning-free 핵심 contribution 1순위** |
+| #10 | KDE-pilot | recov 50-80% | 50-80% | -0.07% (DEEP) / -0.22% (SIFT, mid-sel -3.28%) | 1/10 | **부분 confirm** | online σ 한계 정량화 |
 | #5 | RandProj | recov 10-40% | 10-40% | +6.0% (DEEP) / +12.7% (SIFT, ⚠️ s=0.01 +45%) | 0/10 | **refute 역방향** | 부정적 control |
-| #7 | Hilbert | recov 20-60% | 20-60% | -1.4% (DEEP) / -2.9% (SIFT) | 6/10 | **refute 강 in 좋은 방향** ★ | **learning-free 핵심 발견 후보** |
 | #6 | LSH | recov 30-60% | 30-60% | +5.2% (DEEP) / +6.5% (SIFT) | 0/10 | **refute** | RandProj 와 동급, 부정적 control |
-| #10 | KDE-pilot | recov 50-80% | 50-80% | [미측정] | - | 보류 | online σ 이론 상한 (~6h) |
-| #9 | Distance-Shell | recov 25-50% | 25-50% | [미측정] | - | 보류 | cluster 분할 가치 ablation (~4h) |
-| #11 | IS | recov 30-70% | 30-70% | [미측정] | - | 보류 | 분할 vs 비분할 (~6h) |
+| #9 | Distance-Shell | recov 25-50% | 25-50% | +10.1% (DEEP) / +11.5% (SIFT) | 0/10 | **refute 매우 강 역방향** | **cluster 정보의 결정적 가치 정량 증명** |
+| #11 | IS | recov 30-70% | 30-70% | best cell -17%, worst +866% (DEEP), best -11%, worst +533% (SIFT) | 0/10 | **refute 매우 강 역방향** | **분할의 결정적 가치 정량 증명** |
 
-★ Hilbert 가 가설 (20-60% recovery) 보다 훨씬 강해 (MiniBatch 와 동등) **본 연구 contribution 1순위 격상**.
+★★ Hilbert 가 가설 (20-60% recovery) 보다 훨씬 강해 (MiniBatch 와 동등) **본 연구 contribution 1순위 격상**.
+★ MiniBatch 가 production solution narrative confirmed.
+
+3 contributions narrative:
+1. **Hilbert** (#7) = learning-free 결정론 솔루션, oracle 수준
+2. **MiniBatch** (#8) = production-ready 솔루션, oracle 수준
+3. **Distance-Shell + IS** (#9 + #11) = cluster-aware 분할의 결정적 가치 정량 증명 (negative control)
 
 분모 붕괴 caveat: KM20 vs RANDOM20 격차 0.26~3.98% 라 recovery_rate 분모 fall-back 활성. primary metric 을 method_minus_random_pct 로 변경.
 

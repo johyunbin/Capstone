@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-rq3_figures.py — RQ3 7-way distribution-agnostic 시각화 3종
+rq3_figures.py — RQ3 7-way distribution-agnostic 시각화 4종
 
 산출:
     experiments/figures/rq3_distribution_agnostic/fig6_7way_recovery_rate.png
     experiments/figures/rq3_distribution_agnostic/fig7_paradigm_split.png
     experiments/figures/rq3_distribution_agnostic/fig8_selectivity_gradient_method.png
+    experiments/figures/rq3_distribution_agnostic/fig9_cost_recovery_tradeoff.png
 
 입력:
     --rq3 <parquet>     RQ3 측정 long-form (dataset/mode/selectivity/seed/query_id/q_error).
@@ -95,6 +96,20 @@ METHOD_ORDER = [
     ("kde_pilot",      "B. KDE-pilot",          "online",  0.50, 0.80),
     ("importance",     "H. Importance Sampling","weight",  0.30, 0.70),
 ]
+
+# fig9 — 사전 학습 비용 (초 단위, RQ재정립 §RQ3 의 구현 시간 + 실측 보강)
+# 측정 후 메타 json 의 fit/train timing 으로 갱신 권장. 0.0 = pure online.
+PRE_TRAIN_COST_S = {
+    "random_proj":    0.05,   # numpy random matrix init
+    "lsh":            0.10,   # hyperplane gen + sign hash
+    "hilbert":        1.00,   # PCA SVD + Hilbert grid build
+    "minibatch":      5.00,   # 1% sample MiniBatchKMeans 학습
+    "distance_shell": 0.00,   # online pilot only, no offline
+    "kde_pilot":      0.00,   # online pilot only, no offline
+    "importance":     0.00,   # online pilot only, no offline
+    "km20":          60.00,   # KM20 oracle (full batch K-means) 비교 reference
+    "random20":       0.00,   # RANDOM20 baseline (분류 cost 0)
+}
 
 OUT_DIR = Path("/Users/hyunbin/Capstone/experiments/figures/rq3_distribution_agnostic")
 
@@ -438,11 +453,156 @@ def figure_8_selectivity_gradient_method(rec: pd.DataFrame, out_dir: Path) -> Pa
 
 
 # ---------------------------------------------------------------------------
+# Figure 9 — Cost-Recovery Tradeoff (사전 학습 비용 × Recovery)
+# ---------------------------------------------------------------------------
+
+def figure_9_cost_recovery_tradeoff(rec: pd.DataFrame, out_dir: Path,
+                                    cost_overrides: dict | None = None) -> Path:
+    """방법별 (사전 학습 비용 vs 평균 Recovery Rate) scatter — Pareto frontier 시각화.
+
+    paradigm 색 + dataset 마커 분리. KM20 oracle (1.0) 과 RANDOM20 (0.0) 의
+    reference 선 표시. 비용은 PRE_TRAIN_COST_S 기본값 (사전 등록) 또는 측정
+    후 cost_overrides 로 실측치 갱신 가능.
+
+    이 그림의 메시지:
+      - 좌상단 (low cost, high recovery) = production 솔루션 후보
+      - 우상단 (high cost, high recovery) = oracle 또는 그에 근접한 method (KM20)
+      - 좌하단 (low cost, low recovery) = baseline (RANDOM20)
+    """
+    cost_map = dict(PRE_TRAIN_COST_S)
+    if cost_overrides:
+        cost_map.update(cost_overrides)
+
+    fig, ax = plt.subplots(figsize=(11, 6.2))
+
+    methods = [m for m, *_ in METHOD_ORDER if m in rec["method"].unique()]
+    paradigm_of = {m: p for m, _, p, *_ in METHOD_ORDER}
+    label_of = {m: label for m, label, *_ in METHOD_ORDER}
+
+    # 각 method 의 (cost, recovery_DEEP, recovery_SIFT)
+    plot_rows = []
+    for mm in methods:
+        cost = cost_map.get(mm, 0.0)
+        for ds in ("DEEP", "SIFT"):
+            sub = rec[(rec["method"] == mm) & (rec["dataset"] == ds)
+                      & (rec["metric"] == "recovery")]
+            mean_rec = sub["recovery"].dropna().mean()
+            if math.isnan(mean_rec):
+                continue
+            plot_rows.append({
+                "method": mm, "label": label_of[mm], "paradigm": paradigm_of[mm],
+                "dataset": ds, "cost": cost, "recovery": mean_rec,
+            })
+    pd_plot = pd.DataFrame(plot_rows)
+
+    # paradigm 색 + dataset 마커
+    DATASET_MARKER = {"DEEP": "o", "SIFT": "^"}
+    DATASET_FACE = {"DEEP": "white", "SIFT": None}    # SIFT 채움, DEEP 빈 원
+
+    drawn_paradigms = set()
+    for _, r in pd_plot.iterrows():
+        c = PARADIGM_COLORS.get(r["paradigm"], C_GRAY)
+        marker = DATASET_MARKER[r["dataset"]]
+        face = DATASET_FACE[r["dataset"]] if r["dataset"] == "DEEP" else c
+        # x = max(cost, ε) — log scale 위해
+        x = max(float(r["cost"]), 0.02)
+        ax.scatter(
+            x, r["recovery"], s=160, marker=marker,
+            facecolor=face, edgecolor=c, linewidth=1.8, zorder=3,
+            label=(f"{r['paradigm']}, {r['dataset']}"
+                   if (r["paradigm"], r["dataset"]) not in drawn_paradigms else None),
+        )
+        drawn_paradigms.add((r["paradigm"], r["dataset"]))
+
+        # method label annotation (DEEP 만 — 중복 방지)
+        if r["dataset"] == "DEEP":
+            short = r["label"].split(". ", 1)[1] if ". " in r["label"] else r["label"]
+            ax.annotate(short, xy=(x, r["recovery"]),
+                        xytext=(8, 4), textcoords="offset points",
+                        fontsize=9, color=C_DARK, fontweight="bold")
+
+    # KM20 oracle reference (cost=60s, recovery=1.0)
+    km_cost = cost_map.get("km20", 60.0)
+    ax.scatter(km_cost, 1.0, s=200, marker="*",
+               facecolor=C_GREEN_DARK, edgecolor=C_DARK, linewidth=1.4, zorder=4)
+    ax.annotate("KM20 oracle", xy=(km_cost, 1.0), xytext=(8, 4),
+                textcoords="offset points", fontsize=10,
+                color=C_GREEN_DARK, fontweight="bold")
+
+    # RANDOM20 reference (cost=0, recovery=0)
+    ax.scatter(0.02, 0.0, s=140, marker="s",
+               facecolor=C_GRAY, edgecolor=C_DARK, linewidth=1.2, zorder=4)
+    ax.annotate("RANDOM20", xy=(0.02, 0.0), xytext=(8, 4),
+                textcoords="offset points", fontsize=10,
+                color=C_DARK, fontweight="bold")
+
+    ax.axhline(0, color=C_DARK, linewidth=0.7, linestyle=":", zorder=1)
+    ax.axhline(1, color=C_GREEN_DARK, linewidth=0.9, linestyle="--", zorder=1)
+    ax.set_xscale("log")
+    ax.set_xlim(0.015, 200)
+    ax.set_ylim(-0.4, 1.3)
+    ax.set_xlabel("사전 학습 비용 (초, 로그)")
+    ax.set_ylabel("Recovery Rate (DEEP+SIFT 평균)")
+
+    # 범례 — paradigm 색 + dataset 마커 별도
+    from matplotlib.lines import Line2D
+    legend_paradigm = [
+        Line2D([], [], marker="o", color="w", markerfacecolor=C_BLUE,
+               markeredgecolor=C_DARK, markersize=10, label="Offline (offline 사전 분할)"),
+        Line2D([], [], marker="o", color="w", markerfacecolor=C_ORANGE,
+               markeredgecolor=C_DARK, markersize=10, label="Online (query-adaptive)"),
+        Line2D([], [], marker="o", color="w", markerfacecolor=C_PURPLE,
+               markeredgecolor=C_DARK, markersize=10, label="Weight (분할 X)"),
+    ]
+    legend_dataset = [
+        Line2D([], [], marker="o", color="w", markerfacecolor="white",
+               markeredgecolor=C_DARK, markersize=10, label="DEEP (빈 원)"),
+        Line2D([], [], marker="^", color="w", markerfacecolor=C_DARK,
+               markeredgecolor=C_DARK, markersize=10, label="SIFT (채워진 삼각형)"),
+    ]
+    leg1 = ax.legend(handles=legend_paradigm, loc="upper left", title="Paradigm",
+                     frameon=True, edgecolor=C_DARK, fontsize=9)
+    ax.add_artist(leg1)
+    ax.legend(handles=legend_dataset, loc="lower right", title="Dataset",
+              frameon=True, edgecolor=C_DARK, fontsize=9)
+
+    fig.suptitle(
+        "Figure 9 · Cost-Recovery Tradeoff — 좌상단이 production 솔루션 후보",
+        fontweight="bold", fontsize=13, y=1.00,
+    )
+    caption = (
+        "주: x = 사전 학습 비용 (초, 로그스케일). y = Recovery Rate (DEEP+SIFT × 5 sel 평균).\n"
+        "KM20 oracle (★, 초록) = 비용 ~60초, recovery=1.0 (정의상). RANDOM20 (■, 회색) = 비용 0, recovery=0.\n"
+        "F. MiniBatch 가 좌상단 (low cost ~5초, high recovery 80%+) 에 위치하면 production 솔루션 명확.\n"
+        "Online (G/B) 와 Weight (H) 는 cost=0 라인에 위치 — recovery 차이가 paradigm 의 가치 결정."
+    )
+    fig.text(0.06, -0.03, caption, fontsize=8.5, color=C_DARK, va="top")
+
+    out = out_dir / "fig9_cost_recovery_tradeoff.png"
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"✓ {out}")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
+def _check_baselines(df: pd.DataFrame) -> tuple[bool, list[str]]:
+    """recovery 계산에 필요한 baseline mode (random20, km20, bernoulli) 확인.
+
+    누락 시 main() 에서 경고 출력 후 진행 (해당 셀은 metric='missing' 으로 표시됨).
+    'km20' 이 없을 경우 RQ2 alloc parquet 의 'equal' 모드를 'km20' 으로 rename 권장.
+    """
+    required = {"random20", "km20", "bernoulli"}
+    present = set(df["mode"].unique())
+    missing = sorted(required - present)
+    return (len(missing) == 0), missing
+
+
 def main():
-    parser = argparse.ArgumentParser(description="RQ3 figures (fig6/7/8)")
+    parser = argparse.ArgumentParser(description="RQ3 figures (fig6/7/8/9)")
     parser.add_argument("--rq3", type=Path, default=None, help="RQ3 통합 parquet")
     parser.add_argument("--rq2", type=Path, default=None, help="RQ2 alloc parquet (bernoulli baseline)")
     parser.add_argument("--random20", type=Path, default=None)
@@ -458,11 +618,22 @@ def main():
     df = load_inputs(args)
     print(f"Loaded {len(df):,} rows; modes = {sorted(df['mode'].unique())}")
 
+    ok, missing = _check_baselines(df)
+    if not ok:
+        print(f"⚠ baseline 누락: {missing}. recovery 계산에서 해당 셀은 metric='missing' 으로 처리됨.")
+        if "random20" in missing:
+            print("  → run_random20.py 측정 후 --random20 인자로 추가하세요.")
+        if "km20" in missing:
+            print("  → RQ2 alloc parquet 의 'equal' 모드를 'km20' 으로 rename 후 concat (handoff §6.3 참조).")
+        if "bernoulli" in missing:
+            print("  → --rq2 인자로 RQ2 alloc parquet 를 추가하세요 (bernoulli baseline 포함).")
+
     rec = build_recovery_matrix(df)
     figure_6_7way_recovery(rec, args.out)
     figure_7_paradigm_split(rec, args.out)
     figure_8_selectivity_gradient_method(rec, args.out)
-    print("\n완료. fig6/7/8 생성됨.")
+    figure_9_cost_recovery_tradeoff(rec, args.out)
+    print("\n완료. fig6/7/8/9 생성됨.")
 
 
 if __name__ == "__main__":

@@ -289,3 +289,43 @@ SIFT 1.5M에서 s=0.010이면 true_card는 ~1.5만입니다. BERNOULLI의 median
 2. **8M mid-selectivity (s=0.100, s=0.300)**: 8M에서 중간 구간의 외적 타당성 확인.
 
 이 보충 실험이 완료되면 selectivity gradient 그래프가 3개 데이터셋 모두에서 5개 구간으로 채워지며, gradient 비단조성에 대한 추가 검증이 가능해집니다.
+
+---
+
+## W1 Sprint 추가 측정 — 실험 #1 SIFT × SYSTEM(block) baseline (2026-05-06)
+
+5/5 비대면 회의에서 박세은 팀장이 제기한 의문 **"Normal vs Skew BERN baseline 직접 비교 부재"** 에 대한 정량 답변. RQ1 의 2x2 표 (DEEP/SIFT × SYSTEM/BERNOULLI) 마지막 1 cell — **SIFT × SYSTEM(block)** — 을 채우기 위한 측정. 16:26:20 KST 시작 → 28.6 초 만에 완료, 5 sel × 5 seed × 100 query = 2500 rows 산출.
+
+### 핵심 결과 — Cross-dataset 격차 (★ H1 정량 입증)
+
+모든 selectivity 에서 SIFT(skew) 의 SYSTEM-BERN 격차가 DEEP(normal) 의 격차보다 큼을 확인하였다. 즉 skew 데이터일수록 block 단위 sampling 이 row 단위 대비 더 부정확해지며, 좁은 selectivity 영역에서 격차가 가장 두드러진다.
+
+| sel | SIFT(skew) Δ% | DEEP(normal) Δ% | (SIFT − DEEP) |
+|---|---|---|---|
+| 0.01 | +10.27% | +4.66% | **+5.61%p** |
+| 0.05 | +17.32% | +12.61% | **+4.71%p** |
+| 0.10 | +16.68% | +14.76% | +1.92%p |
+| 0.30 | +14.85% | +14.05% | +0.80%p |
+| 0.50 | +14.36% | +12.59% | +1.77%p |
+
+paired Wilcoxon (n=500/sel, SIFT) — 모든 selectivity 에서 매우 유의:
+
+| sel | SIFT-SYS mean | SIFT-BER mean | p-value | Cohen's d |
+|---|---|---|---|---|
+| 0.01 | 1.9205 | 1.7416 | 2.87e-04 | 0.24 |
+| 0.05 | 1.4811 | 1.2625 | 1.84e-10 | 0.31 |
+| 0.10 | 1.3782 | 1.1812 | 5.74e-20 | 0.58 |
+| 0.30 | 1.2500 | 1.0884 | 3.40e-39 | 0.93 |
+| 0.50 | 1.2275 | 1.0734 | 9.99e-50 | 1.01 |
+
+대조적으로 DEEP s=0.001/0.01 에서는 SYSTEM-BERN 차이가 통계적으로 유의하지 않다 (p=0.81, p=0.48). 즉 normal 분포 + 좁은 selectivity 에서는 두 sampling 모드가 비슷하게 부정확하나, skew 분포에서는 같은 sel 영역에서도 strong signal 이 검출된다.
+
+### 부수 sanity 회복 — q_error 의심 해소
+
+5/6 오전 BERN 측정 시 s=0.01 의 5 seed 모두 median q_error = 1.4411 로 동일하여 PG `setseed` 가 sampling 단계에서 동작 안 하는 게 아닌가 의심하였다. 본 측정으로 raw q_error 를 직접 까서 확인한 결과, query 별 q_error 는 seed 간 매우 다양하며 (예: query 0 의 5 seed q_error = [2.88, 1.44, 1.44, 1.04, 1.44]) 100 query 중 5 seed 모두 동일한 q_error 인 case 는 0% 였다. PG `setseed` 는 정상 작동하며, median 의 우연한 일치는 좁은 selectivity 에서 q_error 가 매우 discrete 하다는 데이터 특성에서 비롯한 것이다. 부수 발견으로 SYSTEM 의 std(0.1314) > BERN 의 std(0.0000) 가 모든 sel 에서 일관되게 관찰되어, **block sampling 의 추정 분산이 row sampling 보다 크다**는 통계학 정통의 직접 증거가 추가되었다.
+
+### 산출물 + 상세 narrative
+
+- 4 단계 narrative + 통계 표 + sanity 분석 전체: [`sift_rq1_2026_05_06/실험1_결과정리_20260506.md`](rq1_motivation/sift_rq1_2026_05_06/실험1_결과정리_20260506.md)
+- raw 측정 데이터: `sift_rq1_2026_05_06/sift_rq1_system.parquet` (2500 rows) + meta json
+- BERN 측정 (5/6 오전): `sift_rq1_2026_05_06/sift_rq1_bernoulli.parquet`

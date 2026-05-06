@@ -2,9 +2,6 @@
 
 > **이 문서가 다음 세션의 진입점입니다. 새 Claude 세션 열면 이 파일부터 읽으세요.**
 > 이번 세션은 RQ1+RQ2 마감, RQ3 (7-way distribution-agnostic) 는 깨끗한 context 로 새 세션에서.
->
-> ★ **메인 세션 8M 측정 끝난 직후 RQ3 측정 진입 시**: `_internal/RQ3_orchestration_plan.md` 가 통합 진입점.
-> 8개 wrapper 매핑 + 병렬/순차 결정 + Phase 별 명령어 sheet. 본 문서는 RQ 큰 그림 / 일정 참조용.
 
 ---
 

@@ -8,15 +8,85 @@
 
 ## 발송 우선순위 (다음 세션 진행 순서)
 
-| # | Method | 코드 위치 | 시작 메시지 §3.1 | 완료 메시지 §3.2 |
+★ **2026-05-06 18:1x 갱신** — 다른 병렬 세션의 `measure_offline.py` 통합 wrapper 반영.
+Offline 6 mode (bernoulli/random20/km20/MiniBatch/RandProj/Hilbert) 는 한 번에 측정 가능.
+
+| # | Method | 코드 위치 | 시작 §3.1 | 완료 §3.2 |
 |---|---|---|---|---|
-| 1 | F. MiniBatch K-means | `offline_simple/run_minibatch.py` | [§§F-1] | [§§F-2] |
-| 2 | C. Random Projection | `offline_simple/run_random_projection.py` | [§§C-1] | [§§C-2] |
-| 3 | E. Hilbert Curve | `hilbert/run_hilbert.py` (또는 measure_offline.py) | [§§E-1] | [§§E-2] |
-| 4 | A. LSH | `lsh/lsh.py` | [§§A-1] | [§§A-2] |
-| 5 | B. KDE-pilot | `kde/kde_pilot.py` ✅ | [§§B-1] | [§§B-2] |
-| 6 | G. Distance-Shell | `online_weight/distance_shell.py` ✅ | [§§G-1] | [§§G-2] |
-| 7 | H. Importance Sampling | `importance_sampling/importance_sampling.py` ✅ | [§§H-1] | [§§H-2] |
+| 0 | RANDOM20 + KM20 + 3 offline methods (통합 wrapper) | `experiments/code/rq3/measure_offline.py` (~30분, 6 mode 동시) | [§§OFFLINE-1] | [§§OFFLINE-2] |
+| 1 | A. LSH | `experiments/code/rq3/run_lsh.py` (~1h) | [§§A-1] | [§§A-2] |
+| 2 | B. KDE-pilot | `experiments/code/rq3/kde/kde_pilot.py` ✅ self-contained | [§§B-1] | [§§B-2] |
+| 3 | G. Distance-Shell | `experiments/code/rq3/online_weight/distance_shell.py` ✅ self-contained | [§§G-1] | [§§G-2] |
+| 4 | H. Importance Sampling | `experiments/code/rq3/online_weight/importance_sampling.py` ✅ self-contained | [§§H-1] | [§§H-2] |
+
+> **개별 method 카톡** (F/C/E §§F-1/C-1/E-1) 은 측정이 한 wrapper 에 묶이므로 사실상 [§§OFFLINE-2] 안에서 method 별 결과만 분리 보고. 개별 §§F/C/E 메시지는 reference 로만 보관.
+
+---
+
+## §§OFFLINE-1 — Offline 6-mode 통합 측정 시작
+
+```
+[RQ3 Phase 1 시작 — Offline 6 mode 통합] {HH:MM}
+
+실험명: measure_offline.py (bernoulli + random20 + km20 + F. MiniBatch + C. Random Projection + E. Hilbert)
+RQ: RQ3 (분포 모를 때 어떤 방식?)
+예상 시간: ~30분 (DEEP+SIFT, KM cluster cache 후 numpy in-memory)
+
+[기획 의도]
+- 6 mode 한 번에 측정 → recovery_rate 분모 (random20) + 분자 (km20) + 3 offline method 동시 확보.
+- 박세은 비판 ("사전 학습 비용") 에 대한 핵심 답 — F. MiniBatch (1% 학습) 가 oracle 의 80%+ 회수면 production 솔루션.
+
+[측정 목표 + 가설]
+- H3-F (MiniBatch): recovery 0.75~0.95
+- H3-C (RandProj): recovery 0.10~0.40 (단순 하한)
+- H3-E (Hilbert): recovery 0.20~0.60 (PCA + curve)
+
+[기대치]
+- KM20 oracle ≈ Δ% -8~-12% (RQ2 'equal' 와 동등)
+- RANDOM20 ≈ Δ% +0~+3% (BERN 과 비슷)
+
+[측정 조건]
+- DEEP/SIFT, 5 sel × 5 seed × 100 query
+- sample_size 385 고정, 6 mode 통합
+
+진행 후 결과 다시 공유드리겠습니다 🙏
+```
+
+## §§OFFLINE-2 — Offline 6-mode 완료
+
+```
+[RQ3 Phase 1 완료 — Offline 6 mode] {HH:MM} (소요 ~30분)
+
+산출: experiments/results/rq3_agnostic/{YYYY_MM_DD}/rq3_offline.parquet (60,000 rows)
+
+═══ method 별 4단계 narrative (3개) ═══
+
+[F. MiniBatch K-means]
+(a) KM20 oracle 의 학습 비용 단축 → production 후보
+(b) recovery 0.75~0.95
+(c) DEEP/SIFT 평균 0.85
+(d) DEEP {recovery_F_DEEP} / SIFT {recovery_F_SIFT}, p_BH {p_BH_F} → {verdict_F}
+
+[C. Random Projection]
+(a) 학습 X 의 단순 하한 (JL random matrix → argmax bucket)
+(b) recovery 0.10~0.40
+(c) DEEP/SIFT 평균 0.20~0.30
+(d) DEEP {recovery_C_DEEP} / SIFT {recovery_C_SIFT}, p_BH {p_BH_C} → {verdict_C}
+
+[E. Hilbert Curve]
+(a) PCA 2D + curve + quantile = 학습 X + 일부 cluster 구조 반영, contribution 후보
+(b) recovery 0.20~0.60
+(c) DEEP 0.30~0.50, SIFT 0.40~0.60 (skew 우위 가설)
+(d) DEEP {recovery_E_DEEP} / SIFT {recovery_E_SIFT}, p_BH {p_BH_E} → {verdict_E}
+
+═══ 의의 + 다음 ═══
+- {3 method 의 ranking 한 줄 / production 후보 명시 / RQ1 narrative 강화 여부}
+- 다음 Phase 2 — A. LSH (run_lsh.py, ~1h)
+
+자동 git commit + push 완료
+```
+
+---
 
 ---
 

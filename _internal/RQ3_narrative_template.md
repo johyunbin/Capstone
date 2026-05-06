@@ -2,6 +2,12 @@
 
 > 본 파일은 7개 method 의 §3.2 4단계 narrative 를 한 곳에 모아둔 채움 폼입니다.
 > 측정이 끝나면 `rq3_combine.py` 로 생성된 `rq3_summary.csv` 의 수치를 placeholder 에 삽입.
+>
+> ★ **2026-05-06 18:1x 갱신** — 다른 병렬 세션의 통합 측정 wrapper 반영:
+> - **Phase 1**: `experiments/code/rq3/measure_offline.py` 한 번 실행으로 6 mode (bernoulli + random20 + km20 + F. MiniBatch + C. Random Projection + E. Hilbert) 동시 측정 → 산출 `rq3_offline.parquet`. 본 템플릿의 #8/#5/#7 narrative 는 이 단일 parquet 에서 method 별 슬라이스로 채움.
+> - **Phase 2**: `run_lsh.py` (#6 A. LSH)
+> - **Phase 3**: 3 self-contained (`kde/kde_pilot.py`, `online_weight/distance_shell.py`, `online_weight/importance_sampling.py`)
+> - 자세한 실행 절차: `_internal/RQ3_orchestration_plan.md` + `_internal/RQ3_handoff_to_main_session.md`
 
 ---
 

@@ -49,10 +49,14 @@ DEFAULT_RESULTS = REPO_ROOT / "experiments" / "results"
 DEFAULT_OUT = REPO_ROOT / "experiments" / "results" / "rq3_agnostic"
 
 # rq2_alloc 의 mode 컬럼 → canonical mode 이름
+# 주의: RQ2 의 'bernoulli' 는 TABLESAMPLE BERNOULLI baseline, RANDOM20 (랜덤 K=20 분할 +
+# equal allocation) 과는 다른 method. RANDOM20 은 measure_offline.py 가 별도 측정.
+# RQ2 의 'equal' 은 KM20 oracle (DB stratum_id + equal allocation) 와 동일 → km20 alias.
 RQ2_MODE_MAP = {
-    "bernoulli": "random20",
     "equal": "km20",
 }
+# RQ2 alloc 에서 canonical 분석에 가져올 mode
+RQ2_MODE_KEEP = {"bernoulli", "equal"}  # bernoulli (sanity), equal→km20
 
 # rq3_*.parquet 의 mode 가 method 별 alias 일 때 canonical 이름으로
 RQ3_MODE_ALIAS = {
@@ -62,8 +66,9 @@ RQ3_MODE_ALIAS = {
     # standalone 측정에서 이미 canonical: kde_pilot, distance_shell, hilbert, importance ...
 }
 
-# rq3 method parquet 안의 baseline (= rq2 의 random20 와 중복) 은 drop
-DROP_FROM_RQ3 = {"bernoulli"}
+# rq3 parquet 의 모든 mode 유지 (random20/km20/methods + bernoulli sanity)
+# dedup 으로 중복 (dataset, mode, sel, seed, qid) 제거.
+DROP_FROM_RQ3: set[str] = set()
 
 
 def kst() -> str:
@@ -83,10 +88,10 @@ def discover_parquets(results_root: Path) -> dict[str, list[Path]]:
 
 
 def load_rq2_alloc(path: Path) -> pd.DataFrame:
-    """rq2_alloc.parquet 에서 random20(bernoulli) + km20(equal) 만 추출 후 rename."""
+    """rq2_alloc.parquet 에서 bernoulli (sanity) + equal→km20 추출 + rename."""
     df = pd.read_parquet(path)
-    keep = df[df["mode"].isin(RQ2_MODE_MAP.keys())].copy()
-    keep["mode"] = keep["mode"].map(RQ2_MODE_MAP)
+    keep = df[df["mode"].isin(RQ2_MODE_KEEP)].copy()
+    keep["mode"] = keep["mode"].replace(RQ2_MODE_MAP)
     return keep
 
 

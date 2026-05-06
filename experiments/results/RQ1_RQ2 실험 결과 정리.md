@@ -405,6 +405,61 @@ paired Wilcoxon (n=500/sel, SIFT) — 모든 selectivity 에서 매우 유의:
 
 ### 산출물
 
-- raw 측정 데이터: `rq2_aware/2026_05_06_alloc/rq2_size_sensitivity.parquet` (24,000 rows) + meta json
+- raw 측정 데이터 (3sel): `rq2_aware/2026_05_06_alloc/rq2_size_sensitivity.parquet` (24,000 rows) + meta json
+- raw 측정 데이터 (5sel 보강, 권장): `rq2_aware/2026_05_06_alloc/rq2_size_sensitivity_5sel.parquet` (40,000 rows) + meta json
 - 4단계 narrative: [`rq2_aware/2026_05_06_alloc/실험4_결과정리_20260506.md`](rq2_aware/2026_05_06_alloc/실험4_결과정리_20260506.md)
 - 측정 스크립트: `experiments/code/rq2/rq2_size_sensitivity.py`
+
+---
+
+## W1 Sprint 보강 작업 — 통계 robustness + 시각화 + DEEP query difficulty (2026-05-06)
+
+5/8 19:00 회의 발표 자료 + 박세은 의문 강화 답변을 위한 4 종 보강 작업.
+
+### 1. BH-FDR 다중 비교 보정 — 통계 robustness 확인
+
+다중 비교 시 false discovery rate 통제를 위한 Benjamini-Hochberg 보정 적용.
+
+| 영역 | 비교 수 | p_raw < 0.05 | p_BH < 0.05 | 결론 |
+|---|---|---|---|---|
+| RQ1 SIFT × SYSTEM vs BERN | 5 | 5 | 5 | 모두 유의 유지 (max p_BH = 4.99e-49) |
+| RQ2 stratified vs BERN | 40 | 32 | 32 | 80% 유의 (비유의는 모두 s=0.01 — sample 부족) |
+| RQ2 Neyman vs Equal | 10 | 2 | 2 | **SIFT × {s=0.01: p_BH=0.024, s=0.05: p_BH=0.010}** ★ 유의 유지 |
+
+→ **모든 핵심 narrative 가 BH-FDR 보정 후에도 robust**. 특히 Neyman 의 가치 (SIFT × 좁은 sel) 는 다중 비교 보정 후에도 명확히 검출됨.
+
+### 2. DEEP query difficulty 분석 — 박세은 질문 강화 답변
+
+박세은의 "DEEP × SYSTEM 의 절대값이 SIFT 보다 클 때가 있는데?" 질문에 대한 정량 답변.
+
+| 영역 | DEEP × s=0.01 | SIFT × s=0.01 |
+|---|---|---|
+| mean q_error | 1.6185 | 1.9205 |
+| q_error > 2 query 비율 | **9%** | **39.4%** ★ |
+| q_error > 5 | 0% | 0.2% |
+
+**DEEP × s=0.01 에서 가장 어려운 query 들의 plan_rows 가 동일값 (2597, 23377, 20779)**:
+이는 BERN sampling 의 small-sample fallback 효과. true_card=10000 → BERN 385개에서 평균 hit=3.85개 → 우연히 hit=0 발생 시 fallback estimator 가 작동하여 plan_rows 가 동일한 값으로 떨어짐. 이게 DEEP × s=0.01 의 max q_error 가 (우연히) 큰 원인이며, **본질적 query difficulty 는 SIFT 가 4 배 이상 큼** (q_error > 2 query 의 비율 39.4% vs 9%).
+
+→ **박세은 질문 답변**: 절대값 비교가 sometimes SIFT < DEEP 인 것은 **DEEP query pool 의 우연한 fallback artifact**. SIFT 의 본질적 difficulty 가 더 크다는 사실은 q_error > 2 query 비율 + Δ% gradient (RQ1 의 핵심 metric) 로 일관되게 입증됨.
+
+### 3. 발표용 figures 5개 (`experiments/figures/rq1_rq2_w1_sprint/`)
+
+- `fig1_rq1_cross_dataset_gradient.png` — RQ1 H1 입증 핵심 그림 (SIFT vs DEEP Δ% gradient)
+- `fig2_rq2_5mode_per_dataset.png` — RQ2 5-mode q_error 비교 (DEEP, SIFT 양쪽)
+- `fig3_rq2_cluster_heterogeneity.png` — N_i × σ_i scatter (cluster 비균질성 시각화)
+- `fig4_rq2_size_sensitivity.png` — Sample size × selectivity 5sel × 4ssize matrix
+- `fig5_rq2_sift_equal_anomaly.png` — SIFT × Equal × s=0.01 anomaly 막대 그림
+
+### 4. σ_i × selectivity dependence — 추가 측정 skip 결정
+
+본 실험의 σ_i 단일 정의 (sel=0.10 D_target anchor) 의 한계는 BH-FDR 결과에서 이미 명확히 검출됨:
+- Neyman vs Equal 의 유의 영역이 SIFT × {s=0.01, s=0.05} 만으로 한정된 것 자체가 **σ 신호의 sel 의존성 증거**.
+- 더 정교한 query-aware σ_i 정의는 RQ3 의 Online (B/G) 영역에서 다룸.
+
+따라서 추가 σ_i 측정 없이 narrative 의 한계로 명시.
+
+### 산출물
+
+- BH-FDR 보정 + DEEP difficulty 분석: [`rq2_aware/2026_05_06_alloc/bh_fdr_difficulty_analysis.json`](rq2_aware/2026_05_06_alloc/bh_fdr_difficulty_analysis.json)
+- 5개 figures: [`experiments/figures/rq1_rq2_w1_sprint/`](../figures/rq1_rq2_w1_sprint/)

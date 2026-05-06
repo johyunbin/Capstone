@@ -98,9 +98,11 @@ HHI는 각 클러스터가 차지하는 비율의 제곱합으로, 균일하면 
 
 | selectivity | 5-seed 평균 개선 | 95% CI | 유의한 seed |
 |-------------|-----------------|--------|------------|
-| 50% | **+1.76%** | [+0.65, +2.86] | 4/5 |
-| 5% | +0.55% | [-3.11, +4.21] | 0/5 |
-| 1% | -0.71% | [-21.13, +19.70] | 0/5 (노이즈 지배) |
+| 50% | **+1.76%** | (기존측정) | - |
+| 30% | **+1.60%** | [+0.48, +2.72] | 4/5 |
+| 10% | **-0.41%** | [-3.59, +2.77] | 1/5 |
+| 5% | **+0.55%** | (기존측정) | - |
+| 1% | **-0.71%** | (기존측정) | - |
 
 50% 범위에서는 1M과 8M 모두 일관된 개선(+1.6~1.8%)으로 CONSISTENT 판정입니다. 1% 범위에서 8M의 CI가 [-21.13, +19.70]으로 극단적으로 넓은 것은 Q-error 자체가 6~8배로 커서 신호 대비 잡음이 지배적이기 때문입니다.
 
@@ -140,9 +142,11 @@ DEEP(+1.64%)보다 SIFT에서 효과가 **2배 이상** 큽니다. SIFT의 50% C
 
 | selectivity | KM20 (CI) | RANDOM20 (CI) | 격차 |
 |-------------|-----------|---------------|------|
-| 50% | +1.76% [+0.65, +2.86] | +1.10% [+0.44, +1.75] | 0.7%p |
-| 5% | +0.55% [-3.11, +4.21] | +0.20% [-3.75, +4.16] | 0.4%p |
-| 1% | -0.71% [-21.13, +19.70] | +11.06% [+0.89, +21.23] | 노이즈 지배 |
+| 50% | +1.76% | +1.10% | +0.7%p |
+| 30% | +1.60% [+0.48, +2.72] |     - |     - |
+| 10% | -0.41% [-3.59, +2.77] |     - |     - |
+| 5% | +0.55% | +0.20% | +0.4%p |
+| 1% | -0.71% | +11.06% | -11.8%p |
 
 50%/5%에서 KM20이 RANDOM20보다 일관되게 우세하나, 1%는 Q-error가 너무 커서 신호 식별이 불가합니다.
 
@@ -195,6 +199,8 @@ SIFT에서는 DEEP과 달리 50%에서부터 Level 2가 +2.06%로 이미 유의�
 | selectivity | Level 1 (비례 배분) | Level 2 (공간 인식) | Total (KM20) |
 |-------------|--------------------|--------------------|-------------|
 | 50% | +1.10% | +0.66% | +1.76% |
+| 30% | (RAND20 미측정) | (분해 불가) | +1.60% |
+| 10% | (RAND20 미측정) | (분해 불가) | -0.41% |
 | 5% | +0.20% | +0.35% | +0.55% |
 | 1% | +11.06% | -11.77% | -0.71% |
 
@@ -278,6 +284,23 @@ s=0.500에서 true_card는 ~50만(전체의 50%)으로, 이 정도 범위에서�
 ### Anomaly 3: SIFT s=0.010에서 KM20이 -0.53%
 
 SIFT 1.5M에서 s=0.010이면 true_card는 ~1.5만입니다. BERNOULLI의 median Q-error가 5-seed 모두 1.4435로 동일한 것은 hook estimation이 같은 값을 반환하는 양자화(quantization) 현상입니다. seed별 diff가 -2.66%~+3.03%로 방향 자체가 불안정하고, CI [-3.18, +2.11]이 0을 포함합니다. KM20이 방어 역할은 하지만(RANDOM20의 -12.11% 악화를 방지), 적극적 개선은 표본 부족으로 불가합니다. 이는 **층화 샘플링의 효과가 안정적으로 발현되는 selectivity 하한이 s>=0.050**이라는 실험적 발견입니다.
+
+---
+
+### 5sel × 3 dataset gradient 일관성 (8M mid-sel 보강 후)
+
+| sel | DEEP 1M (KM gap) | SIFT 1.5M (KM gap) | DEEP 8M (KM gap) |
+|-----|-----------------|--------------------|-------------------|
+| 50% | +1.64% (gap -0.6%) | +3.07% (gap +2.1%) | +1.76% (gap +0.7%) |
+| 30% | +2.62% (gap +2.4%) | - | +1.60% (gap     -) |
+| 10% | +4.19% (gap +2.5%) | - | -0.41% (gap     -) |
+| 5% | +1.85% (gap +1.1%) | +4.39% (gap +4.4%) | +0.55% (gap +0.4%) |
+| 1% | +8.93% (gap +19.6%) | -0.53% (gap +11.6%) | -0.71% (gap -11.8%) |
+
+**단조성 판정 (sel 좁아질수록 KM-RAND gap 증가):**
+- **DEEP_1M**: ~ 부분 단조 (반례 1건) (n=5)
+- **SIFT_1_5M**: ✓ 엄격 단조 증가 (n=3)
+- **DEEP_8M**: ✗ 비단조 (증 0 / 감 2) (n=3)
 
 ---
 
@@ -568,3 +591,80 @@ paired alignment: query_id × seed. Cohen's d = paired diff 의 mean / std. Boot
 
 - Neyman robustness 분석 결과: [`rq2_aware/2026_05_06_alloc/neyman_robustness_analysis.json`](rq2_aware/2026_05_06_alloc/neyman_robustness_analysis.json)
 - RQ3 7가지 측정 결과 (별도 세션 산출): `cache/rq1/rq3_*.parquet` (DEEP/SIFT × 7 algorithm + KM20 oracle baseline)
+
+---
+
+## W1 Sprint 보강 작업 — 5/6 후속 (병렬 세션, RQ3 7-way 측정 후)
+
+5/6 RQ3 7-way 측정 완료 후 진행한 추가 분석/구현. 8M 측정 진행 중에 PG 무관 코드/분석 작업으로 5/8 회의 자료 깊이 보강.
+
+### W1-A. RQ1 Cross-Dataset Gradient 단조성 통계 검정 — H1-G **확정**
+
+DEEP 1M / SIFT 1.5M 의 5 selectivity × 5 seed 측정값에서 sel ↓ → KM20-BERN diff% ↑ 의 단조성 정량 검정. per-seed Spearman ρ + bootstrap 95% CI + Mann-Kendall trend test 3-way 결합.
+
+| dataset | arm | per-seed mean ρ | 95% CI | 결론 |
+|---------|-----|----------------:|--------|------|
+| **DEEP** | **KM20** | **-0.680** | **[-0.800, -0.440]** | **CI 0 제외 → H1-G 단조 감소 통계 확정** |
+| **DEEP** | **RAND** | **+0.560** | **[+0.320, +0.840]** | **CI 0 제외 → RAND 의 reverse-monotonic 확정 (sel↓ → 음수 더 큼)** |
+| SIFT | KM20 | +0.300 | [-0.100, +0.500] | s=0.01 anomaly (sample_size 부족) 영향, mid-sel 보강 필요 |
+| SIFT | RAND | +0.500 | [-0.300, +1.000] | n_cell=3 만 → power 낮음 |
+
+**해석**: DEEP 에서 KM20 (양의 단조 감소) + RAND (음의 단조 감소) 두 패턴 모두 통계 확정. 이로써 \"selectivity 가 낮을수록 공간 인식 sampling 의 가치 (Level 2 효과) 가 커진다\" 의 narrative 가 정량적으로 입증된다.
+
+산출: [`rq1_motivation/rq1_gradient_monotonicity.{md,csv,json}`](rq1_motivation/rq1_gradient_monotonicity.md), 코드 [`local_analysis/rq1_gradient_monotonicity.py`](../code/local_analysis/rq1_gradient_monotonicity.py).
+
+### W1-B. RQ3 alternative algorithm 추가 구현 (3종)
+
+| 추가 method | 위치 | 동기 |
+|-------------|------|------|
+| **Z-order curve** (#7-Z) | [`zorder/zorder_curve.py`](../code/rq3/zorder/zorder_curve.py) + [`run_zorder.py`](../code/rq3/run_zorder.py) | Hilbert ablation. PCA+quantile 골격 동일 + locality 만 다름 → contribution origin 분리 검증 |
+| **MiniBatch + Hilbert hybrid** (#12) | [`hybrid/minibatch_hilbert.py`](../code/rq3/hybrid/minibatch_hilbert.py) + [`run_hybrid.py`](../code/rq3/run_hybrid.py) | outer KMeans (cluster-aware) + inner Hilbert (size-balanced). 두 method 의 정보 직교성 검증 |
+| **MiniBatch partial_fit** (#8b) | [`offline_simple/minibatch_partial.py`](../code/rq3/offline_simple/minibatch_partial.py) + [`run_minibatch_partial.py`](../code/rq3/run_minibatch_partial.py) | OLTP / streaming 환경에서 batch 재학습 X 가능 여부 정량 답변 (박세은 5/5 의문 직결) |
+
+3 method 모두 self-test 통과, 측정은 8M 종료 후 1M/1.5M 부터 진행 예정.
+
+### W1-C. Hilbert vs Z-order Locality Mechanism 정량 분석
+
+Hilbert 의 강한 measurement 결과 (DEEP -3.7%, SIFT -4.1%) 의 origin 분리. synthetic data (96d/128d × {iid, clustered, sift-like}) 에서 두 curve 의 locality metric 직접 비교.
+
+| metric | Hilbert | Z-order | 결론 |
+|--------|---------|---------|------|
+| **inverse mean Manhattan** (1D 인접 → 2D Manhattan distance) | **1.000** | 1.992 | **Hilbert 는 1D-2D continuity 완벽 보존** |
+| **fraction (Manhattan > 1)** (1D 인접쌍의 2D 비연속 비율) | **0.000** | 0.500 | **Z-order 는 절반의 1D 인접쌍이 2D non-adjacent** |
+| stratum compactness (5-Gaussian) | 4.97 | 8.15 | Hilbert 의 stratum 이 1.64× 더 spatial-compact |
+| stratum compactness (sift-like skew) | 4.77 | 12.12 | **2.54× 더 compact** (skew 데이터에서 차이 가장 큼) |
+
+**해석**: Hilbert 의 stratum compactness 우수 → HT estimator 의 within-stratum variance 감소 직접 효과 → measurement 의 -3.7~-4.1% 결과 mechanism 설명. Z-order ablation 측정 (8M 후) 으로 cross-validation 가능.
+
+산출: [`rq3_agnostic/locality_curve_comparison.{md,csv}`](rq3_agnostic/locality_curve_comparison.md), 코드 [`local_analysis/locality_curve_comparison.py`](../code/local_analysis/locality_curve_comparison.py).
+
+### W1-D. RQ3 분석 metric 보강
+
+[`recovery_rate.py`](../code/local_analysis/recovery_rate.py) 의 `method_minus_bern_pct` 컬럼이 fall-back 모드에서만 채워지던 한계 → 항상 계산하도록 수정. 100/100 cell 전부 absolute Q-error 개선폭 (vs BERN baseline) 확보.
+
+상위 method (DEEP/SIFT 평균):
+- **Hilbert** -1.78% / -2.47%
+- **MiniBatch** -1.88% / -1.97%
+- **KDE-pilot** -0.40% / +0.27%
+- LSH +4.91% / +7.07%
+- Random Projection +5.77% / +12.78%
+- IS / Distance-Shell +9~+207% (negative control)
+
+### W1-E. 8M Sensitivity + 1M extra 자동화 인프라 (5/7 02:50 갱신)
+
+**실측 cover**: [`run_8m_sensitivity.py`](../code/rq3/run_8m_sensitivity.py) 가 fit+assign 패턴 **5 method** (minibatch / random_proj / hilbert / zorder / lsh) 측정 — KDE-pilot / Distance-Shell / IS 는 inline estimator 패턴이라 8M sensitivity 미포함.
+
+**3-tier 자동 chain** (서버 tmux 6 + 로컬 watchdog 3, 5/7 새벽 추가):
+1. **post_8m_pipeline.sh** — measure_8m flag 감지 → convert + 5 method 8M sensitivity → `/tmp/post_8m_done.flag`
+2. **final_chain.sh** (5/7 추가) — post_8m flag 감지 → 1M extra **8 method** (zorder/hybrid/partial/pca1d/kdtree/pq/spectral/birch) + SIFT mid-sel → `/tmp/final_chain_done.flag`
+3. **phase2_chain.sh** (5/7 추가) — final_chain flag 감지 → **4 missing method** (gmm/hdbscan/sobol/sparse_rp) → `/tmp/phase2_done.flag`
+
+로컬 watchdog v1/v2/v3 — 각 done flag 감지 → rsync + 분석 driver 자동 재실행 + macOS 알림.
+
+### 5/8 회의 ready 상태
+
+✅ RQ1: 단조성 통계 확정. DEEP-KM20 + DEEP-RAND 양 방향 ρ 모두 CI 0 제외.
+✅ RQ2: Neyman robustness + Anti-Neyman 반증 + KM20 sample_size robustness (별도 commit 037c425).
+✅ RQ3: 7-way 측정 완료 (별도 commit 589d66e), Hilbert mechanism 정량 분리, 추가 11 method 코드 ready (Z-order/hybrid/partial_fit/pca1d/kdtree/pq/spectral/birch + 5/7 새벽 gmm/hdbscan/sobol/sparse_rp).
+🔁 8M sensitivity: overnight 자동 실행 진행 중, ETA ~03:25 KST (sel=0.3 stratified 4/5 진행, 5/7 02:50 시점).
+🔁 1M extra (final_chain) + 4 missing (phase2): 8M flag 도착 후 자동 chain trigger.

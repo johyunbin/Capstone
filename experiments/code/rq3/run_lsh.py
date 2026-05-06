@@ -33,7 +33,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "lsh"))
+# NOTE: ROOT/lsh 를 sys.path 에 추가하면 'lsh.py' 파일과 'lsh/' namespace package
+# 사이의 path resolution 충돌로 `from lsh.lsh import` 가 fail. ROOT 만 두면 'lsh'
+# 가 ROOT/lsh/ namespace package 로 resolve 되어 'lsh.lsh' 정상 작동.
 
 from _measure_common import (  # noqa: E402
     DATASETS, N_STRATA, fetch_all_vectors_safe, kst,

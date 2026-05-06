@@ -377,3 +377,34 @@ paired Wilcoxon (n=500/sel, SIFT) — 모든 selectivity 에서 매우 유의:
 - raw 측정 데이터: `rq2_aware/2026_05_06_alloc/rq2_alloc.parquet` (25,000 rows) + meta json
 - σ_i 사전 계산 스크립트: `experiments/code/rq2/compute_stratum_sigma.py`
 - 측정 스크립트: `experiments/code/rq2/rq2_alloc_python.py`
+
+---
+
+## W1 Sprint 추가 측정 — 실험 #4 RQ2 부수 Sample size sensitivity (2026-05-06)
+
+5/5 회의의 비판 "Exqutor 대비 효과 약함" 에 대한 직접 답변. KM20-Proportional 의 BERN 대비 개선이 sample_size 에 어떻게 의존하는지 측정. 17:17:26 시작 → 17:17:49 종료 (22.7초). 24,000 rows (4 ssize × 2 dataset × 3 sel × 5 seed × 100 query × 2 mode).
+
+### 가설 H2-S — ❌ 단조 감소 가설 미입증
+
+| 데이터셋 | sel | ssize=100 | ssize=385 | ssize=1000 | ssize=3000 |
+|---|---|---|---|---|---|
+| DEEP | 0.01 | -0.83% | -3.62% | -2.93% | -3.88% |
+| DEEP | 0.05 | **-8.15%** | -4.25% | -4.49% | -4.92% |
+| DEEP | 0.50 | -1.53% | -1.26% | -1.07% | -1.36% |
+| SIFT | 0.01 | -4.97% | -2.50% | **-8.98%** | -8.39% |
+| SIFT | 0.05 | -8.78% | -6.55% | -7.89% | -8.11% |
+| SIFT | 0.50 | -4.44% | -4.71% | -5.48% | -5.74% |
+
+→ "sample_size 작을수록 KM20 효과 큼" 가설은 부분적으로만 입증 (DEEP s=0.05 에서만). 다른 case 에서는 non-monotonic 또는 반대 방향.
+
+### ✅ 새 발견 — KM20 효과의 sample_size robustness
+
+**모든 24 개 조합에서 KM20-Proportional > BERN 일관** (Δ% -0.83% ~ -8.98%, 평균 ~-5%). sample_size 30 배 차이 (100 ~ 3000) 에 걸쳐 KM20 의 가치가 robust 하게 유지된다.
+
+이는 production 관점에서 좋은 narrative: **"어느 sample_size 영역에서도 KM20 가치 유지"** — cost-tunable 한 KM20 baseline.
+
+### 산출물
+
+- raw 측정 데이터: `rq2_aware/2026_05_06_alloc/rq2_size_sensitivity.parquet` (24,000 rows) + meta json
+- 4단계 narrative: [`rq2_aware/2026_05_06_alloc/실험4_결과정리_20260506.md`](rq2_aware/2026_05_06_alloc/실험4_결과정리_20260506.md)
+- 측정 스크립트: `experiments/code/rq2/rq2_size_sensitivity.py`

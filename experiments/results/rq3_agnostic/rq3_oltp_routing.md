@@ -8,23 +8,23 @@
 
 ```
                method       N  n_train  elapsed_s  ops_per_row_us
-    KM20 (full-batch)   10000    10000   0.524890       52.489018
-MiniBatch (1% sample)   10000     1000   0.024682        2.468204
-MiniBatch partial_fit   10000     1000   0.007120        0.711989
-  Hilbert (1% sample)   10000     1000   0.005553        0.555277
-    KM20 (full-batch)  100000   100000   6.577899       65.778990
-MiniBatch (1% sample)  100000     1000   0.032044        0.320439
-MiniBatch partial_fit  100000     1000   0.008823        0.088229
-  Hilbert (1% sample)  100000     1000   0.005227        0.052271
-    KM20 (full-batch) 1000000  1000000  69.749390       69.749390
-MiniBatch (1% sample) 1000000    10000   0.053934        0.053934
-MiniBatch partial_fit 1000000    10000   0.025699        0.025699
-  Hilbert (1% sample) 1000000    10000   0.030568        0.030568
+    KM20 (full-batch)   10000    10000   0.543081       54.308105
+MiniBatch (1% sample)   10000     1000   0.023532        2.353215
+MiniBatch partial_fit   10000     1000   0.007745        0.774503
+  Hilbert (1% sample)   10000     1000   0.007061        0.706100
+    KM20 (full-batch)  100000   100000   6.596969       65.969689
+MiniBatch (1% sample)  100000     1000   0.039185        0.391850
+MiniBatch partial_fit  100000     1000   0.009421        0.094211
+  Hilbert (1% sample)  100000     1000   0.005634        0.056341
+    KM20 (full-batch) 1000000  1000000  72.044681       72.044681
+MiniBatch (1% sample) 1000000    10000   0.057205        0.057205
+MiniBatch partial_fit 1000000    10000   0.024066        0.024066
+  Hilbert (1% sample) 1000000    10000   0.030678        0.030678
 ```
 
-- **N = 10,000**: KM20 0.52s / MiniBatch 0.025s = **21× speedup**
-- **N = 100,000**: KM20 6.58s / MiniBatch 0.032s = **205× speedup**
-- **N = 1,000,000**: KM20 69.75s / MiniBatch 0.054s = **1293× speedup**
+- **N = 10,000**: KM20 0.54s / MiniBatch 0.024s = **23× speedup**
+- **N = 100,000**: KM20 6.60s / MiniBatch 0.039s = **168× speedup**
+- **N = 1,000,000**: KM20 72.04s / MiniBatch 0.057s = **1259× speedup**
 
 **5/5 회의록 의 "1/20~1/100 수준 완화" 가 정량적으로 입증** — N=1M 에서 KM20 의 1/(speedup) 비용.
 
@@ -38,20 +38,20 @@ MiniBatch partial_fit 1000000    10000   0.025699        0.025699
 각 (dataset, sel, query) cell 의 best method (rank=1) 를 BERN q_error quartile 별 집계.
 
 ```
-mode          distance_shell  hilbert  hybrid  is_p200_clip  is_p200_noclip  is_p50_clip  is_p50_noclip  kde_pilot  kdtree  km20  lsh  minibatch  minibatch_partial  pca1d   pq  random20  random_proj  zorder
-difficulty_q                                                                                                                                                                                                  
-Q1_easy                  7.0     19.0    21.0           1.0             0.0          5.0            0.0       21.0    21.0  24.0  9.0       34.0               27.0   16.0  3.0      14.0          7.0    21.0
-Q2                       1.0     34.0    27.0           2.0             2.0         10.0            2.0       25.0    17.0  17.0  7.0       21.0               26.0   19.0  5.0      13.0          5.0    18.0
-Q3                       3.0     24.0    31.0           2.0             1.0         10.0            1.0       23.0    24.0  25.0  5.0       22.0               25.0   16.0  7.0       9.0          6.0    15.0
-Q4_hard                  3.0     15.0    29.0           0.0             1.0          9.0            0.0       33.0    26.0  23.0  7.0       32.0               26.0   17.0  6.0       8.0          0.0    15.0
+mode          birch  distance_shell   gmm  hdbscan  hilbert  hybrid  is_p200_clip  is_p200_noclip  is_p50_clip  is_p50_noclip  kde_pilot  kdtree  km20  lsh  minibatch  minibatch_partial  pca1d   pq  random20  random_proj  sobol  sparse_rp  spectral  zorder
+difficulty_q                                                                                                                                                                                                                                                    
+Q1_easy         9.0             4.0  14.0     17.0     13.0    16.0           1.0             0.0          5.0            0.0       19.0    17.0  16.0  6.0       22.0               20.0   12.0  3.0       9.0          5.0   10.0       11.0       6.0    15.0
+Q2             13.0             1.0  10.0     18.0     20.0    18.0           2.0             2.0         10.0            2.0       21.0    11.0  14.0  6.0       14.0               19.0   15.0  4.0       9.0          5.0    4.0        8.0       9.0    16.0
+Q3              7.0             2.0  12.0     14.0     17.0    28.0           2.0             1.0         10.0            1.0       17.0    19.0  20.0  4.0       20.0               18.0   12.0  4.0       6.0          5.0    6.0        8.0       8.0     8.0
+Q4_hard        15.0             1.0   4.0     21.0     11.0    20.0           0.0             0.0          9.0            0.0       25.0    20.0  18.0  5.0       26.0               22.0   15.0  5.0       6.0          0.0    4.0        5.0       6.0    12.0
 ```
 
 ### Difficulty 별 Top method
 
-- **Q1_easy**: `minibatch` (34), `minibatch_partial` (27), `km20` (24), `kde_pilot` (21), `kdtree` (21)
-- **Q2**: `hilbert` (34), `hybrid` (27), `minibatch_partial` (26), `kde_pilot` (25), `minibatch` (21)
-- **Q3**: `hybrid` (31), `km20` (25), `minibatch_partial` (25), `kdtree` (24), `hilbert` (24)
-- **Q4_hard**: `kde_pilot` (33), `minibatch` (32), `hybrid` (29), `kdtree` (26), `minibatch_partial` (26)
+- **Q1_easy**: `minibatch` (22), `minibatch_partial` (20), `kde_pilot` (19), `hdbscan` (17), `kdtree` (17)
+- **Q2**: `kde_pilot` (21), `hilbert` (20), `minibatch_partial` (19), `hdbscan` (18), `hybrid` (18)
+- **Q3**: `hybrid` (28), `km20` (20), `minibatch` (20), `kdtree` (19), `minibatch_partial` (18)
+- **Q4_hard**: `minibatch` (26), `kde_pilot` (25), `minibatch_partial` (22), `hdbscan` (21), `hybrid` (20)
 
 ## 3. Production Method Routing 의 framework 제안
 

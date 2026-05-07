@@ -79,6 +79,23 @@ DATASETS = [
 ]
 
 
+# 8M sensitivity 분석용 (메인 세션 8M 측정 완료 후 활성). 사용 예:
+#     from _measure_common import DATASETS_8M
+#     for ds in DATASETS_8M: ...
+# query_selectivity_8m.parquet 은 phase7_8m_dtarget_midsel.json 을 변환해 생성
+# (scripts/convert_8m_dtarget_to_parquet.py 참조). 현재 sel ∈ {0.1, 0.3} 만 사용 가능.
+DATASETS_8M = [
+    {
+        "name": "DEEP_8M",
+        "table": "partsupp_deep_10_phase7_8m_subset",
+        "embed_col": "ps_embedding",
+        "vec_dim": 96,
+        "query_pool": CACHE / "query_pool.parquet",  # 1M 과 같은 query 풀
+        "query_sel": CACHE / "query_selectivity_8m.parquet",  # 8M 측정 후 생성 필요
+    },
+]
+
+
 def kst() -> str:
     return datetime.now(timezone(timedelta(hours=9))).strftime("%H:%M:%S")
 

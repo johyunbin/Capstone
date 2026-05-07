@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>속도는벡터 RQ1/RQ2/RQ3 Interactive Prototype</title>
+<style>
+  body { font-family: 'Apple SD Gothic Neo', sans-serif; max-width: 1100px; margin: 24px auto; padding: 0 16px; color: #1f2937; }
+  h1 { color: #111827; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+  h2 { color: #374151; margin-top: 32px; }
+  .rq-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; background: #f9fafb; }
+  .rq-card.rq1 { border-left: 6px solid #ef4444; }
+  .rq-card.rq2 { border-left: 6px solid #10b981; }
+  .rq-card.rq3 { border-left: 6px solid #2563eb; }
+  .question { font-size: 1.1em; font-style: italic; color: #4b5563; margin-bottom: 12px; }
+  .key-result { background: #fef3c7; border-radius: 6px; padding: 10px 14px; margin: 8px 0; font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th { background: #1e40af; color: #fff; padding: 8px; }
+  td { border: 1px solid #e5e7eb; padding: 8px; text-align: center; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .narrative-flow { display: flex; align-items: center; justify-content: space-around; margin: 24px 0; flex-wrap: wrap; gap: 12px; }
+  .flow-box { background: #fff; border: 2px solid #cbd5e1; padding: 12px 18px; border-radius: 8px; text-align: center; min-width: 140px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+  .flow-arrow { font-size: 1.5em; color: #6b7280; }
+  .ladder { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; }
+  .ladder-item { display: flex; align-items: center; padding: 10px 16px; background: #fff; border-left: 4px solid; border-radius: 6px; gap: 12px; }
+  .ladder-item .level { font-weight: bold; min-width: 110px; }
+  .ladder-item .desc { color: #4b5563; }
+  .ladder-item.l1 { border-color: #fca5a5; }
+  .ladder-item.l2 { border-color: #fed7aa; }
+  .ladder-item.l3 { border-color: #fef08a; }
+  .ladder-item.l4 { border-color: #bef264; }
+  .ladder-item.l5 { border-color: #86efac; }
+  .ladder-item.l6 { border-color: #6ee7b7; }
+  .ladder-item.l7 { border-color: #67e8f9; }
+  .ladder-item.l8 { border-color: #93c5fd; }
+  .ladder-item.l9 { border-color: #c4b5fd; }
+  .ladder-item.l10 { border-color: #f0abfc; }
+  .contrib-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 24px 0; }
+  .contrib-card { padding: 16px; border-radius: 8px; background: #fff; border: 1px solid #e5e7eb; }
+  .contrib-card h3 { margin-top: 0; color: #1e40af; }
+  .contrib-card .star { color: #f59e0b; }
+  .stat { background: #1e40af; color: #fff; padding: 4px 10px; border-radius: 4px; display: inline-block; font-family: 'SF Mono', Consolas, monospace; font-size: 0.95em; }
+  .toggle { cursor: pointer; user-select: none; padding: 8px 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; margin: 4px; }
+  .toggle:hover { background: #1d4ed8; }
+  .hidden { display: none; }
+  .legend { font-size: 0.9em; color: #6b7280; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<h1>속도는벡터 — RQ1 / RQ2 / RQ3 Interactive Prototype</h1>
+<p class="legend">5/8 회의 + 5/27 발표용. 클릭/탐색 가능한 형식 으로 RQ 직관 빠르게 전달.</p>
+
+<h2>전체 narrative flow</h2>
+<div class="narrative-flow">
+  <div class="flow-box">Vector range query<br/><small>= "몇 건이나?"</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">BERN sampling<br/><small>= 무작위 385개</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box" style="background:#fef3c7;">Skewed 데이터<br/><small>= 부정확</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box" style="background:#dbeafe;">분포 인지<br/>sampling 도입</div>
+</div>
+
+<div class="rq-card rq1">
+  <h2>RQ1 — 기존 sampling 이 skew 데이터에서 얼마나 부정확한가?</h2>
+  <p class="question">"데이터가 한 곳에 몰려 있을 때, 무작위 표본으로 추정하면 얼마나 틀리는가?"</p>
+
+  <h3>측정 (DEEP 1M / SIFT 1.5M × 5 sel × 5 seed × 100 query)</h3>
+  <table>
+    <tr><th>selectivity</th><th>DEEP (Normal)</th><th>SIFT (Skewed)</th><th>의미</th></tr>
+    <tr><td>0.50 (50% 데이터)</td><td>+1.31%</td><td>+3.07%</td><td>BERN 거의 정확</td></tr>
+    <tr><td>0.10</td><td>+4.19%</td><td>(미측정)</td><td>점차 격차 ↑</td></tr>
+    <tr><td>0.05</td><td>+1.85%</td><td>+4.39% (2.4×)</td><td>SIFT 부정확</td></tr>
+    <tr><td><strong>0.01 (1% 데이터)</strong></td><td><strong>+8.93%</strong></td><td>-0.53% <small>(sample 부족 anomaly)</small></td><td>sel 작을수록 BERN 한계</td></tr>
+  </table>
+
+  <div class="key-result">
+    🎯 <strong>핵심 결과 — 단조성 통계 확정</strong>: per-seed Spearman ρ =
+    <span class="stat">-0.680</span>, 95% CI
+    <span class="stat">[-0.800, -0.440]</span> → <strong>0 제외, 단조 감소 확정</strong>
+  </div>
+
+  <h3>Two-Level Decomposition</h3>
+  <table>
+    <tr><th>sel</th><th>L1 (RAND-BERN)</th><th>L2 (KM20-RAND)</th><th>Total</th><th>L2 share</th></tr>
+    <tr><td>0.01 DEEP</td><td>-10.67%</td><td>+19.60%</td><td>+8.93%</td><td><strong>+219%</strong></td></tr>
+    <tr><td>0.05 DEEP</td><td>+0.79%</td><td>+1.06%</td><td>+1.85%</td><td>+57%</td></tr>
+    <tr><td>0.50 DEEP</td><td>+2.20%</td><td>-0.89%</td><td>+1.31%</td><td>-68%</td></tr>
+  </table>
+  <p class="legend">Level 1 = Proportional Allocation (보편), Level 2 = Spatial Awareness (sel-dependent).</p>
+</div>
+
+<div class="rq-card rq2">
+  <h2>RQ2 — 분포 알 때 (KM20 cluster) 어떤 allocation 이 최적?</h2>
+  <p class="question">"미리 K=20 cluster 로 분할해 두었다면, 표본 385 권 어떻게 배분?"</p>
+
+  <h3>5-mode ablation</h3>
+  <table>
+    <tr><th>Mode</th><th>설명</th><th>DEEP 평균 Δ%</th><th>SIFT 평균 Δ%</th></tr>
+    <tr><td>BERN</td><td>baseline (cluster X)</td><td>0%</td><td>0%</td></tr>
+    <tr><td>Equal</td><td>cluster 마다 똑같이 19~20개</td><td>-3.0%</td><td>-4.6%</td></tr>
+    <tr><td>Proportional</td><td>N_i 비례</td><td>-3.6%</td><td>-7.0%</td></tr>
+    <tr><td>Neyman</td><td>N_i × σ_i 비례</td><td>-2.9%</td><td>-6.2%</td></tr>
+    <tr><td>Anti-Neyman</td><td>N_i / σ_i 비례 (anti-pattern)</td><td>-2.9%</td><td>-5.9%</td></tr>
+  </table>
+
+  <div class="key-result">
+    🎯 <strong>핵심 발견</strong>: 모든 stratified > BERN. Neyman ≈ Equal (σ_i 신호 약). <br/>
+    <strong>Anti-Neyman 의 좁은 sel hurt</strong>: DEEP s=0.01 +5.21%, SIFT s=0.01 +9.49% (CI 0 제외) — anti-direction systematic worse.
+  </div>
+
+  <h3>σ_i 신호 약함의 root cause (5/5 회의 의문 답변)</h3>
+  <ul>
+    <li>DEEP cluster 가 모두 100K rows (N_i CV = 0.000) → Proportional = Equal</li>
+    <li>σ_i CV 0.396 만 dominant signal — Max |Neyman - Prop| = 8.48%p (budget 385 의 32 표본 차이)</li>
+    <li>→ measurement noise 로 묻힘. SIFT × s=0.01 만 σ_i amplification 로 유의 (HHI ↑ 시 cluster 집중)</li>
+  </ul>
+</div>
+
+<div class="rq-card rq3">
+  <h2>RQ3 — 분포 모를 때 어떤 stratification 이 최적?</h2>
+  <p class="question">"K-means 학습 못 할 때, 어떤 임시 분류가 KM20 oracle 에 가장 가까운가?"</p>
+
+  <h3>Ablation Ladder (정보 점진 축적)</h3>
+  <div class="ladder">
+    <div class="ladder-item l1"><span class="level">BERN</span><span class="desc">정보 X (baseline)</span></div>
+    <div class="ladder-item l2"><span class="level">RANDOM20</span><span class="desc">random partition (cluster 라벨 임의)</span></div>
+    <div class="ladder-item l3"><span class="level">PCA-1D</span><span class="desc">+ PC1 quantile (1D, curve X)</span></div>
+    <div class="ladder-item l4"><span class="level">Z-order</span><span class="desc">+ 2D + 단순 bit-interleave</span></div>
+    <div class="ladder-item l5"><span class="level">Hilbert ★</span><span class="desc">+ 2D + locality-preserving curve (Manhattan = 1.000)</span></div>
+    <div class="ladder-item l6"><span class="level">PQ</span><span class="desc">+ M sub-vector × KMeans (FAISS 산업)</span></div>
+    <div class="ladder-item l7"><span class="level">KD-tree</span><span class="desc">+ 재귀 median split</span></div>
+    <div class="ladder-item l8"><span class="level">MiniBatch ★</span><span class="desc">+ 96D KMeans (1% sample, OLTP partial_fit)</span></div>
+    <div class="ladder-item l9"><span class="level">Hybrid</span><span class="desc">+ outer KMeans + inner Hilbert</span></div>
+    <div class="ladder-item l10"><span class="level">KM20 oracle</span><span class="desc">full K-means (production X)</span></div>
+  </div>
+
+  <h3>핵심 contribution 3종</h3>
+  <div class="contrib-grid">
+    <div class="contrib-card">
+      <h3><span class="star">★</span> 1. Hilbert Curve</h3>
+      <p><strong>Learning-free + 결정론 1순위</strong></p>
+      <ul>
+        <li>DEEP -1.78% / SIFT -2.47%</li>
+        <li>Cohen's d = -0.156</li>
+        <li>Mechanism: <span class="stat">inverse Manhattan = 1.000</span> (Z-order 1.992)</li>
+        <li>Stratum compactness Z-order 대비 <strong>1.25-2.54×</strong></li>
+      </ul>
+    </div>
+    <div class="contrib-card">
+      <h3><span class="star">★</span> 2. MiniBatch K-means</h3>
+      <p><strong>Production-Ready (OLTP)</strong></p>
+      <ul>
+        <li>DEEP -1.88% / SIFT -1.97%</li>
+        <li>KM20 vs MiniBatch: N=1M <span class="stat">1,189× speedup</span></li>
+        <li>partial_fit ARI = <strong>1.000 (clustered)</strong></li>
+        <li>5/5 회의 OLTP 의문 정량 답변</li>
+      </ul>
+    </div>
+    <div class="contrib-card">
+      <h3><span class="star">★</span> 3. Cluster 분할 가치</h3>
+      <p><strong>Negative Control 정량 증명</strong></p>
+      <ul>
+        <li>Distance-Shell d = +0.49 (small-medium hurt)</li>
+        <li>Importance Sampling d = +0.5~+0.7 (medium hurt)</li>
+        <li>→ "분할 자체가 stratification 핵심"</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Method Routing — 어려운 query 에서 routing 가치</h3>
+  <table>
+    <tr><th>Difficulty</th><th>Top method</th><th>의미</th></tr>
+    <tr><td>Q1_easy</td><td>km20 (52) > minibatch (50) > hilbert (44)</td><td>KM20 oracle 유효</td></tr>
+    <tr><td>Q2 mid</td><td><strong>hilbert (62)</strong> > minibatch (40) > kde_pilot (39)</td><td>Hilbert dominant</td></tr>
+    <tr><td>Q3 mid-hard</td><td><strong>hilbert (57)</strong> > km20 (46) > minibatch (45)</td><td>Hilbert dominant</td></tr>
+    <tr><td>Q4_hard</td><td><strong>kde_pilot (55) ≈ minibatch (55)</strong> > km20 (40)</td><td>Online + cluster</td></tr>
+  </table>
+  <p class="legend">spread vs difficulty 상관 ρ = 0.78 (DEEP/SIFT 모두) → 어려운 query 에서 method 차이 결정적.</p>
+</div>
+
+<h2>Limitation 4종 (5/5 회의 합의)</h2>
+<table>
+  <tr><th>#</th><th>한계</th><th>Mitigation</th></tr>
+  <tr><td>1</td><td>KM20 = oracle, production X</td><td>MiniBatch (1/1000 비용) + partial_fit (OLTP)</td></tr>
+  <tr><td>2</td><td>사전 계산 비용</td><td>HNSW 와 같은 build-time layer</td></tr>
+  <tr><td>3</td><td>OLTP 범위 외</td><td>partial_fit ~10ms/chunk, ARI 1.000</td></tr>
+  <tr><td>4</td><td>단일 → 멀티 future work</td><td>단일은 멀티의 *필요조건* (multi-relational K-means 별도 연구)</td></tr>
+</table>
+
+<hr style="margin: 32px 0;"/>
+<p class="legend"><strong>작성</strong>: 조현빈 · 2026-05-07 00:45 KST · 팀원 이해도 + 5/8 회의 + 5/27 발표용 prototype</p>
+
+</body>
+</html>

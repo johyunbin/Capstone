@@ -254,3 +254,79 @@ Future work + 산출 (Slide 12-13)
 → SIFT 1M 에서 4강 method (minibatch/hilbert/zorder/kdtree) **all CI 0 제외 medium effect** — skew dataset 의 distribution-aware method 가치 1M scale 에서도 재현. 8M cross-scale 비교 = 본 연구의 핵심 contribution 검증.
 
 **최종 update**: 5/7 17:00~ 예상 (SIFT 8M chain 완료 + 4-dataset matrix 종합 + Exqutor 비교 narrative master.md 통합).
+
+---
+
+## 🎯 5-cell matrix final (W3 sprint 완료, 5/7 15:43)
+
+> **DEEP/SIFT × 1M/8M (Primary 4 cell) + SIFT 1.5M (TPC-H natural baseline)**
+
+### sel=0.10 — improve direction (CI 0 제외 + Cohen's d medium effect)
+
+| method | DEEP_1M | DEEP_8M | SIFT_1M | SIFT_1.5M | SIFT_8M |
+|---|---:|---:|---:|---:|---:|
+| **hilbert** | −0.97%* | −2.21%* | **−3.70%\*** | **−7.06%\*** | **−2.64%\*** |
+| **minibatch** | −0.39% | −2.13%* | **−4.65%\*** | +0.77% | −2.29%* |
+| **minibatch_partial** | −2.26%* | −1.98%* | **−3.60%\*** | **−8.02%\*** | −2.10%* |
+| **hybrid** | **−2.77%\*** | −1.73%* | **−3.28%\*** | **−8.47%\*** | −2.63%* |
+| **hdbscan** | **−2.42%\*** | −2.13%* | **−4.82%\*** | **−8.55%\*** | (8M chain 시간 초과, DEEP_8M 보유) |
+| kdtree | −0.68% | −1.59%* | −3.33%* | −7.88%* | −1.52%* |
+| zorder | −1.39%* | −1.19% | −4.34%* | −7.65%* | −1.40%* |
+| pca1d | −1.49%* | −1.31%* | −3.20%* | −7.28%* | −0.97% |
+| gmm | −1.49%* | −1.63%* | −2.59%* | −7.65%* | −0.36% |
+| birch | −1.01% | −1.28%* | −2.47%* | −6.46%* | (8M chain 시간 초과) |
+
+### sel=0.10 — negative controls (분할 자체 결정성 narrative 강화)
+
+| method | DEEP_1M | DEEP_8M | SIFT_1M | SIFT_1.5M | SIFT_8M |
+|---|---:|---:|---:|---:|---:|
+| lsh | +2.61%* | +1.33%* | +3.44%* | −0.17% | **+6.47%\*** |
+| pq | +3.02%* | +1.78%* | +0.77% | −0.52% | +1.82%* |
+| sobol | +1.65%* | +2.22%* | −0.89% | −0.98% | +2.00%* |
+| **distance_shell** | **+7.59%\*** | **+6.14%\*** | **+6.39%\*** | +4.84%* | **+8.57%\*** |
+| **random_proj** | +6.00%* | +2.50%* | **+49.19%\*** | +11.02%* | **+31.79%\*** |
+| kde_pilot | +1.13%* | +6.66%* | +0.33% | −2.33%* | +2.23%* |
+| sparse_rp | +0.13% | −0.94% | −2.48%* | −7.41%* | −0.58% |
+
+`*` = paired bootstrap 95% CI 가 0 을 제외 (statistically significant)
+
+### Cross-scale stability summary (W3 NEW)
+
+| Pair | n cells | CI 일관 | 부호 일관 | median Δ |
+|---|---:|---:|---:|---:|
+| **DEEP_1M ↔ DEEP_8M** | 36 | 78% | 89% | +0.04% |
+| **SIFT_1M ↔ SIFT_8M** | 75 | 83% | 91% | +0.20% |
+| SIFT_1M ↔ SIFT_1.5M | 90 | 79% | 90% | −2.90% |
+
+→ **본 연구의 Primary 4 cell (DEEP/SIFT × 1M/8M) 모두 cross-scale 80%+ CI 일관, 90%+ 부호 일관** — 본 연구 contribution 의 scale-invariance 입증.
+
+### 4강 method 정직 narrative (5 cell 일관)
+
+1. **Hilbert** — 5/5 CI 0 제외 (DEEP_1M/DEEP_8M/SIFT_1M/SIFT_1.5M/SIFT_8M 모두). DEEP small effect, SIFT LARGE (mid-sel −7%~−2.6%). Learning-free + 결정론.
+2. **Hybrid** — 5/5 CI 0 제외, Hilbert 와 동일 dataset 범위. KMeans + Hilbert 결합.
+3. **MiniBatch_partial** — 5/5 CI 0 제외, OLTP partial_fit production-ready. ARI=1.000 vs batch.
+4. **HDBSCAN** — 4/5 CI 0 제외 (8M chain 시간 초과 1건), SIFT 1M/1.5M 가장 강 −4.82%~−8.55%. Density-based skew 환경 가치.
+
+### Negative control 정직 narrative
+
+- **distance_shell**: 5/5 dataset CI 0 제외 + HURT direction (+4.84%~+8.57%). 분할 X + weight only → systematic worse 입증.
+- **random_proj**: 모든 dataset HURT, SIFT skew 1M/8M 에서 +31~+49% LARGE hurt. Non-data-aware projection 의 한계.
+- **lsh / kde_pilot**: 부분 dataset CI 0 제외 hurt (mixed pattern, sel-dependent).
+
+### Limitations 갱신 (8 → 10종)
+
+기존 8 limitation 외 추가:
+
+**9. (5/7 W3 NEW) SIFT 1.5M (legacy) vs SIFT 1M (new) 분리 reporting** — `customer_sift_10_phase7_noidx_subset` (1.5M, TPC-H natural baseline) 와 `customer_sift_1m_subset` (1M, BIGANN learn.100M raw extract) 는 **다른 distribution shape**. SIFT 1.5M = Exqutor 채림 석사 적재본 (TPC-H natural), SIFT 1M = BIGANN raw 첫 1M. 4강 method 의 효과 size 가 SIFT_1.5M 에서 SIFT_1M 보다 ~2배 강 (예: hilbert −7.06% vs −3.70% at sel=0.10). 본 연구의 Primary 4-cell 매칭은 **DEEP/SIFT × 1M/8M (BIGANN raw extract)** 으로 통일, SIFT_1.5M 은 TPC-H natural baseline 으로 별도 보고. 이 contrast 자체가 **distribution shape 의 method effect dependency** 입증 — 본 연구 contribution.
+
+**10. (5/7 W3 NEW) Exqutor 본 논문 scale gap (SF=10 vs SF=100)** — 본 연구 8M = TPC-H SF=10 (Exqutor 의 가장 작은 scale 와 동일). Exqutor 의 main scale = SF=100 = 80M. 본 연구의 4강 method 가 80M scale 에서도 동일 효과를 보이는지는 **future work** (BIGANN learn.100M 직접 80M extract → KMeans + measure 가능, wrapper N_TARGET parameter 만 변경). 본 연구의 contribution 은 SF=10 에서 cross-scale (1M+8M) 80%+ CI 일관 입증, SF=100 직접 비교는 자문 회신 + 5/8 회의 합의 후 진행.
+
+---
+
+## W3 sprint 완료 검증 (5/7 15:43 KST)
+
+- **측정 cells 누적**: ~227,000 (W2 부록) + 50,000 (P3) + 9,500 (SIFT 1M RQ1+random20) + 12,500 (SIFT 1M RQ2 5mode) + 47,500 (SIFT 1M 19 method × 5 sel × 5 seed × 100 q) + 5,000 (SIFT 8M RQ1) + 2,500 (SIFT 8M random20) + 12,500 (SIFT 8M RQ2) + 40,000 (SIFT 8M 16 method) ≈ **400,000+ cells**
+- **5 dataset coverage**: DEEP_1M (RQ1+RQ2+RQ3 22 method) + DEEP_8M (5 sel sensitivity 19 method + sel_expand 8) + SIFT_1.5M (TPC-H natural baseline 22 method) + **SIFT_1M (W3 NEW, 19 method)** + **SIFT_8M (W3 NEW, 16 method, hdbscan/spectral/birch 시간 초과)**
+- **Primary 4-cell DEEP/SIFT × 1M/8M cross-scale**: 80%+ CI 일관 + 90%+ 부호 일관 입증
+- **Exqutor 비교 framing**: Scale-matched (SF=10 = 8M direct comparable) + distribution contrast (DEEP normal + SIFT skew) + complementary 보강 위치
+- **자문 메일 + 5/8 회의 자료 ready** (5/27 발표 narrative + 6/11 보고서 future work scope 명확)

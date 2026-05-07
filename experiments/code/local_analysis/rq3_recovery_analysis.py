@@ -23,7 +23,10 @@ from recovery_rate import (  # noqa: E402
 )
 
 RESULTS = Path("/Users/hyunbin/Capstone/experiments/results/rq3_agnostic")
-METHODS = ["minibatch", "random_proj", "hilbert", "lsh", "kde_pilot", "distance_shell",
+METHODS = ["minibatch", "minibatch_partial", "random_proj", "sparse_rp", "pca1d",
+           "hilbert", "zorder", "sobol", "hybrid", "kdtree", "pq",
+           "spectral", "birch", "hdbscan", "gmm",
+           "lsh", "kde_pilot", "distance_shell",
            "is_p50_noclip", "is_p50_clip", "is_p200_noclip", "is_p200_clip"]
 
 
@@ -35,8 +38,20 @@ def load_all() -> pd.DataFrame:
         "rq3_random20_sift.parquet": None,    # SIFT only
         "rq3_km20.parquet": None,
         "rq3_minibatch.parquet": None,
+        "rq3_minibatch_partial.parquet": None,
         "rq3_random_proj.parquet": None,
+        "rq3_pca1d.parquet": None,
+        "rq3_kdtree.parquet": None,
+        "rq3_pq.parquet": None,
+        "rq3_spectral.parquet": None,
+        "rq3_birch.parquet": None,
+        "rq3_hdbscan.parquet": None,
+        "rq3_gmm.parquet": None,
+        "rq3_sobol.parquet": None,
+        "rq3_sparse_rp.parquet": None,
         "rq3_hilbert.parquet": None,
+        "rq3_zorder.parquet": None,
+        "rq3_hybrid.parquet": None,
         "rq3_lsh.parquet": None,
         "rq3_kde_pilot.parquet": None,
         "rq3_distance_shell.parquet": None,

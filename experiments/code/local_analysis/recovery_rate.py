@@ -76,23 +76,28 @@ def recovery_rate(
         method_q: 방법X 의 q_error (mean, 또는 single sample 의 절대값).
         random20_q: RANDOM20 의 q_error.
         km20_q: KM20 oracle 의 q_error.
-        bern_q: BERNOULLI baseline (fall-back 시 필요).
+        bern_q: BERNOULLI baseline. fall-back 시 필요. 또한 fall-back 이 아니더라도
+            method_minus_bern_pct 보조 metric 산출 위해 권장.
         threshold_pct: 분모 |KM20−RANDOM20| 가 이 값 (%p) 이하면 fall-back.
 
     Returns:
         RecoveryResult — `metric == 'recovery'` 면 표준 공식,
         `'fallback_abs_pct'` 면 (방법X − BERN) / BERN × 100 (%p) 반환.
+        method_minus_bern_pct 는 bern_q 가 주어지면 항상 채워짐 (fall-back 여부 무관).
     """
     denom_pct = abs(random20_q - km20_q) / max(random20_q, 1e-9) * 100.0
     method_minus_random_pct = (method_q - random20_q) / max(random20_q, 1e-9) * 100.0
+    method_minus_bern_pct = (
+        (method_q - bern_q) / max(bern_q, 1e-9) * 100.0
+        if bern_q is not None and not math.isnan(bern_q) else None
+    )
 
     if denom_pct <= threshold_pct:
-        if bern_q is None:
+        if bern_q is None or math.isnan(bern_q):
             raise ValueError(
                 f"분모 붕괴 (|KM20−RANDOM20|/RANDOM20 = {denom_pct:.3f}%p ≤ {threshold_pct}%p) — "
                 "fall-back 위해 bern_q 전달 필요"
             )
-        method_minus_bern_pct = (method_q - bern_q) / max(bern_q, 1e-9) * 100.0
         return RecoveryResult(
             value=method_minus_bern_pct,
             metric="fallback_abs_pct",
@@ -109,7 +114,7 @@ def recovery_rate(
         metric="recovery",
         denom_pct=denom_pct,
         method_minus_random_pct=method_minus_random_pct,
-        method_minus_bern_pct=None,
+        method_minus_bern_pct=method_minus_bern_pct,
     )
 
 

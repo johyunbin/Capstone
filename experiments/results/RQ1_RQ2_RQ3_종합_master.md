@@ -8,7 +8,7 @@
 
 **RQ1**: BERN sampling 의 부정확성은 selectivity 가 작을수록 단조 증가한다. 단조성의 통계 강도는 D_target 측정 환경에 의존한다. PG `tablesample` + vector.c hook 기반 SQL D_target 환경(Phase 6)은 per-seed Spearman ρ = −0.680, 95% bootstrap CI [−0.800, −0.440] 로 **0 제외 — 단조 감소 확정**. numpy 시뮬레이션 D_target 환경(Phase 7)은 ρ = +0.240, CI [−0.061, +0.480] 로 0 포함 — 단조성 검정력 약화. 두 환경의 5-cell 격차(s=0.01 Δ=−12.26%p) 자체가 sub-contribution 으로, **본 연구는 두 환경 결과를 모두 보고하며 gradient 19.6%p 핵심 수치는 production-near 환경(Phase 6) 기준으로 인용한다** (5/8 회의 합의 narrative).
 
-**RQ2**: KM20 oracle stratification 은 모든 (4 sample size × 2 dataset × 5 sel) 40 cell 에서 BERN 보다 우수 (-1.09~-13.50%). σ_i Neyman 신호는 약하나 σ_i anti-direction (Anti-Neyman) 은 좁은 sel 에서 systematic hurt (DEEP s=0.01 +5.21%, SIFT s=0.01 +9.49%, CI 0 제외).
+**RQ2**: KM20 oracle stratification (K-means K=20, **PG 직접 query 로 DEEP 1M / 8M / SIFT 1.5M 모든 dataset 의 stratum_id 0–19 일치 확인**, 5/7 W2 보강) 은 모든 (4 sample size × 2 dataset × 5 sel) 40 cell 에서 BERN 보다 우수 (-1.09~-13.50%). σ_i Neyman 신호는 약하나 σ_i anti-direction (Anti-Neyman) 은 좁은 sel 에서 systematic hurt (DEEP s=0.01 +5.21%, SIFT s=0.01 +9.49%, CI 0 제외). σ table reproducibility 이슈 (compute_stratum_sigma.py 의 unconditional DELETE → DEEP 1M / SIFT σ wiped, 8M σ만 잔존) 는 W2 권고 (5/8 회의 후 dispatch). 측정 결과는 시점 당시 σ valid 하므로 narrative 영향 없음.
 
 **RQ3**: 분포 모를 때 **22 method 비교** (5/7 새벽 final_chain + phase2 완료) — **Hilbert / MiniBatch / Hybrid / HDBSCAN** 4강 (paired bootstrap CI 0 제외 5/10 cell robust). Hilbert mechanism = 1D-2D Manhattan continuity = 1.000 (Z-order 1.992 와 분리). **MiniBatch partial_fit** 은 batch 와 거의 동일 효과 (paired CI 0 제외, ARI = 1.000) → OLTP 적용 확정. **신규 발견 (5/7 02:30~04:11 측정)**: hybrid SIFT s=0.10 **-3.10%** [-4.61, -1.19], **hdbscan SIFT s=0.10 -3.99%** [-5.34, -2.12] (모든 method 중 mid-sel 가장 강). **명확한 negative control**: PQ / Sobol / IS 모두 CI 0 제외 hurt direction. **사용자 검증 필요**: spectral 의 recovery_summary -5.39% 는 mean-of-ratios 왜곡, paired CI 는 +16.71% hurt — narrative 후보 제외.
 
@@ -177,3 +177,5 @@ Future work + 산출 (Slide 12-13)
 
 **최초 작성**: 조현빈 · 2026-05-06 23:55 KST · W1 sprint final master doc
 **5/7 01:50 갱신**: Claude (자율 야간) — 3-tier chain 자동화 + watchdog v1/v2/v3 + 4 missing method run_*.py 추가
+**5/7 04:11 갱신**: 모든 chain 완료 — 22 method × DEEP/SIFT 1M-1.5M (final_chain 8 + phase2 4 + 1차 7 + km20/random20/bernoulli baseline 3) + 16 method × DEEP 8M sensitivity. 측정 운영 산출은 `_internal/archive/2026_05_07_dawn_chain/` 에 archive.
+**5/7 11:11 갱신**: Claude (Opus 4.7 1M, 통합 manager) — 5/7 새벽~오전 다중 세션 산출 통합 commit 3개 (74d6aea narrative 옵션 2 + 1267b8a 딥리뷰 보강 + fc7e147 chain archive). contribution 5→7종 / Limitations 4→6종 final list. 5/8 회의 narrative ready.

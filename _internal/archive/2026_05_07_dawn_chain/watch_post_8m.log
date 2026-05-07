@@ -1,0 +1,940 @@
+[2026-05-07 00:41:23 KST] watch_post_8m.sh START — polling /tmp/post_8m_done.flag every 60s
+[2026-05-07 00:41:23 KST] NOTIFY: watchdog started — waiting for 8M sensitivity
+[2026-05-07 01:10:44 KST] still waiting (30 polls = 30 min)
+[2026-05-07 01:40:58 KST] still waiting (60 polls = 60 min)
+[2026-05-07 02:11:10 KST] still waiting (90 polls = 90 min)
+[2026-05-07 02:41:22 KST] still waiting (120 polls = 120 min)
+[2026-05-07 03:11:38 KST] still waiting (150 polls = 150 min)
+[2026-05-07 03:42:08 KST] still waiting (180 polls = 180 min)
+[2026-05-07 03:47:12 KST] /tmp/post_8m_done.flag detected after 185 polls
+[2026-05-07 03:47:12 KST] step 1: rsync 8M sensitivity parquet
+rq3_8m_spectral.parquet
+rq3_8m_zorder.parquet
+
+sent 368 bytes  received 328078 bytes  3284460000 bytes/sec
+total size is 437885  speedup is 1.33
+[2026-05-07 03:47:13 KST] step 2: rsync auxiliary (8M dtarget + log)
+
+sent 38 bytes  received 6095 bytes  61330000 bytes/sec
+total size is 8987  speedup is 1.47
+
+sent 38 bytes  received 4330 bytes  43680000 bytes/sec
+total size is 30115  speedup is 6.89
+[2026-05-07 03:47:14 KST] step 3: 8M 측정 산출 회수
+phase7_8m_midsel.parquet
+phase7_8m_midsel_meta.json
+
+sent 714 bytes  received 247 bytes  9610000 bytes/sec
+total size is 74472  speedup is 77.49
+[2026-05-07 03:47:15 KST] step 4: RQ3 분석 driver 자동 실행
+   SIFT              km20 bernoulli 0.50      500  -0.829267  44957.0 2.301117e-08 3.944771e-07        True
+   SIFT          random20 bernoulli 0.50      500   0.228624  64019.0 6.668633e-01 1.000000e+00       False
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/wilcoxon_vs_random20.csv
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/wilcoxon_vs_bern.csv
+
+======================================================================
+[5] Recovery Rate dataset 평균 (selectivity 별)
+======================================================================
+method  birch  distance_shell  gmm  hdbscan  ...  sobol  sparse_rp  spectral  zorder
+sel                                          ...                                    
+0.01      NaN          -0.365  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.05      NaN          -3.469  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.10      NaN          -4.726  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.30      NaN          -7.918  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.50      NaN          -7.731  NaN      NaN  ...    NaN        NaN       NaN     NaN
+
+[5 rows x 22 columns]
+
+✓ 분석 완료
+[2026-05-07 03:47:16 KST] step 5: 보강 분석 갱신 (8M 데이터 포함)
+hilbert            10.0              4.0              0.4
+is_p200_clip       10.0             10.0              1.0
+is_p200_noclip     10.0             10.0              1.0
+is_p50_clip        10.0              8.0              0.8
+is_p50_noclip      10.0             10.0              1.0
+kde_pilot          10.0              2.0              0.2
+lsh                10.0              1.0              0.1
+minibatch          10.0              5.0              0.5
+random_proj        10.0              6.0              0.6
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_bootstrap_effect_size.md
+dataset                                                                                                                                            
+DEEP               7.80     3.78         10.48            9.98         9.73           9.19       3.85  3.80  5.27       3.66      4.29         5.64
+SIFT               8.19     3.37          9.73            9.98         8.74           9.40       3.98  3.52  5.85       3.48      4.84         6.38
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_per_query_ranking.md
+[2026-05-07 03:47:23 KST] step 6: figures 재생성
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_per_query_difficulty_scatter.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_per_query_best_method_distribution.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_method_minus_bern_heatmap.png
+======================================================================
+완료
+[2026-05-07 03:47:24 KST] NOTIFY: 회수 완료 — 8M sensitivity 16 files. 분석 갱신됨.
+[2026-05-07 03:47:24 KST] watch_post_8m.sh END — 16 8M parquet retrieved
+         NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- random_proj ---
+dataset  sel  method_q  random20_q   km20_q  recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.970199    1.663209 1.597098 -4.643567         recovery                18.457726
+   DEEP 0.05  1.276614    1.198079 1.194996       NaN fallback_abs_pct                 6.555097
+   DEEP 0.10  1.167322    1.130001 1.125272       NaN fallback_abs_pct                 3.302685
+   DEEP 0.30  1.075559    1.062949 1.056812       NaN fallback_abs_pct                 1.186250
+   DEEP 0.50  1.051411    1.041105 1.035481       NaN fallback_abs_pct                 0.989909
+   SIFT 0.01  2.449839    1.687954 1.673486       NaN fallback_abs_pct                45.136561
+   SIFT 0.05  1.342367    1.245097 1.195525 -1.962224         recovery                 7.812257
+   SIFT 0.10  1.207207    1.150830 1.110213 -1.388035         recovery                 4.898859
+   SIFT 0.30  1.092660    1.068967 1.047940 -1.126756         recovery                 2.216403
+   SIFT 0.50  1.055761    1.043237 1.030875 -1.013073         recovery                 1.200479
+
+--- sparse_rp ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- pca1d ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- hilbert ---
+dataset  sel  method_q  random20_q   km20_q  recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.601648    1.663209 1.597098  0.931167         recovery                -3.701296
+   DEEP 0.05  1.174186    1.198079 1.194996       NaN fallback_abs_pct                -1.994257
+   DEEP 0.10  1.122923    1.130001 1.125272       NaN fallback_abs_pct                -0.626370
+   DEEP 0.30  1.057985    1.062949 1.056812       NaN fallback_abs_pct                -0.467068
+   DEEP 0.50  1.036816    1.041105 1.035481       NaN fallback_abs_pct                -0.411957
+   SIFT 0.01  1.618352    1.687954 1.673486       NaN fallback_abs_pct                -4.123451
+   SIFT 0.05  1.194845    1.245097 1.195525  1.013720         recovery                -4.035953
+   SIFT 0.10  1.112298    1.150830 1.110213  0.948673         recovery                -3.348197
+   SIFT 0.30  1.049141    1.068967 1.047940  0.942859         recovery                -1.854666
+   SIFT 0.50  1.028500    1.043237 1.030875  1.192120         recovery                -1.412646
+
+--- zorder ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- sobol ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- hybrid ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- kdtree ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- pq ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- spectral ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- birch ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- hdbscan ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- gmm ---
+dataset  sel  method_q  random20_q   km20_q  recovery  metric  method_minus_random_pct
+   DEEP 0.01       NaN    1.663209 1.597098       NaN missing                      NaN
+   DEEP 0.05       NaN    1.198079 1.194996       NaN missing                      NaN
+   DEEP 0.10       NaN    1.130001 1.125272       NaN missing                      NaN
+   DEEP 0.30       NaN    1.062949 1.056812       NaN missing                      NaN
+   DEEP 0.50       NaN    1.041105 1.035481       NaN missing                      NaN
+   SIFT 0.01       NaN    1.687954 1.673486       NaN missing                      NaN
+   SIFT 0.05       NaN    1.245097 1.195525       NaN missing                      NaN
+   SIFT 0.10       NaN    1.150830 1.110213       NaN missing                      NaN
+   SIFT 0.30       NaN    1.068967 1.047940       NaN missing                      NaN
+   SIFT 0.50       NaN    1.043237 1.030875       NaN missing                      NaN
+
+--- lsh ---
+dataset  sel  method_q  random20_q   km20_q  recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.932267    1.663209 1.597098 -4.069806         recovery                16.177082
+   DEEP 0.05  1.258325    1.198079 1.194996       NaN fallback_abs_pct                 5.028567
+   DEEP 0.10  1.167085    1.130001 1.125272       NaN fallback_abs_pct                 3.281741
+   DEEP 0.30  1.074057    1.062949 1.056812       NaN fallback_abs_pct                 1.044955
+   DEEP 0.50  1.047706    1.041105 1.035481       NaN fallback_abs_pct                 0.634031
+   SIFT 0.01  2.089823    1.687954 1.673486       NaN fallback_abs_pct                23.808028
+   SIFT 0.05  1.297680    1.245097 1.195525 -1.060760         recovery                 4.223233
+   SIFT 0.10  1.185729    1.150830 1.110213 -0.859221         recovery                 3.032490
+   SIFT 0.30  1.080987    1.068967 1.047940 -0.571626         recovery                 1.124425
+   SIFT 0.50  1.049320    1.043237 1.030875 -0.492094         recovery                 0.583125
+
+--- kde_pilot ---
+dataset  sel  method_q  random20_q   km20_q  recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.652860    1.663209 1.597098  0.156528         recovery                -0.622182
+   DEEP 0.05  1.197880    1.198079 1.194996       NaN fallback_abs_pct                -0.016575
+   DEEP 0.10  1.136035    1.130001 1.125272       NaN fallback_abs_pct                 0.533931
+   DEEP 0.30  1.063686    1.062949 1.056812       NaN fallback_abs_pct                 0.069334
+   DEEP 0.50  1.037946    1.041105 1.035481       NaN fallback_abs_pct                -0.303468
+   SIFT 0.01  1.756675    1.687954 1.673486       NaN fallback_abs_pct                 4.071231
+   SIFT 0.05  1.204269    1.245097 1.195525  0.823610         recovery                -3.279063
+   SIFT 0.10  1.147743    1.150830 1.110213  0.075992         recovery                -0.268201
+   SIFT 0.30  1.061777    1.068967 1.047940  0.341940         recovery                -0.672619
+   SIFT 0.50  1.033107    1.043237 1.030875  0.819452         recovery                -0.971039
+
+--- distance_shell ---
+dataset  sel  method_q  random20_q   km20_q  recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.687315    1.663209 1.597098 -0.364634         recovery                 1.449385
+   DEEP 0.05  1.340330    1.198079 1.194996       NaN fallback_abs_pct                11.873325
+   DEEP 0.10  1.300065    1.130001 1.125272       NaN fallback_abs_pct                15.049908
+   DEEP 0.30  1.214834    1.062949 1.056812       NaN fallback_abs_pct                14.288973
+   DEEP 0.50  1.124557    1.041105 1.035481       NaN fallback_abs_pct                 8.015664
+   SIFT 0.01  1.730517    1.687954 1.673486       NaN fallback_abs_pct                 2.521579
+   SIFT 0.05  1.417060    1.245097 1.195525 -3.469006         recovery                13.811253
+   SIFT 0.10  1.342797    1.150830 1.110213 -4.726287         recovery                16.680709
+   SIFT 0.30  1.235464    1.068967 1.047940 -7.918148         recovery                15.575514
+   SIFT 0.50  1.138812    1.043237 1.030875 -7.731208         recovery                 9.161380
+
+--- is_p50_noclip ---
+dataset  sel  method_q  random20_q   km20_q   recovery           metric  method_minus_random_pct
+   DEEP 0.01  5.909116    1.663209 1.597098 -64.224004         recovery               255.284156
+   DEEP 0.05  1.945630    1.198079 1.194996        NaN fallback_abs_pct                62.395887
+   DEEP 0.10  1.761988    1.130001 1.125272        NaN fallback_abs_pct                55.927956
+   DEEP 0.30  1.203451    1.062949 1.056812        NaN fallback_abs_pct                13.218090
+   DEEP 0.50  1.107886    1.041105 1.035481        NaN fallback_abs_pct                 6.414374
+   SIFT 0.01  4.724700    1.687954 1.673486        NaN fallback_abs_pct               179.906885
+   SIFT 0.05  1.928874    1.245097 1.195525 -13.793794         recovery                54.917625
+   SIFT 0.10  1.744270    1.150830 1.110213 -14.610703         recovery                51.566242
+   SIFT 0.30  1.201547    1.068967 1.047940  -6.305169         recovery                12.402679
+   SIFT 0.50  1.117634    1.043237 1.030875  -6.018141         recovery                 7.131418
+
+--- is_p50_clip ---
+dataset  sel  method_q  random20_q   km20_q   recovery           metric  method_minus_random_pct
+   DEEP 0.01  1.377760    1.663209 1.597098   4.317716         recovery               -17.162499
+   DEEP 0.05  2.938980    1.198079 1.194996        NaN fallback_abs_pct               145.307777
+   DEEP 0.10  2.422283    1.130001 1.125272        NaN fallback_abs_pct               114.361101
+   DEEP 0.30  1.237137    1.062949 1.056812        NaN fallback_abs_pct                16.387197
+   DEEP 0.50  1.120104    1.041105 1.035481        NaN fallback_abs_pct                 7.587966
+   SIFT 0.01  1.498986    1.687954 1.673486        NaN fallback_abs_pct               -11.195137
+   SIFT 0.05  2.368301    1.245097 1.195525 -22.658314         recovery                90.210190
+   SIFT 0.10  2.098214    1.150830 1.110213 -23.324946         recovery                82.321831
+   SIFT 0.30  1.212854    1.068967 1.047940  -6.842890         recovery                13.460410
+   SIFT 0.50  1.113130    1.043237 1.030875  -5.653784         recovery                 6.699660
+
+--- is_p200_noclip ---
+dataset  sel  method_q  random20_q   km20_q    recovery           metric  method_minus_random_pct
+   DEEP 0.01 16.078719    1.663209 1.597098 -218.050374         recovery               866.728983
+   DEEP 0.05  1.975053    1.198079 1.194996         NaN fallback_abs_pct                64.851735
+   DEEP 0.10  1.927679    1.130001 1.125272         NaN fallback_abs_pct                70.590865
+   DEEP 0.30  1.268482    1.062949 1.056812         NaN fallback_abs_pct                19.336036
+   DEEP 0.50  1.147900    1.041105 1.035481         NaN fallback_abs_pct                10.257868
+   SIFT 0.01 10.687637    1.687954 1.673486         NaN fallback_abs_pct               533.170982
+   SIFT 0.05  1.914316    1.245097 1.195525  -13.500117         recovery                53.748402
+   SIFT 0.10  1.842897    1.150830 1.110213  -17.038939         recovery                60.136332
+   SIFT 0.30  1.254923    1.068967 1.047940   -8.843546         recovery                17.395831
+   SIFT 0.50  1.138371    1.043237 1.030875   -7.695520         recovery                 9.119090
+
+--- is_p200_clip ---
+dataset  sel  method_q  random20_q   km20_q   recovery           metric  method_minus_random_pct
+   DEEP 0.01  2.348120    1.663209 1.597098 -10.360029         recovery                41.180104
+   DEEP 0.05  2.306897    1.198079 1.194996        NaN fallback_abs_pct                92.549715
+   DEEP 0.10  2.279386    1.130001 1.125272        NaN fallback_abs_pct               101.715404
+   DEEP 0.30  1.277563    1.062949 1.056812        NaN fallback_abs_pct                20.190405
+   DEEP 0.50  1.145164    1.041105 1.035481        NaN fallback_abs_pct                 9.995076
+   SIFT 0.01  2.230174    1.687954 1.673486        NaN fallback_abs_pct                32.122894
+   SIFT 0.05  1.926412    1.245097 1.195525 -13.744127         recovery                54.719883
+   SIFT 0.10  2.087382    1.150830 1.110213 -23.058246         recovery                81.380553
+   SIFT 0.30  1.255633    1.068967 1.047940  -8.877341         recovery                17.462308
+   SIFT 0.50  1.129320    1.043237 1.030875  -6.963445         recovery                 8.251590
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/recovery_summary.csv
+
+======================================================================
+[2] 7-way 표 — Recovery Rate by (method × dataset × sel)
+======================================================================
+method        distance_shell  hilbert  ...  minibatch  random_proj
+dataset sel                            ...                        
+DEEP    0.01          -0.365    0.931  ...      1.062       -4.644
+SIFT    0.05          -3.469    1.014  ...      0.685       -1.962
+        0.10          -4.726    0.949  ...      0.685       -1.388
+        0.30          -7.918    0.943  ...      1.052       -1.127
+        0.50          -7.731    1.192  ...      1.196       -1.013
+
+[5 rows x 10 columns]
+
+======================================================================
+[3] paired Wilcoxon + BH-FDR vs RANDOM20 (분모)
+======================================================================
+dataset        mode_treat mode_ctrl  sel  n_pairs  delta_pct   w_stat        p_raw         p_BH  reject_005
+   DEEP         minibatch  random20 0.01      483   4.517789  54453.0 9.678731e-02 4.399423e-01       False
+   DEEP minibatch_partial  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj  random20 0.01      472  16.531005  68883.0 9.999948e-01 1.000000e+00       False
+   DEEP         sparse_rp  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert  random20 0.01      481   2.341748  54876.0 1.559358e-01 5.569135e-01       False
+   DEEP            zorder  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh  random20 0.01      470  12.968521  63633.0 9.975539e-01 1.000000e+00       False
+   DEEP         kde_pilot  random20 0.01      489  -6.763951  41968.0 4.831115e-09 9.662231e-08        True
+   DEEP    distance_shell  random20 0.01      478  -0.800205  58081.0 6.095579e-01 1.000000e+00       False
+   DEEP     is_p50_noclip  random20 0.01       46 285.436275   1065.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip  random20 0.01       46  -4.550599    438.0 1.339438e-01 5.508605e-01       False
+   DEEP    is_p200_noclip  random20 0.01       25 677.438886    325.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip  random20 0.01       25  57.093437    304.0 9.999889e-01 1.000000e+00       False
+   DEEP         minibatch  random20 0.05      500   0.285222  59213.0 1.455786e-01 5.508605e-01       False
+   DEEP minibatch_partial  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj  random20 0.05      500   3.888445  75515.0 9.999667e-01 1.000000e+00       False
+   DEEP         sparse_rp  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert  random20 0.05      500  -1.149921  55421.0 1.291577e-02 7.627832e-02       False
+   DEEP            zorder  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh  random20 0.05      500   4.161134  75339.0 9.999581e-01 1.000000e+00       False
+   DEEP         kde_pilot  random20 0.05      500   0.775539  60996.0 3.071408e-01 1.000000e+00       False
+   DEEP    distance_shell  random20 0.05      500   9.640240  88122.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip  random20 0.05      387  33.848229  67368.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip  random20 0.05      387  91.212828  72245.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip  random20 0.05      303  38.464823  41460.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip  random20 0.05      303  96.588397  44664.0 1.000000e+00 1.000000e+00       False
+   DEEP         minibatch  random20 0.10      500  -1.560502  54231.0 4.703592e-03 3.612934e-02        True
+   DEEP minibatch_partial  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj  random20 0.10      500   0.964421  73156.0 9.994390e-01 1.000000e+00       False
+   DEEP         sparse_rp  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert  random20 0.10      500  -1.285317  59188.0 1.438183e-01 5.508605e-01       False
+   DEEP            zorder  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh  random20 0.10      500   1.820646  77169.0 9.999966e-01 1.000000e+00       False
+   DEEP         kde_pilot  random20 0.10      500  -0.728695  62921.0 5.364821e-01 1.000000e+00       False
+   DEEP    distance_shell  random20 0.10      500  10.506646 101000.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip  random20 0.10      489  25.683329 110172.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip  random20 0.10      489  44.904033 114530.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip  random20 0.10      480  41.348988 109832.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip  random20 0.10      480  54.770708 110423.0 1.000000e+00 1.000000e+00       False
+   DEEP         minibatch  random20 0.30      500  -1.055157  52030.0 5.230523e-04 5.230523e-03        True
+   DEEP minibatch_partial  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj  random20 0.30      500   0.706801  71222.0 9.960894e-01 1.000000e+00       False
+   DEEP         sparse_rp  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert  random20 0.30      500  -0.536506  57867.0 7.050982e-02 3.357611e-01       False
+   DEEP            zorder  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh  random20 0.30      500   0.430434  71466.0 9.968827e-01 1.000000e+00       False
+   DEEP         kde_pilot  random20 0.30      500  -0.170477  61999.0 4.232177e-01 1.000000e+00       False
+   DEEP    distance_shell  random20 0.30      500   9.864636 110665.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip  random20 0.30      500   8.720579 111679.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip  random20 0.30      500  10.937537 113809.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip  random20 0.30      500  14.139228 115229.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip  random20 0.30      500  13.662664 116479.0 1.000000e+00 1.000000e+00       False
+   DEEP         minibatch  random20 0.50      500  -0.465022  55498.0 1.373010e-02 7.627832e-02       False
+   DEEP minibatch_partial  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj  random20 0.50      500   0.768146  76378.0 9.999895e-01 1.000000e+00       False
+   DEEP         sparse_rp  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert  random20 0.50      500  -0.526491  55496.0 1.370840e-02 7.627832e-02       False
+   DEEP            zorder  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh  random20 0.50      500   0.300951  70543.0 9.928498e-01 1.000000e+00       False
+   DEEP         kde_pilot  random20 0.50      500  -0.425059  57753.0 6.587031e-02 3.293516e-01       False
+   DEEP    distance_shell  random20 0.50      500   6.397371 109494.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip  random20 0.50      500   4.449125 104273.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip  random20 0.50      500   5.336727 109265.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip  random20 0.50      500   7.677602 113745.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip  random20 0.50      500   7.559640 114426.0 1.000000e+00 1.000000e+00       False
+   SIFT         minibatch  random20 0.01      464   4.727918  50551.0 1.204597e-01 5.237379e-01       False
+   SIFT minibatch_partial  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj  random20 0.01      461  25.556237  67159.0 9.999994e-01 1.000000e+00       False
+   SIFT         sparse_rp  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert  random20 0.01      479   1.251480  54322.0 1.487323e-01 5.508605e-01       False
+   SIFT            zorder  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm  random20 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh  random20 0.01      468  14.277101  62729.0 9.963590e-01 1.000000e+00       False
+   SIFT         kde_pilot  random20 0.01      487   1.057945  50803.0 2.791704e-03 2.326420e-02        True
+   SIFT    distance_shell  random20 0.01      465   7.870323  56901.0 8.266729e-01 1.000000e+00       False
+   SIFT     is_p50_noclip  random20 0.01      110  96.869225   5573.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip  random20 0.01      110  -1.655715   2207.0 5.842177e-03 3.894785e-02        True
+   SIFT    is_p200_noclip  random20 0.01       60 205.143447   1802.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip  random20 0.01       60  12.579744   1295.0 9.974243e-01 1.000000e+00       False
+   SIFT         minibatch  random20 0.05      500  -3.772465  54312.0 5.058107e-03 3.612934e-02        True
+   SIFT minibatch_partial  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj  random20 0.05      500   1.469613  74433.0 9.998705e-01 1.000000e+00       False
+   SIFT         sparse_rp  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert  random20 0.05      500  -3.675992  51404.0 2.587865e-04 3.234832e-03        True
+   SIFT            zorder  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm  random20 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh  random20 0.05      500   2.499035  73678.0 9.996863e-01 1.000000e+00       False
+   SIFT         kde_pilot  random20 0.05      500  -4.649961  52397.0 7.773254e-04 7.066595e-03        True
+   SIFT    distance_shell  random20 0.05      500   6.917077  85593.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip  random20 0.05      425  27.939202  79171.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip  random20 0.05      425  35.392955  80636.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip  random20 0.05      362  24.784512  55213.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip  random20 0.05      362  37.721416  58892.0 1.000000e+00 1.000000e+00       False
+   SIFT         minibatch  random20 0.10      500  -1.588734  51691.0 3.588819e-04 3.987576e-03        True
+   SIFT minibatch_partial  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj  random20 0.10      500   3.979525  77181.0 9.999967e-01 1.000000e+00       False
+   SIFT         sparse_rp  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert  random20 0.10      500  -1.952835  48383.0 5.262087e-06 7.517267e-05        True
+   SIFT            zorder  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm  random20 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh  random20 0.10      500   2.612081  73714.0 9.996989e-01 1.000000e+00       False
+   SIFT         kde_pilot  random20 0.10      500   1.627506  63983.0 6.628050e-01 1.000000e+00       False
+   SIFT    distance_shell  random20 0.10      500  14.054374  99945.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip  random20 0.10      493  22.308287 106964.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip  random20 0.10      493  22.791296 108112.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip  random20 0.10      478  26.158251 103028.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip  random20 0.10      478  30.861260 102827.0 1.000000e+00 1.000000e+00       False
+   SIFT         minibatch  random20 0.30      500  -1.668952  40725.0 6.207216e-12 2.069072e-10        True
+   SIFT minibatch_partial  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj  random20 0.30      500   1.716651  81048.0 1.000000e+00 1.000000e+00       False
+   SIFT         sparse_rp  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert  random20 0.30      500  -1.588073  43824.0 3.003681e-09 7.509202e-08        True
+   SIFT            zorder  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm  random20 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh  random20 0.30      500   0.397378  69546.0 9.838703e-01 1.000000e+00       False
+   SIFT         kde_pilot  random20 0.30      500  -0.377337  56613.0 3.144557e-02 1.655030e-01       False
+   SIFT    distance_shell  random20 0.30      500  11.331819 111350.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip  random20 0.30      500   8.656983 107658.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip  random20 0.30      500   8.521246 107290.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip  random20 0.30      500  11.029966 111972.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip  random20 0.30      500  11.093590 111382.0 1.000000e+00 1.000000e+00       False
+   SIFT         minibatch  random20 0.50      500  -1.266690  38016.0 1.334883e-14 6.674415e-13        True
+   SIFT minibatch_partial  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj  random20 0.50      500   1.045645  78600.0 9.999996e-01 1.000000e+00       False
+   SIFT         sparse_rp  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert  random20 0.50      500  -1.254785  36603.0 4.121241e-16 4.121241e-14        True
+   SIFT            zorder  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm  random20 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh  random20 0.50      500   0.387557  70102.0 9.896440e-01 1.000000e+00       False
+   SIFT         kde_pilot  random20 0.50      500  -1.067603  46889.0 5.627566e-07 9.379276e-06        True
+   SIFT    distance_shell  random20 0.50      500   6.593434 111544.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip  random20 0.50      500   5.916034 109718.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip  random20 0.50      500   5.453731 107766.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip  random20 0.50      500   6.087854 111369.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip  random20 0.50      500   5.644439 111051.0 1.000000e+00 1.000000e+00       False
+
+======================================================================
+[4] paired Wilcoxon + BH-FDR vs BERN (RQ1/RQ2 비교)
+======================================================================
+dataset        mode_treat mode_ctrl  sel  n_pairs  delta_pct   w_stat        p_raw         p_BH  reject_005
+   DEEP         minibatch bernoulli 0.01      486   5.461003  54365.0 6.041081e-02 2.265405e-01       False
+   DEEP minibatch_partial bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj bernoulli 0.01      474  17.186351  70115.0 9.999982e-01 1.000000e+00       False
+   DEEP         sparse_rp bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert bernoulli 0.01      484   3.288520  58400.0 4.631205e-01 1.000000e+00       False
+   DEEP            zorder bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh bernoulli 0.01      475  13.640909  62153.0 9.699641e-01 1.000000e+00       False
+   DEEP         kde_pilot bernoulli 0.01      492  -6.392246  42003.0 1.746687e-09 5.240060e-08        True
+   DEEP    distance_shell bernoulli 0.01      481   0.000000  48185.5 7.079952e-01 1.000000e+00       False
+   DEEP     is_p50_noclip bernoulli 0.01       44 290.912052    986.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip bernoulli 0.01       44  -6.112343    406.0 1.524562e-01 4.690959e-01       False
+   DEEP    is_p200_noclip bernoulli 0.01       24 530.001970    300.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip bernoulli 0.01       24  42.642155    241.0 9.964055e-01 1.000000e+00       False
+   DEEP              km20 bernoulli 0.01      479   3.606762  53199.0 7.891816e-02 2.785347e-01       False
+   DEEP          random20 bernoulli 0.01      481   0.839803  58267.0 5.400227e-01 1.000000e+00       False
+   DEEP         minibatch bernoulli 0.05      500  -3.818117  54737.0 7.336576e-03 4.401945e-02        True
+   DEEP minibatch_partial bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj bernoulli 0.05      500  -0.362326  72422.0 9.987810e-01 1.000000e+00       False
+   DEEP         sparse_rp bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert bernoulli 0.05      500  -5.194539  51666.0 3.489068e-04 2.990630e-03        True
+   DEEP            zorder bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh bernoulli 0.05      500  -0.100794  71157.0 9.958496e-01 1.000000e+00       False
+   DEEP         kde_pilot bernoulli 0.05      500  -3.347862  56998.0 4.085484e-02 1.581478e-01       False
+   DEEP    distance_shell bernoulli 0.05      500   5.154125  83510.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip bernoulli 0.05      387  34.553399  67047.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip bernoulli 0.05      387  92.220220  72685.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip bernoulli 0.05      303  38.960272  42117.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip bernoulli 0.05      303  97.291821  44265.0 1.000000e+00 1.000000e+00       False
+   DEEP              km20 bernoulli 0.05      500  -3.878549  55773.0 1.700998e-02 7.850759e-02       False
+   DEEP          random20 bernoulli 0.05      500  -4.091668  58718.0 1.133839e-01 3.708502e-01       False
+   DEEP         minibatch bernoulli 0.10      500  -1.919009  51537.0 3.014060e-04 2.782209e-03        True
+   DEEP minibatch_partial bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj bernoulli 0.10      500   0.596719  69822.0 9.870120e-01 1.000000e+00       False
+   DEEP         sparse_rp bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert bernoulli 0.10      500  -1.644826  55065.0 9.671021e-03 5.358668e-02       False
+   DEEP            zorder bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh bernoulli 0.10      500   1.449825  71448.0 9.968296e-01 1.000000e+00       False
+   DEEP         kde_pilot bernoulli 0.10      500  -1.090231  60072.0 2.148125e-01 6.137500e-01       False
+   DEEP    distance_shell bernoulli 0.10      500  10.104192  99904.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip bernoulli 0.10      489  25.131414 108594.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip bernoulli 0.10      489  44.267713 113784.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip bernoulli 0.10      480  40.227947 109225.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip bernoulli 0.10      480  53.543220 110397.0 1.000000e+00 1.000000e+00       False
+   DEEP              km20 bernoulli 0.10      500  -1.300391  55659.0 1.557686e-02 7.476891e-02       False
+   DEEP          random20 bernoulli 0.10      500  -0.364190  59190.0 1.439586e-01 4.546060e-01       False
+   DEEP         minibatch bernoulli 0.30      500  -0.813364  50967.0 1.550641e-04 1.691609e-03        True
+   DEEP minibatch_partial bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj bernoulli 0.30      500   0.952899  69830.0 9.870945e-01 1.000000e+00       False
+   DEEP         sparse_rp bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert bernoulli 0.30      500  -0.293446  56705.0 3.351313e-02 1.386750e-01       False
+   DEEP            zorder bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh bernoulli 0.30      500   0.675857  69434.0 9.824209e-01 1.000000e+00       False
+   DEEP         kde_pilot bernoulli 0.30      500   0.073477  59488.0 1.658966e-01 4.976898e-01       False
+   DEEP    distance_shell bernoulli 0.30      500  10.133113 109419.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip bernoulli 0.30      500   8.986260 108475.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip bernoulli 0.30      500  11.208636 111985.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip bernoulli 0.30      500  14.418151 115296.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip bernoulli 0.30      500  13.940422 116732.0 1.000000e+00 1.000000e+00       False
+   DEEP              km20 bernoulli 0.30      500  -0.105545  54620.0 6.633063e-03 4.385686e-02        True
+   DEEP          random20 bernoulli 0.30      500   0.244371  60552.0 2.606530e-01 7.274036e-01       False
+   DEEP         minibatch bernoulli 0.50      500  -0.428818  54673.0 6.944003e-03 4.385686e-02        True
+   DEEP minibatch_partial bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP       random_proj bernoulli 0.50      500   0.804799  72613.0 9.989993e-01 1.000000e+00       False
+   DEEP         sparse_rp bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             pca1d bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP           hilbert bernoulli 0.50      500  -0.490309  53685.0 2.839086e-03 2.129315e-02        True
+   DEEP            zorder bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             sobol bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP            hybrid bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP            kdtree bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP                pq bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP          spectral bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP             birch bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP           hdbscan bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP               gmm bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   DEEP               lsh bernoulli 0.50      500   0.337434  69021.0 9.760785e-01 1.000000e+00       False
+   DEEP         kde_pilot bernoulli 0.50      500  -0.388841  55084.0 9.824225e-03 5.358668e-02       False
+   DEEP    distance_shell bernoulli 0.50      500   6.436071 107948.0 1.000000e+00 1.000000e+00       False
+   DEEP     is_p50_noclip bernoulli 0.50      500   4.487117 102433.0 1.000000e+00 1.000000e+00       False
+   DEEP       is_p50_clip bernoulli 0.50      500   5.375041 107244.0 1.000000e+00 1.000000e+00       False
+   DEEP    is_p200_noclip bernoulli 0.50      500   7.716767 113512.0 1.000000e+00 1.000000e+00       False
+   DEEP      is_p200_clip bernoulli 0.50      500   7.598762 113840.0 1.000000e+00 1.000000e+00       False
+   DEEP              km20 bernoulli 0.50      500  -0.535363  51120.0 1.858832e-04 1.858832e-03        True
+   DEEP          random20 bernoulli 0.50      500   0.036373  61337.0 3.451402e-01 9.412915e-01       False
+   SIFT         minibatch bernoulli 0.01      466   4.794317  50019.0 6.576371e-02 2.391408e-01       False
+   SIFT minibatch_partial bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj bernoulli 0.01      459  26.313745  69258.0 1.000000e+00 1.000000e+00       False
+   SIFT         sparse_rp bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert bernoulli 0.01      480   1.797315  54060.0 1.143455e-01 3.708502e-01       False
+   SIFT            zorder bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm bernoulli 0.01        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh bernoulli 0.01      468  12.787063  62213.0 9.939188e-01 1.000000e+00       False
+   SIFT         kde_pilot bernoulli 0.01      487   1.534984  51133.0 3.848398e-03 2.716516e-02        True
+   SIFT    distance_shell bernoulli 0.01      465   8.655556  45341.0 8.366039e-01 1.000000e+00       False
+   SIFT     is_p50_noclip bernoulli 0.01      110  93.283179   5469.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip bernoulli 0.01      110  -0.557125   2351.0 1.821546e-02 8.095758e-02       False
+   SIFT    is_p200_noclip bernoulli 0.01       61 274.686445   1881.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip bernoulli 0.01       61  35.187487   1263.0 9.887119e-01 1.000000e+00       False
+   SIFT              km20 bernoulli 0.01      474   8.715827  53891.0 2.109346e-01 6.137500e-01       False
+   SIFT          random20 bernoulli 0.01      476   0.475557  56147.0 4.187264e-01 1.000000e+00       False
+   SIFT         minibatch bernoulli 0.05      500  -1.623826  56820.0 3.625364e-02 1.450145e-01       False
+   SIFT minibatch_partial bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj bernoulli 0.05      500   3.735301  77013.0 9.999957e-01 1.000000e+00       False
+   SIFT         sparse_rp bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert bernoulli 0.05      500  -1.525200  55356.0 1.226120e-02 6.397149e-02       False
+   SIFT            zorder bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm bernoulli 0.05        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh bernoulli 0.05      500   4.787708  77301.0 9.999972e-01 1.000000e+00       False
+   SIFT         kde_pilot bernoulli 0.05      500  -2.520916  55997.0 2.015612e-02 8.638337e-02       False
+   SIFT    distance_shell bernoulli 0.05      500   9.304400  89532.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip bernoulli 0.05      425  33.375571  78245.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip bernoulli 0.05      425  41.146048  80199.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip bernoulli 0.05      362  24.813661  56160.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip bernoulli 0.05      362  37.753588  58908.0 1.000000e+00 1.000000e+00       False
+   SIFT              km20 bernoulli 0.05      500  -1.459903  55506.0 1.381719e-02 6.908594e-02       False
+   SIFT          random20 bernoulli 0.05      500   2.232873  65711.0 8.301429e-01 1.000000e+00       False
+   SIFT         minibatch bernoulli 0.10      500  -2.039680  52524.0 8.890456e-04 7.112365e-03        True
+   SIFT minibatch_partial bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj bernoulli 0.10      500   3.503065  81921.0 1.000000e+00 1.000000e+00       False
+   SIFT         sparse_rp bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert bernoulli 0.10      500  -2.402113  49186.0 1.607439e-05 1.928926e-04        True
+   SIFT            zorder bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm bernoulli 0.10        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh bernoulli 0.10      500   2.141886  75486.0 9.999654e-01 1.000000e+00       False
+   SIFT         kde_pilot bernoulli 0.10      500   1.161823  63545.0 6.120341e-01 1.000000e+00       False
+   SIFT    distance_shell bernoulli 0.10      500  13.531747 102116.5 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip bernoulli 0.10      493  21.640941 106856.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip bernoulli 0.10      493  22.121314 107874.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip bernoulli 0.10      478  25.858240 103334.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip bernoulli 0.10      478  30.550065 103977.0 1.000000e+00 1.000000e+00       False
+   SIFT              km20 bernoulli 0.10      500  -2.472057  46806.0 4.940405e-07 7.410607e-06        True
+   SIFT          random20 bernoulli 0.10      500  -0.458226  63566.0 6.145208e-01 1.000000e+00       False
+   SIFT         minibatch bernoulli 0.30      500  -1.589214  41658.0 4.388057e-11 1.755223e-09        True
+   SIFT minibatch_partial bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj bernoulli 0.30      500   1.799135  83303.0 1.000000e+00 1.000000e+00       False
+   SIFT         sparse_rp bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert bernoulli 0.30      500  -1.508270  44116.0 5.134794e-09 1.026959e-07        True
+   SIFT            zorder bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm bernoulli 0.30        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh bernoulli 0.30      500   0.478791  72133.0 9.983670e-01 1.000000e+00       False
+   SIFT         kde_pilot bernoulli 0.30      500  -0.296551  58510.0 1.014954e-01 3.479843e-01       False
+   SIFT    distance_shell bernoulli 0.30      500  11.422099 114542.0 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip bernoulli 0.30      500   8.745094 109058.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip bernoulli 0.30      500   8.609248 109365.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip bernoulli 0.30      500  11.120002 113541.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip bernoulli 0.30      500  11.183677 112987.0 1.000000e+00 1.000000e+00       False
+   SIFT              km20 bernoulli 0.30      500  -1.614622  43804.0 2.894526e-09 6.946862e-08        True
+   SIFT          random20 bernoulli 0.30      500   0.081092  65454.0 8.092731e-01 1.000000e+00       False
+   SIFT         minibatch bernoulli 0.50      500  -1.040962  41422.0 2.696339e-11 1.617803e-09        True
+   SIFT minibatch_partial bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT       random_proj bernoulli 0.50      500   1.276660  79495.0 9.999999e-01 1.000000e+00       False
+   SIFT         sparse_rp bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             pca1d bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT           hilbert bernoulli 0.50      500  -1.029029  39564.0 4.857381e-13 5.828857e-11        True
+   SIFT            zorder bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             sobol bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT            hybrid bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT            kdtree bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT                pq bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT          spectral bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT             birch bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT           hdbscan bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT               gmm bernoulli 0.50        0        NaN      NaN          NaN          NaN       False
+   SIFT               lsh bernoulli 0.50      500   0.617066  71488.0 9.969466e-01 1.000000e+00       False
+   SIFT         kde_pilot bernoulli 0.50      500  -0.841420  48376.0 5.209756e-06 6.946341e-05        True
+   SIFT    distance_shell bernoulli 0.50      500   6.837132 112616.5 1.000000e+00 1.000000e+00       False
+   SIFT     is_p50_noclip bernoulli 0.50      500   6.158183 111546.0 1.000000e+00 1.000000e+00       False
+   SIFT       is_p50_clip bernoulli 0.50      500   5.694823 110618.0 1.000000e+00 1.000000e+00       False
+   SIFT    is_p200_noclip bernoulli 0.50      500   6.330396 112110.0 1.000000e+00 1.000000e+00       False
+   SIFT      is_p200_clip bernoulli 0.50      500   5.885968 111338.0 1.000000e+00 1.000000e+00       False
+   SIFT              km20 bernoulli 0.50      500  -0.829267  44957.0 2.301117e-08 3.944771e-07        True
+   SIFT          random20 bernoulli 0.50      500   0.228624  64019.0 6.668633e-01 1.000000e+00       False
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/wilcoxon_vs_random20.csv
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/wilcoxon_vs_bern.csv
+
+======================================================================
+[5] Recovery Rate dataset 평균 (selectivity 별)
+======================================================================
+method  birch  distance_shell  gmm  hdbscan  ...  sobol  sparse_rp  spectral  zorder
+sel                                          ...                                    
+0.01      NaN          -0.365  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.05      NaN          -3.469  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.10      NaN          -4.726  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.30      NaN          -7.918  NaN      NaN  ...    NaN        NaN       NaN     NaN
+0.50      NaN          -7.731  NaN      NaN  ...    NaN        NaN       NaN     NaN
+
+[5 rows x 22 columns]
+
+✓ 분석 완료
+======================================================================
+RQ3 Bootstrap CI + Cohen's d 분석
+======================================================================
+[load] 65,000 rows, methods: ['bernoulli', 'distance_shell', 'hilbert', 'is_p200_clip', 'is_p200_noclip', 'is_p50_clip', 'is_p50_noclip', 'kde_pilot', 'km20', 'lsh']
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_bootstrap_effect_size.csv
+
+=== Method 별 평균 effect size (Cohen's d) ===
+                 mean    min    max    practical
+method                                          
+distance_shell  0.490  0.038  0.758   hurt-small
+hilbert        -0.156 -0.336 -0.041   negligible
+is_p200_clip    0.704  0.301  1.119  hurt-medium
+is_p200_noclip  0.564  0.305  0.826  hurt-medium
+is_p50_clip     0.498 -0.169  0.900   hurt-small
+is_p50_noclip   0.642  0.412  1.127  hurt-medium
+kde_pilot      -0.049 -0.205  0.033   negligible
+lsh             0.156  0.089  0.211   negligible
+minibatch      -0.151 -0.334 -0.050   negligible
+random_proj     0.216  0.119  0.326   hurt-small
+
+=== CI excludes 0 비율 (method 별, 통계적 robust 정량) ===
+                n_cells  n_ci_excludes_0  fraction_robust
+method                                                   
+distance_shell     10.0              8.0              0.8
+hilbert            10.0              4.0              0.4
+is_p200_clip       10.0             10.0              1.0
+is_p200_noclip     10.0             10.0              1.0
+is_p50_clip        10.0              8.0              0.8
+is_p50_noclip      10.0             10.0              1.0
+kde_pilot          10.0              2.0              0.2
+lsh                10.0              1.0              0.1
+minibatch          10.0              5.0              0.5
+random_proj        10.0              6.0              0.6
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_bootstrap_effect_size.md
+======================================================================
+RQ3 Per-Query Method Ranking
+======================================================================
+[load] 99,795 rows
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_per_query_ranking.csv
+
+=== Method 가 best (rank=1) 빈도 ===
+mode     distance_shell  hilbert  is_p200_clip  is_p200_noclip  is_p50_clip  is_p50_noclip  kde_pilot  km20  lsh  minibatch  random20  random_proj
+dataset                                                                                                                                           
+DEEP                 12       94             4               3           14              3         82    84   32         91        59           22
+SIFT                 11      106             3               1           25              1         92    88   21         99        41           12
+TOTAL                23      200             7               4           39              4        174   172   53        190       100           34
+
+=== Query 난이도 별 best method 분포 ===
+mode                         distance_shell  hilbert  is_p200_clip  is_p200_noclip  is_p50_clip  is_p50_noclip  kde_pilot  km20   lsh  minibatch  random20  random_proj
+dataset difficulty_quartile                                                                                                                                            
+DEEP    Q1_easy                         6.0     20.0           1.0             0.0          1.0            0.0       22.0  23.0  11.0       25.0       9.0          7.0
+        Q2                              1.0     27.0           2.0             1.0          4.0            3.0       17.0  19.0   8.0       14.0      23.0          7.0
+        Q3                              2.0     29.0           1.0             1.0          7.0            0.0       18.0  21.0   5.0       26.0       9.0          5.0
+        Q4_hard                         3.0     18.0           0.0             1.0          2.0            0.0       25.0  21.0   8.0       26.0      18.0          3.0
+SIFT    Q1_easy                         4.0     24.0           2.0             0.0          6.0            0.0       15.0  29.0   3.0       25.0      14.0          2.0
+        Q2                              2.0     35.0           0.0             1.0          6.0            0.0       22.0  15.0   5.0       26.0      10.0          3.0
+        Q3                              2.0     28.0           1.0             0.0          4.0            1.0       25.0  25.0   6.0       19.0       8.0          7.0
+        Q4_hard                         3.0     19.0           0.0             0.0          9.0            0.0       30.0  19.0   7.0       29.0       9.0          0.0
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_query_difficulty_method.csv
+
+=== Method disagreement (best vs worst q_error 차이) ===
+         count   mean     std   min    25%    50%     75%      max
+dataset                                                           
+DEEP     500.0  94.54  103.70  6.10  22.33  65.29  131.53   806.04
+SIFT     500.0  91.70  115.95  3.98  19.06  49.69  119.23  1058.94
+
+=== spread_pct vs BERN q_error (난이도) correlation ===
+         spread_vs_difficulty_corr  n_queries
+dataset                                      
+DEEP                         0.783      500.0
+SIFT                         0.786      500.0
+
+=== Method 별 평균 rank (낮을수록 better) ===
+mode     distance_shell  hilbert  is_p200_clip  is_p200_noclip  is_p50_clip  is_p50_noclip  kde_pilot  km20   lsh  minibatch  random20  random_proj
+dataset                                                                                                                                            
+DEEP               7.80     3.78         10.48            9.98         9.73           9.19       3.85  3.80  5.27       3.66      4.29         5.64
+SIFT               8.19     3.37          9.73            9.98         8.74           9.40       3.98  3.52  5.85       3.48      4.84         6.38
+
+[saved] /Users/hyunbin/Capstone/experiments/results/rq3_agnostic/rq3_per_query_ranking.md
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+Font 'default' does not have a glyph for '\u2212' [U+2212], substituting with a dummy symbol.
+[font] applied: Apple SD Gothic Neo
+======================================================================
+RQ3 보강 시각화 → /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary
+======================================================================
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_method_redundancy_ari_heatmap.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_cohens_d_forest_plot.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_per_query_difficulty_scatter.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_per_query_best_method_distribution.png
+[saved] /Users/hyunbin/Capstone/experiments/figures/rq3_supplementary/rq3_method_minus_bern_heatmap.png
+======================================================================
+완료

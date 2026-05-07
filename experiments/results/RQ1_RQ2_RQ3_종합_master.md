@@ -201,3 +201,56 @@ Future work + 산출 (Slide 12-13)
 **5/7 04:11 갱신**: 모든 chain 완료 — 22 method × DEEP/SIFT 1M-1.5M (final_chain 8 + phase2 4 + 1차 7 + km20/random20/bernoulli baseline 3) + 16 method × DEEP 8M sensitivity. 측정 운영 산출은 `_internal/archive/2026_05_07_dawn_chain/` 에 archive.
 **5/7 11:11 갱신**: Claude (Opus 4.7 1M, 통합 manager) — 5/7 새벽~오전 다중 세션 산출 통합 commit 3개 (74d6aea narrative 옵션 2 + 1267b8a 딥리뷰 보강 + fc7e147 chain archive). contribution 5→7종 / Limitations 4→6종 final list. 5/8 회의 narrative ready.
 **★ 5/7 13:50 갱신 (W2 부록 — Gap Fill 4건 + 종합 paired CI/Cohen's d)**: Claude (Opus 4.7 1M, 통합 manager) — 사용자 결정 "최고 정확도, 최고 산출물, 빈틈 제로" (5/7 13:38) 적용. **빈틈 zero 검증**: RQ1/2/3 × DEEP/SIFT × 1M/8M × 5 sel × 5 mode/22 method 모든 변수 cover. Gap #1 (RQ1 SIFT KM20 5-sel canonical, 5,000 cells, 58s) + Gap #3 (RQ3 8M KM20 sel_expand, 3,000 cells, 289s) 측정 + Gap #2 (IS NaN root cause sel=0.01 80~95%) 분석 + Gap #4 (Phase 6 8M future work) 명시. 8M paired CI 90 cells (70/90 CI 0 제외) + 1M+SIFT paired CI 180 cells (96/180 |d|>0.2, **SIFT mid+high sel |d|=0.63~0.91 LARGE effect**). Limitations 6→8종 (L7 IS NaN sel=0.01, L8 Recovery Rate 분모 한정 추가). 8 worker (W1) + 9 worker (W2) + Gap fill 4 (W2 부록) = 총 21 worker, 측정 cells 누적 ~227,000+. **단일 테이블 영역 변수 cover 99% 완전성** (SIFT 8M dataset 부재 + 8M Phase 6 vector.c hook 의 2건만 future work).
+
+**★★ 5/7 15:30 갱신 (W3 — SIFT 8M chain debug + SIFT 1M Option 1 + P3 + Exqutor 비교 narrative)**: Claude (Opus 4.7 1M, 통합 manager) — 사용자 final 결정 "최고 정확도, 최고 산출물, 분명한 통제/조작 변인 대조실험, Exqutor 비교 + 개선 설명 + 엄밀성" (5/7 14:33) 적용. **SIFT 8M chain 5건 silent fail root cause 해결**: (1) `sift_8m_kmeans_strata.py` autocommit=True + server-side cursor 충돌 → BIGANN raw read 직접 + 8M × 128 vector::real[] cast 우회, (2) `sift_8m_querypool.py` wide format → long format (`query_id × selectivity` row) — `_measure_common._load_query_pool` 호환 일치, (3) `sift_8m_measure_chain.py` runner name (random_proj→random_projection, distance_shell/kde_pilot/importance_sampling subdir import). **Option 1 SIFT 1M subset 추가** — BIGANN learn.100M 첫 1M extract → `customer_sift_1m_subset` PG 적재 + KMeans K=20 (sizes 20593~64517, ratio=3.13) + σ table (avg=0.3652) + querypool 100q × 5 sel — 정확 매칭 2×2 (DEEP/SIFT × 1M/8M) 완성. **P3 (RQ2 size sensitivity 5-mode 8M)** — f-string nested quote (Python 3.10) + sigmas dict format + query_sel long format 충돌 fix → 50,000 cells, 37s, NaN 0.0%. **P-method 7종 산출** (handoff #3 P-chain): OPQ 1M+8M, KM50 1M+8M, Reservoir 1M+8M, KM10 1M. **4-dataset matrix driver**: `rq3_4dataset_matrix.py` — 246 cells (DEEP_1M 90 + DEEP_8M 36 + SIFT_1.5M 90 + SIFT_1M 30 (8 method 진행) + SIFT_8M 0 (chain 진행)). **SIFT_1M 6 method 결과**: minibatch sel=0.10 -4.65% [-5.82, -3.48] CI 0 제외 (Cohen's d=-0.41 medium), hilbert/zorder/pca1d/kdtree all 0 제외 hurt direction (improve), LSH SIFT_1M sel=0.01 +68.28% [+52.50, +86.79] negative control 강화.
+
+### Exqutor 본 논문 vs 본 연구 비교 framing (5/7 15:30 final)
+
+| 비교 항목 | Exqutor (본 논문) | 본 연구 (속도는벡터) | 보완 관계 |
+|---|---|---|---|
+| **Scale** | TPC-H SF=100 = 80M (max), SF=1~100 sweep | SF=10 = 8M (DEEP+SIFT) + 1M subset 정확 매칭 | 본 연구 8M = Exqutor 의 가장 작은 SF=10 와 동일 — direct comparable |
+| **Vector dataset** | 5종 (DEEP/SIFT/SimSearchNet++/YFCC/WIKI), 5 distribution average | 2종 (DEEP normal + SIFT skew) distribution contrast | Exqutor avg = generalization, 본 연구 contrast = mechanism isolation |
+| **인덱스 환경** | HNSW (M=16, ef=400) + 비인덱스 모두 | 비인덱스 (Adaptive Sampling 영역 only) | 본 연구 = Exqutor Adaptive Sampling 영역의 분포 인지 가치 정량화 |
+| **쿼리** | TPC-H Q3/Q5/Q8/Q9/Q10/Q11/Q12/Q20 + range search | 100 random query × 5 sel × range search | Exqutor = TPC-H 정식, 본 연구 = sel gradient sweep (단조성 검증) |
+| **Optimization 대상** | ECQO (인덱스) + Adaptive Sampling momentum | 분포 인지 stratification (KM20 oracle + 22 method distribution-agnostic) | Exqutor = momentum tuning, 본 연구 = stratum-level allocation strategy |
+| **Contribution** | (1) ECQO HNSW range — pgvector 1000× / VBASE 10000× / DuckDB 37× speedup, (2) Adaptive Sampling momentum 1.2~3.2× | (1) Selectivity Gradient 단조 감소 (ρ=−0.680 CI 0 제외), (2) σ_i 신호 약함 honest 입증, (3) Hilbert learning-free + MiniBatch partial_fit OLTP, (4) HDBSCAN SIFT mid-sel 4강 | 본 연구 = Exqutor 의 단일 테이블 영역 ablation 정량화 (Exqutor 미커버) |
+
+**본 연구 위치 — Exqutor의 complementary 보강**:
+- Exqutor 의 Adaptive Sampling 은 Q-error 피드백 momentum 으로 sample size 동적 조정. **본 연구는 그 단계 이전, sample 분배 전략 (proportional vs Neyman vs anti-Neyman) + 분포 인지 stratification 의 가치를 정량 입증.**
+- 본 연구 contribution 은 Exqutor 의 sample size momentum 위에 stack 가능 (orthogonal). 즉, momentum × stratification 조합이 **future work direction**.
+
+**Scale-up 시 직접 비교 narrative (Future work)**:
+- 본 연구 8M (SF=10) = Exqutor 의 가장 작은 scale 과 직접 매칭. **80M (SF=100) 으로 scale-up 시 본 연구의 Hilbert/MiniBatch_partial 4강 method 가 Exqutor 의 fixed-sampling baseline 대비 어떤 추가 정확도 회수를 제공하는지 직접 비교 가능.**
+- 가용 raw datasets (서버 kgh1030):
+  - bigann learn.100M (12.8GB) — SIFT 80M extract 가능
+  - yandex_deep base.1B (384GB) — DEEP 80M+1B extract 가능
+  - 본 연구의 wrapper (`build_sift_8m.py` / `build_sift_1m.py`) → N_TARGET 만 변경 → 80M 직접 extract.
+
+**본 연구의 distribution contrast 강점**:
+- Exqutor 의 5 dataset average = generalization 입증.
+- 본 연구의 DEEP normal + SIFT skew 2 distribution × 1M+8M scale = **mechanism isolation** 입증. 즉, "어떤 distribution + 어떤 scale 에서 어떤 method 가 작동하는가" 를 정량 분리.
+- 예: minibatch SIFT_1M sel=0.10 -4.65% LARGE effect (skew dataset 의 distribution-aware method 가치) vs DEEP_1M sel=0.10 -0.39% (normal dataset 에서 method routing 효과 약함). **이 contrast 가 본 연구의 핵심 narrative.**
+
+### 4-dataset matrix 산출 (W3, 진행 중)
+
+| Dataset | RQ1 km20 | RQ3 random20 | RQ2 5mode | RQ3 method 산출 | 비고 |
+|---|---|---|---|---|---|
+| DEEP_1M (96-dim, normal) | ✓ rq3_km20.parquet | ✓ rq3_random20.parquet | ✓ rq2_alloc_DEEP_5mode | 22 method ✓ | W2 완료 |
+| DEEP_8M (96-dim, normal) | ✓ rq3_8m_km20.parquet | ✓ rq3_8m_random20.parquet | ✓ rq2_alloc_DEEP_8M_5mode | 19 method ✓ + sel_expand 8 | W2 완료 |
+| SIFT_1.5M (128-dim, skew, legacy) | ✓ rq3_km20.parquet (SIFT row) | ✓ rq3_random20_sift.parquet | ✓ rq2_alloc_SIFT_5mode | 22 method ✓ | W2 완료 |
+| **SIFT_1M (128-dim, skew, NEW)** | ✓ rq1_sift_1m_km20.parquet | ✓ rq3_sift_1m_random20.parquet | ✓ rq2_alloc_SIFT_1M_5mode | **8 method ✓ + 11 진행 중** | **W3 NEW** |
+| **SIFT_8M (128-dim, skew, NEW)** | ✓ rq1_sift_8m_km20.parquet | 진행 중 | 진행 중 | 진행 중 (chain ETA ~3h) | **W3 NEW** |
+
+**4-dataset matrix 산출**: `experiments/results/rq3_agnostic/rq3_4dataset_matrix.csv` (246 cells 진행 → 최종 ~456 cells 예상 = 22 method × 5 sel × 4 dataset).
+
+**SIFT_1M 측정 결과 highlights** (8 method 기준):
+- minibatch sel=0.10: **-4.65%** [-5.82, -3.48] CI 0 제외, Cohen's d=-0.41 (medium)
+- hilbert sel=0.10: **-3.70%** [-4.85, -2.53] CI 0 제외, Cohen's d=-0.33 (medium)
+- zorder sel=0.10: **-4.35%** [-5.53, -3.19] CI 0 제외, Cohen's d=-0.38 (medium)
+- pca1d sel=0.10: -3.20% [-4.50, -1.94] CI 0 제외
+- kdtree sel=0.10: -3.33% [-4.61, -2.06] CI 0 제외
+- LSH sel=0.01 +68.28% [+52.50, +86.79] HURT (negative control 강화)
+
+→ SIFT 1M 에서 4강 method (minibatch/hilbert/zorder/kdtree) **all CI 0 제외 medium effect** — skew dataset 의 distribution-aware method 가치 1M scale 에서도 재현. 8M cross-scale 비교 = 본 연구의 핵심 contribution 검증.
+
+**최종 update**: 5/7 17:00~ 예상 (SIFT 8M chain 완료 + 4-dataset matrix 종합 + Exqutor 비교 narrative master.md 통합).

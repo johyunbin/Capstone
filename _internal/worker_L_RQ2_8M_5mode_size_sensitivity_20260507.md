@@ -136,3 +136,22 @@ git push
 
 **작성**: Claude (manager session, Opus 4.7 1M) · 2026-05-07 12:34 KST
 **기반**: 5/7 RQ 완전성 검증 — DEEP 8M RQ2 4 mode + size sensitivity 빠짐 발견
+
+---
+
+## ✅ 완료 (2026-05-07 12:42 KST, commit 3234d38)
+
+- **측정**: 5 mode × 5 sel × 5 seed × 100 q = 12,500 cell (NaN 0.43%, server 8.7s elapsed)
+- **산출**: `experiments/results/rq2_aware/2026_05_07_8m_alloc/` (parquet + meta + log + 분석 md/csv 4종 + summary.md)
+- **분석 스크립트**: `experiments/code/local_analysis/rq2_8m_5mode_analysis.py`
+
+### 핸드오프 가설 vs 실제 결과
+- ✅ σ_i 신호 약함 cross-scale 일관 (Anti-Neyman ≈ Prop, sel=0.01 외 격차 < 1%)
+- ⚠️ stratified < BERN 효과 → 8M 에선 paired Wilcoxon 모두 `p_adj > 0.45` (통계 유의 X). BERN 자연 정확도 N↑ 로 상승하여 stratification marginal benefit 사라짐
+- ✅ Sign 일관성: Neyman 5/5 ★, Equal 4/5, Anti-N 3/5, Prop 2/5
+- 📌 **새 Limitation**: KM20 oracle 효과는 sample-size dependent — N↑ 시 둔화 (기존 oracle/one-time/OLTP/multi-table 4개 + 추가)
+
+### 통합 세션 입력 포인터
+- 상세: `experiments/results/rq2_aware/2026_05_07_8m_alloc/rq2_8m_5mode_summary.md`
+- Step 6 (size sensitivity 8M) — 미진행, 5/8 회의 후 결정
+- Step 7 narrative — 5/27 Slide 7 / 6/11 §4.2 ready

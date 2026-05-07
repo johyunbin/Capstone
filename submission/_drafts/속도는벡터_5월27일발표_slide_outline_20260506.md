@@ -45,9 +45,9 @@ scope 제외 (future work):
 
 | RQ | 질문 | 답 | 핵심 결과 |
 |----|------|-----|----------|
-| **RQ1** | 기존 random sampling 이 skew 데이터에서 얼마나 부정확? | 정량 + selectivity-dependent | 단조성 ρ=-0.680 CI 0 제외 |
+| **RQ1** | 기존 random sampling 이 skew 데이터에서 얼마나 부정확? | 정량 + selectivity-dependent | 단조성 ρ=−0.680 CI 0 제외 (Phase 6 production-near) |
 | **RQ2** | 분포 알 때 어떤 allocation 최적? | KM20 oracle baseline 의 sample-size robustness 확인 | 모든 40 cell 일관 |
-| **RQ3** | 분포 모를 때 어떤 stratification 최적? | Hilbert / MiniBatch 양강 (13+ method 비교) | Hilbert: -1.78%, -2.47% |
+| **RQ3** | 분포 모를 때 어떤 stratification 최적? | Hilbert / MiniBatch / HDBSCAN / Hybrid 4강 (22 method 비교) | Hilbert −1.78%, −2.47% / HDBSCAN SIFT mid-sel −3.99% |
 
 **Speaker note**: 이 3 RQ 가 점진적 narrative — RQ1 진단 → RQ2 oracle → RQ3 production alternative. 5/5 박세은 팀장 제안 후 확정.
 
@@ -57,16 +57,19 @@ scope 제외 (future work):
 
 핵심 figure: `experiments/figures/rq1_rq2_w1_sprint/figure_3_5sel_grid_2x4.png` 또는 보강
 
-수치:
-- DEEP 1M × 5 sel × 5 seed: KM20-BERN 차이 +1.31% (s=0.50) → **+8.93% (s=0.01)**
-- per-seed Spearman ρ = **-0.680**, 95% CI **[-0.800, -0.440]** ★ 0 제외
+수치 (Phase 6, **SQL D — vector.c hook + PG `tablesample`, production-near**):
+- DEEP 1M × 5 sel × 5 seed: KM20−BERN 차이 +1.31% (s=0.50) → **+8.93% (s=0.01)**
+- per-seed Spearman ρ = **−0.680**, 95% CI **[−0.800, −0.440]** ★ 0 제외 — 단조 감소 확정
 - DEEP-RAND 도 reverse-monotonic 확정 (ρ=+0.560 CI 0 제외)
+- **Gradient 19.6%p** (KM20 +8.93% vs RANDOM20 −10.67%, s=0.01) — CI 완전 분리
 
 Two-Level Decomposition:
 - Level 1 (proportional allocation): sel 무관 보편적 효과
 - Level 2 (spatial awareness): sel 작을수록 강 — 본 결과의 핵심
 
-**Speaker note**: \"sel 이 낮을수록 공간 인식 sampling 의 가치가 커진다\" 의 *통계적 입증*. 단순 trend 가 아닌 ρ + bootstrap CI.
+⚠️ **Methodology footnote** (5/7 W2 발견): numpy D simulation (Phase 7) 에서는 ρ=+0.240 [−0.061, +0.480] CI 0 포함, 단조 약화. 5-cell 격차 (s=0.01 Δ=−12.26%p, s=0.50 Δ=−9.44%p) 자체를 *measurement methodology robustness* sub-contribution 으로 별도 보고. 본 슬라이드 수치는 production-near (Phase 6) 기준.
+
+**Speaker note**: \"sel 이 낮을수록 공간 인식 sampling 의 가치가 커진다\" 의 *통계적 입증*. 단순 trend 가 아닌 ρ + bootstrap CI. **5/8 회의 합의 옵션 2 정직 reporting** — Phase 6 (SQL D, production-near) 핵심 인용, Phase 7 (numpy D, simulation) honest 별도 보고. 격차 origin 두 가지 — (1) numpy estimator 의 캐시 기반 sampling-population (≤10K) (2) vector.c hook 환경의 측정 path 차이. 채림 석사 자문 사항 (5/15).
 
 ---
 
@@ -150,7 +153,7 @@ negative control 결과:
 - LSH/Random Projection: d +0.156 ~ +0.216 (negligible-small hurt)
 
 대비:
-- Hilbert d = -0.156, MiniBatch d = -0.151 (negligible-small **improve**)
+- Hilbert d = −0.156, MiniBatch d = −0.151 (negligible-small **improve**)
 
 **Speaker note**: \"cluster-aware partition 자체가 가치\" 의 정량 증명. 부정 결과로 긍정 narrative 강화.
 
@@ -159,7 +162,7 @@ negative control 결과:
 ## Slide 10 — Honest Limitation: Effect Size 의 한계
 
 수치:
-- Hilbert / MiniBatch 의 mean Cohen's d = -0.15 (negligible-small range)
+- Hilbert / MiniBatch 의 mean Cohen's d = −0.15 (negligible-small range)
 - Bootstrap CI 의 fraction_robust: Hilbert 4/10 cells, MiniBatch 5/10
 - p ≤ 1e-13 (paired Wilcoxon) 하지만 sample size 효과 (n=500 paired)
 
@@ -188,26 +191,32 @@ scope:
 
 ---
 
-## Slide 12 — RQ 결과 종합 + Future Work
+## Slide 12 — RQ 결과 종합 + Limitations 6종 + Future Work
 
 contributions:
-1. RQ1: Selectivity gradient 단조성 통계 입증 (ρ=-0.680, CI 0 제외)
-2. RQ2: KM20 oracle 의 sample-size robustness + Anti-Neyman 정량 hurt
-3. RQ3-1: Hilbert curve = learning-free 1순위
-4. RQ3-2: MiniBatch K-means = production-ready (partial_fit OLTP)
-5. RQ3-3: Cluster 분할 자체의 결정적 가치 (Distance-Shell/IS negative control)
+1. **RQ1**: Selectivity gradient 단조성 통계 입증 (ρ=−0.680, CI 0 제외, Phase 6 production-near)
+2. **RQ1-sub**: Methodology robustness 정량 — Phase 6 (SQL D) vs Phase 7 (numpy D) 5-cell 격차 분석 (5/7 W2)
+3. **RQ2**: KM20 oracle 의 sample-size robustness (40/40 cell) + Anti-Neyman 정량 hurt + σ_i 신호 약함 honest 입증
+4. **RQ3-1**: Hilbert curve = learning-free 1순위 (inverse Manhattan 1.000, Z-order 1.992 와 mechanism 분리)
+5. **RQ3-2**: MiniBatch K-means partial_fit = production-ready OLTP (ARI 1.000, 4 cell paired CI 0 제외)
+6. **RQ3-3**: HDBSCAN SIFT mid-sel −3.99% (5/7 새 발견, density-based clustering 가치)
+7. **RQ3-4**: Cluster 분할 자체의 결정적 가치 — Distance-Shell d=+0.49 / IS d=+0.5~+0.7 / PQ +23.64% / Sobol +33.62% (negative control 정량)
 
-limitations:
-- Single-table only
-- KM20 oracle (production X) — sensitivity for trend 만
-- Effect size 한계 — practical small
+honest limitations 6종 (5/8 회의 합의):
+- **L1**: Single-table only — multi-table 은 Exqutor main scope, 단일 정확성이 multi 의 *필요조건* (future work)
+- **L2**: KM20 oracle 학습 부담 (full K-means ~30분) — partial_fit (OLTP) + Hilbert (learning-free) 가 production replacement
+- **L3**: Effect size practical small — 모든 RQ3 method |d| < 0.8, p < 0.05 는 sample size 효과 별도 보고. 어려운 query routing 가치 (spread 0.78)
+- **L4**: numpy estimator 의 sampling-population scope — ≤10K row 캐시 추출 + HT weight 만 N=1M. 절대 q-error 인용 시 명시, 상대 비교 보존
+- **L5**: RQ1 measurement methodology robustness — Phase 6 (SQL D, vector.c hook) vs Phase 7 (numpy D, simulation) 5-cell 격차. gradient 핵심 수치는 Phase 6 production-near 기준
+- **L6**: σ_i 신호 약함의 honest 입증 — Anti-Neyman vs Proportional CI 0 제외하지만 paired Wilcoxon p > 0.5, Cohen's d < 0.1. RQ3 distribution-agnostic 추구의 정직 motivation
 
 future work:
-- 단일 → 멀티 테이블 (Exqutor multi-relation)
-- vector.c integration
+- 단일 → 멀티 테이블 (Exqutor multi-relation join)
+- vector.c integration (5/6 patch 시도 시 memory leak)
 - Distribution shift 적응 (PCA basis 갱신)
+- Phase 6/7 격차의 root cause 정량 — numpy estimator sampling-population scope 통일 + vector.c 측정 path 일관화
 
-**Speaker note**: 본 연구의 4 limitation 명시. 채림 석사 / 지도교수 자문 의견 반영.
+**Speaker note**: 본 연구의 6 limitation 명시. 5/8 회의 합의 옵션 2 정직 reporting. 채림 석사 (Hilbert mechanism + Phase 6/7 origin) / 지도교수 (contribution 학술 가치 + multi 일반화) 자문 의견 반영.
 
 ---
 
@@ -245,6 +254,9 @@ A: 5/6 시도 → memory leak (메모 P5/M5). Python 시뮬레이션으로 우�
 **Q5**: \"산업 표준 (FAISS) 와의 비교는?\"
 A: PQ (Product Quantization) 측정 ready (Slide 6). 결과 기반으로 5/27 보강.
 
+**Q6**: \"Phase 6 (SQL D) 와 Phase 7 (numpy D) 격차의 origin 은? 왜 단조성 결론이 환경 의존적인가?\"
+A: 격차의 origin 두 가지 — (1) numpy estimator 가 ≤10K row 캐시에서 추출하고 HT weight 만 N=1M 적용 → sampling-population scope 가 SQL `tablesample` (full table) 와 다름. (2) vector.c hook 의 production env 측정 path 가 numpy 시뮬레이션 측정 path 와 다름. **본 연구는 Phase 6 결과를 production-near 기준 인용, Phase 7 결과를 honest 별도 보고하며, 5-cell 격차 자체를 measurement methodology robustness sub-contribution 으로 격상**. 채림 석사 자문 사항 (5/15 메일 발송 예정). 5/27 발표 Slide 4 footnote + Slide 12 L5 limitation 으로 명시.
+
 ---
 
 ## 슬라이드 제작 체크리스트
@@ -252,7 +264,8 @@ A: PQ (Product Quantization) 측정 ready (Slide 6). 결과 기반으로 5/27 �
 - [ ] PowerPoint 또는 LaTeX (TeXShop) 결정 (5/8 회의)
 - [ ] figures 모두 PNG 300dpi 변환
 - [ ] 한글 폰트 통일 (Apple SD Gothic Neo)
-- [ ] 5/8 회의 narrative 합의 → outline 갱신
+- [x] 5/8 회의 narrative 합의 (옵션 2 정직 reporting) → outline 갱신 완료 (5/7)
+- [ ] Phase 6/7 격차 5-cell 비교 figure 추가 (Slide 4 footnote 보강)
 - [ ] 5/22 교수님 미팅 직전 draft 검토
 - [ ] 5/26 마감 — final 검토
 

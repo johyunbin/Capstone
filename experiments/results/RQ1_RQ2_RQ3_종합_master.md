@@ -14,22 +14,28 @@
 
 ---
 
-## 핵심 contribution 5종
+## 핵심 contribution 7종 (5/7 W2 갱신)
 
-1. **Selectivity Gradient 단조성 통계 입증** (RQ1) — Spearman ρ + bootstrap CI (per-seed n=25)
-2. **KM20 oracle 의 sample-size robustness** (RQ2) — 40/40 cell 일관
-3. **Hilbert Curve = learning-free + 결정론 + competitive recovery** (RQ3 ★1순위)
-4. **MiniBatch K-means partial_fit = production-ready OLTP solution** (RQ3 ★2순위)
-5. **Cluster 분할 자체의 결정적 가치** (RQ3 negative control: Distance-Shell d=+0.49, IS d=+0.5~+0.7)
+1. **Selectivity Gradient 단조성 통계 입증** (RQ1) — Phase 6 SQL D, Spearman ρ + bootstrap CI (per-seed n=25)
+2. **Measurement Methodology Robustness sub-contribution** (RQ1, 5/7 NEW) — Phase 6 (SQL D, vector.c hook) vs Phase 7 (numpy D, simulation) 5-cell 격차 정량 (s=0.01 Δ=−12.26%p)
+3. **KM20 oracle 의 sample-size robustness** (RQ2) — 40/40 cell 일관 + σ_i 신호 약함 honest 입증
+4. **Hilbert Curve = learning-free + 결정론 + competitive recovery** (RQ3 ★1순위) — inverse Manhattan 1.000
+5. **MiniBatch K-means partial_fit = production-ready OLTP solution** (RQ3 ★2순위) — ARI 1.000, 4 cell paired CI 0 제외
+6. **HDBSCAN = SIFT mid-sel best −3.99%** (RQ3, 5/7 NEW) — density-based clustering 의 가치, 모든 method 중 mid-sel 가장 강
+7. **Cluster 분할 자체의 결정적 가치** (RQ3 negative control: Distance-Shell d=+0.49, IS d=+0.5~+0.7, PQ +23.64%, Sobol +33.62%)
 
 ---
 
-## Honest Limitation 4종
+## Honest Limitation 6종 (5/7 딥리뷰 caveat 통합)
 
-1. **단일 테이블** — Multi-table join 은 Exqutor main scope, future work
-2. **KM20 oracle** — production 학습 부담 (full K-means ~30분), partial_fit + Hilbert 가 production replacement
-3. **Effect size practical small** — Hilbert d=-0.156. p<0.05 의 sample-size 효과 별도 보고. 어려운 query 에서 강 (spread 0.78)
-4. **vector.c Python 시뮬레이션** — 5/6 patch 시도 시 memory leak. integration 은 future work
+1. **단일 테이블** — Multi-table join 은 Exqutor main scope. 단일 정확성이 multi 의 *필요조건*, multi 일반화는 future work.
+2. **KM20 oracle 의 production 학습 부담** — full K-means ~30분. partial_fit (OLTP) + Hilbert (learning-free) 가 production replacement.
+3. **Effect size practical small** — Hilbert d = −0.156 (negligible-small). RQ3 22 method 중 어떤 method 도 |d| > 0.8 large effect 미달. paired Wilcoxon p < 0.05 는 sample size (n=500) 효과 별도 보고. 어려운 query 에서 method routing 가치 강 (spread vs difficulty ρ=0.78).
+4. **numpy estimator 의 sampling-population scope** — bernoulli sampling 이 ≤10K row 캐시에서 추출되며 HT weight 만 N=1M 적용. 절대 q-error 인용 시 "numpy simulation 의 캐시 기반" 명시 필수. 상대 비교 (BERN vs KM20, method ranking) 는 보존.
+5. **RQ1 measurement methodology robustness** (5/7 W2 발견) — Phase 6 (SQL D, vector.c hook, production-near) 와 Phase 7 (numpy D, simulation) 의 5-sel 격차. gradient 19.6%p 핵심 수치는 Phase 6 기준 인용, Phase 7 결과는 sub-contribution 으로 honest 별도 보고.
+6. **σ_i 신호 약함의 honest 입증** (RQ2 → RQ3 motivation chain) — Anti-Neyman vs Proportional CI 0 제외하지만 paired Wilcoxon p > 0.5, Cohen's d < 0.1. σ_i 신호가 약해 median 수준에서만 detect, 개별 query 수준은 random 과 동치. 이 fact 자체가 RQ3 distribution-agnostic 추구의 정직 motivation.
+
+**향후 보강**: **vector.c integration** — 5/6 patch 시도 시 memory leak (`memory/reference_server.md` P5/M5). 본 연구의 measurement layer 를 Python 으로 우회 후 본질 검증 완료. C-level integration 은 future work.
 
 ---
 
@@ -102,7 +108,7 @@
 Motivation (Slide 2)
   ↓ Exqutor 의 single-table 영역의 sampling 정확도
 RQ1 진단 (Slides 3-4)
-  ↓ BERN 부정확성 + selectivity gradient 단조성 (ρ=-0.680 확정)
+  ↓ BERN 부정확성 + selectivity gradient 단조성 (Phase 6 ρ=−0.680 확정 / Phase 7 numpy D ρ=+0.240 honest sub-contribution)
 RQ2 oracle (Slide 5)
   ↓ KM20 의 가치 + σ_i 신호 약 + Anti-Neyman hurt
 RQ3 production alternative (Slides 6-9)

@@ -1,9 +1,124 @@
 # Academic v3 deck — Follow-up Prompts (Claude Design chat)
 
-> 2026-05-07 11:00 KST · 본 세션
+> 2026-05-07 11:00 KST · 본 세션 (12:12 갱신: #A/#B/#C/#D 추가 — Worker A 핸드오프)
 > **deck URL**: https://claude.ai/design/p/019e0006-f163-74e6-bf81-2d7caebaf0f2?file=academic-deck%2Findex.html&slide=1
 > **사용량 제약**: Claude Design 주간 78% — chat prompt 무제한 OK, 새 deck rebuild 1개만 가능
 > **사용 방식**: 사용자가 위 URL 접속 → 우상단 chat 입력란에 prompt 복사 붙여넣기 → 차례로 발송
+
+---
+
+## 우선순위 0 (5/7 narrative 정정 후 — 최우선, 5/8 회의 전 발송)
+
+> 5/7 narrative 정정 (commit 74d6aea) 반영 — 옵션 2 정직 reporting + contribution 7종 + Limitations 6종.
+> 본 4 prompt (#A/#B/#C/#D) 발송 후 PPTX/PDF export → `submission/_drafts/속도는벡터_5월27일발표_v3_academic.{pptx,pdf}`.
+
+### Prompt #A — Slide 6 (RQ1 진단) Phase 6/7 dual narrative
+
+```
+Slide 6 (RQ1 진단) 의 큰 수치 "ρ = -0.680" 옆에
+"Phase 6 (SQL D, vector.c hook, production-near)" footnote 한 줄 추가해주세요.
+
+하단 secondary stat row 에 추가 한 줄:
+"Phase 7 (numpy D, simulation): ρ = +0.240 [-0.061, +0.480] CI 0 포함
+— measurement methodology robustness sub-contribution honest 별도 보고"
+
+polish only, layout 변경 X. 큰 -0.680 stat 자체는 유지.
+
+근거: experiments/results/RQ1_RQ2_RQ3_종합_master.md (5/7 narrative 정정)
++ 5/8 회의 합의 옵션 2 정직 reporting.
+```
+
+### Prompt #B — Slide 11/12 사이에 5번째 contribution 슬라이드 추가 (HDBSCAN)
+
+```
+현재 16 slide 에 5번째 contribution 슬라이드 추가 (slide 11 negative control 직전 또는 직후):
+
+타이틀: "RQ3 핵심 contribution 5: HDBSCAN — Density-Based Clustering 의 가치"
+
+huge stat (좌측 navy bar 강조):
+"−3.99% [−5.34, −2.12]"
+"SIFT mid-sel (s=0.10), 모든 22 method 중 1위"
+
+핵심 narrative:
+- HDBSCAN density-based clustering: SIFT 의 더 큰 skew 환경에서 mid-sel
+  가장 강한 effect (−3.99%, paired CI 0 제외)
+- mid-sel (s=0.10) 의 sweet spot — 1% 너무 좁아 noise, 50% 너무 넓어 약화
+- 4강 (Hilbert / MiniBatch / Hybrid / HDBSCAN) 의 마지막 핵심
+
+implication bar (하단):
+"density 인식 분할이 high-skew 환경의 mid-sel 에서 oracle 에 근접한 효과"
+
+layout: 일관 유지 (좌측 navy bar + huge stat + implication bar + page indicator).
+근거: experiments/results/rq3_agnostic/rq3_hdbscan_results.md
+```
+
+### Prompt #C — Slide 15 Limitation 4-card → 6-card 확장
+
+```
+Slide 15 Limitation 4-card 를 6-card 로 확장. 2×3 grid 또는 6-card row 로 layout.
+card 별 1 line label + 1 line short description.
+
+L1: Single-table only
+    "multi-table 은 Exqutor main scope, 단일 정확성이 multi 의 필요조건 (future work)"
+
+L2: KM20 oracle 학습 부담
+    "full K-means ~30분, partial_fit (OLTP) + Hilbert (learning-free) 가 production replacement"
+
+L3: Effect size practical small
+    "모든 RQ3 method |d| < 0.8, p<0.05 는 sample size 효과 별도 보고. 어려운 query routing 가치 (spread 0.78)"
+
+L4: numpy estimator sampling-population scope (NEW)
+    "≤10K row 캐시 + HT weight 만 N=1M. 절대 q-error 인용 시 명시, 상대 비교 보존"
+
+L5: RQ1 measurement methodology robustness (NEW)
+    "Phase 6 (SQL D, vector.c hook) vs Phase 7 (numpy D) 5-cell 격차. 핵심 수치 Phase 6 production-near 기준"
+
+L6: σ_i 신호 약함의 honest 입증 (NEW)
+    "Anti-Neyman vs Proportional CI 0 제외, paired Wilcoxon p>0.5, Cohen's d<0.1. RQ3 distribution-agnostic 추구의 정직 motivation"
+
+근거: experiments/results/RQ1_RQ2_RQ3_종합_master.md line 27-32 + 5/8 narrative 합의.
+기존 4-card (Multi-table / vector.c / Distribution shift / Online streaming) 의 분류는 본 6-card 로 전면 교체.
+```
+
+### Prompt #E — Slide 4 (RQ1 결과) Phase 6/7 figure sidebar 삽입
+
+> **D 결과 반영** (Worker D 5/7 12:15 figure 완료 — `phase6_vs_phase7_5sel.png` 2969×1782).
+> 본 prompt 발송 전 사용자가 Claude Design 좌측 panel 에 figure 를 drag-drop upload 필요.
+
+```
+방금 upload 한 phase6_vs_phase7_5sel.png 를 Slide 4 (RQ1 결과) 우측 1/3 영역에
+sidebar 형태로 삽입해주세요. (또는 Slide 6 RQ1 진단 footnote 옆 작게)
+
+위치: Slide 4 우측 1/3 (제목 아래, page indicator 위)
+크기: slide 1/3 폭 × 1/2 높이
+caption (figure 하단 한 줄):
+"Phase 6/7 5-cell 격차 — methodology robustness 정량 입증"
+slide layout 일관 유지.
+
+근거: 5/7 W2 Worker D 분석. Phase 6 (SQL D, vector.c hook, ρ=−0.680 CI 0 제외)
+vs Phase 7 (numpy D, simulation, ρ=+0.240 CI 0 포함) 의 measurement
+methodology robustness 시각화. Slide 12 L5 limitation 의 visual evidence.
+```
+
+### Prompt #D — Slide 14 (Q&A) Q6 추가 (Phase 6/7 origin)
+
+```
+Slide 14 (Q&A) 에 Q6 추가 (현재 Q1-Q5 5개 → Q6 추가 후 6개):
+
+Q6: "Phase 6 (SQL D) 와 Phase 7 (numpy D) 격차의 origin 은?
+     왜 단조성 결론이 환경 의존적인가?"
+
+A: 격차의 origin 두 가지 —
+   (1) numpy estimator 가 ≤10K row 캐시에서 추출하고 HT weight 만 N=1M 적용
+       → sampling-population scope 가 SQL `tablesample` (full table) 와 다름.
+   (2) vector.c hook 의 production env 측정 path 가 numpy 시뮬레이션 측정 path 와 다름.
+   본 연구는 Phase 6 production-near 결과 핵심 인용, Phase 7 결과 honest 별도 보고.
+   5-cell 격차 자체를 measurement methodology robustness sub-contribution 으로 격상.
+   채림 석사 자문 사항 (5/15 메일 발송 예정).
+
+근거: 5/7 W2 발견 + outline 정정 (line 257-258).
+layout 일관 유지. Q1-Q6 모두 1 line question + 2-3 line answer.
+```
 
 ---
 
@@ -87,7 +202,9 @@ slide 12 (Cross-scale) 의 "DEEP_8M ✗ 비단조 (증 0 / 감 2, n=3)" 발견�
 문제 지점 1-2개 만 알려주시면 그 부분만 수정합니다.
 ```
 
-### Prompt #7 — Limitation slide (15) 4-card 분류 검증
+### Prompt #7 — Limitation slide (15) 4-card 분류 검증 ⚠️ **#C 로 SUPERSEDED (5/7 12:12)**
+
+> 본 prompt 는 4-card 검증용. 5/7 narrative 정정 (옵션 2 + 6-Limitations) 후 #C 가 4→6 확장으로 전면 교체. 발송 금지.
 
 ```
 slide 15 Limitation 의 4-card grid:
@@ -110,14 +227,60 @@ slide 15 Limitation 의 4-card grid:
 ## 발송 순서 권장
 
 ```
-지금 (5/7 11:00 KST) → Prompt #1 발송 (slide 6 정정, 1분)
+지금 (5/7 12:12 KST) ★ 우선순위 0 (narrative 정정, 5/8 회의 전 필수)
+                   → Prompt #A 발송 (Slide 6 Phase 6/7 dual narrative, 2-3분)
+                   → Prompt #B 발송 (Slide 11/12 5번째 contribution HDBSCAN, 5-10분)
+                   → Prompt #C 발송 (Slide 15 Limitation 4 → 6-card, 3-5분)
+                   → Prompt #D 발송 (Slide 14 Q6 추가, 2-3분)
+                   → [phase6_vs_phase7_5sel.png drag-drop upload 후]
+                     Prompt #E 발송 (Slide 4 figure sidebar, 3-5분)
+                   → 5 prompt 응답 후 PPTX/PDF export (Share → Export)
+
+기존 우선순위 1 (시간 여유 시 추가 발송, 5/8 전 발송 가능)
+                   → Prompt #1 발송 (slide 6 "6 sel" → "5 sel" typo, 1분)
                    → Prompt #2 발송 (slide 13 ARI 검증, 5-10분 응답)
                    → Prompt #3 발송 (cover background 확인, 1-2분)
 
 5/7 14:00 ~ 18:00 → Prompt #4 / #5 (선택, 시간 여유 시)
 
-5/8 회의 (19:00) 직전 → Prompt #6 / #7 (선택, 학술 콘텍스트 보강)
+5/8 회의 (19:00) 직전 → Prompt #6 (선택, 학술 콘텍스트 보강)
+                       (#7 은 #C 로 superseded — 발송 금지)
 ```
+
+## Export 절차 (Step 4 — Worker A 핸드오프)
+
+#A/#B/#C/#D 4 prompt 응답 confirm 후:
+
+```
+1. Claude Design 우상단 Share → Export as PPTX
+   → submission/_drafts/속도는벡터_5월27일발표_v3_academic.pptx
+
+2. Claude Design 우상단 Share → Export as PDF
+   → submission/_drafts/속도는벡터_5월27일발표_v3_academic.pdf
+
+3. 한글 폰트 검증 (Apple SD Gothic Neo) — Slide 1, Slide 12, Slide 15 문장 단위 확인
+   ⚠️ 깨짐 시 Claude Design chat 으로 "Apple SD Gothic Neo (또는 Noto Sans KR) 폰트 강제 적용" 재발송
+
+4. 검증 후 git commit:
+   git add submission/_drafts/속도는벡터_5월27일발표_v3_academic.{pptx,pdf}
+   git commit -m "5/27 발표 deck Academic v3 v1 export — 옵션 2 narrative + contribution 7종 + Limitations 6종"
+   git push
+```
+
+검증 기준 (worker A §4):
+- [ ] Slide 6 dual narrative 표기 (Phase 6 main + Phase 7 honest)
+- [ ] Slide 11/12 사이 HDBSCAN 5번째 contribution slide 등장 (총 17 slide 가능)
+- [ ] Slide 14 Q6 추가 (Q1-Q6 6개)
+- [ ] Slide 15 Limitations 6-card 확장 (L1-L6)
+- [ ] Slide 4 (또는 6) Phase 6/7 figure sidebar 등장 (#E 발송 후)
+- [ ] PPTX/PDF 한글 폰트 깨짐 X (Apple SD Gothic Neo)
+- [ ] Master 1:1 수치 일관 — ρ=−0.680 / d=−0.156 / ARI=1.000 / HDBSCAN −3.99% / inverse Manhattan 1.000
+
+## Worker D figure 의존성
+
+- Slide 4 또는 6 sidebar 의 figure source: `experiments/figures/rq1_motivation/phase6_vs_phase7_5sel.png`
+- ✅ **2026-05-07 12:15 KST D figure 완료** (2969×1782, 200KB) — Prompt #E 로 즉시 반영 가능
+- Worker A 의 Step 2 (Slide 4 footnote 보강) → text-only 우회 불필요. #E 발송으로 figure 즉시 sync.
 
 ---
 

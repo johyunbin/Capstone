@@ -56,6 +56,7 @@ scope 제외 (future work):
 ## Slide 4 — RQ1 결과: Selectivity Gradient 단조성 확정
 
 핵심 figure: `experiments/figures/rq1_rq2_w1_sprint/figure_3_5sel_grid_2x4.png` 또는 보강
+sidebar figure (5/7 W2 신규): `experiments/figures/rq1_motivation/phase6_vs_phase7_5sel.png` — Phase 6/7 5-cell 격차 시각화
 
 수치 (Phase 6, **SQL D — vector.c hook + PG `tablesample`, production-near**):
 - DEEP 1M × 5 sel × 5 seed: KM20−BERN 차이 +1.31% (s=0.50) → **+8.93% (s=0.01)**
@@ -265,7 +266,8 @@ A: 격차의 origin 두 가지 — (1) numpy estimator 가 ≤10K row 캐시에�
 - [ ] figures 모두 PNG 300dpi 변환
 - [ ] 한글 폰트 통일 (Apple SD Gothic Neo)
 - [x] 5/8 회의 narrative 합의 (옵션 2 정직 reporting) → outline 갱신 완료 (5/7)
-- [ ] Phase 6/7 격차 5-cell 비교 figure 추가 (Slide 4 footnote 보강)
+- [x] Phase 6/7 격차 5-cell 비교 figure 생성 (`phase6_vs_phase7_5sel.png` 5/7 12:15 W2)
+- [ ] Phase 6/7 figure → Claude Design Slide 4 sidebar 삽입 (Worker A #E)
 - [ ] 5/22 교수님 미팅 직전 draft 검토
 - [ ] 5/26 마감 — final 검토
 

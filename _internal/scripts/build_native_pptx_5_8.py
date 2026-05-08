@@ -1527,25 +1527,25 @@ def main():
     body_y = Inches(1.95)
     col_w = Inches(5.7)
 
-    # LEFT — Multi-vector
+    # LEFT — Multi-vector × 4강 method (sel=0.10 paired Δ% vs BERN)
     mv_card = add_card(s, MARGIN_X, body_y, col_w, Inches(2.2), fill=WHITE, border=LINE)
     add_simple_text(s, MARGIN_X + Inches(0.18), body_y + Inches(0.12),
                     col_w - Inches(0.36), Inches(0.3),
-                    "MULTI-VECTOR (한 행 두 임베딩)",
+                    "MULTI-VECTOR × 4강 (sel=0.10 paired Δ%)",
                     font=MONO_FONT, size=8, bold=True, color=NAVY)
     add_table_styled(s,
                      MARGIN_X + Inches(0.2), body_y + Inches(0.55),
-                     col_w - Inches(0.4), Inches(1.2),
-                     headers=["Cell", "dim", "concat", "product"],
+                     col_w - Inches(0.4), Inches(1.5),
+                     headers=["Cell (96+dim)", "hdbscan", "hilbert", "hybrid", "mb_partial"],
                      rows=[
-                         ["partsupp_deep_sift_10", "96+128", "−0.35%", "−1.15%"],
-                         ["partsupp_deep_wiki_10", "96+768", "−0.30%", "+0.53%"],
+                         ["partsupp_deep_sift_10", "−1.02%", "−0.48%", "+0.31%", "−1.30%"],
+                         ["partsupp_deep_wiki_10", "+1.15%", "+0.06%", "+0.08%", "+0.99%"],
                      ],
-                     col_widths=[Inches(2.0), Inches(1.0), Inches(1.05), Inches(1.05)],
-                     mono_cols={1, 2, 3}, row_h=Inches(0.32), cell_size=9)
+                     col_widths=[Inches(2.0), Inches(0.85), Inches(0.85), Inches(0.85), Inches(0.95)],
+                     mono_cols={1, 2, 3, 4}, row_h=Inches(0.32), cell_size=9)
     add_simple_text(s, MARGIN_X + Inches(0.2), body_y + Inches(1.85),
                     col_w - Inches(0.4), Inches(0.3),
-                    "measure_multi_vector.py · concat 또는 separate column 두 시나리오",
+                    "STAGE 1+2 완료 (5/8) · n=2500/cell · sign 3/8 neg · |Δ| < 1.5% marginal",
                     font=KOR_FONT, size=10, color=MUTED)
 
     # LEFT bottom — Multi-table (compact) + grouped bar chart underneath
@@ -1553,17 +1553,17 @@ def main():
     mt_card = add_card(s, MARGIN_X, mt_y, col_w, Inches(1.4), fill=WHITE, border=LINE)
     add_simple_text(s, MARGIN_X + Inches(0.18), mt_y + Inches(0.12),
                     col_w - Inches(0.36), Inches(0.3),
-                    "MULTI-TABLE NATURAL JOIN",
+                    "MULTI-TABLE NATURAL JOIN × 4강 — STAGE 3 측정 진행 중",
                     font=MONO_FONT, size=8, bold=True, color=NAVY)
     add_table_styled(s,
                      MARGIN_X + Inches(0.2), mt_y + Inches(0.55),
                      col_w - Inches(0.4), Inches(0.6),
-                     headers=["Cell", "type", "best mode Δ%"],
+                     headers=["Cell", "type", "STAGE 3 4강 Δ%"],
                      rows=[
-                         ["partsupp_deep_10 ⨝ part_wiki_10", "TPC-H", "+1.51%"],
+                         ["partsupp_deep_10 ⨝ part_wiki_10", "TPC-H", "측정 중 (회의 후)"],
                      ],
                      col_widths=[Inches(2.7), Inches(1.0), Inches(1.4)],
-                     mono_cols={2}, row_h=Inches(0.3), cell_size=9)
+                     mono_cols={1, 2}, row_h=Inches(0.3), cell_size=9)
     add_simple_text(s, MARGIN_X + Inches(0.2), mt_y + Inches(1.0),
                     col_w - Inches(0.4), Inches(0.4),
                     "ps_partkey = p_partkey 자연 외래키 · DEEP 96 ↔ WIKI 768 dim 격차",
@@ -1575,36 +1575,41 @@ def main():
                     w=SLIDE_W - 2 * MARGIN_X, h=Inches(0.95),
                     eyebrow="MULTI-CELL · 4강 method paired Δ%")
 
-    # RIGHT navy card — Exqutor matching logic
+    # RIGHT navy card — Magnitude shrinkage (single → multi)
     right_x = MARGIN_X + col_w + Inches(0.25)
     right_w = col_w
     ex_card = add_card_navy(s, right_x, body_y, right_w, Inches(2.5))
     card_set_content(ex_card,
-                     eyebrow="EXQUTOR 매칭 LOGIC",
+                     eyebrow="MAGNITUDE SHRINKAGE — SINGLE → MULTI",
                      body_runs=[
-                         {"text": "Exqutor 본 논문의 ECQO 핵심 contribution 영역 = ", "size": 11, "color": INK_SOFT},
-                         {"text": "multi-table query", "size": 11, "bold": True, "color": INK},
-                         {"text": ". 본 연구는 ", "size": 11, "color": INK_SOFT},
-                         {"text": "단일 정확성", "size": 11, "bold": True, "color": INK},
-                         {"text": " 으로 multi 정확성의 ", "size": 11, "color": INK_SOFT},
+                         {"text": "단일 sweet spot 4강 평균 |Δ%| ", "size": 11, "color": INK_SOFT},
+                         {"text": "17.13%", "size": 11, "bold": True, "color": INK},
+                         {"text": " (SIFT/WIKI/YFCC sf1) → multi-vector 4강 평균 |Δ%| ", "size": 11, "color": INK_SOFT},
+                         {"text": "0.67%", "size": 11, "bold": True, "color": INK},
+                         {"text": " (sel=0.10). magnitude ", "size": 11, "color": INK_SOFT},
+                         {"text": "25.4× 약화", "size": 11, "bold": True, "color": NAVY},
+                         {"text": ". 단일 정확성 = multi 정확성의 ", "size": 11, "color": INK_SOFT},
                          {"text": "필요조건만", "size": 11, "bold": True, "color": NAVY},
-                         {"text": " 입증 — 충분조건 일반화는 future work.", "size": 11, "color": INK_SOFT},
+                         {"text": " (충분조건 X).", "size": 11, "color": INK_SOFT},
                      ],
                      dash_items=[
-                         "Multi-vector: 한 row 두 임베딩 → concat·separate 두 ablation",
-                         "Multi-table: TPC-H natural join 직접 매칭",
-                         "4강 method 의 multi-relation 일관성 입증",
+                         "sel=0.01: 8/8 hurt (sample budget narrow)",
+                         "sel=0.10: 3/8 neg · 5/8 pos (boundary, |Δ| < 1.5%)",
+                         "sel=0.50: 7/8 neg (수렴, magnitude marginal)",
+                         "method ranking 보존 X — multi 환경 노이즈 수준",
                      ])
 
-    # Multi-relation takeaway card (replaces former YFCC verify reference)
+    # Multi-relation takeaway card — future work narrative
     mr_card = add_card(s, right_x, body_y + Inches(2.7), right_w, Inches(1.4),
                         fill=BG_CARD, border=LINE)
     card_set_content(mr_card,
-                     eyebrow="MULTI-RELATION TAKEAWAY",
+                     eyebrow="MULTI-RELATION FUTURE WORK",
                      body_runs=[
-                         {"text": "Exqutor 본래 contribution 영역 = ", "size": 10, "color": INK_SOFT},
-                         {"text": "multi-relation query", "size": 10, "bold": True, "color": INK},
-                         {"text": ". 본 연구의 4강 method (Hilbert · MiniBatch_partial · Hybrid · HDBSCAN) 가 multi-vector + natural join 영역에서 부호·크기 일관성을 유지하는지 정량 검증.",
+                         {"text": "단일 sweet spot의 강력 improve가 multi-vector에서 marginal로 약화 → multi-relation 일반화는 ", "size": 10, "color": INK_SOFT},
+                         {"text": "joint-aware clustering", "size": 10, "bold": True, "color": INK},
+                         {"text": " 또는 ", "size": 10, "color": INK_SOFT},
+                         {"text": "multi-vector decomposition", "size": 10, "bold": True, "color": INK},
+                         {"text": " 별도 설계 필요. STAGE 3 multi-table join × 4강 측정은 회의 후 보강.",
                           "size": 10, "color": INK_SOFT},
                      ])
 

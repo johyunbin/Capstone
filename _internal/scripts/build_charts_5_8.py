@@ -203,7 +203,7 @@ def build_s8():
         ax.add_patch(arr)
 
     # Right-side final winner annotation + 가지치기 detail (단일 100% finalize)
-    ax.text(4.05, 0.62, "4강 WINNER",
+    ax.text(4.05, 0.62, "TOP 4 WINNERS",
             fontsize=8, fontfamily=MONO, color=NAVY, fontweight="bold",
             va="center", ha="left")
     ax.text(4.05, 0.46, "★1 HDBSCAN -8.04%\n★2 MB_partial -7.63%\n★3 Hilbert -7.54%\n★4 Hybrid -7.13%",
@@ -290,8 +290,8 @@ def build_s10():
                    colors=GRAY_500, length=0, pad=3)
     ax.set_xlabel("Cluster imbalance ratio (log)", fontsize=8.5,
                   fontfamily=MONO, color=GRAY_600, labelpad=6)
-    ax.set_ylabel("Hilbert effect Δ% (negative = improve)",
-                  fontsize=8.5, fontfamily=MONO, color=GRAY_600, labelpad=6)
+    ax.set_ylabel("Hilbert Δ% (negative = improve)",
+                  fontsize=8.5, fontfamily=MONO, color=GRAY_600, labelpad=8)
     _style_ax(ax, grid=False)
     ax.grid(True, color=GRAY_200, linewidth=0.4, alpha=0.7)
     ax.set_axisbelow(True)
@@ -305,9 +305,9 @@ def build_s10():
         ax.text(1.13, 4 - i * 1.4, lbl, fontfamily=MONO, fontsize=7,
                 color=INK_SOFT, va="center", zorder=5)
 
-    plt.subplots_adjust(left=0.13, right=0.92, top=0.97, bottom=0.16)
+    plt.subplots_adjust(left=0.16, right=0.93, top=0.97, bottom=0.16)
     out = OUT / "S10.png"
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.05)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.20)
     plt.close(fig)
     return out
 
@@ -316,23 +316,24 @@ def build_s10():
 # S11 — Multi-vector + Multi-table 4강 effect bars
 # ---------------------------------------------------------------------------
 def build_s11():
-    """Side-by-side grouped bars for 3 multi-cells × 4 KM20 oracle modes.
-    Values measured per master_v6 §multi (n=2500 per cell, sel=0.10 reference).
+    """4강 method × 2 multi-vector cell paired Δ% vs BERN @ sel=0.10.
+    multi-table join (STAGE 3) 측정 진행 중. Single sweet spot reference -17.13% 비교.
+    Source: multi_4kang_partsupp_deep_{sift,wiki}_10.parquet (5/8 03:07 / 06:04).
     """
-    cells = ["partsupp_deep_sift_10", "partsupp_deep_wiki_10",
-             "partsupp_deep_10 ⨝ part_wiki_10"]
-    methods = ["km20_emb1", "km20_emb2", "km20_concat", "km20_product"]
+    cells = ["deep_sift_10\nmulti-vector",
+             "deep_wiki_10\nmulti-vector",
+             "deep_10 ⋈ part_wiki_10\nnatural join"]
+    methods = ["hdbscan", "hilbert", "hybrid", "mb_partial"]
     method_colors = [NAVY, BLUE, "#7E97D6", GRAY_500]
-    # Measured @ sel=0.10 from master_v6 §multi (km20 oracle modes)
-    # multi-table join only has deep_only / wiki_only / product (3 modes)
+    # paired Δ% vs BERN @ sel=0.10 from sub-agent (5/8 16:?? finalize)
     values = np.array([
-        [+0.98, +0.21, -0.35, -1.15],   # deep_sift_10
-        [-0.20, -0.14, -0.30, +0.53],   # deep_wiki_10
-        [+1.51, +1.72, +1.86, +1.86],   # join: deep_only / wiki_only / (placeholder) / product
+        [-1.02, -0.48, +0.31, -1.30],   # deep_sift_10: hdb / hil / hyb / mb_p
+        [+1.15, +0.06, +0.08, +0.99],   # deep_wiki_10
+        [np.nan, np.nan, np.nan, np.nan],   # join: 측정 진행 중 (STAGE 3)
     ])
-    measured = True
+    SINGLE_REF = -17.13  # 단일 sweet spot 4강 평균 (SIFT_sf1 / WIKI_sf1 / YFCC_sf1)
 
-    fig, ax = plt.subplots(figsize=(6.0, 3.0))
+    fig, ax = plt.subplots(figsize=(6.6, 3.2))
 
     n_cells = len(cells)
     n_methods = len(methods)
@@ -341,46 +342,61 @@ def build_s11():
 
     for i, (m, c) in enumerate(zip(methods, method_colors)):
         offset = (i - (n_methods - 1) / 2) * bar_w
-        bars = ax.bar(x + offset, values[:, i], width=bar_w * 0.95,
+        vals = values[:, i]
+        # mask NaN (join cell - 측정 중)
+        vmask = ~np.isnan(vals)
+        bars = ax.bar(x[vmask] + offset, vals[vmask], width=bar_w * 0.95,
                       color=c, edgecolor="white", linewidth=0.5,
-                      alpha=0.85,
+                      alpha=0.88,
                       label=m, zorder=3)
-        for rect, v in zip(bars, values[:, i]):
-            y_off = 0.15 if v >= 0 else -0.15
+        for rect, v in zip(bars, vals[vmask]):
+            y_off = 0.10 if v >= 0 else -0.10
             va = "bottom" if v >= 0 else "top"
             ax.text(rect.get_x() + rect.get_width() / 2, v + y_off,
                     f"{v:+.2f}", ha="center", va=va,
                     fontsize=6.5, fontfamily=MONO, color=INK_SOFT)
 
+    # join cell overlay: "측정 진행 중"
+    ax.text(2.0, 0.0, "measuring\n(STAGE 3)",
+            ha="center", va="center",
+            fontsize=8, fontfamily=MONO, color=GRAY_500,
+            style="italic", alpha=0.85, zorder=2)
+
+    # zero baseline
     ax.axhline(0, color=GRAY_500, linewidth=0.6, alpha=0.7)
+    # single sweet spot reference (off-scale, text annotation only)
+    ax.text(-0.42, 1.65, f"single sweet spot avg = {SINGLE_REF:+.2f}%",
+            fontsize=7, fontfamily=MONO, color=NAVY,
+            ha="left", va="center", alpha=0.85,
+            bbox=dict(boxstyle="round,pad=0.25", fc=BLUE_SOFT, ec=NAVY,
+                      alpha=0.7, linewidth=0.5))
+    ax.text(-0.42, 1.30, "(SIFT/WIKI/YFCC sf1 TOP-4 mean)",
+            fontsize=6.0, fontfamily=MONO, color=GRAY_500,
+            ha="left", va="center", alpha=0.85)
+
     ax.set_xticks(x)
-    # x-tick labels include the join symbol (⨝, U+2A1D) — fall back to a sans font for it
-    ax.set_xticklabels([
-        "deep_sift_10\nmulti-vector",
-        "deep_wiki_10\nmulti-vector",
-        "deep_10 ⋈ part_wiki_10\nnatural join",
-    ], fontfamily=SANS, fontsize=7.5, color=INK_SOFT, linespacing=1.4)
-    ax.set_yticks([-2, -1, 0, 1, 2, 3])
-    ax.axhline(0, color=GRAY_500, linewidth=0.6, alpha=0.7)
-    ax.set_ylabel("Δ% vs BERN @ sel=0.10 (negative = improve)",
-                  fontsize=8.5, fontfamily=MONO, color=GRAY_600, labelpad=6)
+    ax.set_xticklabels(cells, fontfamily=SANS, fontsize=7.5,
+                       color=INK_SOFT, linespacing=1.4)
+    ax.set_yticks([-2, -1, 0, 1, 2])
+    ax.set_ylabel("Δ% vs BERN @ sel=0.10",
+                  fontsize=8.5, fontfamily=MONO, color=GRAY_600, labelpad=8)
     ax.tick_params(axis="y", labelsize=8, labelfontfamily=MONO,
                    colors=GRAY_500, length=0, pad=3)
     ax.tick_params(axis="x", length=0, pad=4)
-    ax.set_ylim(-2.0, 2.8)
+    ax.set_ylim(-2.0, 2.4)
     _style_ax(ax, grid=False)
     ax.grid(axis="y", color=GRAY_200, linewidth=0.4, alpha=0.7)
     ax.set_axisbelow(True)
 
     leg = ax.legend(loc="upper right", frameon=False,
-                    ncol=4, columnspacing=1.0, handlelength=1.0,
+                    ncol=4, columnspacing=1.2, handlelength=1.0,
                     handletextpad=0.4,
                     prop={"family": MONO, "size": 7.5}, labelcolor=INK_SOFT,
-                    bbox_to_anchor=(1.0, 1.18))
+                    bbox_to_anchor=(1.0, 1.16))
 
-    plt.subplots_adjust(left=0.13, right=0.97, top=0.85, bottom=0.22)
+    plt.subplots_adjust(left=0.16, right=0.97, top=0.85, bottom=0.22)
     out = OUT / "S11.png"
-    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.05)
+    fig.savefig(out, dpi=300, bbox_inches="tight", pad_inches=0.20)
     plt.close(fig)
     return out
 

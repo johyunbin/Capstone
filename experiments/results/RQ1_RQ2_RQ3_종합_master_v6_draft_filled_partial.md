@@ -687,6 +687,38 @@ Exqutor multi-table query 영역과 직접 비교. 한 행 두 임베딩 (multi-
 
 → multi σ-allocation 측정은 future work 또는 회의 후 follow-up sprint 로 deferred. 본 narrative 에서는 (1) RQ1 단조성은 multi cell 에서도 일관 입증 (§6 multi 3 cell ρ=-0.605~-0.632), (2) RQ2 의 cluster-label 결합 전략은 sel ≥ 0.10 multi-vector 에서만 KM20 가치 회수, (3) σ-allocation 결정성은 single 에서 이미 입증 — 세 발견 결합으로 충분.
 
+### §multi-2. Multi-vector 4강 method 일반화 측정 (5/8 STAGE 1+2 완료, STAGE 3 진행 중)
+
+**측정 대상**: 단일 §10.4 4강 method (hdbscan / hilbert / hybrid / minibatch_partial) 의 multi-vector 환경 일반화 검증. 단일 cell 의 sweet spot magnitude (-7~-32%) 가 multi-vector 환경에서 어디까지 보존되는가 정량화.
+
+**source**: `multi_4kang_partsupp_deep_sift_10.parquet` (5/8 03:07, n=10000), `multi_4kang_partsupp_deep_wiki_10.parquet` (5/8 06:04, n=10000), BERN baseline `rq2_multi_5mode_*.parquet`. paired Δ% = per-query (q_method - q_bern)/q_bern 의 row-wise 평균. CI = bootstrap 500x.
+
+#### partsupp_deep_sift_10 (DEEP+SIFT 한 행 두 임베딩, 96+128 dim)
+
+| Method | sel=0.01 | sel=0.05 | sel=0.10 | sel=0.30 | sel=0.50 | n |
+|---|---:|---:|---:|---:|---:|---:|
+| **hdbscan** | +15.73%\* | +0.35% | -1.02% | -0.96%\* | -0.32% | 2500 |
+| **hilbert** | +9.12%\* | +0.41% | -0.48% | -0.86%\* | -0.48%\* | 2500 |
+| **hybrid** | +14.57%\* | +2.10%\* | +0.31% | -0.43% | -0.20% | 2500 |
+| **mb_partial** | +18.45%\* | +1.68% | -1.30%\* | -0.66%\* | -0.14% | 2500 |
+
+#### partsupp_deep_wiki_10 (DEEP+WIKI 한 행 두 임베딩, 96+768 dim)
+
+| Method | sel=0.01 | sel=0.05 | sel=0.10 | sel=0.30 | sel=0.50 | n |
+|---|---:|---:|---:|---:|---:|---:|
+| **hdbscan** | +19.82%\* | +1.21% | +1.15%\* | +0.05% | -0.11% | 2500 |
+| **hilbert** | +17.93%\* | +1.78%\* | +0.06% | -0.23% | -0.21% | 2500 |
+| **hybrid** | +23.00%\* | +2.28%\* | +0.08% | -0.44% | -0.20% | 2500 |
+| **mb_partial** | +24.91%\* | +2.44%\* | +0.99% | +0.03% | +0.02% | 2500 |
+
+**multi-vector 4강 일반화 narrative**:
+- **부호 일관성 (sel 별)**: sel=0.01 → 8/8 positive (hurt direction, sample budget narrow 패턴 단일과 동일); sel=0.05 → 8/8 positive (4 measurement CI excludes 0, 부호 hurt 측 일관); **sel=0.10 → 3/8 negative, 5/8 positive (boundary, |Δ| 모두 < 1.5% 의 marginal magnitude)**; sel=0.30 → 6/8 negative (3 measurement CI excludes 0); sel=0.50 → 7/8 negative (1 CI excludes 0).
+- **단일 sweet spot 대비 magnitude shrinkage 25.4×**: sel=0.10 기준 단일 4강 (SIFT_sf1 / WIKI_sf1 / YFCC_sf1) 평균 |Δ%| 17.13% vs multi-vector 4강 평균 |Δ%| 0.67%. 단일에서 강한 -34~-7% improve 가 multi-vector 에서는 ±1% 부근의 marginal effect 로 약화.
+- **method 별 ranking 보존 X**: 단일에서 hdbscan > minibatch_partial > hilbert > hybrid 순서가 multi 에서 일관되지 않음 (multi-SIFT sel=0.10 에서 mb_partial > hdbscan > hilbert > hybrid). **단일 sweet spot 의 sample-budget-aware ranking 은 multi-vector 환경에서 노이즈 수준**.
+- **§multi-1 (km20 결합 전략) 결과와 정합**: §multi-1 의 km20_concat / km20_product 가 sel=0.10 에서 -0.30~-1.15% 의 marginal effect (역시 단일 -8~-34% 와 magnitude 격차). multi-vector 환경에서 KM20 stratification 은 σ-allocation 보다 "결합 전략" 자체가 dominant factor 로 추정.
+
+**multi-table join (STAGE 3) 측정 진행 중** — 회의 전 완료 보장 X, 회의 후 보강 자료로 추가. 본 narrative 의 핵심 결론 (multi-vector 4강 magnitude shrinkage + single 정확성 = multi 정확성의 *필요조건만*) 은 STAGE 1+2 결과만으로 입증 완료.
+
 ---
 
 ## §yfcc_source. YFCC source 결정 — 채림 정본 단일 (5/8 10:18 사용자 결정)
@@ -838,11 +870,13 @@ Exqutor multi-table query 영역과 직접 비교. 한 행 두 임베딩 (multi-
 - **Ceiling (effect 약 / hurt, -2~+2%)**: SSN++ (cluster_ratio 1.29 / intrinsic 0.88) — uniform-like distribution, BERN baseline 자체가 이미 낮음.
 - **Decision boundary**: cluster_ratio > 1.4 AND intrinsic_dim < 0.85 → distribution-aware method 효과 안정. 둘 다 미달 시 ceiling effect → method choice 영향 약.
 
-### §10.6 Multi 일반화 + Exqutor 비교 narrative (회의 후 자료, plan 만)
+### §10.6 Multi 일반화 + Exqutor 비교 narrative (5/8 STAGE 1+2 완료, STAGE 3 진행 중)
 
-**Multi 일반화** (현재 측정 진행 중 — agent Y4):
-- §multi 3 cell (partsupp_deep_sift_10, partsupp_deep_wiki_10, partsupp_deep_10 ⨝ part_wiki_10) × 4강 method = 12 measurements 추가 진행.
-- 회의 narrative: 단일 일관 → multi 검증은 future work. 단일 정확성은 multi 정확성의 *필요조건만* 성립 (충분조건 아님).
+**Multi 일반화** (5/8 multi-vector 2 cell × 4강 measurement 완료, multi-table join 진행 중):
+- **multi-vector 2 cell × 4강 = 8 measurement 결과** (§multi-2 표): sel=0.10 sign 3/8 negative · 5/8 positive (boundary, |Δ| < 1.5% marginal); sel=0.50 sign 7/8 negative (1 CI excludes 0). **단일 sweet spot 대비 magnitude shrinkage 25.4×** — 단일 -7~-32% 강력 improve 가 multi-vector 에서는 ±1% 부근 marginal 로 약화.
+- **method 별 ranking 보존 X**: 단일 hdbscan > mb_partial > hilbert > hybrid 순서가 multi 환경에서는 노이즈 수준 (multi-SIFT sel=0.10: mb_partial > hdbscan > hilbert > hybrid).
+- **회의 narrative**: 단일 정확성은 multi 정확성의 *필요조건만* 성립 (충분조건 아님). multi-vector 환경에서 KM20 stratification 은 cluster-label 결합 전략 자체가 σ-allocation 보다 dominant — multi-relation 일반화는 future work (joint-aware clustering 또는 별도 multi-vector decomposition 필요).
+- **multi-table join (STAGE 3, partsupp_deep_10 ⨝ part_wiki_10) × 4강 measurement 진행 중** — 회의 전 완료 보장 X, 회의 후 보강 자료로 추가.
 
 **Exqutor 비교 frame** (5/27 발표 narrative, 회의 후 자료):
 | Method category | 적용 영역 | 정확도 | Cost |

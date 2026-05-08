@@ -3,7 +3,7 @@
 > **에이전트**: U3 (Capstone background agent)
 > **범위**: `plans/` cleanup + `reference/` inventory
 > **방침**: plans/ 의 stale design 안만 archive/ 로 이동, reference/ 는 보존 + 점검만 수행
-> **commit hash**: (다음 commit step 후 채움)
+> **commit hash**: `e6a12b5`
 
 ---
 

@@ -834,7 +834,11 @@ Exqutor multi-table query 영역과 직접 비교. 한 행 두 임베딩 (multi-
 | **🔴 W0** | lsh | +2092% | 4/10 | 8/10 | variance explosion | Wave 0 즉시 |
 | **🔴 W0** | random_proj | +434% | 4/10 | 8/10 | variance explosion | Wave 0 즉시 |
 
-**최종 결과 (단일 10 cell 100% 측정 기준)**: 30 method 中 **Tier 1 = 17종, Tier 2 = 2종 (birch, kde_pilot), Tier 3 = 1종 (pq), Pruned = 7종 (sobol/hammersley/halton/spectral/distance_shell/optics/importance_sampling), Wave 0 = 3종 (dbscan/lsh/random_proj)**.
+**최종 결과 (단일 10 cell 100% 측정 기준)**: 30 method 中 **Tier 1 = 17종, Tier 2 = 2종 (birch, kde_pilot — V5 audit 권장 별도 처리), Tier 3 = 1종 (pq), Pruned = 7종 (sobol/hammersley/halton/spectral/distance_shell/optics/importance_sampling), Wave 0 = 3종 (dbscan/lsh/random_proj)**.
+
+**Tier 2 V5 audit 정정** (5/8 분포·인덱스 leak audit 후 보강):
+- **birch** — P1 hierarchical redundancy: CFTree 의 hierarchical clustering 이 P1 paradigm 의 MiniBatch + HDBSCAN 와 정보적 redundant (3 method 모두 cluster-based partition). avg -6.33% Tier 1 boundary 값이지만 paradigm 내 redundancy 로 representative 자격 약화. Tier 2 boundary 유지.
+- **kde_pilot** — KM20 cluster leak suspect: pilot kernel 학습 시 KM20 partition 또는 query 분포 정보를 사용 가능성 (서버 코드 audit 보류 영역). avg -3.03% magnitude 약 + leak 의심으로 Tier 2 boundary 정직 분류. 본 측정 narrative 에서는 "leak 의심 → 효과의 학술 신뢰도 보류" 로 reporting 권장.
 
 **Wave 1 method 의 단일 100% 검증 결과** (5/8 14:13 finalize):
 - **reservoir** Tier 1 진입 confirmed — 10 cell partial 5 cell 결과 (-7.90%) → 10 cell (-6.78%) 약간 약하나 sign 8/10 일관, T1 유지
@@ -861,9 +865,9 @@ Exqutor multi-table query 영역과 직접 비교. 한 행 두 임베딩 (multi-
 **4강 method × YFCC sf10 fill 결과** (단일 100% 마지막 cell):
 - hdbscan -5.77%, hilbert -5.21%, minibatch_partial -5.62%, hybrid -4.78% — 4강 모두 -4.78~-5.77% 일관 improve direction. YFCC = 채림 정본 단일 source narrative 강하게 confirm. SSN++ ceiling outlier 외 모든 단일 cell 에서 4강 method improve direction 입증 완료.
 
-**Tier 2 후보 (회의 narrative 보완)**:
-- **birch**: 단일 10 cell 측정 결과 avg -6.33%, neg_cells 8/10 으로 사실상 Tier 1 boundary. 메모리 효율 (CFTree) 우수. 5/8 회의 narrative 에서 Tier 1 격상 검토 가능.
-- **kde_pilot**: avg -3.03%, neg_cells 8/10. KDE pilot 의 가치는 SSN +5% / YFCC +4% 등 hurt 가 다수 — pilot stratification 의 한계 정직 reporting.
+**Tier 2 후보 (회의 narrative 보완 + V5 audit 정정 5/8)**:
+- **birch**: 단일 10 cell 측정 결과 avg -6.33%, neg_cells 8/10 으로 magnitude 측면 Tier 1 boundary. 다만 V5 audit 권장 — **P1 paradigm 안 hierarchical redundancy** (CFTree → MiniBatch + HDBSCAN 와 정보적 redundant) 로 paradigm representative 자격 약함. Tier 2 boundary 유지 권장 (Tier 1 격상 X).
+- **kde_pilot**: avg -3.03%, neg_cells 8/10. V5 audit 권장 — **KM20 cluster leak suspect** (pilot kernel 학습이 KM20 partition 사용 시 data leak 가능성, 서버 코드 audit 보류 영역). magnitude 약 + leak 의심 두 사유로 narrative 에서 honest 보고 (Tier 2 boundary 정직 분류).
 - **reservoir**: 단일 10 cell 측정 결과 avg -6.78%, neg_cells 8/10 — Tier 1 진입 confirmed. 4강 외 streaming sampling 의 unique narrative.
 
 ### §10.5 RQ1 + RQ2 + RQ3 통합 narrative + Sweet Spot 정량 정의

@@ -176,6 +176,7 @@ scp 'capstone:/mnt/hdd0/home/capstone2026/cache/rq1/multi_*sf1*.parquet' \
 | **17** | **(본 세션 추가)** Adaptive Sampling 의미론 = across-query 50-batch momentum update (paper §V-B), within-query stopping X — 발표 1슬라이드 + Q&A backup 에 1줄 명시 |
 | **18** | **(본 세션 추가)** 6 audit (V1~V6) 모두 ✅ — RQ1/RQ2/RQ3 narrative evidence integrity 보증. master_v6 의 모든 mean/sig count 가 raw csv 와 fully consistent |
 | **19** | **(본 세션 추가)** 자문 메일 분리 — 박성원 멘토 (5/15~5/20 발송) / 박광현 교수님 (5/22 미팅 직접) / 임채림 지도연구원 (별도 의뢰 X). 매 자문 단독 발송 |
+| **20** | **(V7~V9 추가)** V7~V9 method-level audit — 11 method 중 9/11 paper-correct + 2/11 minor deviation (Reservoir single-cell = RANDOM20 proxy / LSH K=20 vs n_hp=5 misalignment / sparse_rp = Li 2006 1/√D variant). master_v6 §10.7 + 보고서 outline v2 §6 L11~L13 + 자문 메일 v4 §3(6) honest reporting 으로 정정 완료 |
 
 ---
 
@@ -197,13 +198,14 @@ scp 'capstone:/mnt/hdd0/home/capstone2026/cache/rq1/multi_*sf1*.parquet' \
 - `_internal/records/kakaotalk/20260508_19시_RQ123sprint_회의.md` — 5/8 회의록
 - `_internal/records/kakaotalk/20260508_2038_박세은_교수님draft.md` — 박세은 카톡 message draft
 
-### 6 audit reports (5/8 21:48 ~ 22:04)
+### 6 audit reports (5/8 21:48 ~ 22:04) + V7~V9 method-level (5/8 22:30~)
 - `_internal/audit_matrix_20260508.md` — 측정 매트릭스 49/50 single + Multi 진행 중
 - `_internal/audit_data_integrity_20260508.md` — A- 등급, schema/null/paired 100% PASS
 - `_internal/audit_master_v6_§10.7_20260508.md` — narrative fully consistent ✅ + 보정 disclaimer
 - `_internal/audit_adaptive_algorithm_20260508.md` — Section VI exact + 식 1~6 line-by-line
 - `_internal/audit_extra_experiments_20260508.md` — P1 즉시 4종 / P2 Multi / P3 자문 후 K-sweep
 - `_internal/audit_adaptive_semantic_20260508.md` — across-query batch update, 본 구현 일치
+- V7 (Reservoir RANDOM20 proxy) / V8 (LSH K=20 vs n_hp=5 misalignment) / V9 (sparse_rp = Li 2006 1/√D variant) — master_v6 §10.7 + outline v2 §6 L11~L13 + 자문 메일 v4 §3(6) 정정 완료
 
 ### 코드 (RQ3 launch ready / 진행 중)
 - `experiments/code/rq3/run_adaptive_sampling.py` (544 lines) + `launch_adaptive_phase1_2.sh` (160 lines) — Single Adaptive (Phase 1+2 완료, Phase 3 deferred)

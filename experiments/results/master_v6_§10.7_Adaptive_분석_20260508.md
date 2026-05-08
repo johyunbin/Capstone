@@ -45,3 +45,11 @@ paired Δ% 정의:
 ### Limitation 및 multi 환경 placeholder
 
 본 결과는 단일 테이블 한정이다. §10.6 의 25× shrinkage chain (단일 17.13% → multi-vector 0.67%) 이 보여준 바, multi 환경에서는 4강 vs BERN 자체가 ±1% marginal 영역으로 약화되므로 4강 vs Adaptive head-to-head 도 indistinguishable 가능성이 높다. **Multi-vector + multi-table-join 3 cell × Adaptive Sampling baseline** 측정은 5/9 morning 도착 예정이며, 결과 도착 후 본 §10.7 에 multi 비교 표를 추가한다 (placeholder). 단일 정확성이 multi 정확성의 *필요조건만* 성립한다는 §10.6 narrative 와 정합하므로, 4강의 head-to-head 우위가 multi 에서는 약화될 것이라는 가설을 사전에 명시한다.
+
+### Method-level limitation (V7 audit)
+
+본 연구의 11 method paired 비교는 9/11 paper-correct + 2/11 minor deviation:
+
+- **Reservoir (V7 finding)**: single-cell `run_reservoir.py` 는 `rng.integers(0, K, size=N)` 로 RANDOM20 proxy 구현 (Vitter Algorithm R 가 아님). multi-cell `_fit_reservoir` 는 `rng.choice(N, K, replace=False)` + nearest-centroid 으로 Vitter 통계 동치. 즉 P3 streaming sub-paradigm 의 representative 로서는 multi-cell 측정만 valid 하며, single-cell 결과는 RANDOM20 variant 로 해석한다.
+- **LSH (V7 finding)**: Charikar 2002 sign(W·v) random projection 자체는 정확. 그러나 K=20 vs n_hyperplanes=5 의 misalignment 로 mod 20 collision 발생 (buckets 0~11 의 ~2× over-density), Wave 0 +2092% fail 의 algorithmic origin. K=2^n_hp (K=16 또는 K=32) 정합 시 자연스러우나 본 연구는 K=20 fixed 로 honest limitation.
+- **sparse_rp (V7 finding)**: Achlioptas 2003 PODS 의 density 1/3 가 아니라 Li et al. 2006 KDD 의 1/√D variant 구현. 두 reference 모두 본 연구 narrative 에 명시.

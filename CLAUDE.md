@@ -116,13 +116,14 @@
 - Deep Review (학술 정합성): `_internal/RQ3_paradigm_심층검증_20260508.md`
 - Adaptive 분석: `_internal/Adaptive_Sampling_method_분석_20260508.md`
 
-6 audit reports (5/8 21:48 ~ 22:04, 모두 ✅):
+6 audit reports (5/8 21:48 ~ 22:04, 모두 ✅) + V7~V9 method-level (5/8 22:30~):
 - `_internal/audit_matrix_20260508.md` — 측정 매트릭스 49/50 single + Multi 진행 중
 - `_internal/audit_data_integrity_20260508.md` — A- 등급, schema/null/paired 100% PASS
 - `_internal/audit_master_v6_§10.7_20260508.md` — narrative fully consistent ✅
 - `_internal/audit_adaptive_algorithm_20260508.md` — Section VI exact + 식 1~6 line-by-line
 - `_internal/audit_extra_experiments_20260508.md` — P1/P2/P3 priority 권장
 - `_internal/audit_adaptive_semantic_20260508.md` — across-query batch update, 본 구현 일치
+- V7~V9 method-level audit — 11 method 중 9 paper-correct + 2 minor deviation (Reservoir RANDOM20 proxy / LSH K=20 vs n_hp=5 misalignment / sparse_rp = Li 2006 1/√D variant). master_v6 §10.7 + outline v2 §6 L11~L13 + 자문 메일 v4 §3(6) 정정 반영
 
 handoff chain:
 - `_internal/handoff_v13_session_20260508_2110_RQ3확정완료_launch대기.md`

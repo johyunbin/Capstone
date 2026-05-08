@@ -695,7 +695,7 @@ function S12() {
           <div className="card" style={{padding:'12px 14px', background: C.g100, border:'none'}}>
             <div className="label-mono">sf100 측정</div>
             <div style={{fontSize: 12, color: C.g600, marginTop: 6, fontFamily:'var(--font-mono)'}}>
-              채림 석사 자문 후 보강 (5/15) · multi-table join STAGE 3 진행 중
+              채림 석사 자문 후 보강 (5/15) · multi-table join STAGE 3 완료 (5/8 17:50)
             </div>
           </div>
         </div>

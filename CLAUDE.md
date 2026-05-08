@@ -85,7 +85,7 @@
    - K-aware sweep 확장 (SIFT/SSN/WIKI/YFCC × 2 SF × 4K = 32 cell, ~15h, 자문 회신 후)
    - 5/22 박광현 교수님 미팅 reflection
 
-5. **⭐ SF100 (80M) 실험** — 5/27 발표 무리, 6/11 최종보고서 supplementary 우선
+5. **⭐ SF100 (80M) 실험 = scope 제외** (5/8 22:16 사용자 결정) — SF1/SF10 만으로 본 연구 narrative 완결, SF100 은 future work 으로 보고서 limitation 명시
 
 6. **⭐ 6/11 최종보고서 drafting** (W5~W6, 5/29 ~ 6/10, ~40h)
    - Outline v2 base (`plans/최종보고서_outline_v2_20260508.md`, 516 lines)

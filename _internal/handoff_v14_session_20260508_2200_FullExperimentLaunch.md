@@ -157,7 +157,7 @@ scp 'capstone:/mnt/hdd0/home/capstone2026/cache/rq1/multi_*sf1*.parquet' \
 
 ### 보류 / 연기 결정
 
-- **SF100 (80M)** — 채림 자문 회신 + 시간 부담 → 6/11 최종보고서 supplementary 우선, 5/27 발표 무리
+- **SF100 (80M) = scope 제외** (5/8 22:16 사용자 결정) — SF1·SF10 만으로 본 연구 narrative 완결, future work 으로 limitation 명시
 - **Sample size budget 4종 × 10 cell × 11 method** — Adaptive paired sub-set 으로 cover 인정, 추가 측정 X
 - **Selectivity extreme low (0.001 / 0.005)** — 본 thesis sel range 5종이 이미 충분, 보류
 - **Distance shell + Importance Sampling fix** — 5 paradigm 외 method 제외 정당, 추가 측정해도 narrative 변화 X

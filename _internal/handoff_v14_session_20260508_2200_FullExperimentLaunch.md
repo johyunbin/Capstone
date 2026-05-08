@@ -53,7 +53,7 @@
 
 ### 2.2 본 세션 추가 결정 4종 (21:30 ~ 22:00)
 
-1. **★4 sparse_rp = paradigm anchor reframe** — Single Adaptive 결과 (Outcome C 동등) → standalone 우위 X 가 honest 하게 보고되나 *5 paradigm framework P4 anchor* + *학습 free production-friendly tier* 가치는 별도로 정량 확인 (자문 메일 v4 §3(2) reframe, master_v6 §10.7 narrative)
+1. **★4 sparse_rp = paradigm anchor reframe** — Single Adaptive 결과 (Outcome B 동등) → standalone 우위 X 가 honest 하게 보고되나 *5 paradigm framework P4 anchor* + *학습 free production-friendly tier* 가치는 별도로 정량 확인 (자문 메일 v4 §3(2) reframe, master_v6 §10.7 narrative)
 2. **Multi SF1 setup launch** (Agent W) — `multi_join_deep_wiki` 4kang 1 cell 결손 보강 + Multi paradigm 광범위 narrative 보완. ETA ~5/9 02:00
 3. **YFCC K-sweep 1 cell 추가 launch** — single 매트릭스 49/50 → 50/50 완전성. ~2h, ~24:00 finalize
 4. **자문 메일 v4 = 박성원 멘토 단독** (지도연구원 임채림 + 박광현 교수님 5/22 미팅 분리) — v3 (5/8 21:10 finalize, 4명 합의 내용) → v4 (5/8 21:44 박성원 단독, Adaptive 결과 추가)
@@ -172,7 +172,7 @@ scp 'capstone:/mnt/hdd0/home/capstone2026/cache/rq1/multi_*sf1*.parquet' \
 | 13 | (handoff_v13 추가) 서버 측정 코드 = chain_unified.py 의 CELLS dict + monkey-patch 패턴 (`mc.DATASETS = [DS]`) |
 | 14 | (handoff_v13 추가) Adaptive Sampling hyperparameter Section VI exact: m=0.9, η₀=0.1, α=50, β=1.5, γ=0.99, period=50, init_N=385 — 변경 절대 X |
 | 15 | (handoff_v13 추가) 백그라운드 6 에이전트 병렬 = 한 세션 token 효율 max (메인 = 사용자 대화 + 결정 + commit) |
-| **16** | **(본 세션 추가)** ★4 sparse_rp narrative = *5 paradigm P4 anchor* + *학습 free production-friendly tier* 가치 (standalone 우위 X 정직 reporting). Outcome C 동등 결과 = paradigm coverage 증명, Outcome A 와 동일 권위 |
+| **16** | **(본 세션 추가)** ★4 sparse_rp narrative = *5 paradigm P4 anchor* + *학습 free production-friendly tier* 가치 (standalone 우위 X 정직 reporting). Outcome B 동등 결과 = paradigm coverage 증명, Outcome A 와 동일 권위 |
 | **17** | **(본 세션 추가)** Adaptive Sampling 의미론 = across-query 50-batch momentum update (paper §V-B), within-query stopping X — 발표 1슬라이드 + Q&A backup 에 1줄 명시 |
 | **18** | **(본 세션 추가)** 6 audit (V1~V6) 모두 ✅ — RQ1/RQ2/RQ3 narrative evidence integrity 보증. master_v6 의 모든 mean/sig count 가 raw csv 와 fully consistent |
 | **19** | **(본 세션 추가)** 자문 메일 분리 — 박성원 멘토 (5/15~5/20 발송) / 박광현 교수님 (5/22 미팅 직접) / 임채림 지도연구원 (별도 의뢰 X). 매 자문 단독 발송 |

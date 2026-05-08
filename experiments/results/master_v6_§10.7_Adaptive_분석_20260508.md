@@ -36,7 +36,7 @@ paired Δ% 정의:
 
 **Multiple comparison correction (40 test = 10 cell × 4 method) — Outcome 판정 불변.** Bonferroni (α = 0.00125): HDBSCAN 6/10, MB_partial 4/10, Hilbert 3/10, sparse_rp 0/10. Benjamini-Hochberg FDR (q = 0.05): HDBSCAN 7/10, MB_partial 5/10, Hilbert 6/10, sparse_rp 0/10. 두 보정 모두 **★1~★3 의 paired 우위** + **★4 의 동등** 결론은 안정적이며, 단지 magnitude tier (`*` / `**` / `***`) 가 raw p 기준 표시이므로 critical reviewer 검토 시 BH/Bonferroni 결과를 보조 evidence 로 함께 제시한다.
 
-종합하면 Outcome **A (4강 > Adaptive)** 이 단, sparse_rp 는 outcome **C (동등)**. 4강 method 중 *분포-인지 강도가 강한 3종* (HDBSCAN, Hilbert, MB_partial) 이 Adaptive Sampling 에 paired statistical significance 를 가지고 우월하며, *production-friendly random projection* (sparse_rp) 은 Adaptive Sampling 과 통계적 indistinguishable.
+종합하면 Outcome 의 혼합 — ★1~★3 (HDBSCAN/Hilbert/MB_partial) 은 **A (4강 > Adaptive, paired 우위)**, ★4 sparse_rp 는 **B (동등, paired CI 0 포함)**. 보고서 outline v2 §4.4 의 4 outcome 정의 기준: A=4강 우위, B=동등, C=Adaptive 우위 (thesis fail), D=Hybrid. 4강 method 중 *분포-인지 강도가 강한 3종* (HDBSCAN, Hilbert, MB_partial) 이 Adaptive Sampling 에 paired statistical significance 를 가지고 우월하며, *production-friendly random projection* (sparse_rp) 은 Adaptive Sampling 과 통계적 indistinguishable.
 
 ### 본 연구 contribution 강도 평가
 

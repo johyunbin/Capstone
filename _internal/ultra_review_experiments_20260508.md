@@ -85,4 +85,4 @@ R  experiments/figures/rq1_motivation/slide6_vector_c_snippet.png -> experiments
 
 ## 6. Commit hash
 
-(commit 본 step 직후 추가)
+`2c9a9d7` — `ultra-review experiments/ — stale archive + naming 정정` (5/8 22:32 KST)

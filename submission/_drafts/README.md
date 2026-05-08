@@ -2,13 +2,13 @@
 
 이 폴더는 **현재 작업 중인 공유 문서** 를 둔다. 마감 후 정식 파일은 `submission/제출완료/` 로 이동하고, 작업 중간 버전은 `archive/` 로 보낸다.
 
-> **마지막 갱신**: 2026-05-08 17:55 KST — 5/8 19:00 회의 직전 정리 (3 파일 통합 narrative + 5/8 v1 PPT archive 이동)
+> **마지막 갱신**: 2026-05-08 18:05 KST — 5/8 19:00 회의 직전 정리 (3 파일 통합 narrative + multi-table join STAGE 3 측정 완료 반영)
 
 ---
 
-## 📌 현재 상태 (2026-05-08, W4 sprint 종료 직전)
+## 📌 현재 상태 (2026-05-08, W4 sprint 종료)
 
-**5/8 19:00 회의 자료 finalize.** RQ1+RQ2+RQ3 단일 100% 측정 + multi-vector 4강 일반화 완료, multi-table join (STAGE 3) 측정 진행 중. 자문 메일 발송은 회의 후 ~5/15.
+**5/8 19:00 회의 자료 finalize.** RQ1+RQ2+RQ3 단일 100% 측정 + multi-vector 4강 일반화 + multi-table-join 4강 (STAGE 3, 5/8 17:50) 모두 완료. shrinkage chain 17.13 → 0.67 → 0.68% 25.2× 확정. 자문 메일 발송은 회의 후 ~5/15.
 
 5/8 회의 발표 본체는 **Claude Design 16-slide academic deck** (사용자 카톡 link 직접 공유). 본 _drafts 는 그 보조 문서들.
 

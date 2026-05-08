@@ -2,7 +2,7 @@
 
 이 폴더는 **현재 작업 중인 공유 문서** 를 둔다. 마감 후 정식 파일은 `submission/제출완료/` 로 이동하고, 작업 중간 버전은 `archive/` 로 보낸다.
 
-> **마지막 갱신**: 2026-05-08 18:05 KST — 5/8 19:00 회의 직전 정리 (3 파일 통합 narrative + multi-table join STAGE 3 측정 완료 반영)
+> **마지막 갱신**: 2026-05-08 22:30 KST — 회의 종료 후 cleanup 정리. v3/v4 active 만 _drafts/ 잔존, 이전 버전은 `archive/2026_05_08_drafts_cleanup/` 으로 이동.
 
 ---
 
@@ -30,12 +30,14 @@
 
 ---
 
-## 📋 회의 의제 자료
+## 📋 회의 후 active 자료 (W2 자문 발송 / 지도확인서)
 
 | 자료 | 용도 | 비고 |
 |---|---|---|
-| `속도는벡터_자문메일초안_W4_20260508.{md,pdf}` | 자문 발송용 (채림 석사 + 지도교수님) | v6, PDX 의제 4 포함 + multi 4강 일반화 update |
-| `속도는벡터_5월27일발표_plan_20260508.{md,pdf}` | 5/27 최종발표 plan (slide outline) | §S13 multi 25.4× shrinkage 반영 |
+| `속도는벡터_연구지도확인서_20260508_v3.{md,pdf}` | 연구 지도 확인서 (5/22 미팅 + 6/11 보고서 reference) | v3, narrative 축소 → method 선정 단계까지만 |
+| `속도는벡터_자문메일_박성원멘토_20260508_v4.md` | 자문 발송용 (박성원 멘토, 5/15~5/20 발송 예정) | v4, W4 sprint 결과 반영 |
+
+> 5/27 발표 outline 은 별도 plan 문서 대신 본 deck (`속도는벡터 — Academic v3 · Final 5_27.{pdf,pptx}`) 자체로 대체. 이전 outline plan PDF 는 archive/ 로 이동.
 
 ---
 
@@ -72,14 +74,23 @@
 
 ```
 archive/
+├── 2026_05_08_drafts_cleanup/  ← 5/8 22:30 cleanup, v3/v4 로 superseded 된 파일들
+│   ├── 속도는벡터_연구지도확인서_20260508_v2.md (v3 로 superseded)
+│   ├── 속도는벡터_자문메일초안_W4_20260508_v6.pdf (v4 md 로 superseded)
+│   └── 속도는벡터_5월27일발표_plan_20260508.pdf (deck 으로 대체)
 ├── 5_8_회의_v1_PPT/        ← 5/8 v1 PPT 관련 (Claude Design deck 으로 대체됨, 5/8 17:55 이동)
 │   ├── 속도는벡터_5월8일회의_v1.pptx (525 KB, 양식 99%)
 │   ├── 속도는벡터_5월8일회의_v1.{html,pdf}
 │   ├── 속도는벡터_5월8일회의_v1_image.pptx (image backup)
 │   ├── 속도는벡터_5월8일회의_PPT_outline.md (5/7 outline)
 │   └── academic_deck_5월8일회의/ (5/7 prototype HTML)
+├── W4_5월6일~7일_pre회의/   ← 5/6~7 pre-회의 work-in-progress (19 파일)
 ├── 발표prototype/          ← RQ_interactive_prototype.html (5/7)
-└── (이전 19 archive 파일들, 5/6~7 work-in-progress)
+├── 자문이메일/             ← 4/15 발송 archive (v1, v2)
+├── 중간발표/               ← 4/30 중간발표 archive (templates + history)
+├── 중간보고서/             ← 4/28 중간보고서 archive (history)
+├── 팀원온보딩/             ← 4/27 온보딩 archive
+└── 프로젝트설명서/         ← 4/28 프로젝트 설명서 archive
 ```
 
 ---
@@ -92,10 +103,10 @@ archive/
 
 ---
 
-## 📅 다음 작업 (5/8 회의 후)
+## 📅 다음 작업 (5/8 회의 종료 후)
 
-1. handoff_v11 update (회의 4 의제 결정 사항 반영)
-2. 자문 메일 발송 결정 (Option A: 회의 직후 / Option B: 5/9~10 v7 후)
-3. master_v6 v7 작성 (회의 narrative 합의 결과)
-4. STAGE 3 multi-table join 결과 도착 시 master_v6 §multi-2 + Slides.jsx S13 추가 반영
-5. 5/27 plan v2 (자문 회신 ~5/15+ 후)
+1. ✅ 회의 종료 (5/8 19:00~19:30, 비대면 전원) — 결정 3가지: Adaptive Sampling 비교 / 5/27 발표 / SF100 시간 여유 시
+2. 5/9~5/15: 자문 메일 v4 발송 (박성원 멘토) + 회신 대기 + Adaptive 비교 측정 launch
+3. 5/22 교수님 미팅 — 연구지도확인서 v3 reference
+4. 5/27 최종발표 — Academic v3 deck 본체 + 자문 합의 supplementary slide
+5. 6/11 최종보고서 (~38p) drafting

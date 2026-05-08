@@ -10,16 +10,18 @@
 
 ## 현재 단계
 
-> **5/8 21:10 — RQ3 paradigm framework 확정 + Adaptive Sampling launch ready. 다음: 22:00 KST overnight launch (~5h).**
-> 5/8 19:00 회의 후 Deep Review Agent (학술 정합성 검증) + 6 백그라운드 에이전트 병렬 산출 → 4 변경 사항 finalize: ① **P5 = "Low-discrepancy / Quasi-random"** 단일 inductive bias (Option B, LSH = Wave 0 fail limitation), ② **★4 = sparse RP** (Achlioptas 2003 PODS, data-independent, ARI #1, **Hybrid 대체**), ③ 누락 critical (Sketch / Mean-Shift / R-tree / MinHash) = limitation 명시, ④ 4강 narrative 변경 X. 박세은 20:38 교수님 카톡 brief draft 발송 예정. 자문 메일 v3 (formal) 은 Multi/Adaptive 결과 후 5/11~5/15 finalize. 다음 미팅 5/22 교수님, 최종발표 **5/27 (D-19)**, 최종보고서 **6/11 (D-34)**.
+> **5/8 22:00 — Single 100% (10 cell × 5 mode) + Multi SF10/SF1 진행 + 6 audit ✅ + 자문 메일 v4 박성원 멘토 ready. 다음: 5/9 morning 4 측정 회수.**
+> 5/8 21:10 RQ3 paradigm framework 확정 후 50분간 collateral sprint — Single Adaptive 분석 (Outcome A 판정, HDBSCAN 7/10 sig + sparse_rp 0/10 동등) + 자문 메일 v4 박성원 멘토 단독 (sparse_rp = paradigm anchor reframe) + 보고서 outline v2 (516 lines, 8 section ~40p) + 6 audit (V1 matrix / V2 data integrity / V3 §10.7 narrative / V4 algorithm fidelity Section VI exact / V5 extra experiments priority / V6 semantic Adaptive 직관 vs paper) 모두 ✅. ★4 sparse_rp = paradigm anchor reframe 적용 (standalone 우위 X 정직 reporting + paradigm coverage 가치). Adaptive 알고리즘 = Section VI hyperparam 정확 일치 + paper 의미론 (across-query 50-batch momentum update) 본 구현과 일치.
 >
-> **W1 sprint 종합 결과** (5/5~5/8, RQ1+RQ2+RQ3 100% 측정 완료):
-> - **RQ1**: 13/13 cell ρ < 0 (10 single + 3 multi) — selectivity 작을수록 BERN 부정확 단조 증가, DEEP-KM20 ρ=-0.680 CI [-0.800, -0.440]
-> - **RQ2**: 12 single cell × 5 mode × 5 sel → 51/52 paired CI 0 제외, σ-allocation 격차 < 1% (어느 mode 든 비슷, 균등도 충분)
+> **W1 sprint 종합 + 5/8 evening sprint 결과** (5/5~5/8 22:00, RQ1+RQ2+RQ3+Adaptive 100% 측정 + 6 audit):
+> - **Single 매트릭스 49/50** (10 cell × {RQ1 km20 / RQ2 5-mode / K-sweep / RQ3 11 method / Adaptive} = 98%, 단일 결손 = YFCC_sf10 K-sweep 1 cell × 4 K → 22:00 launch 보강 진행 중, ~24:00 finalize)
+> - **Multi 측정 진행 중**: SF10 paradigm 11 method (PID 4100549, ~5/9 03~05 finalize) + SF10 Adaptive (PID 4100548, ~22:00 finalize) + Multi SF1 setup (Agent W, ETA ~5/9 02:00)
 > - **RQ3 paradigm framework** (5/8 20:48 confirm): **5 paradigm × 11 method** — P1 Cluster (HDBSCAN/MiniBatch/GMM) / P2 Spatial (Hilbert/faiss_ivf) / P3 Streaming (MB_partial/Reservoir) / P4 DimReduction (sparse_rp/PCA1D) / P5 Low-discrepancy (LSH/Sobol). **4강** = 5 paradigm 중 4 distinct representative: ★1 HDBSCAN -8.04 (P1) / ★2 MB_partial -7.63 (P3) / ★3 Hilbert -7.54 (P2) / ★4 **sparse RP -6.91 (P4, Achlioptas 2003)**.
-> - **Multi 일반화**: 3 cell × 4강 → 단일 sweet spot 17.13% → multi 0.67% (25× 약화) → "단일 정확성 = multi 정확성 *필요조건* 만"
+> - **Single Adaptive paired Δ% (Outcome A)**: HDBSCAN 10/10 win + 7/10 sig (paired Wilcoxon p<0.05) / Hilbert 9/10 win + 6/10 sig / MB_partial 8/10 win + 6/10 sig / **sparse_rp 4/10 win + 0/10 sig (Outcome C 동등)** → ★4 = paradigm P4 anchor + 학습 free production-friendly tier 가치 reframe
+> - **6 audit 모두 ✅** (V1~V6, narrative evidence integrity 보증) + 별표 tier inflation 8 cell + multiple comparison correction 1줄 disclaimer 권장
+> - **자문 메일 v4 박성원 멘토 ready** (90% filled, Multi 결과 §2 도착 후 finalize → 5/15~5/20 발송)
 > - **PDX (SIGMOD 2025) 학술 confirmation**: intrinsic_dim + skewness driven algorithm selection (본 thesis 와 정확 일치)
-> - **5/8 21:10 launch ready**: Adaptive code (chain_unified 패턴) + Multi paradigm wrapper (11 method) 모두 서버 dry-run 통과. Phase 1 (22:00~01:00 SF1 5 cell) + Phase 2 (01:00~03:00 DEEP/SIFT SF10) overnight.
+> - **Multi 일반화**: 3 cell × 4강 → 단일 sweet spot 17.13% → multi 0.67% (25× 약화) → "단일 정확성 = multi 정확성 *필요조건* 만"
 
 - **연구 방향**: Exqutor 가 미작동하는 단일 테이블 영역에 대한 분포 정보의 가치 정량화. (단일 → 멀티 일반화는 future work, 단일 정확성은 멀티 정확성의 *필요조건*만 성립.)
 
@@ -47,7 +49,8 @@
 | **W1 Sprint** | **5/5~5/8 19:00** | **RQ1+RQ2+RQ3 100% 측정 + 4강 도출 + multi 25× shrinkage + PDX confirmation** | ✅ 완료 |
 | **5/8 회의** | 5/8 19:00~19:30 | 비대면 회의 — 결정 3가지 (Adaptive 비교 / 5/27 발표 / SF100) + 자문 outline 3줄 합의 | ✅ 완료 |
 | **5/8 RQ3 finalize** | 5/8 19:30~21:10 | **Deep Review (학술 정합성) + 5 paradigm × 11 method + ★4 sparse RP + 6 에이전트 병렬 산출** | ✅ 완료 |
-| **W2 자문/launch** | **5/9~5/15** | **22:00 Adaptive launch overnight + 5/9 Multi paradigm + 자문 메일 v3 발송 (Adaptive/Multi 결과 후)** | ← **현재** |
+| **5/8 evening sprint** | 5/8 21:10~22:00 | **Single Adaptive 분석 + 자문 메일 v4 박성원 멘토 + 보고서 outline v2 + 6 audit (V1~V6) + Multi 측정 launch** | ✅ 완료 |
+| **W2 자문/launch** | **5/9~5/15** | **5/9 morning 4 측정 회수 (Multi 11-method/Adaptive/YFCC K-sweep/Multi SF1) + master_v6 §10.6 fill + 자문 메일 v4 박성원 발송 ready** | ← **현재** |
 | W3 | 5/16~5/21 | (자문 합의 후) Multi 광범위 + Ensemble + 발표자료 초안 | ⬜ |
 | 미팅 | 5/22 | 교수님 미팅 | ⬜ |
 | W4 | 5/23~5/26 | 발표자료 최종 마감 + supplementary slide (자문 결과) | ⬜ |
@@ -57,27 +60,36 @@
 | W6 | 6/5~6/10 | 최종보고서 finalize + 양식·검토 | ⬜ |
 | 보고 | **6/11** | **★ 최종보고서 제출 (D-34 from 5/8)** | ⬜ |
 
-### 다음 단계 (5/8 21:10 RQ3 finalize 후)
+### 다음 단계 (5/9 morning trigger checklist)
 
-1. **⭐⭐⭐ Adaptive Sampling baseline launch** (5/8 22:00 ~ 5/9 03:00, ~5h overnight)
-   - Phase 1 (22:00~01:00): SF1 5 cell 순차 (DEEP/SIFT/SSN/WIKI/YFCC)
-   - Phase 2 (01:00~03:00): SF10 DEEP+SIFT 병렬 (HDD ≤ 2)
-   - Phase 3 (5/9 daytime): SF10 SSN/WIKI/YFCC deferred
-   - 코드: `experiments/code/rq3/run_adaptive_sampling.py` + `launch_adaptive_phase1_2.sh` (chain_unified 패턴, 서버 dry-run 통과)
+1. **⭐⭐⭐ 5/9 morning 4 측정 회수 + 분석** (~30분, 본 §0 진입 즉시)
+   - flag 점검: `ssh capstone "ls /tmp/*_done.flag"` (4 flag 기대)
+   - 결과 회수: Multi paradigm 11 method (33 csv) + Multi SF10 Adaptive + YFCC sf10 K-sweep (4 parquet) + Multi SF1 setup (3-6 parquet)
+   - `analyze_multi_paradigm.py` 실행 → master_v6 §10.6 fill (agent 위임)
+   - master_v6 §10.5 의 YFCC sf10 row update (K-sweep 보강)
 
-2. **⭐⭐⭐ Multi paradigm 광범위 launch** (5/9 저녁 ~ 5/10 새벽, ~10h)
-   - 3 multi cell × 11 method × 5 sel × 5 seed × 100 query = 8250 measurement
-   - 코드: `_internal/scripts/measure_multi_paradigm.py` (서버 `cache/rq3/` scp 완료)
+2. **⭐⭐⭐ 자문 메일 v4 박성원 멘토 finalize + 발송 ready** (~10분, 5/9 morning)
+   - `submission/_drafts/속도는벡터_자문메일_박성원멘토_20260508_v4.md` 의 §2 Multi 결과 fill
+   - PDF 변환: `python3 scripts/md2pdf.py`
+   - 사용자 review → 5/15~5/20 박성원 멘토 발송 결정
 
-3. **⭐⭐ 자문 메일 v3 finalize** (5/11~5/15)
-   - 지도확인서 v3 base (`submission/_drafts/속도는벡터_연구지도확인서_20260508_v3.{md,pdf}`) + Adaptive/Multi 결과 통합
-   - 채림 + 교수님 발송 (W2 마감)
+3. **⭐⭐ P1 즉시 task 4종** (5/10 일, ~3h 합산)
+   - MinHash 측정 (P5 hashing 보강, ~0.5h) — LSH Wave 0 fail 의 직접 보강
+   - per-stratum BERN per-K 재분석 (~2h, 분석만, 기존 cache 재사용)
+   - Tier 2 (birch, kde_pilot) narrative 정정 (~0h, 문서만) — 강재현 audit 결과 kde_pilot KM20 leak
+   - Adaptive 회수 + 4강 paired Δ% 점검 (~10분)
 
-4. **⭐⭐ 5/27 발표 준비** (W3~W4)
-   - Slide redesign 안: `_internal/slide_redesign_v2_20260508.md` (16→18 page, S6.5/S10.5 신규)
-   - 5/22 교수님 미팅 reflection
+4. **⭐⭐ 5/27 발표 준비** (W3~W4, 5/13 ~ 5/26)
+   - Slide redesign 안 적용: `_internal/slide_redesign_v2_20260508.md` (515 lines, 16→18 page, S6.5/S10.5 신규)
+   - Adaptive×4강 Ensemble (matched-budget mode B, ~5h, 5/13 evening)
+   - K-aware sweep 확장 (SIFT/SSN/WIKI/YFCC × 2 SF × 4K = 32 cell, ~15h, 자문 회신 후)
+   - 5/22 박광현 교수님 미팅 reflection
 
-5. **⭐ SF100 (80M) 실험** — 시간 여유 시 (현실적 어려움, 자문 의견 대기)
+5. **⭐ SF100 (80M) 실험** — 5/27 발표 무리, 6/11 최종보고서 supplementary 우선
+
+6. **⭐ 6/11 최종보고서 drafting** (W5~W6, 5/29 ~ 6/10, ~40h)
+   - Outline v2 base (`plans/최종보고서_outline_v2_20260508.md`, 516 lines)
+   - 4 팀원 분담 (박세은 통합 / 조현빈 §3 §4.1 / 이동욱 §2 §4.2 / 강재현 §4.3)
 
 ### W1 Sprint 산출 (5/5~5/8) — 100% 완료 ✅
 
@@ -88,14 +100,33 @@
 - **PDX (SIGMOD 2025) 학술 confirmation** 추가 (intrinsic_dim + skewness driven algorithm selection 본 thesis 일치)
 - **RQ3 30 method 분포·인덱스 leak audit** 완료 (23 clean / 1 oracle / 1 suspect / 5 pending)
 
-**산출물 위치**:
-- master 분석본: `experiments/results/RQ1_RQ2_RQ3_종합_master_v6_draft_filled_partial.{md,pdf}`
+**산출물 위치** (5/8 22:00 기준):
+
+분석 본체:
+- master 분석본: `experiments/results/RQ1_RQ2_RQ3_종합_master_v6_draft_filled_partial.{md,pdf}` — §10.5 sweet spot + §10.6 Multi placeholder + §10.7 Single Adaptive
+- §10.7 Adaptive: `experiments/results/master_v6_§10.7_Adaptive_분석_20260508.md` (Outcome A 판정)
+- 10cell narrative: `experiments/results/10cell_narrative_종합_20260508.{md,pdf}`
+
+자료 / 문서 (5/8 finalize):
+- 자문 메일 v4 박성원 멘토 (5/9 fill 대기): `submission/_drafts/속도는벡터_자문메일_박성원멘토_20260508_v4.md`
+- 지도확인서 v3 (5/8 21:10 finalize): `submission/_drafts/속도는벡터_연구지도확인서_20260508_v3.{md,pdf}`
 - 발표 deck (현재): `submission/_drafts/속도는벡터 — Academic v3 · Final 5_27.pdf` (16 page)
-- 발표 deck redesign 안 (5 paradigm): `_internal/slide_redesign_v2_20260508.md` (515 lines, 16→18 page)
-- 지도확인서 v3 (5/8 21:10 finalize): `submission/_drafts/속도는벡터_연구지도확인서_20260508_v3.{md,pdf}` (paradigm naming 정정 4종 + 박세은 카톡 별첨)
-- Deep Review (학술 정합성 backbone): `_internal/RQ3_paradigm_심층검증_20260508.md`
-- Adaptive Sampling 분석: `_internal/Adaptive_Sampling_method_분석_20260508.md`
-- handoff_v13: `_internal/handoff_v13_session_20260508_2110_RQ3확정완료_launch대기.md`
+- 발표 deck redesign 안 (5 paradigm): `_internal/slide_redesign_v2_20260508.md` (515 lines, 16→18 page, S6.5/S10.5 신규)
+- 보고서 outline v2: `plans/최종보고서_outline_v2_20260508.md` (516 lines, 8 section ~40p, v1 → v2 변경 5종)
+- Deep Review (학술 정합성): `_internal/RQ3_paradigm_심층검증_20260508.md`
+- Adaptive 분석: `_internal/Adaptive_Sampling_method_분석_20260508.md`
+
+6 audit reports (5/8 21:48 ~ 22:04, 모두 ✅):
+- `_internal/audit_matrix_20260508.md` — 측정 매트릭스 49/50 single + Multi 진행 중
+- `_internal/audit_data_integrity_20260508.md` — A- 등급, schema/null/paired 100% PASS
+- `_internal/audit_master_v6_§10.7_20260508.md` — narrative fully consistent ✅
+- `_internal/audit_adaptive_algorithm_20260508.md` — Section VI exact + 식 1~6 line-by-line
+- `_internal/audit_extra_experiments_20260508.md` — P1/P2/P3 priority 권장
+- `_internal/audit_adaptive_semantic_20260508.md` — across-query batch update, 본 구현 일치
+
+handoff chain:
+- `_internal/handoff_v13_session_20260508_2110_RQ3확정완료_launch대기.md`
+- `_internal/handoff_v14_session_20260508_2200_FullExperimentLaunch.md` ← **다음 세션 진입점**
 
 ## 세션 시작 체크리스트
 
@@ -179,11 +210,11 @@ Capstone/
 | 5/5 20:00 | RQ 재정립 회의 (전원 비대면) | ✅ |
 | 5/8 19:00 | RQ1+RQ2+RQ3 실험 마감 + 비대면 회의 | ✅ |
 | 5/8 21:10 | RQ3 paradigm framework 확정 (5 paradigm × 11 method, ★4 sparse RP) + Adaptive launch ready | ✅ |
-| **5/8 22:00** | **★ Adaptive Sampling overnight launch ← 다음** | ⬜ |
-| 5/9 morning | Adaptive Phase 1+2 결과 회수 + 분석 | ⬜ |
-| 5/9 daytime | Adaptive Phase 3 (SF10 SSN/WIKI/YFCC) launch | ⬜ |
-| 5/9 저녁 | Multi paradigm 광범위 launch (~10h) | ⬜ |
-| ~5/15 | 자문 요청 발송 (채림 석사 + 교수님) | ⬜ |
+| 5/8 22:00 | Single Adaptive 분석 + 자문 메일 v4 + 보고서 outline v2 + 6 audit (V1~V6) + Multi 측정 launch | ✅ |
+| **5/9 morning** | **★ 4 측정 회수 (Multi 11-method/Adaptive/YFCC K-sweep/Multi SF1) + master_v6 §10.6 fill ← 다음** | ⬜ |
+| 5/9 daytime | Adaptive Phase 3 (SF10 SSN/WIKI/YFCC) launch + 자문 메일 v4 박성원 finalize | ⬜ |
+| 5/10 | P1 task 4종 (MinHash + per-K 재분석 + Tier 2 정정 + Adaptive 회수) | ⬜ |
+| 5/15~5/20 | 자문 메일 v4 박성원 멘토 발송 + 회신 대기 | ⬜ |
 | ~5/21 | 발표자료 초안 마감 | ⬜ |
 | 5/22 | 교수님 미팅 | ⬜ |
 | 5/26 | 발표자료 최종 마감 | ⬜ |

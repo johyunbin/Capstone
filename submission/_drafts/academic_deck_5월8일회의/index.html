@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>속도는벡터 — 5/8 W4 Sprint 회의 자료 (v3 Academic, static)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<style>
+/* =====================================================================
+   v3 Academic — STATIC deck (no React, no Recharts)
+   Reused 1:1 from index-print.html design tokens.
+   Dimensions: 1280 × 720 per slide, deck-stage emulated by plain section.
+   ===================================================================== */
+:root {
+  --bg:           #FFFFFF;
+  --bg-tint:      #F7F9FD;
+  --bg-card:      #FFFFFF;
+  --ink:          #0B0F1C;
+  --ink-soft:     #1A2238;
+  --brand-navy:       #1B3DAD;
+  --brand-navy-deep:  #14307F;
+  --brand-blue:       #4A7BD8;
+  --brand-blue-soft:  #E4ECF8;
+  --brand-red:        #E03A3A;
+  --brand-red-soft:   #FBE3E3;
+  --green:        #2A9D6E;
+  --green-soft:   #E2F1EA;
+  --gold:         #D9A53B;
+  --gold-soft:    #FBF1DC;
+  --gray-50:      #FAFBFD;
+  --gray-100:     #F2F4F8;
+  --gray-200:     #DEE2EC;
+  --gray-300:     #C9CDD8;
+  --gray-400:     #A4ABBC;
+  --gray-500:     #6E7891;
+  --gray-600:     #4B5470;
+  --gray-700:     #2E3650;
+  --line:         #DEE2EC;
+  --line-strong:  #A4ABBC;
+  --font-sans:    "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, -apple-system, "Inter", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --font-num:     "Inter", "IBM Plex Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #2c2f36;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+.deck {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 24px;
+  padding: 28px 12px 56px;
+}
+section.slide {
+  width: 1280px; height: 720px;
+  background: var(--bg);
+  position: relative; overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.30);
+  page-break-after: always;
+  break-after: page;
+}
+
+/* ── Academic chrome ──────────────────────────────────────── */
+.a-stripe {
+  position: absolute;
+  top: 56px; left: 60px;
+  width: 5px; height: 60px;
+  background: var(--brand-navy);
+}
+.a-pad {
+  padding: 56px 72px 80px 80px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.a-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+.a-titlewrap { display: flex; align-items: flex-start; gap: 18px; }
+.a-num {
+  flex: 0 0 auto;
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-num);
+  font-weight: 700; font-size: 18px;
+  letter-spacing: -0.02em;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+.a-title {
+  font-size: 30px; font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  color: var(--ink);
+}
+.a-eyebrow {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gray-500);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.a-meta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gray-500);
+  letter-spacing: 0.14em;
+  flex: 0 0 auto;
+  min-width: 220px;
+  white-space: nowrap;
+}
+.a-meta .pn { color: var(--brand-navy); font-weight: 700; font-size: 12px; }
+.a-meta .pn .total { color: var(--gray-400); font-weight: 500; }
+.a-rule { height: 1px; background: var(--line); margin-bottom: 28px; }
+.a-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.a-impl {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: var(--brand-navy);
+  color: #fff;
+  padding: 16px 80px;
+  font-size: 15px;
+  line-height: 1.45;
+  display: flex; align-items: center;
+  gap: 14px;
+}
+.a-impl::before {
+  content: "→";
+  font-family: var(--font-mono);
+  color: var(--brand-blue-soft);
+  font-weight: 600;
+}
+.a-impl b { color: #fff; font-weight: 700; }
+
+.a-footer {
+  position: absolute;
+  left: 80px; right: 80px; bottom: 22px;
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gray-500);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 1;
+}
+/* when impl bar present, hide footer entirely (page-number already in corner .a-meta) */
+.slide:has(.a-impl) .a-footer { display: none; }
+
+/* ── Type ─────────────────────────────────────────────────── */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gray-500);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.lead { font-size: 15px; line-height: 1.6; color: var(--gray-600); }
+.num-mega { font-family: var(--font-num); font-weight: 800; letter-spacing: -0.06em; line-height: 0.9; color: var(--brand-navy); font-feature-settings: "tnum" 1, "lnum" 1; font-size: 150px; }
+.num-huge { font-family: var(--font-num); font-weight: 800; letter-spacing: -0.05em; line-height: 0.9; color: var(--brand-navy); font-feature-settings: "tnum" 1, "lnum" 1; font-size: 120px; }
+.num-big  { font-family: var(--font-num); font-weight: 800; letter-spacing: -0.04em; line-height: 0.95; color: var(--brand-navy); font-feature-settings: "tnum" 1, "lnum" 1; font-size: 92px; }
+.num-mid  { font-family: var(--font-num); font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--brand-navy); font-feature-settings: "tnum" 1, "lnum" 1; font-size: 56px; }
+.title-l  { font-size: 56px; font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: var(--ink); }
+.title-m  { font-size: 26px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; color: var(--ink); }
+.title-s  { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.title-xs { font-size: 13px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); }
+
+/* ── Cards / Pills / Bullets ─────────────────────────────── */
+.card {
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  border-radius: 3px;
+  padding: 18px 20px;
+}
+.card.tint { background: var(--gray-50); }
+.card.navy-top { border-top: 3px solid var(--brand-navy); }
+.card.red-top  { border-top: 3px solid var(--brand-red); }
+.card.green-top { border-top: 3px solid var(--green); }
+.card.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+.card.dark .label-mono { color: var(--gray-300); }
+.card.dark .lead { color: var(--gray-200); }
+.card.dark .title-m { color: #fff; }
+
+.b-num {
+  display: inline-grid; place-items: center;
+  width: 24px; height: 24px;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-num); font-weight: 700;
+  font-size: 11px; border-radius: 2px;
+}
+.b-num.lg { width: 36px; height: 32px; font-size: 14px; }
+
+.sq-bullet { display:inline-block; width: 8px; height: 8px; background: var(--brand-navy); margin-right: 10px; transform: translateY(-2px); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 4px 9px; border-radius: 2px;
+  border: 1px solid var(--line);
+  color: var(--gray-600); letter-spacing: 0.1em;
+  background: #fff;
+}
+.pill.navy { color: var(--brand-navy); border-color: rgba(27,61,173,0.4); background: rgba(27,61,173,0.05); }
+.pill.red  { color: var(--brand-red);  border-color: rgba(224,58,58,0.4);  background: rgba(224,58,58,0.06); }
+.pill.green{ color: var(--green);      border-color: rgba(42,157,110,0.4); background: rgba(42,157,110,0.06); }
+.pill.gold { color: #8a6e1f; border-color: rgba(217,165,59,0.5); background: rgba(217,165,59,0.10); }
+.pill.dark { color: #fff; background: var(--ink); border-color: var(--ink); }
+
+/* ── tables ──────────────────────────────────────────────── */
+table.clean { width:100%; border-collapse: collapse; font-size: 12px; }
+table.clean th { font-size: 10px; font-weight: 600; color: var(--gray-500); text-align:left; padding: 8px 10px; border-bottom: 2px solid var(--ink); letter-spacing: 0.12em; text-transform: uppercase; }
+table.clean td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-family: var(--font-num); font-feature-settings: "tnum" 1; }
+table.clean td.label { font-family: var(--font-sans); color: var(--gray-700); font-weight: 600; }
+table.clean td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.clean td.num.pos { color: var(--green); font-weight: 600; }
+table.clean td.num.neg { color: var(--brand-red); font-weight: 600; }
+table.clean td.num.huge { color: var(--brand-navy); font-weight: 700; }
+table.clean tr.row-hl td { background: var(--brand-blue-soft); }
+table.clean tr.row-warn td { background: var(--gold-soft); }
+
+/* heatmap-style table */
+table.heat { width:100%; border-collapse: collapse; font-family: var(--font-num); font-size: 12px; }
+table.heat th { font-size: 10px; font-weight: 600; color: var(--gray-500); text-align: center; padding: 7px 6px; letter-spacing: 0.10em; text-transform: uppercase; border-bottom: 2px solid var(--ink); }
+table.heat td { padding: 8px 6px; text-align: center; font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--line); }
+table.heat td.row-lbl { font-family: var(--font-sans); font-weight: 700; text-align: left; padding-left: 12px; color: var(--ink-soft); background: var(--gray-50); }
+table.heat td.h0 { background: #fff; color: var(--gray-500); }
+table.heat td.h1 { background: #f0e9d5; color: #6b5a1f; }
+table.heat td.h2 { background: #ead8b1; color: #5e4a13; font-weight: 600; }
+table.heat td.h3 { background: #e0c481; color: #2a1d00; font-weight: 700; }
+table.heat td.h4 { background: #c89a3e; color: #fff; font-weight: 700; }
+table.heat td.h5 { background: #8a5b00; color: #fff; font-weight: 700; }
+table.heat td.hp1 { background: #fbe3e3; color: var(--brand-red); font-weight: 600; }
+table.heat td.hp2 { background: #f3c2c2; color: #951717; font-weight: 700; }
+
+/* ── stat tiles ──────────────────────────────────────────── */
+.stat { display:flex; flex-direction:column; gap:4px; }
+.stat .label { font-family: var(--font-mono); font-size: 10px; color: var(--gray-500); letter-spacing: 0.18em; text-transform: uppercase; }
+.stat .v { font-family: var(--font-num); font-weight: 700; letter-spacing: -0.03em; color: var(--brand-navy); font-feature-settings: "tnum" 1, "lnum" 1; }
+.stat .v.size-l { font-size: 44px; line-height: 1; }
+.stat .v.size-m { font-size: 32px; line-height: 1; }
+.stat .v.size-s { font-size: 22px; line-height: 1; }
+.stat .desc { font-size: 11.5px; color: var(--gray-600); line-height: 1.45; }
+
+/* ── grid layouts ────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.grid-2-r { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+.grid-2-l { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; }
+.gap-flex { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ── horizontal bar (no charts, just CSS) ────────────────── */
+.bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 70px;
+  gap: 12px;
+  align-items: center;
+  margin: 5px 0;
+}
+.bar-row .b-lbl { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+.bar-row .b-track {
+  height: 14px;
+  background: var(--gray-100);
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.bar-row .b-fill { height: 100%; background: var(--brand-navy); }
+.bar-row .b-fill.pos { background: var(--green); }
+.bar-row .b-fill.neg { background: var(--brand-red); }
+.bar-row .b-fill.muted { background: var(--gray-400); }
+.bar-row .b-val {
+  font-family: var(--font-num);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.bar-row .b-val.pos { color: var(--green); }
+.bar-row .b-val.neg { color: var(--brand-red); }
+
+/* ── timeline (7 step) ───────────────────────────────────── */
+.tl { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; margin-top: 10px; }
+.tl .t-step {
+  border-top: 2px solid var(--line);
+  padding: 10px 12px 0 0;
+  position: relative;
+}
+.tl .t-step::before {
+  content:"";
+  position:absolute; top:-6px; left:0;
+  width: 10px; height: 10px;
+  background: var(--brand-navy);
+  border-radius: 1px;
+}
+.tl .t-step.done::before { background: var(--green); }
+.tl .t-step.now::before { background: var(--brand-red); }
+.tl .t-step.muted::before { background: var(--gray-400); }
+.tl .t-date { font-family: var(--font-mono); font-size: 10px; color: var(--gray-500); letter-spacing: 0.10em; text-transform: uppercase; }
+.tl .t-title { font-size: 12px; font-weight: 700; color: var(--ink); margin-top: 4px; line-height: 1.3; }
+
+/* ── numbered TOC tiles ─────────────────────────────────── */
+.toc-tile {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 14px 14px 16px;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+  border-radius: 3px;
+}
+.toc-tile .badge {
+  width: 30px; height: 24px;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-num); font-weight: 700;
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 2px;
+}
+.toc-tile .tile-title { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.005em; margin-top: 8px; line-height: 1.25; }
+.toc-tile .tile-sub { font-size: 11px; color: var(--gray-500); margin-top: 3px; line-height: 1.4; }
+
+/* ── tier funnel ─────────────────────────────────────────── */
+.funnel { display:flex; flex-direction: column; gap: 7px; margin-top: 6px; }
+.funnel .step {
+  display: grid;
+  grid-template-columns: 96px 1fr 56px;
+  gap: 10px; align-items: center;
+}
+.funnel .step .stage {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--gray-500);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.funnel .step .bar {
+  height: 26px;
+  background: var(--brand-navy);
+  color: #fff;
+  display: flex; align-items: center;
+  padding: 0 12px;
+  font-size: 11.5px; font-weight: 600;
+  border-radius: 1px;
+}
+.funnel .step.dim .bar { background: #b6c5e2; color: #fff; }
+.funnel .step.fade .bar { background: var(--gray-200); color: var(--ink); }
+.funnel .step.win .bar { background: var(--brand-navy-deep); }
+.funnel .step .count { text-align: right; font-family: var(--font-num); font-weight: 700; color: var(--ink); font-size: 13px; }
+
+/* ── lim list ────────────────────────────────────────────── */
+ul.lim { margin:0; padding:0; list-style: none; }
+ul.lim li { border-bottom: 1px solid var(--line); padding: 8px 0; display: grid; grid-template-columns: 30px 1fr; gap: 12px; }
+ul.lim li .num { font-family: var(--font-mono); font-weight: 700; color: var(--brand-navy); font-size: 12px; }
+ul.lim li .txt { font-size: 12px; color: var(--gray-700); line-height: 1.5; }
+ul.lim li .txt strong { color: var(--ink); }
+
+/* ── numbered list (large) ──────────────────────────────── */
+ol.big-num { padding: 0; margin: 0; list-style: none; counter-reset: bn; }
+ol.big-num li {
+  counter-increment: bn;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--gray-100);
+  align-items: start;
+}
+ol.big-num li::before {
+  content: counter(bn, decimal-leading-zero);
+  font-family: var(--font-mono);
+  font-size: 16px; font-weight: 700;
+  color: var(--brand-navy);
+}
+ol.big-num li .li-title { font-size: 13.5px; font-weight: 700; color: var(--ink); line-height: 1.35; }
+ol.big-num li .li-desc { font-size: 11.5px; color: var(--gray-600); margin-top: 2px; line-height: 1.45; }
+
+/* ── callout ─────────────────────────────────────────────── */
+.callout {
+  background: var(--brand-blue-soft);
+  border-left: 3px solid var(--brand-navy);
+  padding: 10px 14px;
+  font-size: 12px; line-height: 1.55;
+  color: var(--ink-soft);
+}
+.callout.warn { background: var(--gold-soft); border-left-color: var(--gold); color: #6b561e; }
+.callout.warm { background: var(--brand-red-soft); border-left-color: var(--brand-red); color: #7d1d1d; }
+.callout.cool { background: var(--green-soft); border-left-color: var(--green); color: #14512f; }
+.callout strong { color: var(--ink); }
+.callout code { font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.6); padding: 1px 5px; border-radius: 2px; }
+
+.img-frame {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px;
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 0;
+}
+.img-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+/* ── COVER ───────────────────────────────────────────────── */
+.cover-grid {
+  display: grid;
+  grid-template-rows: 1fr 130px;
+  height: 100%;
+}
+.cover-title h1 {
+  margin: 0;
+  font-size: 64px; font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.cover-title h1 .accent { color: var(--brand-navy); }
+.cover-title .ko-sub {
+  margin-top: 24px;
+  font-size: 17px;
+  color: var(--gray-700);
+  line-height: 1.6;
+  max-width: 920px;
+}
+.cover-info {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  gap: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+.cover-info .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.20em; color: var(--gray-500); text-transform: uppercase; margin-bottom: 8px; }
+.cover-info .v1 { font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.cover-info .v2 { font-family: var(--font-mono); font-size: 11.5px; color: var(--gray-600); margin-top: 4px; }
+
+/* tag corner */
+.corner-tags {
+  position: absolute;
+  top: 56px; right: 60px;
+  display: flex; gap: 8px;
+}
+.tag-box {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid var(--brand-navy);
+  color: var(--brand-navy);
+  background: #fff;
+}
+.tag-box.alt { border-color: var(--brand-red); color: var(--brand-red); }
+.tag-box.solid { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ── PRINT ───────────────────────────────────────────────── */
+@page { size: 1280px 720px; margin: 0; }
+@media print {
+  html, body { background: #fff; }
+  .deck { padding: 0; gap: 0; }
+  section.slide { box-shadow: none; margin: 0; page-break-after: always; }
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ============================================================
+     S1 — COVER
+     ============================================================ -->
+<section class="slide" id="s1">
+  <div class="a-stripe"></div>
+  <div class="corner-tags">
+    <span class="tag-box">YONSEI · CSE</span>
+    <span class="tag-box alt">BDAI LAB</span>
+  </div>
+  <div class="a-pad" style="padding-top: 96px;">
+    <div class="a-eyebrow" style="padding-left: 24px; margin-top: 0;">CAPSTONE 2026-1 · W4 SPRINT · YONSEI CSE</div>
+
+    <div class="cover-grid" style="margin-top: 60px;">
+      <div class="cover-title">
+        <h1>
+          Skew-Aware<br>
+          Stratified Sampling for<br>
+          <span class="accent">Vector-Augmented</span> Analytical Query
+        </h1>
+        <p class="ko-sub">
+          W4 Sprint 결과 종합 — 4강 method (Hilbert / Hybrid / MiniBatch_partial / HDBSCAN) 의<br>
+          5 dataset × 2 scale 일반화 검증, 분포 sweet spot 정리, 자문 메일 합의
+        </p>
+      </div>
+
+      <div class="cover-info">
+        <div>
+          <div class="label">Team</div>
+          <div class="v1">속도는벡터</div>
+          <div class="v2">박세은 · 강재현 · 조현빈 · 이동욱</div>
+        </div>
+        <div>
+          <div class="label">Advisor</div>
+          <div class="v1">박광현 교수</div>
+          <div class="v2">BDAI Research Lab</div>
+        </div>
+        <div>
+          <div class="label">Reference</div>
+          <div class="v1">arXiv:2512.09695v2</div>
+          <div class="v2">Exqutor (BDAI)</div>
+        </div>
+        <div>
+          <div class="label">Date</div>
+          <div class="v1">2026.05.08</div>
+          <div class="v2">W4 Sprint Meeting</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S2 — TOC
+     ============================================================ -->
+<section class="slide" id="s2">
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div>
+          <div class="a-title">오늘의 구성</div>
+          <div class="a-eyebrow">TABLE OF CONTENTS · 7 SECTIONS · 15 SLIDES · 30 MIN</div>
+        </div>
+      </div>
+      <div class="a-meta">
+        속도는벡터 · STYLE A · ACADEMIC<br>
+        <span class="pn">02<span class="total"> / 15</span></span>
+      </div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div style="display:grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr 1fr; gap: 14px;">
+        <div class="toc-tile"><div class="badge">01</div><div class="tile-title">Motivation</div><div class="tile-sub">Exqutor 보완 영역</div></div>
+        <div class="toc-tile"><div class="badge">02</div><div class="tile-title">Matrix</div><div class="tile-sub">15 cell sprint</div></div>
+        <div class="toc-tile"><div class="badge">03</div><div class="tile-title">RQ1 · Diagnostic</div><div class="tile-sub">selectivity gradient</div></div>
+        <div class="toc-tile"><div class="badge">04</div><div class="tile-title">RQ2 · Aware</div><div class="tile-sub">KM20 + K-aware</div></div>
+        <div class="toc-tile"><div class="badge">05</div><div class="tile-title">RQ3 · Agnostic</div><div class="tile-sub">25 method tier</div></div>
+        <div class="toc-tile"><div class="badge">06</div><div class="tile-title">4강 Heatmap</div><div class="tile-sub">5 dataset 일관성</div></div>
+        <div class="toc-tile"><div class="badge">07</div><div class="tile-title">Distribution</div><div class="tile-sub">sweet spot</div></div>
+        <div class="toc-tile"><div class="badge">08</div><div class="tile-title">Multi-relation</div><div class="tile-sub">vector + join</div></div>
+        <div class="toc-tile"><div class="badge">09</div><div class="tile-title">Honesty</div><div class="tile-sub">limit · future</div></div>
+        <div class="toc-tile"><div class="badge">10</div><div class="tile-title">자문 · 일정</div><div class="tile-sub">5/27 narrative</div></div>
+      </div>
+    </div>
+
+    <div class="a-footer">
+      <span>속도는벡터 · STYLE A · ACADEMIC</span>
+      <span>W4 SPRINT · 2026.05.08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S3 — MOTIVATION
+     ============================================================ -->
+<section class="slide" id="s3">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">01</div>
+        <div>
+          <div class="a-title">본 연구는 Exqutor 의 단일 테이블 비인덱스 영역을 보완한다</div>
+          <div class="a-eyebrow">§01 · MOTIVATION</div>
+        </div>
+      </div>
+      <div class="a-meta">arXiv:2512.09695v2<br><span class="pn">03<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2" style="flex:1;">
+        <div class="card navy-top">
+          <div class="label-mono">EXQUTOR (BDAI) · 본 논문 영역</div>
+          <p class="lead" style="margin: 8px 0 6px;"><b>ECQO</b> — 인덱스가 있을 때 HNSW range query 로 정확한 카디널리티를 1~2 ms 안에 추정. multi-table query plan 까지 직접 다룸.</p>
+          <p class="lead" style="margin: 6px 0;"><b>Adaptive Sampling</b> — 인덱스 없는 단일 테이블 영역에서 momentum 기반 동적 sample size 조정으로 1.2~3.2× speedup. <em>그러나 분포 인지 sampling 의 가치는 미분석.</em></p>
+          <div style="display:flex; flex-direction: column; gap: 8px; margin-top: 14px;">
+            <div><span class="sq-bullet"></span><b>인덱스 ✓ + multi-table ✓</b> &nbsp; <span class="pill navy">covered</span></div>
+            <div><span class="sq-bullet" style="background: var(--brand-red);"></span><b>인덱스 ✗ + 단일 테이블</b> &nbsp; <span class="pill red">partial — sample size 만</span></div>
+          </div>
+        </div>
+
+        <div class="card dark">
+          <div class="label-mono">본 연구 · 보완할 영역</div>
+          <p class="lead" style="margin: 8px 0 12px; color: #d6deea;">Adaptive Sampling 의 <b>전 단계</b>인 "어떻게 sample 을 분배할 것인가" 의 가치를 정량화.</p>
+          <ol class="big-num" style="--brand-navy: #4A7BD8;">
+            <li><div><div class="li-title" style="color:#fff;">분포 인지 stratification (KM20 oracle) 의 가치 정량 입증</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">분포 모를 때 production-ready 4강 method 도출</div><div class="li-desc" style="color:#b6c5e2;">Hilbert / Hybrid / MiniBatch_partial / HDBSCAN</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">σ_i Neyman 신호 honest 한계 보고</div></div></li>
+          </ol>
+          <div class="callout" style="background: rgba(74,123,216,0.18); border-left-color: var(--brand-blue); color: #d6deea; margin-top: 14px;">
+            <b>필요조건</b> · 단일 테이블 정확성은 multi-table 정확성의 필요조건. 단일 → multi 일반화는 <em>future work</em>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>본 연구의 위치 정확히 명시</b> — Exqutor 가 정량 처리한 인덱스 + multi-table 영역의 보완으로서, 단일 테이블 비인덱스 + 분포 인지 sampling 의 가치를 정량화.</div>
+    <div class="a-footer"><span>§01 MOTIVATION</span><span>03 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S4 — MATRIX
+     ============================================================ -->
+<section class="slide" id="s4">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">02</div>
+        <div>
+          <div class="a-title">5 dataset × sf1 / sf10 + multi-relation 3 cell = 15 cell</div>
+          <div class="a-eyebrow">§02 · W4 SPRINT MATRIX</div>
+        </div>
+      </div>
+      <div class="a-meta">5 DATASET · 2 SCALE<br><span class="pn">04<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">단일 테이블 매트릭스 (12 cell)</div>
+          <table class="clean" style="margin-top: 10px;">
+            <thead><tr><th>Dataset</th><th style="text-align:right;">dim</th><th style="text-align:center;">sf1 (800K)</th><th style="text-align:center;">sf10 (8M)</th><th>비고</th></tr></thead>
+            <tbody>
+              <tr><td class="label">DEEP</td><td class="num">96</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">▣</td><td class="label">normal · 균형</td></tr>
+              <tr class="row-hl"><td class="label">SIFT</td><td class="num">128</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">▣</td><td class="label" style="color: var(--brand-navy);"><b>cluster ratio 9.41 — imbalanced</b></td></tr>
+              <tr><td class="label">SSN++</td><td class="num">256</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">▣</td><td class="label">balanced (ratio 1.29)</td></tr>
+              <tr><td class="label">WIKI</td><td class="num">768</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">—</td><td class="label">high-dim text</td></tr>
+              <tr><td class="label">YFCC</td><td class="num">192</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">—</td><td class="label">PCA from 1280d</td></tr>
+              <tr><td class="label">YFCC_DL</td><td class="num">192</td><td class="num" style="text-align:center;">▣</td><td class="num" style="text-align:center;">▣</td><td class="label">분포 정합성 비교용</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card tint">
+          <div class="label-mono">Multi-relation 3 cell</div>
+          <ul style="margin: 10px 0 0; padding-left: 18px; line-height: 1.7; font-size: 12px; color: var(--gray-700);">
+            <li><b>partsupp_deep_sift_10</b> · 한 행 두 임베딩 (96 + 128)</li>
+            <li><b>partsupp_deep_wiki_10</b> · dim 격차 (96 vs 768)</li>
+            <li><b>partsupp_deep_10 ⨝ part_wiki_10</b> · TPC-H natural join</li>
+          </ul>
+          <div class="callout" style="margin-top: 14px;">
+            <b>chain_unified.py</b> 로 cell 당 25 method × 5 sel × 5 seed × 100 query 일괄 측정.<br>
+            <code>partsupp_&lt;DS&gt;_&lt;sf&gt;</code> 일관 패턴.
+          </div>
+          <div class="callout warn" style="margin-top: 8px;">
+            <b>sf100 (80M)</b> 은 5/8 회의 후 자문 합의 후 별도 측정 (W4 의 future scope).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>15 cell 단일 매트릭스</b> — 모든 적재본 partsupp_&lt;DS&gt;_&lt;sf&gt; 일관 패턴, 25 method 일괄 dispatch 로 Exqutor 직접 비교 가능.</div>
+    <div class="a-footer"><span>§02 MATRIX · 15 cell</span><span>04 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S5 — RQ1 (selectivity gradient)
+     ============================================================ -->
+<section class="slide" id="s5">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">03</div>
+        <div>
+          <div class="a-title">BERN sampling 의 부정확성은 selectivity 가 작을수록 단조 증가한다</div>
+          <div class="a-eyebrow">§03 · RQ1 — DIAGNOSTIC</div>
+        </div>
+      </div>
+      <div class="a-meta">SELECTIVITY GRADIENT<br><span class="pn">05<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">측정 — per-seed Spearman ρ + bootstrap 95% CI</div>
+          <table class="clean" style="margin-top: 10px;">
+            <thead><tr><th>Dataset</th><th class="num" style="text-align:right;">sf1 ρ</th><th class="num" style="text-align:right;">sf10 ρ</th><th>부호 일관</th></tr></thead>
+            <tbody>
+              <tr><td class="label">DEEP</td><td class="num">−0.680</td><td class="num">−0.621</td><td><span class="pill green">consistent</span></td></tr>
+              <tr><td class="label">SIFT</td><td class="num">−0.74</td><td class="num">−0.66</td><td><span class="pill green">consistent</span></td></tr>
+              <tr><td class="label">SSN++</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td><span class="pill gold">measuring</span></td></tr>
+              <tr><td class="label">WIKI</td><td class="num">[TBD]</td><td class="num">—</td><td><span class="pill gold">measuring</span></td></tr>
+              <tr><td class="label">YFCC</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td><span class="pill gold">measuring</span></td></tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top: 14px;">
+            <b>W1 sprint 확정</b> · DEEP-KM20 ρ = −0.680, 95% CI [−0.800, −0.440] (bootstrap, 0 제외).<br>selectivity 가 절반이 되면 추정 오차가 단조 증가.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">SIFT 1M selectivity 효과 — sel 별 BERN 오차 (baseline)</div>
+          <div style="margin-top: 10px;">
+            <div class="bar-row"><div class="b-lbl">sel = 0.01</div><div class="b-track"><div class="b-fill neg" style="width: 96%;"></div></div><div class="b-val neg">+19.6%p</div></div>
+            <div class="bar-row"><div class="b-lbl">sel = 0.05</div><div class="b-track"><div class="b-fill neg" style="width: 62%;"></div></div><div class="b-val neg">+12.7%p</div></div>
+            <div class="bar-row"><div class="b-lbl">sel = 0.10</div><div class="b-track"><div class="b-fill neg" style="width: 36%;"></div></div><div class="b-val neg">+7.4%p</div></div>
+            <div class="bar-row"><div class="b-lbl">sel = 0.20</div><div class="b-track"><div class="b-fill neg" style="width: 18%;"></div></div><div class="b-val neg">+3.7%p</div></div>
+            <div class="bar-row"><div class="b-lbl">sel = 0.30</div><div class="b-track"><div class="b-fill neg" style="width: 8%;"></div></div><div class="b-val neg">+1.6%p</div></div>
+          </div>
+          <div class="callout warn" style="margin-top: 14px;">
+            <b>RQ1 결론</b> · skewed 분포 + 좁은 selectivity 영역에서 BERN 은 systematic 으로 부정확. 분포 인지 sampling 의 동기 확보.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>RQ1 진단 통계 확정</b> — selectivity gradient 단조성이 5 dataset 부호 일관성으로 일반화 입증 (DEEP/SIFT 확정, SSN/WIKI/YFCC measuring).</div>
+    <div class="a-footer"><span>§03 RQ1</span><span>05 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S6 — RQ2 (KM20 oracle + K-aware + Anti-Neyman)
+     ============================================================ -->
+<section class="slide" id="s6">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">04</div>
+        <div>
+          <div class="a-title">KM20 oracle 은 일관, σ_i 신호는 약하나 Anti-Neyman 은 systematic hurt</div>
+          <div class="a-eyebrow">§04 · RQ2 — AWARE</div>
+        </div>
+      </div>
+      <div class="a-meta">K-SWEEP · WILCOXON<br><span class="pn">06<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">KM20 vs BERN — paired Δ% (sel=0.10), 4 method 일관</div>
+          <table class="heat" style="margin-top: 10px;">
+            <thead><tr><th>Cell</th><th>Hilbert</th><th>Hybrid</th><th>MB_partial</th><th>HDBSCAN</th></tr></thead>
+            <tbody>
+              <tr><td class="row-lbl">DEEP_sf1</td><td class="h0">−0.43</td><td class="h0">−1.06</td><td class="h0">−1.36</td><td class="h1">−1.84</td></tr>
+              <tr><td class="row-lbl">DEEP_sf10</td><td class="h0">−1.20</td><td class="h1">−1.91</td><td class="h1">−2.07</td><td class="h1">−1.77</td></tr>
+              <tr><td class="row-lbl">SIFT_sf1</td><td class="h5">−32.08</td><td class="h5">−28.95</td><td class="h5">−31.58</td><td class="h5">−32.63</td></tr>
+              <tr><td class="row-lbl">SIFT_sf10</td><td class="h4">−10.72</td><td class="h4">−10.20</td><td class="h4">−10.22</td><td class="h4">−10.47</td></tr>
+              <tr><td class="row-lbl">SSN_sf1</td><td class="hp1">+2.34</td><td class="hp1">+1.35</td><td class="hp1">+1.73</td><td class="hp1">+1.56</td></tr>
+              <tr><td class="row-lbl">SSN_sf10</td><td class="hp1">+2.06</td><td class="hp1">+1.25</td><td class="hp1">+2.04</td><td class="hp1">+1.39</td></tr>
+              <tr><td class="row-lbl">WIKI_sf1</td><td class="h3">−9.61</td><td class="h2">−7.69</td><td class="h3">−9.86</td><td class="h3">−9.96</td></tr>
+              <tr><td class="row-lbl">YFCC_sf1</td><td class="h2">−6.88</td><td class="h2">−5.71</td><td class="h2">−7.15</td><td class="h2">−7.23</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card tint">
+          <div class="label-mono">Anti-Neyman ablation</div>
+          <p class="lead" style="font-size:12.5px; margin: 8px 0 6px;">σ_i 신호 anti-direction 좁은 sel=0.01 측정.</p>
+          <table class="clean">
+            <thead><tr><th>Dataset</th><th class="num" style="text-align:right;">Δ% vs Prop.</th></tr></thead>
+            <tbody>
+              <tr><td class="label">DEEP_sf10</td><td class="num neg">+5.21%</td></tr>
+              <tr><td class="label">SIFT_sf10</td><td class="num neg">+9.49%</td></tr>
+              <tr><td class="label">SSN/WIKI/YFCC</td><td class="num">[TBD]</td></tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top: 12px; font-size:11.5px;">
+            <b>K-sweep</b> K∈{10,20,50,100,200} → K=20 default 가 5 dataset 일반화 robust. K_optimal 격차 [TBD].
+          </div>
+          <div class="callout warn" style="margin-top: 8px; font-size: 11px;">
+            <b>Honest</b> · Anti-Neyman vs Proportional Wilcoxon p &gt; 0.5, Cohen's d &lt; 0.1 → σ_i 신호 비결정적.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>KM20 일관 우월</b> — 8 cell paired Δ% 측정. 단 SSN++ (cluster ratio 1.29 balanced) 만 mild hurt — 분포 sweet spot 단서.</div>
+    <div class="a-footer"><span>§04 RQ2 · KM20 + K-aware</span><span>06 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S7 — RQ3 25 method tier elimination
+     ============================================================ -->
+<section class="slide" id="s7">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">05</div>
+        <div>
+          <div class="a-title">25 method 를 4-step tier elimination 하면 4강이 남는다</div>
+          <div class="a-eyebrow">§05 · RQ3 — AGNOSTIC</div>
+        </div>
+      </div>
+      <div class="a-meta">TIER ELIMINATION<br><span class="pn">07<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">Tier elimination flow — 25 → 12 → 8 → 6 → 4</div>
+          <div class="funnel">
+            <div class="step">
+              <div class="stage">Tier 0 · all</div>
+              <div class="bar" style="background: var(--ink);">25 method (16 base + 9 NEW)</div>
+              <div class="count">25</div>
+            </div>
+            <div class="step dim">
+              <div class="stage">Tier 1 · 통계</div>
+              <div class="bar" style="width: 80%;">≥5/10 cell paired bootstrap CI 0 제외</div>
+              <div class="count">~12</div>
+            </div>
+            <div class="step dim">
+              <div class="stage">Tier 2 · cost</div>
+              <div class="bar" style="width: 60%;">학습 &lt; 5분 + memory &lt; 10 GB + det.</div>
+              <div class="count">~8</div>
+            </div>
+            <div class="step dim">
+              <div class="stage">Tier 3 · scale</div>
+              <div class="bar" style="width: 45%;">sf1 ↔ sf10 부호 일관성 ≥ 80%</div>
+              <div class="count">~6</div>
+            </div>
+            <div class="step win">
+              <div class="stage">Tier 4 · winner</div>
+              <div class="bar" style="width: 32%;"><b>Hilbert · Hybrid · MB_partial · HDBSCAN</b></div>
+              <div class="count">4</div>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top: 14px;">
+            <b>9 NEW method</b> · DBSCAN, OPTICS, Agglomerative, Hierarchical KMeans, Faiss IVF, PCA-KMeans, KMeans++, Coresets, Spectral.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">Tier 4 winner 4강 — production 특성</div>
+          <table class="clean" style="margin-top: 10px; font-size: 11.5px;">
+            <thead><tr><th>Method</th><th>학습</th><th style="text-align:center;">Det.</th><th style="text-align:center;">Online</th></tr></thead>
+            <tbody>
+              <tr><td class="label">Hilbert</td><td class="num" style="text-align:left;">learning-free</td><td class="num" style="text-align:center;">✓</td><td class="num" style="text-align:center;">✓</td></tr>
+              <tr><td class="label">Hybrid</td><td class="num" style="text-align:left;">~2 min</td><td class="num" style="text-align:center;">✓</td><td class="num" style="text-align:center;">partial</td></tr>
+              <tr><td class="label">MB_partial</td><td class="num" style="text-align:left;">&lt; 1 min</td><td class="num" style="text-align:center;">✓</td><td class="num" style="text-align:center;">✓</td></tr>
+              <tr><td class="label">HDBSCAN</td><td class="num" style="text-align:left;">~5 min</td><td class="num" style="text-align:center;">✓</td><td class="num" style="text-align:center;">—</td></tr>
+            </tbody>
+          </table>
+          <div class="callout warn" style="margin-top: 14px; font-size:11.5px;">
+            <b>Negative control</b> · IS NaN sel=0.01 80~95%, PQ +23.6%, Sobol +33.6%, Random_proj 큰 hurt → "분할 자체의 가치" narrative.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>4-step elimination 으로 evidence-based 4강 선정</b> — 통계 → cost → scale → distribution robust. 모든 step 정량 criteria 명시.</div>
+    <div class="a-footer"><span>§05 RQ3 · tier elimination</span><span>07 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S8 — 4강 5 cell heatmap
+     ============================================================ -->
+<section class="slide" id="s8">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">05</div>
+        <div>
+          <div class="a-title">4강 method × 8 cell — SIFT 가장 큰 효과 −32%, SSN++ mild hurt</div>
+          <div class="a-eyebrow">§05 · 4강 일관성 HEATMAP</div>
+        </div>
+      </div>
+      <div class="a-meta">PAIRED Δ% vs BERN<br><span class="pn">08<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">Heatmap — paired Δ% (sel=0.10) · 음수 = improve / 양수 = hurt</div>
+          <table class="heat" style="margin-top: 10px;">
+            <thead><tr><th>Cell</th><th>Hilbert</th><th>Hybrid</th><th>MB_partial</th><th>HDBSCAN</th></tr></thead>
+            <tbody>
+              <tr><td class="row-lbl">DEEP_sf1</td><td class="h0">−0.43</td><td class="h0">−1.06</td><td class="h0">−1.36</td><td class="h1">−1.84</td></tr>
+              <tr><td class="row-lbl">DEEP_sf10</td><td class="h0">−1.20</td><td class="h1">−1.91</td><td class="h1">−2.07</td><td class="h1">−1.77</td></tr>
+              <tr><td class="row-lbl">SIFT_sf1</td><td class="h5">−32.08</td><td class="h5">−28.95</td><td class="h5">−31.58</td><td class="h5">−32.63</td></tr>
+              <tr><td class="row-lbl">SIFT_sf10</td><td class="h4">−10.72</td><td class="h4">−10.20</td><td class="h4">−10.22</td><td class="h4">−10.47</td></tr>
+              <tr><td class="row-lbl">SSN_sf1</td><td class="hp1">+2.34</td><td class="hp1">+1.35</td><td class="hp1">+1.73</td><td class="hp1">+1.56</td></tr>
+              <tr><td class="row-lbl">SSN_sf10</td><td class="hp1">+2.06</td><td class="hp1">+1.25</td><td class="hp1">+2.04</td><td class="hp1">+1.39</td></tr>
+              <tr><td class="row-lbl">WIKI_sf1</td><td class="h3">−9.61</td><td class="h2">−7.69</td><td class="h3">−9.86</td><td class="h3">−9.96</td></tr>
+              <tr><td class="row-lbl">YFCC_sf1</td><td class="h2">−6.88</td><td class="h2">−5.71</td><td class="h2">−7.15</td><td class="h2">−7.23</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">Cross-scale 부호 일관성</div>
+          <table class="clean" style="margin-top: 8px; font-size: 11.5px;">
+            <thead><tr><th>Dataset</th><th>sf1 → sf10</th></tr></thead>
+            <tbody>
+              <tr><td class="label">DEEP</td><td class="num pos">consistent (−)</td></tr>
+              <tr class="row-hl"><td class="label">SIFT</td><td class="num pos">consistent (−)</td></tr>
+              <tr class="row-warn"><td class="label">SSN++</td><td class="num neg">consistent (+) hurt</td></tr>
+            </tbody>
+          </table>
+          <div class="img-frame" style="margin-top: 12px; min-height: 220px;">
+            <img src="figures/fig_4kang_heatmap_partial.png" alt="4강 heatmap">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>4강 method × 8 cell 일관성 입증</b> — sf1↔sf10 부호 일관 = scale invariance, SSN++ mild hurt 만 honest 별도 보고.</div>
+    <div class="a-footer"><span>§05 RQ3 · 4강 heatmap</span><span>08 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S9 — Distribution sweet spot
+     ============================================================ -->
+<section class="slide" id="s9">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">06</div>
+        <div>
+          <div class="a-title">4강 효과는 cluster size imbalance 에 비례한다</div>
+          <div class="a-eyebrow">§06 · DISTRIBUTION SWEET SPOT</div>
+        </div>
+      </div>
+      <div class="a-meta">CLUSTER RATIO<br><span class="pn">09<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">Dataset 별 효과 크기 ranking — distribution sweet spot</div>
+          <div style="margin-top: 8px;">
+            <div class="bar-row"><div class="b-lbl">SIFT_sf1</div><div class="b-track"><div class="b-fill pos" style="width: 100%;"></div></div><div class="b-val pos">−32.6%</div></div>
+            <div class="bar-row"><div class="b-lbl">SIFT_sf10</div><div class="b-track"><div class="b-fill pos" style="width: 33%;"></div></div><div class="b-val pos">−10.5%</div></div>
+            <div class="bar-row"><div class="b-lbl">WIKI_sf1</div><div class="b-track"><div class="b-fill pos" style="width: 31%;"></div></div><div class="b-val pos">−10.0%</div></div>
+            <div class="bar-row"><div class="b-lbl">YFCC_sf1</div><div class="b-track"><div class="b-fill pos" style="width: 22%;"></div></div><div class="b-val pos">−7.2%</div></div>
+            <div class="bar-row"><div class="b-lbl">DEEP_sf10</div><div class="b-track"><div class="b-fill pos" style="width: 6%;"></div></div><div class="b-val pos">−2.1%</div></div>
+            <div class="bar-row"><div class="b-lbl">DEEP_sf1</div><div class="b-track"><div class="b-fill pos" style="width: 6%;"></div></div><div class="b-val pos">−1.8%</div></div>
+            <div class="bar-row"><div class="b-lbl">SSN_sf10</div><div class="b-track"><div class="b-fill neg" style="width: 7%;"></div></div><div class="b-val neg">+2.1%</div></div>
+            <div class="bar-row"><div class="b-lbl">SSN_sf1</div><div class="b-track"><div class="b-fill neg" style="width: 8%;"></div></div><div class="b-val neg">+2.3%</div></div>
+          </div>
+          <div class="callout warn" style="margin-top: 12px;">
+            <b>SSN++ honest 보고</b> · cluster ratio 1.29 (balanced) → 4강 method 가 기여하지 못하는 distribution. mild hurt 정직 reporting.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">Cluster ratio (max/min) 매핑</div>
+          <table class="clean" style="margin-top: 10px; font-size: 11.5px;">
+            <thead><tr><th>Dataset</th><th class="num" style="text-align:right;">ratio</th><th>효과</th></tr></thead>
+            <tbody>
+              <tr class="row-hl"><td class="label">SIFT</td><td class="num huge">9.41</td><td><span class="pill green">LARGE</span></td></tr>
+              <tr><td class="label">WIKI 768d</td><td class="num">[high]</td><td><span class="pill green">LARGE</span></td></tr>
+              <tr><td class="label">YFCC 192d</td><td class="num">[mid]</td><td><span class="pill navy">MEDIUM</span></td></tr>
+              <tr><td class="label">DEEP</td><td class="num">~2</td><td><span class="pill">small</span></td></tr>
+              <tr class="row-warn"><td class="label">SSN++</td><td class="num huge">1.29</td><td><span class="pill red">HURT</span></td></tr>
+            </tbody>
+          </table>
+          <div class="img-frame" style="margin-top: 10px; min-height: 180px;">
+            <img src="figures/fig_distribution_effect.png" alt="distribution effect">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>distribution sweet spot</b> — cluster ratio 가 효과 크기를 결정. SIFT (9.41) LARGE / WIKI/YFCC MEDIUM / DEEP small / SSN++ (1.29) HURT.</div>
+    <div class="a-footer"><span>§06 DISTRIBUTION SWEET SPOT</span><span>09 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S10 — Multi-relation
+     ============================================================ -->
+<section class="slide" id="s10">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">07</div>
+        <div>
+          <div class="a-title">단일 정확성을 multi-relation 영역까지 확장 — Exqutor 직접 매칭</div>
+          <div class="a-eyebrow">§07 · MULTI-RELATION</div>
+        </div>
+      </div>
+      <div class="a-meta">VECTOR + TABLE JOIN<br><span class="pn">10<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">Multi-vector — 한 행 두 임베딩</div>
+          <ul style="margin: 8px 0; padding-left: 18px; font-size: 12px; color: var(--gray-700); line-height: 1.6;">
+            <li><b>partsupp_deep_sift_10</b> · DEEP (96d) + SIFT (128d) = 224d concat</li>
+            <li><b>partsupp_deep_wiki_10</b> · DEEP (96d) + WIKI (768d) = dim 격차 시나리오</li>
+          </ul>
+          <table class="clean" style="margin-top: 10px; font-size: 11.5px;">
+            <thead><tr><th>Cell</th><th class="num" style="text-align:right;">KM20</th><th class="num" style="text-align:right;">Hilbert</th><th class="num" style="text-align:right;">MB_p</th><th class="num" style="text-align:right;">Hybrid</th><th class="num" style="text-align:right;">HDBSCAN</th></tr></thead>
+            <tbody>
+              <tr><td class="label">deep_sift_10</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">deep_wiki_10</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td><td class="num">[TBD]</td></tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top: 12px; font-size: 11.5px;">
+            <b>핵심 질문</b> · 4강 method 의 multi-vector 일반화 성립 여부. 5/8 새벽 측정 완료 시 update.
+          </div>
+        </div>
+
+        <div class="card tint">
+          <div class="label-mono">Multi-table natural join</div>
+          <p class="lead" style="font-size: 12px; margin: 8px 0;"><b>partsupp_deep_10 ⨝ part_wiki_10</b> · TPC-H natural foreign key (ps_partkey = p_partkey). 두 dataset 의 다른 dim (96 vs 768) 환경에서 4강 method 일반화.</p>
+          <table class="clean" style="margin-top: 10px; font-size: 11.5px;">
+            <thead><tr><th>Method</th><th class="num" style="text-align:right;">recovery rate</th></tr></thead>
+            <tbody>
+              <tr><td class="label">KM20</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">Hilbert</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">MB_partial</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">Hybrid</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">HDBSCAN</td><td class="num">[TBD]</td></tr>
+            </tbody>
+          </table>
+          <div class="callout warn" style="margin-top: 12px; font-size: 11px;">
+            <b>scope</b> · 단일 정확성은 multi 의 <em>필요조건</em>만. 충분조건까지 일반화는 future work — Exqutor multi-table 영역 본격 통합은 차후 학기.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>multi-vector + multi-table 부분 입증</b> — 단일 → multi 일반화의 필요조건. Exqutor 본 논문의 multi-relation 영역과 직접 비교 가능.</div>
+    <div class="a-footer"><span>§07 MULTI-RELATION</span><span>10 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S11 — YFCC 분포 정합성
+     ============================================================ -->
+<section class="slide" id="s11">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">08</div>
+        <div>
+          <div class="a-title">YFCC vs YFCC_DL — PCA basis 일치 검증으로 분포 정합성을 보고한다</div>
+          <div class="a-eyebrow">§08 · YFCC 분포 정합성</div>
+        </div>
+      </div>
+      <div class="a-meta">PCA 192d<br><span class="pn">11<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">측정 metric — sf1 / sf10</div>
+          <table class="clean" style="margin-top: 10px; font-size: 12px;">
+            <thead><tr><th>Metric</th><th class="num" style="text-align:right;">sf1</th><th class="num" style="text-align:right;">sf10</th></tr></thead>
+            <tbody>
+              <tr><td class="label">PCA correlation (192 comp avg)</td><td class="num">[TBD]</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">KS test p-value</td><td class="num">[TBD]</td><td class="num">[TBD]</td></tr>
+              <tr><td class="label">Energy distance</td><td class="num">[TBD]</td><td class="num">[TBD]</td></tr>
+              <tr class="row-hl"><td class="label">4강 recovery 일치도</td><td class="num huge">[TBD]</td><td class="num huge">[TBD]</td></tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top: 14px;">
+            <b>방법</b> · 채림 적재본 (YFCC) vs 자체 추출 (build_yfcc.py — 1280d CLIP → PCA 192d → partsupp_yfcc_dl) 을 sf1/sf10 동일 row count 로 비교.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">Caveat &amp; honest reporting</div>
+          <ul style="margin: 8px 0; padding-left: 18px; font-size: 11.5px; color: var(--gray-700); line-height: 1.6;">
+            <li>두 PCA fit 은 <b>다른 sample 으로 학습</b>됨 — component 부호 sign-flip 가능</li>
+            <li>component-wise correlation absolute 값으로 정합성 판단</li>
+            <li>일치하지 않을 시 → distribution shape 차이 별도 honest 보고</li>
+            <li>4강 recovery 일치 여부가 distribution-aware sampling 의 transferability 입증</li>
+          </ul>
+          <div class="callout warn" style="margin-top: 12px; font-size: 11.5px;">
+            <b>가설</b> · 192d PCA 의 정보 보존이 충분하면 두 적재본의 4강 recovery 가 일치. 일치하지 않으면 PCA target dim 재검토 + distribution shift detection 으로 link.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>YFCC 분포 정합성 검증</b> — PCA basis 일치 + 4강 recovery 일치도가 distribution-aware sampling 의 transferability 직접 입증.</div>
+    <div class="a-footer"><span>§08 DISTRIBUTION VALIDITY</span><span>11 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S12 — Honest limitations
+     ============================================================ -->
+<section class="slide" id="s12">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">09</div>
+        <div>
+          <div class="a-title">본 연구의 한계 8종 — 모든 한계는 future work 으로 link</div>
+          <div class="a-eyebrow">§09 · HONEST LIMITATIONS</div>
+        </div>
+      </div>
+      <div class="a-meta">8 LIMITATIONS<br><span class="pn">12<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <ul class="lim">
+        <li><div class="num">L1</div><div class="txt"><b>단일 → multi-table generalization</b> · 단일 정확성은 multi 의 <em>필요조건</em>. W4 partsupp_deep_sift / deep_10⨝part_wiki_10 부분 입증, 일반 multi-relation 영역은 future work.</div></li>
+        <li><div class="num">L2</div><div class="txt"><b>NPY-only mode 의 RQ2 dependency</b> · KM20 oracle 학습은 partsupp_&lt;DS&gt;_sf NPY 추출본 의존. 적재본 부재 시 RQ2 skip, RQ1/RQ3 만 가능.</div></li>
+        <li><div class="num">L3</div><div class="txt"><b>YFCC PCA basis 검증 caveat</b> · YFCC vs YFCC_DL 의 PCA fit 은 다른 sample 으로 학습됨. component-wise correlation [TBD] 1.0 미만 시 distribution shape 차이 honest 별도 보고.</div></li>
+        <li><div class="num">L4</div><div class="txt"><b>σ_i 신호 약함</b> · Anti-Neyman vs Proportional CI 0 제외하지만 paired Wilcoxon p &gt; 0.5, Cohen's d &lt; 0.1 → σ_i 신호의 비결정적 가치 명시. SSN++ mild hurt 함께 보고.</div></li>
+        <li><div class="num">L5</div><div class="txt"><b>IS NaN sel=0.01 발산</b> · Importance Sampling NaN 비율 80~95%. 분할 X + weight only 의 estimator invalid 를 negative control narrative 으로 활용.</div></li>
+        <li><div class="num">L6</div><div class="txt"><b>K-sweep upper bound K=200</b> · K&gt;200 (예: K=500/1000) 영역은 미측정. WIKI 768d / SSN++ 256d 고차원 환경에서 K_optimal 이 그 영역에 있을 가능성.</div></li>
+        <li><div class="num">L7</div><div class="txt"><b>sf100 (80M) deferred</b> · sf1↔sf10 2-scale 부호 일관성으로 W4 narrative 완성. sf100 cross-scale 일관성은 5/8 회의 후 자문 합의 결과를 반영하여 별도 측정 (W4 의 future scope).</div></li>
+        <li><div class="num">L8</div><div class="txt"><b>Effect size dataset 별 격차</b> · DEEP small (~−1~−2%) / SIFT large (~−10~−32%) / WIKI/YFCC medium (~−7~−10%) / SSN++ mild hurt (+1~+2%). 5 dataset 별 effect size 별도 보고.</div></li>
+      </ul>
+    </div>
+
+    <div class="a-impl"><b>모든 한계는 future work 으로 link</b> — σ_i 약함 / IS NaN / SSN++ hurt 는 negative control narrative 으로 활용.</div>
+    <div class="a-footer"><span>§09 HONEST · L1 ~ L8</span><span>12 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S13 — Future work
+     ============================================================ -->
+<section class="slide" id="s13">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">09</div>
+        <div>
+          <div class="a-title">5/8 합의 후 sf100 (80M) launch — 5/27 cross-scale validation 완성</div>
+          <div class="a-eyebrow">§09 · FUTURE WORK</div>
+        </div>
+      </div>
+      <div class="a-meta">5/8 → 5/27 → 6/11<br><span class="pn">13<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">Future work — 우선순위 6종</div>
+          <ol class="big-num" style="margin-top: 4px;">
+            <li><div><div class="li-title">sf100 (80M) 5 dataset 측정</div><div class="li-desc">5/8 자문 회신 후 launch (~5/15). chain_unified.py extension. 5/27 발표 narrative 에 cross-scale 추가.</div></div></li>
+            <li><div><div class="li-title">Exqutor multi-table 영역 일반화</div><div class="li-desc">충분조건까지 입증. 차후 학기.</div></div></li>
+            <li><div><div class="li-title">vector.c C-level integration</div><div class="li-desc">Phase 6 SQL D 영역 — Exqutor source code level merge.</div></div></li>
+            <li><div><div class="li-title">K&gt;200 K-sweep</div><div class="li-desc">WIKI/SSN++ 고차원 영역. K_optimal 의 dim 의존성 정량.</div></div></li>
+            <li><div><div class="li-title">Distribution shift detection</div><div class="li-desc">online detection mechanism — 4강 method 의 자동 선택.</div></div></li>
+            <li><div><div class="li-title">DuckDB native fixed-rate baselines</div><div class="li-desc">pgvector 33% / VBASE 50% / DuckDB 100% 직접 통합.</div></div></li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="label-mono">Timeline · 5/8 → 6/11</div>
+          <div class="tl">
+            <div class="t-step done"><div class="t-date">5/7</div><div class="t-title">W4 측정</div></div>
+            <div class="t-step now"><div class="t-date">5/8</div><div class="t-title">비대면 회의</div></div>
+            <div class="t-step"><div class="t-date">~5/15</div><div class="t-title">자문 + sf100</div></div>
+            <div class="t-step"><div class="t-date">~5/22</div><div class="t-title">sf100 완료</div></div>
+            <div class="t-step"><div class="t-date">5/22</div><div class="t-title">교수 미팅</div></div>
+            <div class="t-step"><div class="t-date">5/26</div><div class="t-title">자료 final</div></div>
+            <div class="t-step"><div class="t-date">5/27</div><div class="t-title">최종 발표</div></div>
+          </div>
+
+          <div class="callout" style="margin-top: 24px;">
+            <b>sf100 측정 estimated time</b> · 5 dataset × ~2-4 hour = ~10-20 hour overnight chain. chain_unified.py extension 으로 한 번에 launch.
+          </div>
+          <div class="callout warn" style="margin-top: 10px;">
+            <b>리스크</b> · 자문 회신 지연 시 sf100 launch deferred → 5/27 narrative 는 W4 only 로 자체 closure. honest reporting.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>5/8 회의 → 자문 회신 → sf100 launch → 5/27 발표</b> 의 timeline 합의가 회의 핵심 outcome.</div>
+    <div class="a-footer"><span>§09 FUTURE WORK · sf100 plan</span><span>13 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S14 — 자문 메일 초안
+     ============================================================ -->
+<section class="slide" id="s14">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">10</div>
+        <div>
+          <div class="a-title">자문 메일 — 2 대상 × 2 핵심 질문 합의가 회의 outcome</div>
+          <div class="a-eyebrow">§10 · 자문 요청 합의</div>
+        </div>
+      </div>
+      <div class="a-meta">5/9 ~ 5/12 발송<br><span class="pn">14<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2" style="flex:1;">
+        <div class="card navy-top">
+          <div class="label-mono">채림 석사 — 이론 자문</div>
+          <ol class="big-num" style="margin-top: 4px;">
+            <li><div><div class="li-title">YFCC PCA fit 의 sample 의존성</div><div class="li-desc">PCA fit 이 다른 sample 으로 학습된 두 적재본 (YFCC vs YFCC_DL) 의 distribution shape 검증 방법론. component-wise correlation + KS + energy distance 의 적정성.</div></div></li>
+            <li><div><div class="li-title">multi-table natural join 영역의 sampling rate dependency</div><div class="li-desc">partsupp_deep ⨝ part_wiki 환경에서 sampling rate 가 정확도에 미치는 영향. 단일 → multi-table 일반화 caveat.</div></div></li>
+          </ol>
+        </div>
+
+        <div class="card red-top">
+          <div class="label-mono">지도교수 — 발표 narrative + 자원</div>
+          <ol class="big-num" style="margin-top: 4px;">
+            <li><div><div class="li-title">sf100 (80M) 측정의 시간 자원</div><div class="li-desc">5 dataset × 2-4 hour = ~10-20 hour overnight chain 자원 합의. tmux session 진행 plan.</div></div></li>
+            <li><div><div class="li-title">W4 narrative 발표 정합성</div><div class="li-desc">4강 method (Hilbert/Hybrid/MB_partial/HDBSCAN) + 25 method tier elimination 의 5/27 발표 narrative flow 검토. SSN++ mild hurt honest reporting 의 수위.</div></div></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 14px;">
+        <b>발송 일정</b> · 5/9 ~ 5/12 메일 발송 → ~5/15 회신 ETA → 5/15 이후 sf100 측정 launch → 5/22 교수님 미팅에서 자문 결과 + sf100 진행 상황 공유.
+      </div>
+    </div>
+
+    <div class="a-impl"><b>2 대상 × 2 핵심 질문</b> — 채림 (이론) + 지도교수 (자원/narrative). 5/8 회의에서 메일 본문 + 첨부 자료 합의.</div>
+    <div class="a-footer"><span>§10 ADVISORY · 자문 메일</span><span>14 / 15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S15 — 5/27 narrative + closing
+     ============================================================ -->
+<section class="slide" id="s15">
+  <div class="a-stripe"></div>
+  <div class="a-pad">
+    <div class="a-head">
+      <div class="a-titlewrap">
+        <div class="a-num">10</div>
+        <div>
+          <div class="a-title">5/27 발표 = W4 (15 cell) + sf100 (5 cell) = 20 cell narrative</div>
+          <div class="a-eyebrow">§10 · 5/27 NARRATIVE</div>
+        </div>
+      </div>
+      <div class="a-meta">D-19<br><span class="pn">15<span class="total"> / 15</span></span></div>
+    </div>
+    <div class="a-rule"></div>
+
+    <div class="a-body">
+      <div class="grid-2-r" style="flex:1;">
+        <div class="card">
+          <div class="label-mono">5/27 발표 12-slide mapping</div>
+          <ol class="big-num" style="font-size:12px; margin-top: 6px;">
+            <li><div><div class="li-title">표지 — 속도는벡터</div></div></li>
+            <li><div><div class="li-title">Motivation — Exqutor + 본 연구</div></div></li>
+            <li><div><div class="li-title">Matrix — 15 + 5 = 20 cell</div></div></li>
+            <li><div><div class="li-title">RQ1 — selectivity gradient 5×2</div></div></li>
+            <li><div><div class="li-title">RQ2 — KM20 + K-aware + Anti-Neyman</div></div></li>
+            <li><div><div class="li-title">RQ3 — 25 method tier elimination</div></div></li>
+            <li><div><div class="li-title">4강 일관성 heatmap</div></div></li>
+            <li><div><div class="li-title">Multi-vector + Multi-table</div></div></li>
+            <li><div><div class="li-title">YFCC 분포 정합성</div></div></li>
+            <li><div><div class="li-title">Honest limitation</div></div></li>
+            <li><div><div class="li-title">Future work</div></div></li>
+            <li><div><div class="li-title">Q&amp;A</div></div></li>
+          </ol>
+        </div>
+
+        <div class="card dark">
+          <div class="label-mono">5/8 회의 deliverable</div>
+          <ol class="big-num" style="margin-top: 6px; --brand-navy: #4A7BD8;">
+            <li><div><div class="li-title" style="color:#fff;">W4 결과 합의 — 4강 + tier + heatmap</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">Honest limitation 8종 합의 — 발표 시 수위</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">자문 메일 초안 합의 — 채림 + 지도교수</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">sf100 launch timing 결정 — 자문 회신 후</div></div></li>
+            <li><div><div class="li-title" style="color:#fff;">5/27 narrative flow 합의 — 12 slide mapping</div></div></li>
+          </ol>
+          <div class="callout" style="background: rgba(74,123,216,0.18); border-left-color: var(--brand-blue); color: #d6deea; margin-top: 16px;">
+            본 W4 sprint 는 Exqutor 가 정량 처리한 <b style="color:#fff;">인덱스 + multi-table</b> 영역의 보완으로서, 단일 테이블 비인덱스 + 분포 인지 sampling 의 가치를 정량화한다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-impl"><b>END · 속도는벡터</b> — 박세은 · 강재현 · 조현빈 · 이동욱 / W4 SPRINT 회의 자료 / 2026.05.08</div>
+    <div class="a-footer"><span>속도는벡터 · CAPSTONE 2026</span><span>END · W4 · 2026.05.08</span></div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

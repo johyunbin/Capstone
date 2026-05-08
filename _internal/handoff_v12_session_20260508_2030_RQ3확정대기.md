@@ -118,24 +118,23 @@
 
 ---
 
-## 4. Deep Review Agent 진행 상태 (백그라운드)
+## 4. Deep Review Agent 결과 (✅ 완료, 5/8 20:43 도착)
 
 **Agent ID**: `ac950253eb5332e89`
 **Launch 시각**: 5/8 20:36 KST
-**예상 완료**: 5/8 21:00~21:10 (~25-30분)
-**산출 위치**: `/Users/hyunbin/Capstone/_internal/RQ3_paradigm_심층검증_20260508.md`
+**완료 시각**: 5/8 20:43 KST (예상보다 빠름, ~7분)
+**산출**: `/Users/hyunbin/Capstone/_internal/RQ3_paradigm_심층검증_20260508.md` (3370 words 한+영 혼용)
 
-**검증 사항** (전권 위임):
-1. 5 paradigm 분류의 학술적 정합성 (sampling/clustering literature standard taxonomy 와 일치)
-2. 각 method 의 paradigm assignment 정확성 (단일 inductive bias 확인)
-3. ★4 = sparse RP 권장 결정 (vs PCA1D vs 다른 후보)
-4. 5 paradigm 외 19종 제외 OK 검증
-5. 누락 critical 3종 (Mean-Shift / R-tree / MinHash) — 추가 측정 vs limitation 명시 권장
-6. 학술 narrative 일치성 평가
+### 핵심 변경 사항 (Deep Review 권장, 200자 요약)
 
-**활용 도구**: WebSearch 3-5 query (학술 survey 외부 출처) + Read 프로젝트 파일 + Bash grep
+| # | 권장 | 비고 |
+|---|---|---|
+| 1 | **P5 "Hashing/QR" 분리** | LSH (failed) 와 Sobol 의 inductive bias 가 다름 → **P5 = "Low-discrepancy" 단일** 권장. LSH 는 별 paradigm 또는 narrative 사례로 처리 |
+| 2 | **★4 = sparse RP 유지 ✅** | data-independent + ARI orthogonality #1 + Achlioptas 2003 canonical reference. 변경 불필요 |
+| 3 | **누락 critical 3종 추가 측정 X** | Sketch family / Mean-Shift / R-tree / MinHash → **limitation 명시로 충분** (시간 절약) |
+| 4 | **4강 narrative 강함, 변경 불필요** | HDBSCAN(P1) / MB_partial(P3) / Hilbert(P2) / sparse RP(P4) — **5 paradigm 중 4 paradigm distinct representative** → 학술 정합성 확보 |
 
-**산출 분량**: 1500~2500 words 학술 산문 + 표 + WebSearch 출처 list
+→ **새 세션 시작 시**: Deep Review md 정독 + 위 4 변경 사항 사용자 confirm + paradigm framework 5→6 분리 (P5 hashing 별도) 결정.
 
 ---
 

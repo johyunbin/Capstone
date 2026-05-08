@@ -11,22 +11,30 @@
 ```
 @_internal/handoff_v12_session_20260508_2030_RQ3확정대기.md 읽고 이어서 진행.
 
-5/8 회의 후 [N]시간 경과. Deep Review Agent (ac950253eb5332e89) 진행 상태 확인 필요.
+5/8 회의 후 [N]시간 경과. Deep Review Agent (ac950253eb5332e89) 진행 상태 확인.
 
-다음 작업 (메인 세션 = 대화 / 백그라운드 = 에이전트 적극 활용):
-1. Deep Review Agent 결과 검토 (with 사용자) — `/Users/hyunbin/Capstone/_internal/RQ3_paradigm_심층검증_20260508.md`
-2. 5 paradigm + 11 method 최종 confirm + ★4 final 결정
-3. RQ3 확정 후:
-   a. 자문 메일 v3 update 에이전트 호출 (5 paradigm × N method 정정)
-   b. Adaptive Sampling baseline 코드 작성 에이전트 호출
-   c. Multi 광범위 wrapper 확장 에이전트 호출 (paradigm 11 method 기준)
-   d. 발표 slide redesign 에이전트 호출
+# 즉시 launch (Deep Review 와 병렬, RQ3 확정 무관) — 사용자 confirm 후
+
+[E] Adaptive Sampling 본 논문 (Exqutor arXiv:2512.09695v2) method 분석 에이전트 호출 (background)
+   → 산출: _internal/Adaptive_Sampling_method_분석_20260508.md
+   → Exqutor 의 momentum 기반 동적 sample size 알고리즘 정독 + 본 연구 stratification 과의 paired 비교 설계 + 측정 코드 design (run_adaptive_sampling.py 골격)
+
+# Deep Review 완료 후 (~21:00) 
+
+1. _internal/RQ3_paradigm_심층검증_20260508.md 검토 (메인 세션, with 사용자)
+2. 5 paradigm + N method 최종 confirm + ★4 final 결정
+3. RQ3 확정 후 백그라운드 4 에이전트 병렬 launch:
+   [A] 자문 메일 v3 update (5 paradigm × N method 정정 + 박세은 카톡 reframe)
+   [B] Adaptive Sampling 측정 코드 finalize (E 산출 기반, 서버 launch 준비)
+   [C] Multi 광범위 wrapper 확장 (measure_multi_paradigm.py, N method 기준)
+   [D] 발표 slide redesign 안 (5 paradigm × representative + Top 4 + Pruned)
 4. 박세은 카톡 update (paradigm naming 정정)
-5. 서버 launch (Adaptive baseline overnight, ~5h)
+5. 서버 launch (Adaptive baseline overnight, ~5h) — 5/8 22:00 ~ 5/9 03:00
 
 원칙:
 - 메인 세션 = 사용자 대화 + 에이전트 결과 통합 + 결정 (token 절약, 주간 한도 17% 남음)
 - 백그라운드 에이전트 = 모든 작업 위임 (분석/코드/측정 준비/narrative redesign)
+- E 는 RQ3 확정 무관 → 새 세션 시작 즉시 launch 가능
 ```
 
 ---
@@ -132,6 +140,19 @@
 ---
 
 ## 5. 다음 세션 task list (우선순위)
+
+### Step 0 — 즉시 launch (Deep Review 와 병렬, RQ3 확정 무관)
+
+**Agent E** (백그라운드, 새 세션 시작 즉시 호출)
+- Task: Adaptive Sampling 본 논문 (Exqutor arXiv:2512.09695v2) method 분석
+- 산출: `_internal/Adaptive_Sampling_method_분석_20260508.md`
+- 내용:
+  · Exqutor 의 momentum 기반 동적 sample size 알고리즘 정독
+  · 본 연구 stratification 과의 paired 비교 설계 (동일 dataset/sel/sample_size 조건)
+  · 측정 코드 design (`run_adaptive_sampling.py` 골격)
+  · WebFetch 활용 가능 (arXiv:2512.09695v2)
+- 시간: ~10-15분
+- → Step 2 의 Agent B (코드 finalize) 의 input 으로 활용
 
 ### Step 1 — Deep Review Agent 결과 검토 (메인 세션, ~10분)
 

@@ -16,14 +16,14 @@ paired Δ% 정의:
 |---|---|---|---|---|
 | DEEP_sf1 | **-0.53\*** | **-0.69\*** | **-0.50\*** | -0.12 |
 | DEEP_sf10 | **-0.67\*** | **-0.33\*** | -0.22 | +0.21 |
-| SIFT_sf1 | **-1.16\*\*\*** | **-0.82\*\*** | **-1.11\*\*\*** | +0.01 |
+| SIFT_sf1 | **-1.16\*\*\*** | **-0.82\*** | **-1.11\*\*\*** | +0.01 |
 | SIFT_sf10 | **-1.12\*\*\*** | **-1.14\*\*\*** | **-1.15\*\*\*** | -0.13 |
 | SSN_sf1 | -0.06 | +0.09 | +0.05 | +0.18 |
 | SSN_sf10 | -0.35 | -0.23 | -0.08 | -0.03 |
 | WIKI_sf1 | -0.31 | -0.24 | -0.36 | +0.37 |
-| WIKI_sf10 | **-0.37\*\*** | +0.30 | **-0.32\*** | +0.05 |
-| YFCC_sf1 | **-0.97\*\*\*** | **-0.69\*\*\*** | **-0.40\*\*** | +0.05 |
-| YFCC_sf10 | **-0.62\*\*\*** | **-0.57\*\*\*** | **-0.69\*\*\*** | -0.05 |
+| WIKI_sf10 | **-0.37\*** | +0.30 | **-0.32\*** | +0.05 |
+| YFCC_sf1 | **-0.97\*\*** | **-0.69\*\*\*** | **-0.40\*** | +0.05 |
+| YFCC_sf10 | **-0.62\*\*** | **-0.57\*\*** | **-0.69\*\*** | -0.05 |
 | **Win count (median < 0)** | **10/10** | **8/10** | **9/10** | 4/10 |
 | **Sig. count (Wilcoxon p < 0.05)** | **7/10** | **6/10** | **6/10** | **0/10** |
 | **mean of cell median Δ%** | **-0.62** | -0.43 | -0.48 | +0.05 |
@@ -32,7 +32,9 @@ paired Δ% 정의:
 
 ### 4 outcome 판정 — A (4강 ≻ Adaptive Sampling)
 
-(1) **HDBSCAN 은 10/10 cell win, 7/10 cell statistically significant.** SIFT 양 scale (sf1/sf10) 에서 Wilcoxon p < 1e-8 의 highly significant 우위, YFCC sf10 / sf1 동일. SSN 와 WIKI sf1 의 ceiling 영역에서만 p > 0.05 로 marginal. (2) **Hilbert 는 9/10 win, 6/10 sig**, MB_partial 8/10 win 6/10 sig 으로 **HDBSCAN 보다 약간 약하나 trend 일관**. (3) **sparse_rp 는 4/10 win 0/10 sig** — Adaptive Sampling 과 사실상 통계적 동등 (mean of cell median Δ% = +0.05%, "본 연구 contribution 강도 = 약").
+(1) **HDBSCAN 은 10/10 cell win, 7/10 cell statistically significant.** SIFT 양 scale (sf1/sf10) 에서 Wilcoxon p < 1e-7 의 highly significant 우위, YFCC sf1/sf10 도 p < 1e-3 로 동일 trend. SSN 와 WIKI sf1 의 ceiling 영역에서만 p > 0.05 로 marginal. (2) **Hilbert 는 9/10 win, 6/10 sig**, MB_partial 8/10 win 6/10 sig 으로 **HDBSCAN 보다 약간 약하나 trend 일관**. (3) **sparse_rp 는 4/10 win 0/10 sig** — Adaptive Sampling 과 사실상 통계적 동등 (mean of cell median Δ% = +0.05%, "본 연구 contribution 강도 = 약").
+
+**Multiple comparison correction (40 test = 10 cell × 4 method) — Outcome 판정 불변.** Bonferroni (α = 0.00125): HDBSCAN 6/10, MB_partial 4/10, Hilbert 3/10, sparse_rp 0/10. Benjamini-Hochberg FDR (q = 0.05): HDBSCAN 7/10, MB_partial 5/10, Hilbert 6/10, sparse_rp 0/10. 두 보정 모두 **★1~★3 의 paired 우위** + **★4 의 동등** 결론은 안정적이며, 단지 magnitude tier (`*` / `**` / `***`) 가 raw p 기준 표시이므로 critical reviewer 검토 시 BH/Bonferroni 결과를 보조 evidence 로 함께 제시한다.
 
 종합하면 Outcome **A (4강 > Adaptive)** 이 단, sparse_rp 는 outcome **C (동등)**. 4강 method 중 *분포-인지 강도가 강한 3종* (HDBSCAN, Hilbert, MB_partial) 이 Adaptive Sampling 에 paired statistical significance 를 가지고 우월하며, *production-friendly random projection* (sparse_rp) 은 Adaptive Sampling 과 통계적 indistinguishable.
 

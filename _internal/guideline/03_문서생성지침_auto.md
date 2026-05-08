@@ -1,7 +1,15 @@
 # 문서생성지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-03-28 (전항목 정상, 누락 0건, 96/96 폰트 OK)
+> 마지막 실행: 2026-05-08 22:00 (md2pdf.py 정합성 재확인, Apple SD Gothic Neo 변경 X)
+
+## 5/8 22:00 정합성 재확인
+
+md2pdf.py 의 핵심 변환 stack 은 변경 없음 — Chrome CDP + Apple SD Gothic Neo 그대로 active. 다만 5/8 cleanup 으로 `_build_docx_v0/v2/4_28.py` 가 archive 로 이동했으므로 docx 변환은 **`_build_docx_v1.py` 만** 사용 (4/27 19:02 commit, 5/8 시점 현역).
+
+PPT 변환은 native (5/8 신규 완성):
+- `build_native_pptx_5_8.py` (Slides.jsx → native PPT, 5/27 발표 deck용)
+- `build_charts_5_8.py` (chart asset 생성)
 
 ## 문서생성지침의 범위
 

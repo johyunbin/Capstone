@@ -1,7 +1,18 @@
 # 발표지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: (미실행)
+> 마지막 실행: 2026-05-08 22:00 (5/27 최종 발표 deck redesign v2 framework 반영)
+
+## 5/27 최종 발표 deck redesign v2 framework (W4 active)
+
+본 발표 deck redesign 안은 `_internal/slide_redesign_v2_20260508.md` 에 markdown design doc 으로 작성되어 있다 (5/8 21:00 사용자 confirm). 핵심:
+
+- **16 page → 18 page 확장** — 기존 academic v3 의 16 page 에 S6.5 (RQ3 Paradigm Framework, 5 paradigm × 11 method matrix) + S10.5 (★4 sparse RP, P4 Dim Reduction representative) 2 page 추가.
+- **Top 4 = 5 paradigm 중 4 distinct representative** narrative — ★1 HDBSCAN (P1) / ★2 MB_partial (P3) / ★3 Hilbert (P2) / **★4 sparse RP (P4)** ← Hybrid 에서 sparse RP 로 교체.
+- **LSH Wave 0 fail = P5 limitation honest reporting** — S6.5 + S15 L8 callout 추가.
+- **Slides.jsx 실제 수정 X** — design doc only. 실제 변환은 W4 (5/23~5/26) 별도 task. 변환 도구는 `_internal/scripts/build_native_pptx_5_8.py` + `build_charts_5_8.py` 사용.
+
+본 5/27 발표 준비 시 위 redesign v2 design doc 을 우선 참조한다.
 
 ## 발표지침의 범위
 

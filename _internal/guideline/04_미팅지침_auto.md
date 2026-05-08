@@ -1,7 +1,19 @@
 # 미팅지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-03-28 (회의록 1건, 후속과제 5건 중 1완료/3미확인/1내일마감)
+> 마지막 실행: 2026-05-08 22:00 (5/8 19:00~19:30 비대면 회의 회의록 finalize, 5/22 박광현 교수님 미팅 framework 추가)
+
+## 5/22 박광현 교수님 미팅 framework (W3, D-14 from 5/8)
+
+다음 미팅은 **5/22 박광현 교수님 미팅** (D-14, W3 종료 시점).
+미팅 전 brief 요구사항:
+
+1. **W2 자문 회신 결과 요약** (박성원 멘토 → RQ2 Neyman 검토 + RQ3 method 분류 + Adaptive 비교 합의 내용)
+2. **W2 추가 측정 결과 요약** — 4강 vs Adaptive Sampling paired Δ% (단일 10 cell × 5 sel) + Multi 광범위 (3 cell × Tier 1 17종)
+3. **W3 마감 제안** — 발표자료 초안 (Slides v4 18 page redesign 진행 상태) + supplementary slide (자문 결과)
+4. **5/27 최종 발표 D-day 점검** + 5/28 전시회 자료 + 6/11 최종보고서
+
+브리핑 파일명: `_internal/records/kakaotalk/20260522_박광현교수님_미팅브리핑.md`
 
 ## 미팅지침의 범위
 

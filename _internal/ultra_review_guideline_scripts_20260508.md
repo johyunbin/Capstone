@@ -61,4 +61,4 @@ git status 로 확인 시 `git mv` 한 5건은 staged R 상태, .bak 4건은 unt
 
 ## 4. commit 결과
 
-5/8 22:00 finalize → ultra-review guideline + scripts cleanup 완료. 본 보고서 + guideline 5건 update + scripts 9건 archive 를 단일 commit 으로 묶어 push 예정.
+본 작업의 모든 staged 변경 (5 guideline updates + 9 scripts archive moves + 본 ultra_review_guideline_scripts 보고서) 은 commit `15accbd` ("ultra-review root + templates/ — README.md 5/8 update + 루트 정리") 에 다른 에이전트의 root + templates 작업과 함께 합쳐서 commit 되었음. 동시 진행되던 다른 에이전트가 staged area 의 모든 변경을 함께 가져갔음 — 단일 commit 메시지가 root + templates 만 명시했지만 file list 에는 본 작업 산출 전부가 포함됨.

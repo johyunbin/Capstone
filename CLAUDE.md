@@ -36,7 +36,7 @@
 - **핵심 결과** (RQ1/RQ2 측정 완료분): DEEP 1M selectivity gradient 19.6%p (s=1%), SIFT +3.07~4.39% (DEEP 2배+), 8M +1.76% CONSISTENT
 - **본 연구 contribution**: (1) Normal/Skew × Block/Row 정량 비교 (2) Selectivity Gradient (3) Two-Level Decomposition (4) Recovery Rate Framework
 - **Limitation 4가지**: KM20 oracle (production X) / 사전 계산 one-time cost / OLTP 범위 외 / 단일→멀티 future work
-- **설계안 히스토리**: v3 `plans/archive/연구제안서_20260403_162818.md` → v4 `plans/연구재설계안_20260415_131400.md` → v5 `submission/속도는벡터_중간보고서_20260417_0000.md` + `plans/RQ3설계안_20260416_213500.md` → **v6 (5/5) `plans/RQ재정립_20260505_2122.md`**
+- **설계안 히스토리**: v3 `plans/archive/연구제안서_20260403_162818.md` → v4 `plans/archive/2026_05_08_supersed/연구재설계안_20260415_131400.md` → v5 `submission/속도는벡터_중간보고서_20260417_0000.md` + `plans/archive/2026_05_08_supersed/RQ3설계안_20260416_213500.md` → **v6 (5/5) `plans/RQ재정립_20260505_2122.md`**
 - **실험 정리**: `experiments/results/RQ1_RQ2 실험 결과 정리.md`
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 

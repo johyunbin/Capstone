@@ -51,7 +51,7 @@ CLAUDE.md, README.md                           # 진입점 2
 
 ## 5. commit hash
 
-(commit 직후 채워짐)
+`15accbd` — ultra-review root + templates/ — README.md 5/8 update + 루트 정리
 
 ## 6. 요약
 

@@ -8,23 +8,28 @@
 
 ---
 
-## 0. 회의 결과 (TODO 5/8 21:00 직후 작성)
+## 0. 회의 결과 (5/8 19:00~19:30 비대면, 박세은 팀장 결정)
 
 ### 0-1. 의제 4 종 결정 사항
 
 | 의제 | 결정 | 작성 |
 |---|---|---|
-| 의제 1: 단일 결과 종합 검토 | ⬜ 합의 / ⬜ 수정 | [팀원 합의 결과] |
-| 의제 2: 자문 메일 초안 합의 | ⬜ 발송 즉시 / ⬜ v7 후 | [발송 결정 + 수정 사항] |
-| 의제 3: multi 측정 진행 상황 공유 | ⬜ future work confirm / ⬜ 추가 측정 | [4강 multi 결과 narrative] |
-| 의제 4: 5/27 발표 plan 18 슬라이드 합의 | ⬜ 자문 후 v2 / ⬜ 즉시 | [수정 사항] |
+| 의제 1: 단일 결과 종합 검토 | ✅ 합의 (10 cell × 30 method 100% / 4강 selection / Tier 1 17종 narrative) | 박세은 confirm — 회의 자료 PDF 4종 + sprint 정리안 (commit 217e485) 그대로 |
+| 의제 2: 자문 메일 초안 합의 | ✅ outline 3줄 합의 (실험·데이터셋·자문 only) → v7 작성 후 발송 | 박세은 19:41 outline → 사용자 reference draft (sub-agent 위임) → ~5/15 발송 |
+| 의제 3: multi 측정 진행 상황 공유 | ✅ STAGE 3 (multi-table join) 완료 confirm + Adaptive 비교 시 4강만 multi 적용 | 17:50 측정 완료, master_v6 §10.6 narrative finalize. Tier 1 17종 multi 광범위는 자문 후 launch |
+| 의제 4: 5/27 발표 plan 합의 | ✅ Academic v3 deck (16 page) 그대로 발표 본체 + 자문 회신 후 v2 보강 | Slide 6/9/10/11/12 narrative 기본 fix, 자문 합의 결과는 supplementary slide 추가 |
 
 ### 0-2. 회의 사용자 결정 누적 (절대 변경 금지 항목 추가)
 
 | # | 결정 | 시점 | 의미 |
 |---|---|---|---|
-| 9 | [회의 결과 1] | 5/8 19:??~21:?? | [의미] |
-| 10 | [회의 결과 2] | | |
+| 9 | **Adaptive Sampling 본 논문 비교 = 우선순위 1** | 5/8 19:29 박세은 | Exqutor 본 논문 method 직접 paired 비교. 우리 연구의 정량적 가치 입증 핵심 missing piece. multi-table 은 4강만 적용 (Tier 1 17종 광범위는 시간 여유 시) |
+| 10 | **5/27 발표 준비 = 우선순위 2** | 5/8 19:29 박세은 | D-19. Academic v3 deck 본체 + 자문 합의 결과 supplementary |
+| 11 | **SF100 (80M) = 우선순위 3, 시간 여유 시** | 5/8 19:29 박세은 | 현실적 불가 가능성. 자문 합의 후 최종 판단. 채림 정본 sf100 합의 우선 |
+| 12 | **자문 메일 outline 3줄 골격** | 5/8 19:41 박세은 | (1) RQ2 Neyman·RQ3 method 탐색 (2) SF1·SF10 한정 (3) 현재 상황 전체. 사용자 (조현빈) 가 박세은 outline 위에 sprint 결과 보강한 reference draft 작성 |
+| 13 | **데이터셋 크기 SF1·SF10 한정** | 5/8 16:16 조현빈 → 19:00 박세은 confirm | YFCC sf100 자체가 존재하지 않음. 빌드 시간 부담. SF100 deferred |
+| 14 | **kde_pilot honest disclosure** | 5/8 19:50 회의 중 audit | RQ3 30 method audit 결과 1종 (Tier 2 boundary, KM20 hybrid). 자문 메일에 reclassify 요청 |
+| 15 | **halton/hammersley/reservoir/sf_importance/distance_shell 서버 코드 검증 보류** | 5/8 19:50 audit | 다음 서버 접속 시 ~5분 작업. 자문 메일에 명시 |
 
 ---
 

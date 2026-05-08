@@ -10,15 +10,16 @@
 
 ## 현재 단계
 
-> **5/6 22:30 — RQ1+RQ2+RQ3 1차 측정 완료 + 보강 분석 진행 중. 8M sensitivity overnight 가동.**
-> 5/5 비대면 회의 (20:00~21:22, 전원) 에서 박세은 팀장 제안으로 RQ 구조 전면 재정립. 새 설계안: `plans/RQ재정립_20260505_2122.md`. 채림 석사 메일 보고용 연구지도확인서: `submission/_drafts/속도는벡터_연구지도확인서_20260505.md`. 5/5 회의록: `_internal/records/kakaotalk/20260505_RQ재정립_회의.md`. 다음 회의 5/8 19:00 (비대면, 실험 결과 종합 + 자문 합의), 최종발표 5/27 (D-21), 최종보고서 6/11 (D-36).
+> **5/8 19:30 — 비대면 회의 완료, W1 sprint finalize. 다음: 자문 발송 + W2 추가 실험 launch (5/9~5/15).**
+> 5/8 19:00~19:30 비대면 회의 (전원) 에서 박세은 팀장 결정 사항 3가지: ① **Adaptive Sampling 본 논문 비교 + multi-table 4강 적용** (가장 중요), ② 5/27 발표 준비, ③ SF100 (시간 여유 시). 자문 메일 outline 3줄: 실험 (RQ2 Neyman + RQ3 method 탐색) / 데이터셋 (SF1·SF10 한정) / 자문 only (현 상황 전체). 5/8 회의록: `_internal/records/kakaotalk/20260508_19시_RQ123sprint_회의.md`. 자문 메일 draft: `submission/_drafts/속도는벡터_연구지도확인서_20260508.md`. 다음 미팅 5/22 교수님, 최종발표 **5/27 (D-19)**, 최종보고서 **6/11 (D-34)**.
 >
-> **5/6 후속 보강** (RQ1_RQ2 정리.md §W1 Sprint 보강 작업 참조):
-> - W1-A: RQ1 단조성 통계 확정 (DEEP-KM20 ρ=-0.680 CI [-0.800, -0.440] 0 제외)
-> - W1-B: RQ3 추가 3 method 구현 — Z-order (Hilbert ablation), MiniBatch+Hilbert hybrid, MiniBatch partial_fit (OLTP)
-> - W1-C: Hilbert vs Z-order locality mechanism 정량 분리 (inverse Manhattan: Hilbert 1.000 vs Z-order 1.992)
-> - W1-D: RQ3 metric 보강 (method_minus_bern_pct 항상 계산)
-> - W1-E: 8M overnight automation watchdog (서버 tmux post_8m 가동, ETA ~01:00~02:00 KST)
+> **W1 sprint 종합 결과** (5/5~5/8, RQ1+RQ2+RQ3 100% 측정 완료):
+> - **RQ1**: 13/13 cell ρ < 0 (10 single + 3 multi) — selectivity 작을수록 BERN 부정확 단조 증가, DEEP-KM20 ρ=-0.680 CI [-0.800, -0.440]
+> - **RQ2**: 12 single cell × 5 mode × 5 sel → 51/52 paired CI 0 제외, σ-allocation 격차 < 1% (어느 mode 든 비슷, 균등도 충분)
+> - **RQ3**: 10 cell × 30 method × 5 sel → Tier 1 17종 (avg -8.04~-6.83, spread 1.21%p). **4강** ★1 HDBSCAN -8.04 / ★2 MB_partial -7.63 / ★3 Hilbert -7.54 / ★4 Hybrid -7.13
+> - **Multi 일반화**: 3 cell × 4강 → 단일 sweet spot 17.13% → multi 0.67% (25× 약화) → "단일 정확성 = multi 정확성 *필요조건* 만"
+> - **PDX (SIGMOD 2025) 학술 confirmation**: intrinsic_dim + skewness driven algorithm selection (본 thesis 와 정확 일치)
+> - **RQ3 30 method 분포·인덱스 leak audit** (강재현 의견): 23 ✅ clean / 1 🅾️ KM20 oracle / 1 ⚠️ kde_pilot suspect (Tier 2 boundary, narrative 정정 권장) / 5 ❓ 서버 코드 검증 보류 (halton/hammersley/reservoir/sf_importance/distance_shell)
 
 - **연구 방향**: Exqutor 가 미작동하는 단일 테이블 영역에 대한 분포 정보의 가치 정량화. (단일 → 멀티 일반화는 future work, 단일 정확성은 멀티 정확성의 *필요조건*만 성립.)
 
@@ -37,40 +38,52 @@
 - **실험 정리**: `experiments/results/RQ1_RQ2 실험 결과 정리.md`
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
 
-### 실행 로드맵 (5/5 회의에서 압축 일정 확정)
+### 실행 로드맵 (5/8 회의 후 update)
 
 | 단계 | 기간 | 핵심 작업 | 상태 |
 |------|------|----------|------|
 | W0 | 4/4-4/16 | 환경 + RQ1/RQ2 실험 완료 | ✅ |
 | 중간 | 4/17-4/30 | 중간보고서·발표 + 4/28 LearnUs 제출 + 4/30 발표 | ✅ |
-| **Sprint** | **5/6-5/8 19:00** | **RQ1 + RQ2 + RQ3 모든 실험 마감 (11종 + 보강 3종 + 8M sensitivity)** | ✅ 1차 완료 / 보강 진행 |
-| 회의 | 5/8 19:00 | 비대면 회의 — 실험 결과 종합 + 자문 요청 초안 합의 | ← 현재 (자료 ready) |
-| 자문 | ~5/15 | 자문 요청 발송 (채림 석사 + 지도교수님) | ⬜ |
-| 초안 | ~5/21 | 발표자료 초안 마감 | ⬜ |
+| **W1 Sprint** | **5/5~5/8 19:00** | **RQ1+RQ2+RQ3 100% 측정 + 4강 도출 + multi 25× shrinkage + PDX confirmation** | ✅ 완료 |
+| **5/8 회의** | 5/8 19:00~19:30 | 비대면 회의 — 결정 3가지 (Adaptive 비교 / 5/27 발표 / SF100) + 자문 outline 3줄 합의 | ✅ 완료 |
+| **W2 자문** | **5/9~5/15** | **자문 메일 발송 (채림 + 교수님) + 회신 대기 + Adaptive 비교 측정 launch** | ← **현재** |
+| W3 | 5/16~5/21 | (자문 합의 후) Multi 광범위 + Ensemble + 발표자료 초안 | ⬜ |
 | 미팅 | 5/22 | 교수님 미팅 | ⬜ |
-| 발표 | 5/26 | 발표자료 최종 마감 → **★ 5/27 최종발표** | ⬜ |
+| W4 | 5/23~5/26 | 발표자료 최종 마감 + supplementary slide (자문 결과) | ⬜ |
+| 발표 | **5/27** | **★ 최종 발표 (D-19 from 5/8)** | ⬜ |
 | 전시 | 5/28 | 전시회 자료 마감 | ⬜ |
-| 보고 | ~6/11 | **★ 6/11 최종보고서** | ⬜ |
+| W5 | 5/29~6/4 | 최종보고서 drafting (8 section ~38p) | ⬜ |
+| W6 | 6/5~6/10 | 최종보고서 finalize + 양식·검토 | ⬜ |
+| 보고 | **6/11** | **★ 최종보고서 제출 (D-34 from 5/8)** | ⬜ |
 
-### Sprint 작업 (5/6~5/8 19:00) — 11종, 사용자 주도 진행
+### 다음 단계 (5/8 회의 후 우선순위, 박세은 팀장 결정)
 
-총 ~26시간. 사용자(조현빈)가 모든 실험을 직접 진행, 각 실험 완료 시마다 브리핑 + 상세 설명 프롬프트로 정리.
+1. **⭐⭐⭐ Adaptive Sampling 본 논문 비교 + multi-table 4강 적용** (W2~W3, 자문 회신 후 launch)
+   - 4강 vs Exqutor 본 논문 Adaptive Sampling 직접 paired Δ% (단일 10 cell × 5 sel, ~5h)
+   - Multi 광범위 (3 cell × Tier 1 17종, ~20h) — `measure_multi_4kang.py` 17 method 확장
+   - (선택) Adaptive Sampling × 4강 ensemble (10 cell × 5 sel, ~10h)
 
-| # | 실험 | RQ | 예상 시간 | 비고 |
-|---|---|---|---|---|
-| 1 | SIFT × SYSTEM(block) baseline | RQ1 | ~2h | 가장 짧음, 2x2 표 즉시 완성 |
-| 2 | Neyman Allocation | RQ2 | ~4h | variance-optimal |
-| 3 | Anti-Neyman ablation | RQ2 | ~포함 | Neyman 과 묶음 |
-| 4 | Sample size sensitivity (100/385/1000/3000) | RQ2 | ~3h | KM20 효과 sample_size 의존성 |
-| 5 | C. Random Projection | RQ3 | ~2h | Johnson-Lindenstrauss |
-| 6 | A. LSH | RQ3 | ~4h | Locality-Sensitive Hashing |
-| 7 | E. Hilbert Curve | RQ3 | ~4h | space-filling curve |
-| 8 | F. MiniBatch K-means | RQ3 | ~1h | sklearn 한 줄 |
-| 9 | G. Distance-Shell | RQ3 | ~4h | pilot 기반 |
-| 10 | B. KDE-pilot | RQ3 | ~6h | Neyman + KDE |
-| 11 | H. Importance Sampling (+2x2 factorial) | RQ3 | ~6h | 분할 X, 가중치만 |
+2. **⭐⭐ 5/27 발표 준비** (W3~W4)
+   - Academic v3 deck (16 page) 본체 + 자문 합의 supplementary slide
+   - 5/22 교수님 미팅 reflection
 
-→ **새 세션 진행 가이드**: `_internal/실험_진행_프롬프트_템플릿.md`
+3. **⭐ SF100 (80M) 실험** — 시간 여유 시
+   - 채림 석사 정본 sf100 합의 후 launch
+   - 측정 시간 부담 (~60-80h) → 현실적 5/27 전 가용성 자문 의견 필요
+
+### W1 Sprint 산출 (5/5~5/8) — 100% 완료 ✅
+
+- **단일 10 cell × 30 method × 5 sel = 1500 measurement** (analyze_10cell_w4.py 재계산, query_id paired alignment)
+- **Multi 3 cell × 4강 method × 5 sel = 60 measurement** (5/8 17:50 STAGE 3 finalize)
+- **30 method 가지치기**: Tier 1 = 17종 / Tier 2 = 2종 (birch, kde_pilot) / Tier 3 = 1종 (pq) / Pruned = 7종 / Wave 0 = 3종
+- **4강 selection** (production criteria): HDBSCAN -8.04 / MB_partial -7.63 / Hilbert -7.54 / Hybrid -7.13
+- **PDX (SIGMOD 2025) 학술 confirmation** 추가 (intrinsic_dim + skewness driven algorithm selection 본 thesis 일치)
+- **RQ3 30 method 분포·인덱스 leak audit** 완료 (23 clean / 1 oracle / 1 suspect / 5 pending)
+
+**산출물 위치**:
+- master 분석본: `experiments/results/RQ1_RQ2_RQ3_종합_master_v6_draft_filled_partial.{md,pdf}`
+- 발표 deck: `submission/_drafts/속도는벡터 — Academic v3 · Final 5_27.pdf` (16 page)
+- 자문 메일 draft: `submission/_drafts/속도는벡터_연구지도확인서_20260508.md`
 
 ## 세션 시작 체크리스트
 

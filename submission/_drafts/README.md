@@ -41,10 +41,12 @@
 
 ## 🎨 5/27 발표 deck (academic v3, W4 finalize)
 
-| 자료 | 용도 |
-|---|---|
-| `academic_deck_v3_source/academic-deck/` | 5/27 발표 deck source (index.html, Slides.jsx, deck-stage.js) — Claude Design archive 적용 (5/8 17:40) |
-| `academic_deck_v3_W4_finalize.zip` (49 KB) | source 압축 — 카톡 첨부 가능 form |
+| 자료 | 용도 | 사이즈 |
+|---|---|---:|
+| ⭐ **`속도는벡터 — Academic v3 · Final 5_27.pdf`** | **발표 본체 PDF** (Claude Design export, 5/8 17:58) | **936 KB, 16 pages** |
+| `속도는벡터 — Academic v3 · Final 5_27.pptx` | 발표 본체 PPTX (Claude Design export) | 1.05 MB |
+| `academic_deck_v3_source/academic-deck/` | source HTML (index.html, Slides.jsx, deck-stage.js) — Claude Design archive 적용 (5/8 17:40) | — |
+| `academic_deck_v3_W4_finalize.zip` (49 KB) | source 압축 — 카톡 첨부 가능 form | 49 KB |
 
 **deck 구성**: 16 slide (Cover / TOC / Problem / Prior+PDX / Approach / RQ1 / RQ2 / RQ3 4강 / Hilbert+Tier1 / MiniBatch / Sweet Spot / Cross-scale / Mechanism+Multi 25.4× / Effect / Limitation / Closing) + 한국어 speaker notes 16개 (12분 분량) + 차트 hand-coded SVG.
 

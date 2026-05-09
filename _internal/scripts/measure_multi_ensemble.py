@@ -39,6 +39,13 @@ CLI:
         --methods HDBSCAN MiniBatch GMM Hilbert faiss_ivf MB_partial \
                   Reservoir sparse_rp PCA1D LSH Sobol
 
+5/9 18:50 — methods/* (Tier S/A/B + NeuroCard) 신규 10종 동일 dispatch:
+        --methods PQ Coreset DenseRP BanditUCB1 NeurAM \
+                  CCA1D CoCluster_Nystrom WanderJoin AMSCountSketch NeuroCard
+    Tier C ConditionalAdaptive 는 single-table 만 지원 — 본 multi-vector
+    pipeline 에서는 무시. measure_multi_adaptive_sampling 의 변형으로
+    별도 통합.
+
 서버 launch (cell × method loop):
     nohup python3 _internal/scripts/measure_multi_ensemble.py \
         --cells partsupp_deep_sift_10 ... \
@@ -76,6 +83,7 @@ from measure_multi_paradigm import (  # noqa: E402
     METHOD_MAP, PARADIGM,
     build_concat, stratify_method,
     _lazy_imports, _FALLBACK_CONSTS,
+    _load_prebuilt_artifacts,
 )
 
 
@@ -156,25 +164,34 @@ def measure_ensemble_4way(cell_name: str, methods_user: list[str],
     from measure_multi_vector import cache_dual_samples, stratified_estimate_dual  # noqa
 
     cfg = CELL_4WAY[cell_name]
-    table = cfg["table"]
+    table = cfg.get("table", cell_name)
     kst = consts["kst"]
     SELECTIVITIES = consts["SELECTIVITIES"]
     SEEDS = consts["SEEDS"]
     N_STRATA = consts["N_STRATA"]
     SAMPLE_SIZE = consts["SAMPLE_SIZE"]
 
-    print(f"[{kst()}] === ensemble 4way: cell={cell_name} ===")
+    print(f"[{kst()}] === ensemble 4way: cell={cell_name} "
+          f"({'prebuilt' if cfg.get('prebuilt') else 'PG/NPY'}) ===")
 
-    emb1, emb2 = helpers["fetch_dual_vectors"](
-        table, cfg["emb1_col"], cfg["emb2_col"],
-        cfg["emb1_dim"], cfg["emb2_dim"],
-    )
-    N = emb1.shape[0]
-    print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]})")
+    if cfg.get("prebuilt"):
+        emb1, emb2, qids, q1, q2, D1_by_sel, D2_by_sel, true_card = (
+            _load_prebuilt_artifacts(cell_name, cfg, "4way", n_queries)
+        )
+        N = emb1.shape[0]
+        print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]}) "
+              f"[prebuilt artifacts]")
+    else:
+        emb1, emb2 = helpers["fetch_dual_vectors"](
+            table, cfg["emb1_col"], cfg["emb2_col"],
+            cfg["emb1_dim"], cfg["emb2_dim"],
+        )
+        N = emb1.shape[0]
+        print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]})")
 
-    qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool"](
-        emb1, emb2, n_queries=n_queries,
-    )
+        qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool"](
+            emb1, emb2, n_queries=n_queries,
+        )
 
     concat = build_concat(emb1, emb2)
     print(f"[{kst()}]   concat shape={concat.shape}")
@@ -187,6 +204,7 @@ def measure_ensemble_4way(cell_name: str, methods_user: list[str],
             m_canon, concat, kst,
             learn_frac=learn_frac, seed=learn_seed,
             n_strata=N_STRATA,
+            emb1=emb1, emb2=emb2,
         )
         s1, s2, sizes = cache_dual_samples(emb1, emb2, sids)
         print(f"[{kst()}]   stratum sizes "
@@ -264,25 +282,33 @@ def measure_ensemble_join(cell_name: str, methods_user: list[str],
     N_STRATA = consts["N_STRATA"]
     SAMPLE_SIZE = consts["SAMPLE_SIZE"]
 
-    print(f"[{kst()}] === ensemble join: cell={cell_name} ===")
+    print(f"[{kst()}] === ensemble join: cell={cell_name} "
+          f"({'prebuilt' if cfg.get('prebuilt') else 'PG/NPY'}) ===")
 
-    ps_emb, ps_keys = helpers["fetch_partsupp"](
-        cfg["partsupp_table"], cfg["partsupp_emb_col"], cfg["partsupp_emb_dim"],
-    )
-    p_emb, p_keys = helpers["fetch_part"](
-        cfg["part_table"], cfg["part_emb_col"], cfg["part_emb_dim"],
-    )
-    deep_join, wiki_join = helpers["build_join"](ps_emb, ps_keys, p_emb, p_keys)
-    print(f"[{kst()}] join: deep {deep_join.shape}, wiki {wiki_join.shape}")
+    if cfg.get("prebuilt"):
+        deep_join, wiki_join, qids, q1, q2, D1_by_sel, D2_by_sel, true_card = (
+            _load_prebuilt_artifacts(cell_name, cfg, "join", n_queries)
+        )
+        print(f"[{kst()}] join: emb1 {deep_join.shape}, emb2 {wiki_join.shape} "
+              f"[prebuilt artifacts]")
+        table_name = cfg.get("join_pair_name", cell_name)
+    else:
+        ps_emb, ps_keys = helpers["fetch_partsupp"](
+            cfg["partsupp_table"], cfg["partsupp_emb_col"], cfg["partsupp_emb_dim"],
+        )
+        p_emb, p_keys = helpers["fetch_part"](
+            cfg["part_table"], cfg["part_emb_col"], cfg["part_emb_dim"],
+        )
+        deep_join, wiki_join = helpers["build_join"](ps_emb, ps_keys, p_emb, p_keys)
+        print(f"[{kst()}] join: deep {deep_join.shape}, wiki {wiki_join.shape}")
 
-    qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool_join"](
-        deep_join, wiki_join, n_queries=n_queries,
-    )
+        qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool_join"](
+            deep_join, wiki_join, n_queries=n_queries,
+        )
+        table_name = f"{cfg['partsupp_table']}_join_{cfg['part_table']}"
 
     concat = build_concat(deep_join, wiki_join)
     print(f"[{kst()}]   concat shape={concat.shape}")
-
-    table_name = f"{cfg['partsupp_table']}_join_{cfg['part_table']}"
     all_rows: list[dict] = []
     for m_user in methods_user:
         m_canon = METHOD_MAP[m_user]
@@ -291,6 +317,7 @@ def measure_ensemble_join(cell_name: str, methods_user: list[str],
             m_canon, concat, kst,
             learn_frac=learn_frac, seed=learn_seed,
             n_strata=N_STRATA,
+            emb1=deep_join, emb2=wiki_join,
         )
         s1, s2, sizes = cache_dual_samples(deep_join, wiki_join, sids)
         print(f"[{kst()}]   stratum sizes "

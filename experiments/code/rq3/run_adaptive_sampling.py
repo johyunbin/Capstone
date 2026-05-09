@@ -2,6 +2,14 @@
 """
 RQ3 — Exqutor Adaptive Sampling baseline (arXiv:2512.09695v2 Section V-B 구현).
 
+5/9 18:50 — `--variant conditional` 추가:
+  ConditionalAdaptiveState (_internal/scripts/methods/conditional_adaptive_strat.py)
+  의 selectivity-conditioned 변형. 식 (3) 에 sel_term × log(sel) prior 추가,
+  식 (4)-(6) 동일. single-table single-vector 전용 — multi-vector pipeline
+  (measure_multi_paradigm / _ensemble) 에는 미적용.
+  CLI: --variant conditional [--sel-term 5.0]
+
+
 5/8 회의 결정 ⭐⭐⭐: Exqutor 본 논문의 momentum 기반 동적 sample size 알고리즘을
 본 연구의 stratification 4강 (HDBSCAN / MB_partial / Hilbert / sparse RP) 와 paired
 비교. 동일 query_id × seed × selectivity 격자를 사용해 inner-join Δ% 산출 가능.
@@ -238,6 +246,8 @@ def run_adaptive_measurement(
     n_queries: int = 100,
     fixed_size: int | None = None,
     state_kwargs: dict | None = None,
+    variant: str = "exqutor",
+    sel_term: float = 5.0,
 ) -> tuple[list[dict], dict]:
     """단일 cell (dataset) Adaptive Sampling 측정.
 
@@ -265,8 +275,32 @@ def run_adaptive_measurement(
     print(f"[{kst()}]   loaded {len(qp)} queries (dim={qvecs.shape[1]})")
 
     n_total = all_vecs.shape[0]
-    method = "adaptive_fixed" if fixed_size is not None else "adaptive_sampling"
+    if fixed_size is not None:
+        method = "adaptive_fixed"
+    elif variant == "conditional":
+        method = "conditional_adaptive_sampling"
+    else:
+        method = "adaptive_sampling"
     rows: list[dict] = []
+
+    use_conditional = (variant == "conditional" and fixed_size is None)
+    if use_conditional:
+        # methods/__init__.py 의 ConditionalAdaptiveState (Tier C, single-table 전용).
+        # 동일 process 안에 두 import path (project/_internal) 가 모두 가능하도록
+        # 양쪽 시도.
+        try:
+            sys_path_added = Path(__file__).resolve().parent.parent.parent.parent / \
+                "_internal" / "scripts"
+            if str(sys_path_added) not in sys.path:
+                sys.path.insert(0, str(sys_path_added))
+            from methods.conditional_adaptive_strat import (  # noqa: WPS433
+                ConditionalAdaptiveState,
+            )
+        except Exception as e:
+            raise RuntimeError(
+                "ConditionalAdaptiveState import 실패 — "
+                "_internal/scripts/methods/conditional_adaptive_strat.py 필요."
+            ) from e
 
     # cell 진단용 — 마지막 sample_size trajectory 보존
     final_sizes_per_seed: dict = {}
@@ -299,7 +333,15 @@ def run_adaptive_measurement(
         for seed in seeds:
             seed_int = int(seed * 10**9) % (2**31 - 1)
             rng = np.random.default_rng(seed_int)
-            state = AdaptiveState(**base_kwargs)
+            if use_conditional:
+                # ConditionalAdaptiveState 의 attribute 명명: sample_size (float),
+                # learning_rate, sel_term — base_kwargs 호환 매핑.
+                cond_kwargs = dict(base_kwargs)
+                cond_kwargs["sel_term"] = sel_term
+                # min_size / max_size 는 양쪽 모두 사용
+                state = ConditionalAdaptiveState(**cond_kwargs)
+            else:
+                state = AdaptiveState(**base_kwargs)
             sample_size = SAMPLE_SIZE  # 첫 query 는 식 1 의 N=385
 
             t0 = time.time()
@@ -339,7 +381,11 @@ def run_adaptive_measurement(
                 size_trace.append(s_used)
 
                 if fixed_size is None:
-                    sample_size = state.step(qerr)
+                    if use_conditional:
+                        # ConditionalAdaptiveState.step(qerror, selectivity)
+                        sample_size = state.step(qerr, selectivity=sel)
+                    else:
+                        sample_size = state.step(qerr)
 
             elapsed = time.time() - t0
             valid = sum(1 for q in qe_list if q == q)
@@ -451,6 +497,16 @@ def main():
     ap.add_argument("--min-size", type=int, default=50)
     ap.add_argument("--max-size", type=int, default=5000)
 
+    # 5/9 변형 — ConditionalAdaptiveState (Tier C) 사용 옵션
+    ap.add_argument("--variant", default="exqutor",
+                    choices=["exqutor", "conditional"],
+                    help="exqutor (기본 §V-B) 또는 conditional "
+                         "(_internal/scripts/methods/conditional_adaptive_strat.py — "
+                         "Tier C, sel_term × log(sel) prior 포함, single-table 전용).")
+    ap.add_argument("--sel-term", type=float, default=5.0,
+                    help="conditional variant 의 sel_term coefficient "
+                         "(default 5.0 = methods.DEFAULT_SEL_TERM, 0 = exqutor 와 등가).")
+
     args = ap.parse_args()
 
     # seed 슬라이싱 — DEFAULT_SEEDS [0.1, 0.2, 0.3, 0.4, 0.5] 에서 [start:start+num]
@@ -502,27 +558,45 @@ def main():
         n_queries=args.num_queries,
         fixed_size=args.fixed_size,
         state_kwargs=state_kwargs,
+        variant=args.variant,
+        sel_term=args.sel_term,
     )
 
     # output 명명 — 기존 4강 measurement 와 동일 패턴 (rq3_<DATASET>_sf<N>_<method>)
     if args.out_prefix:
         base = args.out_prefix
     else:
-        mode_tag = f"adaptive_fixed{args.fixed_size}" if args.fixed_size is not None else "adaptive"
+        if args.fixed_size is not None:
+            mode_tag = f"adaptive_fixed{args.fixed_size}"
+        elif args.variant == "conditional":
+            mode_tag = "conditional_adaptive"
+        else:
+            mode_tag = "adaptive"
         base = f"rq3_{args.dataset}_sf{args.sf}_{mode_tag}"
     out_pq = args.out_dir / f"{base}.parquet"
     out_meta = args.out_dir / f"{base}_meta.json"
 
+    if args.fixed_size is not None:
+        method_label = f"Fixed Bernoulli (size={args.fixed_size}, sanity)"
+    elif args.variant == "conditional":
+        method_label = (
+            "Conditional Adaptive Sampling "
+            "(_internal/scripts/methods/conditional_adaptive_strat.py, "
+            f"sel_term={args.sel_term})"
+        )
+    else:
+        method_label = "Exqutor Adaptive Sampling (arXiv:2512.09695v2 §V-B)"
+
     cell_meta = {
-        "method": ("Exqutor Adaptive Sampling (arXiv:2512.09695v2 §V-B)"
-                   if args.fixed_size is None
-                   else f"Fixed Bernoulli (size={args.fixed_size}, sanity)"),
+        "method": method_label,
+        "variant": args.variant,
         "hyperparameters": {
             "m": args.momentum, "eta0": args.lr0,
             "alpha": args.alpha, "beta": args.beta,
             "gamma": args.gamma, "update_period": args.update_period,
             "init_N": SAMPLE_SIZE,
             "min_size": args.min_size, "max_size": args.max_size,
+            "sel_term": args.sel_term if args.variant == "conditional" else None,
         },
         "fixed_size": args.fixed_size,
         "n_queries": args.num_queries,

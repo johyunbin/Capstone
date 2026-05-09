@@ -13,6 +13,22 @@ Paradigm framework (5/8 20:43 Deep Review + user confirm 20:48):
   P4 DimReduction: sparse_rp, PCA1D
   P5 Quasi-random: LSH, Sobol
 
+5/9 18:50 — methods/* (Tier S/A/B) 신규 10종 통합 (extension):
+  P6_Sketch:        AMSCountSketch (SimHash sign-bit signature)
+  P7_Joint:         CCA1D (joint canonical 1D projection)
+  P8_DimInvariant:  NeurAM (1D autoencoder bottleneck)
+  P10_Theoretical:  DenseRP (Bingham-Mannila Gaussian RP)
+  P11_Hierarchical: PQ (product quantization), CoCluster_Nystrom
+                    (bipartite spectral co-clustering)
+  P12_Adaptive:     BanditUCB1 (KMeans + UCB1 metadata)
+  P13_AdaptiveSel:  Coreset (lightweight coreset sensitivity)
+  P14_Latent:       NeuroCard (gaussian-head MLP latent log-density bin)
+  S_MultiRelation:  WanderJoin (index-aware random walk)
+
+Tier C (ConditionalAdaptive) 는 single-table single-vector 만 다루므로
+이 multi-vector pipeline 에서는 무시 — measure_multi_adaptive_sampling /
+run_adaptive_sampling 의 변형으로 별도 통합 필요.
+
 Cell list (3 multi cell):
   - partsupp_deep_sift_10:  4-way (emb1=deep 96d, emb2=sift 128d)
   - partsupp_deep_wiki_10:  4-way (emb1=deep 96d, emb2=wiki 768d)
@@ -71,6 +87,7 @@ sys.path.insert(0, str(SCRIPTS_PATH))
 # stratify_method() / 4kang assign_method() 는 lowercase canonical name 사용.
 # CLI 는 paper 표기 (HDBSCAN, MiniBatch, ...) 라 lower-snake 매핑 필요.
 METHOD_MAP = {
+    # ---- 기존 11 method (변경 X) -----------------------------------------
     # P1 Cluster
     "HDBSCAN":   "hdbscan",     # 4kang assign_method (hdbscan_partition.py)
     "MiniBatch": "minibatch",   # measure_multi_all stratify_method (offline_simple)
@@ -87,15 +104,52 @@ METHOD_MAP = {
     # P5 Quasi-random
     "LSH":       "lsh",         # measure_multi_all stratify_method (lsh.lsh, Wave 0 hyperparams)
     "Sobol":     "sobol",       # measure_multi_all stratify_method (sobol)
+    # ---- 5/9 신규 10 method (methods/__init__.py STRATIFY_FUNCTIONS) -----
+    # Tier S — multi-relation native sampling
+    "WanderJoin":      "wander_join",        # Li SIGMOD 2016 / TODS 2019
+    "AMSCountSketch":  "ams_count_sketch",   # Alon PODS 1999 / JCSS 2002
+    # Tier A — productionized stratification primitives
+    "PQ":          "pq",            # Jegou-Douze-Schmid PAMI 2011
+    "Coreset":     "coreset",       # Bachem-Lucic-Krause ICML 2017
+    "DenseRP":     "dense_rp",      # Bingham-Mannila ICDM 2001
+    "BanditUCB1":  "bandit_ucb1",   # Carpentier-Munos NeurIPS 2011
+    "NeurAM":      "neuram",        # Geraci 2026 (arXiv:2506.08921)
+    # Tier B — multi-vector aware joint stratification
+    "CCA1D":             "cca1d",                 # Hotelling Biometrika 1936
+    "CoCluster_Nystrom": "coclustering_nystrom",  # Dhillon KDD 2003 + Nystrom
+    # NeuroCard (latent-feature K-bin wrapper, drop-in compatible — option A)
+    "NeuroCard":   "neurocard",     # Yang VLDB 2020 (lite reimpl)
 }
 
 # Paradigm 별 method 분류 (출력 / meta 용)
 PARADIGM = {
+    # 기존 5 paradigm (변경 X)
     "HDBSCAN": "P1_Cluster", "MiniBatch": "P1_Cluster", "GMM": "P1_Cluster",
     "Hilbert": "P2_Spatial", "faiss_ivf": "P2_Spatial",
     "MB_partial": "P3_Streaming", "Reservoir": "P3_Streaming",
     "sparse_rp": "P4_DimReduction", "PCA1D": "P4_DimReduction",
     "LSH": "P5_Quasi-random", "Sobol": "P5_Quasi-random",
+    # 5/9 신규 paradigm
+    "AMSCountSketch":    "P6_Sketch",
+    "CCA1D":             "P7_Joint",
+    "NeurAM":            "P8_DimInvariant",
+    "DenseRP":           "P10_Theoretical",
+    "PQ":                "P11_Hierarchical",
+    "CoCluster_Nystrom": "P11_Hierarchical",
+    "BanditUCB1":        "P12_Adaptive",
+    "Coreset":           "P13_AdaptiveSel",
+    "NeuroCard":         "P14_Latent",
+    "WanderJoin":        "S_MultiRelation",
+}
+
+# 신규 10 method 의 stratify_method() 는 (emb1, emb2, K, seed) signature 사용 →
+# methods/__init__.py 의 STRATIFY_FUNCTIONS dict 에서 dispatch.
+# 기존 11 method 는 concat vectors + measure_multi_all helper 경로 유지.
+NEW_METHOD_CANONS: set[str] = {
+    "wander_join", "ams_count_sketch",
+    "pq", "coreset", "dense_rp", "bandit_ucb1", "neuram",
+    "cca1d", "coclustering_nystrom",
+    "neurocard",
 }
 
 
@@ -104,6 +158,7 @@ PARADIGM = {
 # ---------------------------------------------------------------------------
 
 CELL_4WAY = {
+    # ---------- Existing sf=10 (PG / cache/rq1 NPY fast-path) ----------
     "partsupp_deep_sift_10": {
         "table": "partsupp_deep_sift_10",
         "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
@@ -116,9 +171,59 @@ CELL_4WAY = {
         "emb2_col": "ps_embedding_wiki", "emb2_dim": 768,
         "kind": "4way",
     },
+    # ---------- 5/9 added: existing sf=1 variants (NPY fast-path in cache/rq3) ----------
+    # cache/rq3/partsupp_deep_sift_1_emb1.npy / _emb2.npy already present —
+    # fetch_dual_vectors hits the {table}_emb1.npy fast-path automatically.
+    "partsupp_deep_sift_1": {
+        "table": "partsupp_deep_sift_1",
+        "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
+        "emb2_col": "ps_embedding_sift", "emb2_dim": 128,
+        "kind": "4way",
+    },
+    "partsupp_deep_wiki_1": {
+        "table": "partsupp_deep_wiki_1",
+        "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
+        "emb2_col": "ps_embedding_wiki", "emb2_dim": 768,
+        "kind": "4way",
+    },
+    # ---------- 5/9 added: new prebuilt sf=1 (build_new_multi_cells.py 산출) ----------
+    # cache/rq3/<cell>_emb1.npy / _emb2.npy / _query_pool.parquet /
+    # _query_selectivity.parquet — fetch_dual_vectors / build_query_pool 우회.
+    "partsupp_sift_wiki_1": {
+        "prebuilt": True, "table": "partsupp_sift_wiki_1",
+        "emb1_dim": 128, "emb2_dim": 768,
+        "kind": "4way",
+    },
+    "partsupp_fb_wiki_1": {
+        "prebuilt": True, "table": "partsupp_fb_wiki_1",
+        "emb1_dim": 256, "emb2_dim": 768,
+        "kind": "4way",
+    },
+    "partsupp_yfcc_wiki_1": {
+        "prebuilt": True, "table": "partsupp_yfcc_wiki_1",
+        "emb1_dim": 192, "emb2_dim": 768,
+        "kind": "4way",
+    },
+    # ---------- 5/9 added: new prebuilt sf=10 (build pending — config preload) ----------
+    "partsupp_sift_wiki_10": {
+        "prebuilt": True, "table": "partsupp_sift_wiki_10",
+        "emb1_dim": 128, "emb2_dim": 768,
+        "kind": "4way",
+    },
+    "partsupp_fb_wiki_10": {
+        "prebuilt": True, "table": "partsupp_fb_wiki_10",
+        "emb1_dim": 256, "emb2_dim": 768,
+        "kind": "4way",
+    },
+    "partsupp_yfcc_wiki_10": {
+        "prebuilt": True, "table": "partsupp_yfcc_wiki_10",
+        "emb1_dim": 192, "emb2_dim": 768,
+        "kind": "4way",
+    },
 }
 
 CELL_JOIN = {
+    # ---------- Existing sf=10 (PG / cache/rq3 NPY fast-path) ----------
     "multi_join_deep_wiki": {
         "partsupp_table": "partsupp_deep_10",
         "part_table": "part_wiki_10",
@@ -126,8 +231,119 @@ CELL_JOIN = {
         "part_emb_col": "p_embedding", "part_emb_dim": 768,
         "kind": "join",
     },
+    # ---------- 5/9 added: existing sf=1 variant (NPY fast-path) ----------
+    # cache/rq3/partsupp_deep_1_vectors.npy + part_wiki_1_vectors.npy 이미 존재 →
+    # fetch_partsupp / fetch_part 의 NPY 분기로 자동 진입.
+    "multi_join_deep_wiki_1": {
+        "partsupp_table": "partsupp_deep_1",
+        "part_table": "part_wiki_1",
+        "partsupp_emb_col": "ps_embedding", "partsupp_emb_dim": 96,
+        "part_emb_col": "p_embedding", "part_emb_dim": 768,
+        "kind": "join",
+    },
+    # ---------- 5/9 added: new prebuilt sf=1 (build_new_multi_cells.py 산출) ----------
+    # cache/rq3/<cell>_emb1_join.npy / _emb2_join.npy / _query_pool.parquet /
+    # _query_selectivity.parquet — fetch_partsupp / fetch_part / build_join 우회.
+    "multi_join_sift_wiki_1": {
+        "prebuilt": True, "join_pair_name": "partsupp_sift_1_join_part_wiki_1",
+        "partsupp_emb_dim": 128, "part_emb_dim": 768,
+        "kind": "join",
+    },
+    "multi_join_fb_wiki_1": {
+        "prebuilt": True, "join_pair_name": "partsupp_fb_1_join_part_wiki_1",
+        "partsupp_emb_dim": 256, "part_emb_dim": 768,
+        "kind": "join",
+    },
+    "multi_join_yfcc_wiki_1": {
+        "prebuilt": True, "join_pair_name": "partsupp_yfcc_1_join_part_wiki_1",
+        "partsupp_emb_dim": 192, "part_emb_dim": 768,
+        "kind": "join",
+    },
+    # ---------- 5/9 added: new prebuilt sf=10 (build pending — config preload) ----------
+    "multi_join_sift_wiki_10": {
+        "prebuilt": True, "join_pair_name": "partsupp_sift_10_join_part_wiki_10",
+        "partsupp_emb_dim": 128, "part_emb_dim": 768,
+        "kind": "join",
+    },
+    "multi_join_fb_wiki_10": {
+        "prebuilt": True, "join_pair_name": "partsupp_fb_10_join_part_wiki_10",
+        "partsupp_emb_dim": 256, "part_emb_dim": 768,
+        "kind": "join",
+    },
+    "multi_join_yfcc_wiki_10": {
+        "prebuilt": True, "join_pair_name": "partsupp_yfcc_10_join_part_wiki_10",
+        "partsupp_emb_dim": 192, "part_emb_dim": 768,
+        "kind": "join",
+    },
 }
 ALL_CELLS = list(CELL_4WAY.keys()) + list(CELL_JOIN.keys())
+
+
+# ---------------------------------------------------------------------------
+# Prebuilt loader (5/9 added) — short-circuit fetch_dual_vectors /
+# fetch_partsupp+fetch_part+build_join + build_query_pool by reading cached
+# NPY + parquet artifacts produced by build_new_multi_cells.py.
+# ---------------------------------------------------------------------------
+
+def _load_prebuilt_artifacts(
+    cell_name: str, cfg: dict, kind: str, n_queries: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+           dict[float, np.ndarray], dict[float, np.ndarray],
+           dict[tuple[int, float], int]]:
+    """Load prebuilt (emb1, emb2, qids, q1, q2, D1_by_sel, D2_by_sel, true_card).
+
+    Used by both 4way and join cells when ``cfg["prebuilt"] is True``. Mirrors the
+    return shape of ``measure_multi_vector.build_query_pool`` so callers do not
+    branch beyond the load step.
+
+    For 4-way:  reads {cell}_emb1.npy, {cell}_emb2.npy
+    For join:   reads {cell}_emb1_join.npy, {cell}_emb2_join.npy
+    Both load:  {cell}_query_pool.parquet, {cell}_query_selectivity.parquet
+    """
+    cache = ROOT  # /mnt/hdd0/home/capstone2026/cache/rq3 on server
+    if kind == "4way":
+        emb1 = np.load(cache / f"{cell_name}_emb1.npy")
+        emb2 = np.load(cache / f"{cell_name}_emb2.npy")
+    else:
+        emb1 = np.load(cache / f"{cell_name}_emb1_join.npy")
+        emb2 = np.load(cache / f"{cell_name}_emb2_join.npy")
+    N = emb1.shape[0]
+
+    # Replay deterministic qids — build_new_multi_cells.py uses
+    # rng = np.random.default_rng(QUERY_SEED=1234); rng.choice(N, n_queries).
+    rng = np.random.default_rng(1234)
+    qids_full = rng.choice(N, size=100, replace=False)
+    if n_queries < 100:
+        qids = qids_full[:n_queries].copy()
+    else:
+        qids = qids_full
+    q1 = emb1[qids].copy()
+    q2 = emb2[qids].copy()
+
+    # Load query_selectivity parquet — schema:
+    #   query_id, ps_partkey, selectivity, D1_target, D2_target,
+    #   true_cardinality, true_selectivity
+    qs = pd.read_parquet(cache / f"{cell_name}_query_selectivity.parquet")
+    sels = sorted(qs["selectivity"].unique().tolist())
+    D1_by_sel: dict[float, np.ndarray] = {}
+    D2_by_sel: dict[float, np.ndarray] = {}
+    for sel in sels:
+        sub = qs[qs["selectivity"] == sel].sort_values("query_id")
+        d1 = sub["D1_target"].to_numpy(dtype=np.float32)
+        d2 = sub["D2_target"].to_numpy(dtype=np.float32)
+        D1_by_sel[float(sel)] = d1[:n_queries]
+        D2_by_sel[float(sel)] = d2[:n_queries]
+
+    true_card: dict[tuple[int, float], int] = {}
+    for _, row in qs.iterrows():
+        qid_idx = int(row["query_id"])
+        if qid_idx >= n_queries:
+            continue
+        true_card[(int(qids[qid_idx]), float(row["selectivity"]))] = int(
+            row["true_cardinality"],
+        )
+
+    return emb1, emb2, qids, q1, q2, D1_by_sel, D2_by_sel, true_card
 
 
 # ---------------------------------------------------------------------------
@@ -250,8 +466,61 @@ def _fit_reservoir(learn: np.ndarray, vectors: np.ndarray,
 
 def stratify_method(method_canon: str, vectors: np.ndarray, kst,
                      learn_frac: float = 0.01, seed: int = 42,
-                     n_strata: int = 20) -> np.ndarray:
-    """11 method 중 하나로 stratification (lower-snake canonical name)."""
+                     n_strata: int = 20,
+                     emb1: np.ndarray | None = None,
+                     emb2: np.ndarray | None = None) -> np.ndarray:
+    """11 method 중 하나로 stratification (lower-snake canonical name).
+
+    신규 10 method (NEW_METHOD_CANONS) 는 (emb1, emb2) 를 직접 받아
+    methods.STRATIFY_FUNCTIONS dispatch — concat vectors 와 별도 경로.
+    emb1/emb2 None 이면 vectors 를 emb1 으로, emb2=None 으로 fallback
+    (PCA-1D fallback in cca1d / coclustering_nystrom).
+    """
+    # ============ 신규 10 method (Tier S/A/B + NeuroCard) ============
+    if method_canon in NEW_METHOD_CANONS:
+        from methods import STRATIFY_FUNCTIONS  # noqa: WPS433 (lazy)
+        try:
+            from methods.neurocard_lite import (  # noqa: WPS433
+                stratify_method as neurocard_strat,
+            )
+        except Exception:  # pragma: no cover — torch optional
+            neurocard_strat = None
+
+        # emb1 fallback: concat vectors 를 emb1 으로 사용 (single-vector mode)
+        e1 = emb1 if emb1 is not None else vectors
+        e2 = emb2  # may be None — Tier B mappers 자체 fallback
+
+        if method_canon == "neurocard":
+            if neurocard_strat is None:
+                raise ImportError(
+                    "NeuroCard 사용에는 torch 필요 (methods/neurocard_lite.py)."
+                )
+            stratify_fn = neurocard_strat
+        else:
+            stratify_fn = STRATIFY_FUNCTIONS[method_canon]
+
+        # neurocard_lite 의 stratify_method 는 emb2 가 None 일 때 동작 X — emb1 으로 채움
+        if e2 is None and method_canon == "neurocard":
+            e2 = e1
+        # WanderJoin / AMS count-sketch / pq / coreset / dense_rp / bandit_ucb1 /
+        # neuram 도 emb2 None 시 emb1 자체로 채워서 single-vector path 호환
+        if e2 is None and method_canon not in ("cca1d", "coclustering_nystrom"):
+            e2 = e1
+
+        print(f"[{kst()}]   strat (new): {method_canon} on "
+              f"emb1.shape={e1.shape}"
+              f"{', emb2.shape=' + str(e2.shape) if e2 is not None else ''}")
+        t0 = time.time()
+        sids = stratify_fn(e1, e2, K=n_strata, seed=seed).astype(np.int32)
+        elapsed = time.time() - t0
+        counts = np.bincount(sids, minlength=n_strata)
+        nz = counts[counts > 0]
+        print(f"[{kst()}]   strat done {elapsed:.1f}s — sizes "
+              f"min={int(nz.min()) if len(nz) else 0} "
+              f"max={int(counts.max())} K_used={(counts > 0).sum()}/{n_strata}")
+        return sids
+
+    # ============ 기존 11 method (변경 X) ============
     learn = _learn_subsample(vectors, learn_frac, seed, n_strata=n_strata)
     print(f"[{kst()}]   strat: {method_canon} on {learn.shape[0]:,}/{vectors.shape[0]:,} "
           f"learn samples (dim={vectors.shape[1]})")
@@ -368,20 +637,29 @@ def stratify_method(method_canon: str, vectors: np.ndarray, kst,
 def measure_4way(cell_name: str, methods_user: list[str], consts: dict, helpers: dict,
                  n_queries: int, learn_frac: float, learn_seed: int) -> list[dict]:
     cfg = CELL_4WAY[cell_name]
-    table = cfg["table"]
+    table = cfg.get("table", cell_name)
     kst = consts["kst"]
-    print(f"[{kst()}] === paradigm 4way: cell={cell_name} ===")
+    print(f"[{kst()}] === paradigm 4way: cell={cell_name} "
+          f"({'prebuilt' if cfg.get('prebuilt') else 'PG/NPY'}) ===")
 
-    emb1, emb2 = helpers["fetch_dual_vectors"](
-        table, cfg["emb1_col"], cfg["emb2_col"],
-        cfg["emb1_dim"], cfg["emb2_dim"],
-    )
-    N = emb1.shape[0]
-    print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]})")
+    if cfg.get("prebuilt"):
+        emb1, emb2, qids, q1, q2, D1_by_sel, D2_by_sel, true_card = (
+            _load_prebuilt_artifacts(cell_name, cfg, "4way", n_queries)
+        )
+        N = emb1.shape[0]
+        print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]}) "
+              f"[prebuilt artifacts]")
+    else:
+        emb1, emb2 = helpers["fetch_dual_vectors"](
+            table, cfg["emb1_col"], cfg["emb2_col"],
+            cfg["emb1_dim"], cfg["emb2_dim"],
+        )
+        N = emb1.shape[0]
+        print(f"[{kst()}] N={N:,} dims=({emb1.shape[1]}, {emb2.shape[1]})")
 
-    qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool"](
-        emb1, emb2, n_queries=n_queries,
-    )
+        qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool"](
+            emb1, emb2, n_queries=n_queries,
+        )
 
     concat = build_concat(emb1, emb2)
     print(f"[{kst()}]   concat shape={concat.shape} "
@@ -395,6 +673,7 @@ def measure_4way(cell_name: str, methods_user: list[str], consts: dict, helpers:
             m_canon, concat, kst,
             learn_frac=learn_frac, seed=learn_seed,
             n_strata=consts["N_STRATA"],
+            emb1=emb1, emb2=emb2,
         )
         rows = helpers["measure_strategy"](
             m_canon, sids, emb1, emb2, qids, q1, q2,
@@ -416,27 +695,35 @@ def measure_join(cell_name: str, methods_user: list[str], consts: dict, helpers:
                  n_queries: int, learn_frac: float, learn_seed: int) -> list[dict]:
     cfg = CELL_JOIN[cell_name]
     kst = consts["kst"]
-    print(f"[{kst()}] === paradigm join: cell={cell_name} "
-          f"({cfg['partsupp_table']} ⨝ {cfg['part_table']}) ===")
 
-    ps_emb, ps_keys = helpers["fetch_partsupp"](
-        cfg["partsupp_table"], cfg["partsupp_emb_col"], cfg["partsupp_emb_dim"],
-    )
-    p_emb, p_keys = helpers["fetch_part"](
-        cfg["part_table"], cfg["part_emb_col"], cfg["part_emb_dim"],
-    )
-    deep_join, wiki_join = helpers["build_join"](ps_emb, ps_keys, p_emb, p_keys)
-    print(f"[{kst()}] join: deep {deep_join.shape}, wiki {wiki_join.shape}")
+    if cfg.get("prebuilt"):
+        print(f"[{kst()}] === paradigm join: cell={cell_name} (prebuilt) ===")
+        deep_join, wiki_join, qids, q1, q2, D1_by_sel, D2_by_sel, true_card = (
+            _load_prebuilt_artifacts(cell_name, cfg, "join", n_queries)
+        )
+        print(f"[{kst()}] join: emb1 {deep_join.shape}, emb2 {wiki_join.shape} "
+              f"[prebuilt artifacts]")
+        table_name = cfg.get("join_pair_name", cell_name)
+    else:
+        print(f"[{kst()}] === paradigm join: cell={cell_name} "
+              f"({cfg['partsupp_table']} ⨝ {cfg['part_table']}) ===")
+        ps_emb, ps_keys = helpers["fetch_partsupp"](
+            cfg["partsupp_table"], cfg["partsupp_emb_col"], cfg["partsupp_emb_dim"],
+        )
+        p_emb, p_keys = helpers["fetch_part"](
+            cfg["part_table"], cfg["part_emb_col"], cfg["part_emb_dim"],
+        )
+        deep_join, wiki_join = helpers["build_join"](ps_emb, ps_keys, p_emb, p_keys)
+        print(f"[{kst()}] join: deep {deep_join.shape}, wiki {wiki_join.shape}")
 
-    qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool_join"](
-        deep_join, wiki_join, n_queries=n_queries,
-    )
+        qids, q1, q2, D1_by_sel, D2_by_sel, true_card = helpers["build_query_pool_join"](
+            deep_join, wiki_join, n_queries=n_queries,
+        )
+        table_name = f"{cfg['partsupp_table']}_join_{cfg['part_table']}"
 
     concat = build_concat(deep_join, wiki_join)
     print(f"[{kst()}]   concat shape={concat.shape} "
           f"({concat.nbytes / 1e6:.1f} MB)")
-
-    table_name = f"{cfg['partsupp_table']}_join_{cfg['part_table']}"
     all_rows: list[dict] = []
     for m_user in methods_user:
         m_canon = METHOD_MAP[m_user]
@@ -445,6 +732,7 @@ def measure_join(cell_name: str, methods_user: list[str], consts: dict, helpers:
             m_canon, concat, kst,
             learn_frac=learn_frac, seed=learn_seed,
             n_strata=consts["N_STRATA"],
+            emb1=deep_join, emb2=wiki_join,
         )
         rows = helpers["measure_strategy_join"](
             m_canon, sids, deep_join, wiki_join, qids, q1, q2,

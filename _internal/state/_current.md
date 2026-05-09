@@ -1,6 +1,14 @@
-# 현재 단계 (CLAUDE.md 분리, 5/9 13:30 The End 완료 update)
+# 현재 단계 (CLAUDE.md 분리, 5/9 16:12 Multi Ensemble running update)
 
-> **5/9 13:30 — The End 완료. narrative fill 4 task finalize + 자문 메일 v4 박세은 발송 ready. 다음 milestone: 5/15~5/20 박성원 멘토 자문 회신 / 5/22 박광현 교수님 미팅 / 5/27 최종 발표 / 6/11 최종 보고서.**
+> **5/9 16:12 — 자문 메일 v5 박세은 톡방 공유 ready (256 KB / 2 페이지) + Multi Adaptive Ensemble 측정 background 진행 중 (Cell 1/6 완료, ETA 22:00) + (2)~(5) brainstorming 후보 코드 작성 대기. 다음 세션부터 agent 활용 적극 (메인 세션 보호).**
+> **5/9 13:30 ~ 16:12 KST 진행** (handoff_v17 참조):
+> - ✅ 자문 메일 v5 finalize (박세은 카톡 톡 100% align + code-reviewer agent 8건 필수 수정 적용)
+> - ✅ (가) Multi 11 method × Adaptive paired 분석 (paired-better 0/66 정량)
+> - ✅ (1) Multi Adaptive Ensemble script 작성 + 서버 launch (5/9 15:16 KST tmux multi_ensemble, ETA 22:00)
+> - 🔄 (1) 측정 진행 중: Cell 1/6 완료 (49분, 27,500 rows), Cell 2/6 진입
+> - ⏸️ (2) Hierarchical Multi-vector Decomp / (3) Joint-aware / (4) Conditional Adaptive / (5) Latent Embedding 코드 작성 대기 (server 단일 점유 (1) 완료 후 직렬 launch)
+> 
+> **5/9 13:30 (선행)** — handoff_v16 The End 완료, narrative fill 4 task finalize
 > **5/9 morning sprint** (5/9 02:20 ~ 13:30 KST):
 > - ✅ Multi 6 cell × 11 method paradigm 측정 + Multi Adaptive baseline 6 cell finalize (16,500 + 15,000 = 31,500 measurement)
 > - ✅ analyze_multi_paradigm.py / analyze_ensemble.py 분석 csv 7 종 산출

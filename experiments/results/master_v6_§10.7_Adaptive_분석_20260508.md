@@ -42,9 +42,41 @@ paired Δ% 정의:
 
 4강 vs BERN (§10.4) 의 sweet spot 에서의 magnitude 가 -7~-32% 였던 것에 비해, 4강 vs Adaptive 의 head-to-head magnitude 는 -0.5~-1.2% 로 한 자릿수 작다. 이는 **Adaptive Sampling 자체가 BERN 대비 일정 이득** 을 가져오기 때문이다 — Adaptive 의 cell-level median Δ% vs BERN 은 SIFT_sf1 -26.77%, WIKI_sf1 -6.50%, YFCC_sf1 -4.26% 로 본 4강과 동일 부호·동일 region 에서 효과가 발생한다. 그럼에도 불구하고 4강의 *분포 인지* 가 Adaptive Sampling 의 *모멘텀-기반 동적 표본 확장* 보다 같은 sweet spot 에서 추가 0.5~1.2%p improvement 를 paired-significantly 가져온다는 것은 **분포 정보 활용의 marginal value** 를 정량 입증한다. 본 연구의 narrative ("Exqutor 가 미작동하는 단일 테이블 영역에 대한 분포 정보의 가치") 는 paired Wilcoxon 유의 7/10 cell 으로 강화되며, sparse_rp 같은 production-friendly tier 에 대해서는 honest reporting 으로 "동등" 을 보고한다.
 
-### Limitation 및 multi 환경 placeholder
+### Multi 환경 head-to-head — Outcome C (동등) + 부분 D (low-sel mixed)
 
-본 결과는 단일 테이블 한정이다. §10.6 의 25× shrinkage chain (단일 17.13% → multi-vector 0.67%) 이 보여준 바, multi 환경에서는 4강 vs BERN 자체가 ±1% marginal 영역으로 약화되므로 4강 vs Adaptive head-to-head 도 indistinguishable 가능성이 높다. **Multi-vector + multi-table-join 3 cell × Adaptive Sampling baseline** 측정은 5/9 morning 도착 예정이며, 결과 도착 후 본 §10.7 에 multi 비교 표를 추가한다 (placeholder). 단일 정확성이 multi 정확성의 *필요조건만* 성립한다는 §10.6 narrative 와 정합하므로, 4강의 head-to-head 우위가 multi 에서는 약화될 것이라는 가설을 사전에 명시한다.
+본 결과는 단일 테이블 한정이다. §10.6 의 24.5× shrinkage chain (단일 17.13% → multi 6 cell mean 0.70%) 이 보여준 바, multi 환경에서는 4강 vs BERN 자체가 ±1% marginal 영역으로 약화되므로 4강 vs Adaptive head-to-head 도 indistinguishable 가능성이 높다는 *사전 가설* 을 5/8 21:34 launch 시 명시하였다. 5/9 02:20 완료된 multi-vector + multi-table-join 6 cell × Adaptive Sampling baseline 의 paired Δ% 결과는 본 사전 가설을 sweet spot 영역에서 정확히 confirm 한다.
+
+#### Cell-level head-to-head median Δ% 매트릭스 (6 cell × 4강, sel=0.5 sweet spot)
+
+| Cell | HDBSCAN | MB_partial | Hilbert | sparse_rp |
+|---|---|---|---|---|
+| partsupp_deep_sift_10 | +0.005 | +0.180 | −0.167 | +0.537\* |
+| partsupp_deep_wiki_10 | +0.609\*\* | +0.432\* | +0.208 | +0.439\* |
+| multi_join_deep_wiki | +0.376\* | +0.152 | +0.163 | +0.277\* |
+| partsupp_deep_sift_1 | +0.391 | +0.146 | +0.011 | +0.186 |
+| partsupp_deep_wiki_1 | −0.008 | +0.064 | −0.165 | +0.106 |
+| multi_join_deep_wiki_1 | −0.008 | +0.064 | −0.165 | +0.106 |
+| **Win count (median < 0)** | 2/6 | 0/6 | 3/6 | 0/6 |
+| **Sig. count (Wilcoxon p<0.05 + median<0)** | 0/6 | 0/6 | 0/6 | 0/6 |
+| **mean of cell median Δ%** | +0.227 | +0.173 | −0.021 | +0.275 |
+
+`*` p < 0.05  `**` p < 1e-3  |  multi_join_deep_wiki_1 의 4강 q_error 가 partsupp_deep_wiki_1 의 q_error 와 query_id 별 정확 일치 (1:1 key join 의 구조적 collapse, raw csv md5 검증) — h2h 매트릭스도 동일.
+
+#### 단일 vs multi outcome 비교
+
+단일 §10.7 의 Outcome A (4강 ≻ Adaptive, 단일 mean cell median Δ% −0.43~−0.62) 가 multi 에서는 **불성립**. multi 6 cell mean 은 sweet spot 에서 −0.021 (Hilbert) ~ +0.275 (sparse_rp) 의 near-zero 영역으로 수렴하며, 24 cell pair (6 cell × 4 method) 중 Wilcoxon p < 0.05 + median < 0 의 **0/24** = paired-significantly better 가 0% 로 **Outcome C (동등) 가 dominant**. 단일에서 most favorable 였던 HDBSCAN 도 multi 에서는 +0.227 mean (worse direction).
+
+전 selectivity pool ('all' 행) 으로 시야를 넓히면 4강 모두 +9.32 ~ +13.28 mean Δ% (Wilcoxon p ≪ 1e-30) 의 *4강이 Adaptive 보다 명확히 worse* 가 발현 — **low-selectivity 영역 (sel=0.01~0.1) 에서 multi 환경의 momentum-기반 dynamic budget 확장이 분포 인지 stratification 보다 우월** (Outcome D 부분 발현). 즉 multi 환경에서는 sweet spot 에서는 indistinguishable, low-sel 에서는 4강이 worse 의 mixed pattern 으로 honest reporting.
+
+#### Multiple comparison correction (multi)
+
+24 test (6 cell × 4 method, sel=0.5 reference) 또는 144 test (sel-breakdown 포함) 에 BH FDR + Bonferroni 적용. 단일 §10.7 의 40 test 보정 결과 (HDBSCAN BH 7/10, Bonferroni 6/10) 는 multi 에서 **0/24 (sweet spot 영역) 로 완전 약화**, 144 test 전체 pool 에서도 4강 method 가 paired-better 로 BH-significant 한 cell 이 0/144 — multi 환경에서 4강의 Outcome A 가 통계적 보정 어느 기준에서도 **확정적으로 불성립**.
+
+#### narrative 함의
+
+(1) 본 연구 contribution narrative ("분포 정보의 가치") 는 **단일 환경 한정** 으로 정량 입증 (§10.7 Outcome A, 7/10 BH-sig). (2) Multi 환경에서는 *분포 정보의 marginal value 가 통계적으로 indistinguishable 영역으로 약화* (Outcome C) → "단일 정확성은 multi 정확성의 필요조건만" narrative 강한 정량 증거. (3) Low-sel 영역의 4강 worse 발현 (Outcome D 부분) 은 *multi 환경의 partial dependency / multi-relation cardinality* 가 본 연구 단일-cell 분포 인지의 inductive bias 와 부정합함을 시사 → future work (multi-relation joint-aware clustering, ECQO + 분포 인지 ensemble) 의 정량 motivation. (4) Multi-table-join 1:1 key join 의 q_error collapse (multi_join_deep_wiki_1 ≡ partsupp_deep_wiki_1) 는 *foreign-key dimension join 환경에서 multi-side 측정이 single-side 측정으로 환원* 가능함을 정량 확인 → supplementary contribution.
+
+raw csv reference: `_internal/cache/multi_paradigm_paired/multi_4kang_vs_adaptive_h2h.csv` (144 rows = 6×4×6). 통합 narrative 는 §10.6 (Multi 광범위 11-method paradigm 결과) 와 정합.
 
 ### Method-level limitation (V7 audit)
 

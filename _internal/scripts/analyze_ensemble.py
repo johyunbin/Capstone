@@ -72,17 +72,17 @@ CELLS = [
     ("YFCC", 1), ("YFCC", 10),
 ]
 
-# X7 launch 의 11 base method (5 paradigm representative full set)
+# X7 launch 의 11 base method (5 paradigm representative full set, lowercase 매칭)
 BASE_METHODS = [
-    "HDBSCAN", "MiniBatch", "GMM",       # P1 Density Clustering
-    "Hilbert", "faiss_ivf",              # P2 Spatial Indexing
-    "MB_partial", "Reservoir",           # P3 Online Streaming
-    "sparse_rp", "PCA1D",                # P4 Linear Projection
-    "LSH", "Sobol",                      # P5 Quasi-random
+    "hdbscan", "minibatch", "gmm",        # P1 Density Clustering
+    "hilbert", "faiss_ivf",               # P2 Spatial Indexing
+    "minibatch_partial", "reservoir",     # P3 Online Streaming
+    "sparse_rp", "pca1d",                 # P4 Linear Projection
+    "lsh", "sobol",                       # P5 Quasi-random
 ]
 
 # 4강 (X6 launch) — production-friendly criteria
-FOUR_KANG = ["HDBSCAN", "MB_partial", "Hilbert", "sparse_rp"]
+FOUR_KANG = ["hdbscan", "minibatch_partial", "hilbert", "sparse_rp"]
 
 SELECTIVITIES = [0.01, 0.05, 0.10, 0.30, 0.50]
 

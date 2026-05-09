@@ -59,10 +59,25 @@ from scipy import stats
 # ---------------------------------------------------------------------------
 
 CELLS = [
+    # SF10
     "partsupp_deep_sift_10",  # multi-vector (deep 96d + sift 128d)
     "partsupp_deep_wiki_10",  # multi-vector (deep 96d + wiki 768d)
     "multi_join_deep_wiki",   # multi-table join (partsupp_deep_10 ⨝ part_wiki_10)
+    # SF1 (Agent W setup, 5/8 22:46 완료)
+    "partsupp_deep_sift_1",
+    "partsupp_deep_wiki_1",
+    "multi_join_deep_wiki_1",
 ]
+
+# bern baseline file 명 매핑 (rq2_multi_5mode 의 file naming 이 partsupp_ prefix 없음)
+BERN_FILE_MAP = {
+    "partsupp_deep_sift_10":  "rq2_multi_5mode_deep_sift_10",
+    "partsupp_deep_wiki_10":  "rq2_multi_5mode_deep_wiki_10",
+    "multi_join_deep_wiki":   "rq2_multi_5mode_multi_join_deep_wiki",
+    "partsupp_deep_sift_1":   "rq2_multi_5mode_deep_sift_1",
+    "partsupp_deep_wiki_1":   "rq2_multi_5mode_deep_wiki_1",
+    "multi_join_deep_wiki_1": "rq2_multi_5mode_multi_join_deep_wiki_1",
+}
 
 # paradigm framework — measure_multi_paradigm.py 와 동일 11종
 PARADIGM_METHODS = [
@@ -101,7 +116,7 @@ def scan_inputs(input_dirs: list[Path]) -> dict[str, dict]:
             for pattern, key in [
                 (f"multi_paradigm_{cell}.*",      "paradigm"),
                 (f"multi_adaptive_{cell}.*",      "adaptive"),
-                (f"rq2_multi_5mode_{cell}*.*",    "bern_baseline"),
+                (f"{BERN_FILE_MAP.get(cell, 'rq2_multi_5mode_'+cell)}.*",    "bern_baseline"),
             ]:
                 if slot[key] is None:
                     for p in d.rglob(pattern):

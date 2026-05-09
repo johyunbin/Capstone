@@ -280,18 +280,22 @@ def add_mc_correction(wilcoxon: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def compute_h2h_vs_adaptive(paradigm: pd.DataFrame, adaptive: pd.DataFrame,
-                              cell: str) -> pd.DataFrame:
-    """4강 method 4종 + Adaptive 1종 = 5 method 의 head-to-head paired Δ%.
+                              cell: str, method_list=None) -> pd.DataFrame:
+    """method 별로 Adaptive 와 head-to-head paired Δ%.
 
     Δ%_h2h = (q_error[method] − q_error[adaptive]) / q_error[adaptive] × 100
+
+    method_list: 분석할 method list (default = FOUR_KANG)
     """
+    if method_list is None:
+        method_list = FOUR_KANG
     KEY = ["selectivity", "seed", "query_id"]
     ada = adaptive[KEY + ["q_error"]].copy()
     ada = ada.rename(columns={"q_error": "q_error_ada"})
 
     method_col = "method_user" if "method_user" in paradigm.columns else "mode"
     out_rows = []
-    for method in FOUR_KANG:
+    for method in method_list:
         sub = paradigm[paradigm[method_col] == method]
         if sub.empty:
             continue
@@ -464,7 +468,8 @@ def main():
 
     summary_dfs: list[pd.DataFrame] = []
     wilcoxon_dfs: list[pd.DataFrame] = []
-    h2h_dfs: list[pd.DataFrame] = []
+    h2h_dfs: list[pd.DataFrame] = []        # FOUR_KANG (기존)
+    h2h_all_dfs: list[pd.DataFrame] = []     # ALL 11 method (5/9 add)
 
     for cell in CELLS:
         slot = found[cell]
@@ -475,19 +480,23 @@ def main():
 
         s = compute_paired_summary(paradigm, bern, cell)
         w = compute_paired_wilcoxon(paradigm, bern, cell)
-        h = compute_h2h_vs_adaptive(paradigm, adaptive, cell)
+        h = compute_h2h_vs_adaptive(paradigm, adaptive, cell, method_list=FOUR_KANG)
+        h_all = compute_h2h_vs_adaptive(paradigm, adaptive, cell, method_list=PARADIGM_METHODS)
         summary_dfs.append(s)
         wilcoxon_dfs.append(w)
         h2h_dfs.append(h)
+        h2h_all_dfs.append(h_all)
 
         print(f"  paradigm rows={len(paradigm):,} adaptive rows={len(adaptive):,} "
               f"bern rows={len(bern):,}", file=sys.stderr)
-        print(f"  summary rows={len(s)}, wilcoxon rows={len(w)}, h2h rows={len(h)}",
+        print(f"  summary rows={len(s)}, wilcoxon rows={len(w)}, "
+              f"h2h_4kang rows={len(h)}, h2h_11 rows={len(h_all)}",
               file=sys.stderr)
 
     summary = pd.concat(summary_dfs, ignore_index=True) if summary_dfs else pd.DataFrame()
     wilcoxon = pd.concat(wilcoxon_dfs, ignore_index=True) if wilcoxon_dfs else pd.DataFrame()
     h2h = pd.concat(h2h_dfs, ignore_index=True) if h2h_dfs else pd.DataFrame()
+    h2h_all = pd.concat(h2h_all_dfs, ignore_index=True) if h2h_all_dfs else pd.DataFrame()
 
     if not wilcoxon.empty:
         wilcoxon = add_mc_correction(wilcoxon)
@@ -497,18 +506,23 @@ def main():
     out_summary = out_dir / "multi_paradigm_paired_summary.csv"
     out_wilcox = out_dir / "multi_paradigm_paired_wilcoxon.csv"
     out_h2h = out_dir / "multi_4kang_vs_adaptive_h2h.csv"
+    out_h2h_all = out_dir / "multi_11method_vs_adaptive_h2h.csv"
     out_shrink = out_dir / "multi_shrinkage_table.csv"
 
     summary.to_csv(out_summary, index=False)
     wilcoxon.to_csv(out_wilcox, index=False)
     h2h.to_csv(out_h2h, index=False)
+    h2h_all.to_csv(out_h2h_all, index=False)
     shrinkage.to_csv(out_shrink, index=False)
 
     print(f"\n=== output ===", file=sys.stderr)
-    print(f"  {out_summary}  ({len(summary)} rows)", file=sys.stderr)
-    print(f"  {out_wilcox}   ({len(wilcoxon)} rows)", file=sys.stderr)
-    print(f"  {out_h2h}      ({len(h2h)} rows)", file=sys.stderr)
-    print(f"  {out_shrink}   ({len(shrinkage)} rows)", file=sys.stderr)
+    print(f"  {out_summary}    ({len(summary)} rows)", file=sys.stderr)
+    print(f"  {out_wilcox}     ({len(wilcoxon)} rows)", file=sys.stderr)
+    print(f"  {out_h2h}        ({len(h2h)} rows = 6 cell × 4 method × 6 sel)",
+          file=sys.stderr)
+    print(f"  {out_h2h_all}    ({len(h2h_all)} rows = 6 cell × 11 method × 6 sel)",
+          file=sys.stderr)
+    print(f"  {out_shrink}     ({len(shrinkage)} rows)", file=sys.stderr)
     return 0
 
 

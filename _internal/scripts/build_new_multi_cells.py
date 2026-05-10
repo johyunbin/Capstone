@@ -139,37 +139,114 @@ def kst() -> str:
 # Cell registry — 12 new cells (CLI choices + per-cell config)
 # ---------------------------------------------------------------------------
 
-#: 4-way cells: partsupp_<img>_wiki_<sf>.
-#:   image_src — name of NPY family in cache/rq1 (partsupp_<img>_<sf>_vectors.npy + _pks.npy).
-#:   wiki_src  — partsupp_wiki_<sf>_vectors.npy + _pks.npy in cache/rq1.
-CELL_4WAY: dict[str, dict] = {
-    f"partsupp_{img}_wiki_{sf}": {
-        "kind": "4way",
-        "image_src": f"partsupp_{img}_{sf}",
-        "wiki_src":  f"partsupp_wiki_{sf}",
-        "img_dim": dim,
-        "wiki_dim": 768,
-        "sf": sf,
-    }
-    for (img, dim) in (("sift", 128), ("fb", 256), ("yfcc", 192))
-    for sf in (1, 10)
+#: Embedding source dimensions (cache/rq1 NPY conventions).
+EMB_DIMS: dict[str, int] = {
+    "deep":     96,
+    "sift":    128,
+    "fb":      256,
+    "yfcc":    192,
+    "yfcc_pca": 192,
+    "wiki":    768,
 }
 
-#: multi_join cells: partsupp_<img>_<sf>  ⨝  part_wiki_<sf>.
+#: 4-way cells: partsupp_<A>_<B>_<sf>.
+#:   image_src / wiki_src — kept for back-compat, but new generic schema uses
+#:   src1 (partsupp_<A>_<sf>) + src2 (partsupp_<B>_<sf>) — src2 is broadcast by partkey.
+#:
+#:   Note: legacy entries used the alias 'image_src' / 'wiki_src' (B was always wiki
+#:   when this builder was first written). New entries use src1/src2; the helper
+#:   _get_4way_sources() reads either form.
+CELL_4WAY: dict[str, dict] = {
+    # ---- Legacy: <X>_wiki (broadcast wiki) — kept for backward compatibility ----
+    **{
+        f"partsupp_{img}_wiki_{sf}": {
+            "kind": "4way",
+            "image_src": f"partsupp_{img}_{sf}",
+            "wiki_src":  f"partsupp_wiki_{sf}",
+            "img_dim": dim,
+            "wiki_dim": 768,
+            "sf": sf,
+        }
+        for (img, dim) in (("sift", 128), ("fb", 256), ("yfcc", 192))
+        for sf in (1, 10)
+    },
+    # ---- v8 new: 22 NEW 4-way pairs (5/9) — uses src1 / src2 schema -----
+    **{
+        f"partsupp_{a}_{b}_{sf}": {
+            "kind": "4way",
+            "src1": f"partsupp_{a}_{sf}",
+            "src2": f"partsupp_{b}_{sf}",
+            "img_dim":  EMB_DIMS[a],   # alias for downstream estimators
+            "wiki_dim": EMB_DIMS[b],   # alias
+            "dim1":     EMB_DIMS[a],
+            "dim2":     EMB_DIMS[b],
+            "sf": sf,
+        }
+        for (a, b) in (
+            ("deep", "fb"), ("deep", "yfcc"), ("deep", "yfcc_pca"),
+            ("sift", "fb"), ("sift", "yfcc"), ("sift", "yfcc_pca"),
+            ("fb", "yfcc"), ("fb", "yfcc_pca"),
+            ("yfcc", "yfcc_pca"),
+            ("yfcc_pca", "wiki"),
+        )
+        for sf in (1, 10)
+    },
+}
+
+#: multi_join cells: partsupp_<X>_<sf>  ⨝  part_wiki_<sf> (or part_<Y>_<sf>).
 CELL_JOIN: dict[str, dict] = {
-    f"multi_join_{img}_wiki_{sf}": {
+    # ---- Legacy: <img> joined with part_wiki (img-side broadcast) ----
+    **{
+        f"multi_join_{img}_wiki_{sf}": {
+            "kind": "join",
+            "partsupp_src": f"partsupp_{img}_{sf}",
+            "part_src":     f"part_wiki_{sf}",
+            "img_dim": dim,
+            "wiki_dim": 768,
+            "sf": sf,
+        }
+        for (img, dim) in (("sift", 128), ("fb", 256), ("yfcc", 192))
+        for sf in (1, 10)
+    },
+    # ---- v8 new: 4 NEW joins (5/9) ----
+    "multi_join_yfcc_pca_wiki_1": {
         "kind": "join",
-        "partsupp_src": f"partsupp_{img}_{sf}",  # cache/rq1 NPY family
-        "part_src":     f"part_wiki_{sf}",        # cache/rq1 NPY family (or rq3 fallback)
-        "img_dim": dim,
-        "wiki_dim": 768,
-        "sf": sf,
-    }
-    for (img, dim) in (("sift", 128), ("fb", 256), ("yfcc", 192))
-    for sf in (1, 10)
+        "partsupp_src": "partsupp_yfcc_pca_1",
+        "part_src":     "part_wiki_1",
+        "img_dim":  192, "wiki_dim": 768, "sf": 1,
+    },
+    "multi_join_yfcc_pca_wiki_10": {
+        "kind": "join",
+        "partsupp_src": "partsupp_yfcc_pca_10",
+        "part_src":     "part_wiki_10",
+        "img_dim":  192, "wiki_dim": 768, "sf": 10,
+    },
+    "multi_join_wiki_1": {
+        "kind": "join",
+        "partsupp_src": "partsupp_wiki_1",
+        "part_src":     "part_wiki_1",
+        "img_dim":  768, "wiki_dim": 768, "sf": 1,
+    },
+    "multi_join_wiki_10": {
+        "kind": "join",
+        "partsupp_src": "partsupp_wiki_10",
+        "part_src":     "part_wiki_10",
+        "img_dim":  768, "wiki_dim": 768, "sf": 10,
+    },
 }
 
 ALL_CELLS: list[str] = list(CELL_4WAY.keys()) + list(CELL_JOIN.keys())
+
+
+def _get_4way_sources(cfg: dict) -> tuple[str, str]:
+    """Return (src1, src2) NPY family names for a 4-way cell.
+
+    Supports both the legacy {image_src, wiki_src} schema and the new
+    {src1, src2} schema. ``src2`` is broadcast by partkey (first occurrence).
+    """
+    if "src1" in cfg:
+        return cfg["src1"], cfg["src2"]
+    return cfg["image_src"], cfg["wiki_src"]
 
 
 def _expected_n_rows(sf: int) -> int:
@@ -264,16 +341,17 @@ def _sort_by_pks(vec: np.ndarray, pks: np.ndarray) -> tuple[np.ndarray, np.ndarr
 def build_4way_arrays(cell: str, cfg: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Build aligned (emb1, emb2, partkeys) for a 4-way cell.
 
-    Strategy: image source is the row spine; wiki is broadcast by partkey
-    (each partkey -> first wiki embedding for that partkey).
+    Strategy: src1 (image / first emb) is the row spine; src2 (wiki / second emb)
+    is broadcast by partkey (each partkey -> first src2 embedding for that partkey).
     """
     print(f"[{kst()}] >>> 4way build: {cell}")
-    img_vec, img_pks = _load_partsupp_npy(cfg["image_src"])
-    wiki_vec, wiki_pks = _load_partsupp_npy(cfg["wiki_src"])
+    src1, src2 = _get_4way_sources(cfg)
+    img_vec, img_pks = _load_partsupp_npy(src1)
+    wiki_vec, wiki_pks = _load_partsupp_npy(src2)
 
     img_vec, img_pks = _sort_by_pks(img_vec, img_pks)
     wiki_vec, wiki_pks = _sort_by_pks(wiki_vec, wiki_pks)
-    print(f"[{kst()}]   image rows: {img_vec.shape}  wiki rows: {wiki_vec.shape}")
+    print(f"[{kst()}]   src1={src1} {img_vec.shape}  src2={src2} {wiki_vec.shape}")
 
     # If the row keys match exactly, do direct alignment (cheaper, exact).
     if img_pks.shape == wiki_pks.shape and np.array_equal(img_pks, wiki_pks):
@@ -623,10 +701,11 @@ def main() -> None:
         for cell in cells:
             cfg = (CELL_4WAY | CELL_JOIN)[cell]
             if cfg["kind"] == "4way":
-                needed_sources.update({cfg["image_src"], cfg["wiki_src"]})
+                src1, src2 = _get_4way_sources(cfg)
+                needed_sources.update({src1, src2})
             else:
                 needed_sources.add(cfg["partsupp_src"])
-                needed_sources.add(f"part_wiki_{cfg['sf']}")
+                needed_sources.add(cfg.get("part_src", f"part_wiki_{cfg['sf']}"))
         for src in sorted(needed_sources):
             if src.startswith("part_wiki"):
                 v = CACHE_RQ3 / f"{src}_vectors.npy"

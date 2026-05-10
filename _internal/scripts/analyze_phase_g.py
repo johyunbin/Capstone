@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-"""Phase G — End-to-end analysis pipeline for the v7 22 method × 28 cell × 6 baseline matrix.
+"""Phase G — End-to-end analysis pipeline for the v9 36 method × 56 cell × 6 baseline matrix.
 
-Phase G runs *after* Phase E (full matrix measurement, 22 method × 28 cell ×
-5 sel × 5 seed × 100 query ≈ 7.7M paired observations) and Phase F (6 baseline
-runs B1 ~ B6 × 28 cell) finish. The script produces the seven analytical
-sections that feed boa report §7~9, slide v3 page 18~22, and the production
-package summary in ``experiments/code/exqutor_augment/``.
+Phase G runs *after* Phase E (full matrix measurement) and Phase F (6 baseline
+runs B1 ~ B6 × 56 cell) finish. The script produces eight analytical
+sections (G1–G8) that feed boa report §7~9, slide v3 page 18~22, and the
+production package summary in ``experiments/code/exqutor_augment/``.
+
+Versioning history:
+  v7 (22 methods × 28 cells)  — original Phase G scope.
+  v8 (27 methods × 28 cells)  — +5 Tier S+ methods (ThompsonSampling,
+                                EpsilonNetBaseline, AdaptiveBucketProbing,
+                                CCSketch, FactorJoin).
+  v9 (36 methods × 56 cells)  — +9 extreme-mode methods (LpBound, MFMC,
+                                Tucker, VineCopula, HNSW_SS, HKBU_RepSample,
+                                LHS, kDPP, OPQ) + 28 new multi cells.
+
+Use ``--methods-version v7|v8|v9`` to constrain the method portfolio
+(default v9). Backwards-compatible: cells with only v7-portfolio data still
+analyse correctly under any version flag (missing methods are marked N/A).
 
 The pipeline implements the statistical framework documented in
 ``plans/RQ재정립_v7_evidence_20260509_1820.md`` § 8 (paired Wilcoxon, Bonferroni
@@ -53,6 +65,14 @@ Sections (run in order; each writes a CSV under ``OUT_DIR``):
       (b) Adaptive-augment positively (B4 better than B1 on at least one
       axis), (c) low resource cost, (d) interpretable (paradigm or Tier).
       Top 3-5 candidates emitted with English README-ready descriptors.
+
+  G8. HKBU-RepSample reference comparison (v9, SIGMOD 2026)
+      Dedicated comparison vs the HKBU paper claim — Wu et al. SIGMOD 2026,
+      "Balancing Global and Local: Representative Sampling for Large-Scale
+      Vector Data" (https://www.comp.hkbu.edu.hk/~xinhuang/publications/pdfs/SIGMOD26-Vector.pdf).
+      Reports per-cell paired Δ% for HKBU_RepSample alongside our top-3
+      methods, with multi-table specific highlights (cells where the v9
+      additions recovered the 0/66 paired-better baseline of v7).
 
 Inputs (under ``_internal/cache/`` or server-side):
   * Phase E full matrix parquets:
@@ -115,6 +135,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import statsmodels.api as sm
+from statsmodels.stats.multitest import multipletests
 
 # ---------------------------------------------------------------------------
 # Constants — must match measure_multi_paradigm.py and plan v7 §4–§6.
@@ -139,7 +160,10 @@ BASELINE_NAMES = {
     "B6": "Oracle KM20",
 }
 
-# v7 §4 22 methods, ordered legacy 11 first then new 11 (Tier S/A/B/C).
+# v9 §4 36 methods, ordered legacy 11 → v7 +11 → v8 +5 → v9 +9.
+# IMPORTANT: AMS_CountSketch (analyze_phase_g v7 spelling) is aliased to
+# AMSCountSketch (measure_multi_paradigm v9 spelling) below — both names
+# are accepted by the registry to keep ingest backwards-compatible.
 METHODS_LEGACY = [
     "HDBSCAN", "MiniBatch", "GMM",       # P1 Cluster
     "Hilbert", "faiss_ivf",              # P2 Spatial
@@ -147,20 +171,54 @@ METHODS_LEGACY = [
     "sparse_rp", "PCA1D",                # P4 DimReduction
     "LSH", "Sobol",                      # P5 Quasi-random
 ]
-METHODS_NEW = [
-    # Tier S
-    "WanderJoin", "AMS_CountSketch", "NeuroCard",
-    # Tier A
+# v7 +11 methods (5/9 first wave)
+METHODS_V7_NEW = [
+    # Tier S — multi-relation native
+    "WanderJoin", "AMSCountSketch", "NeuroCard",
+    # Tier A — general
     "PQ", "Coreset", "DenseRP", "BanditUCB1", "NeurAM",
-    # Tier B
+    # Tier B — multi-vector specialist
     "CCA1D", "CoCluster_Nystrom",
-    # Tier C
+    # Tier C — single-only modification
     "ConditionalAdaptive",
 ]
-METHODS_ALL = METHODS_LEGACY + METHODS_NEW
+# v8 +5 methods (5/9 dispatch wave)
+METHODS_V8_NEW = [
+    "ThompsonSampling",
+    "EpsilonNetBaseline",
+    "AdaptiveBucketProbing",
+    "CCSketch",
+    "FactorJoin",
+]
+# v9 +9 methods (5/9 23:35 extreme mode wave) — HNSW_SS DROPPED 5/10 (narrative violation, vector index), LPM2 added 5/10 v0.
+METHODS_V9_NEW = [
+    "LpBound",
+    "MFMC",
+    "Tucker",
+    "VineCopula",
+    "HKBU_RepSample",
+    "LHS",
+    "kDPP",
+    "OPQ",
+    "LPM2",
+]
+METHODS_ALL = METHODS_LEGACY + METHODS_V7_NEW + METHODS_V8_NEW + METHODS_V9_NEW
+# Backwards-compatible alias: existing parquets may carry either name.
+METHODS_NEW = METHODS_V7_NEW + METHODS_V8_NEW + METHODS_V9_NEW
+
+# Spelling aliases — measure_multi_paradigm uses AMSCountSketch (no
+# underscore) and HKBU_RepSample (with underscore). Older parquets may use
+# AMS_CountSketch / HKBURepSample. Normalise on ingest.
+METHOD_ALIASES = {
+    "AMS_CountSketch": "AMSCountSketch",
+    "HKBURepSample":   "HKBU_RepSample",
+    "HNSWSS":          "HNSW_SS",
+    "kdpp":            "kDPP",
+    "Wander_Join":     "WanderJoin",
+}
 
 PARADIGM = {
-    # Legacy 5 paradigms
+    # Legacy 5 paradigms (v7 §4.1) — unchanged.
     "HDBSCAN": "P1_Cluster",
     "MiniBatch": "P1_Cluster",
     "GMM": "P1_Cluster",
@@ -172,26 +230,43 @@ PARADIGM = {
     "PCA1D": "P4_DimReduction",
     "LSH": "P5_QuasiRandom",
     "Sobol": "P5_QuasiRandom",
-    # New paradigms (v7 §4.2)
+    # v7 +11 (5/9 first wave) — paradigm anchors P6–P14, S_MultiRelation.
     "WanderJoin": "S_MultiRelation",
-    "AMS_CountSketch": "P6_Sketch",
-    "NeuroCard": "S_MultiRelation",
-    "PQ": "P4_DimReduction",            # PQ codebook subspace = dim reduction.
-    "Coreset": "P1_Cluster",            # sensitivity-weighted clustering.
-    "DenseRP": "P4_DimReduction",
-    "BanditUCB1": "P3_Streaming",
+    "AMSCountSketch": "P6_Sketch",
+    "NeuroCard": "P14_Latent",
+    "PQ": "P11_Hierarchical",
+    "Coreset": "P13_AdaptiveSel",
+    "DenseRP": "P10_Theoretical",
+    "BanditUCB1": "P12_Adaptive",
     "NeurAM": "P8_DimInvariant",
     "CCA1D": "P7_Joint",
-    "CoCluster_Nystrom": "P7_Joint",
-    "ConditionalAdaptive": "S_MultiRelation",  # adaptive variant — Stage ⑥ ablation.
+    "CoCluster_Nystrom": "P11_Hierarchical",
+    "ConditionalAdaptive": "S_MultiRelation",
+    # v8 +5 (5/9 dispatch wave) — paradigm anchors P15–P19.
+    "ThompsonSampling":      "P15_BayesianBandit",
+    "EpsilonNetBaseline":    "P16_VCDimBaseline",
+    "AdaptiveBucketProbing": "P17_LSHChernoff",
+    "CCSketch":              "P18_SketchConv",
+    "FactorJoin":            "P19_FactorGraph",
+    # v9 +9 (5/9 23:35 extreme mode) — paradigm anchors P20–P29 (HNSW_SS dropped, LPM2 added).
+    "LpBound":            "P20_PessimisticLP",
+    "MFMC":               "P21_MultiFidelity",
+    "Tucker":             "P22_TensorDecomp",
+    "VineCopula":         "P23_CopulaTree",
+    "HKBU_RepSample":     "P25_RepSampling",
+    "LHS":                "P26_LatinHypercube",
+    "kDPP":               "P27_RepulsiveDiverse",
+    "OPQ":                "P28_RotatedQuant",
+    "LPM2":               "P29_PivotalDesign",
 }
 
 TIER = {
     # Legacy: Tier "L" (legacy paradigm coverage)
     **{m: "L" for m in METHODS_LEGACY},
+    # ---- v7 +11 ---------------------------------------------------------
     # Tier S — multi-relation native
     "WanderJoin": "S",
-    "AMS_CountSketch": "S",
+    "AMSCountSketch": "S",
     "NeuroCard": "S",
     # Tier A — general
     "PQ": "A",
@@ -204,22 +279,90 @@ TIER = {
     "CoCluster_Nystrom": "B",
     # Tier C — single-only modification
     "ConditionalAdaptive": "C",
+    # ---- v8 +5 (S+ tier introduced by deep-review consensus) ------------
+    "ThompsonSampling":      "S+",
+    "EpsilonNetBaseline":    "A",
+    "AdaptiveBucketProbing": "S+",
+    "CCSketch":              "S+",
+    "FactorJoin":            "S+",
+    # ---- v9 +9 (extreme mode) -------------------------------------------
+    # Tier S+ (v9): WanderJoin/AMSCountSketch/NeuroCard/ThompsonSampling/
+    # CCSketch/FactorJoin/AdaptiveBucketProbing/LpBound/HNSW_SS/HKBU_RepSample
+    # — most are inherited; v9 adds LpBound + HNSW_SS + HKBU_RepSample to S+.
+    "LpBound":        "S+",
+    "HNSW_SS":        "S+",
+    "HKBU_RepSample": "S+",
+    # Tier A (v9): PQ/Coreset/DenseRP/BanditUCB1/NeurAM (already A) +
+    # MFMC/Tucker/VineCopula/EpsilonNetBaseline/kDPP/OPQ.
+    "MFMC":     "A",
+    "Tucker":   "A",
+    "VineCopula": "A",
+    "kDPP":     "A",
+    "OPQ":      "A",
+    # Tier B (v9): CCA1D/CoCluster_Nystrom (already B) + LHS.
+    "LHS":      "B",
 }
+
+# Promote v9 inherited methods to S+ where the v9 portfolio reclassifies
+# them (per task spec: WanderJoin, AMSCountSketch, NeuroCard, ThompsonSampling,
+# CCSketch, FactorJoin, AdaptiveBucketProbing all sit in v9 Tier S+).
+TIER_V9_PROMOTE_S_PLUS = {
+    "WanderJoin", "AMSCountSketch", "NeuroCard",
+    "ThompsonSampling", "CCSketch", "FactorJoin", "AdaptiveBucketProbing",
+    "LpBound", "HNSW_SS", "HKBU_RepSample",
+}
+for _m in TIER_V9_PROMOTE_S_PLUS:
+    TIER[_m] = "S+"
 
 PARADIGMS = sorted(set(PARADIGM.values()))
 
-# v7 §5 cell portfolio (28 cells).
+# v9 §5 cell portfolio (54 cells = 12 single + 30 partsupp 4-way +
+# 12 multi-join). Mirrors measure_multi_paradigm.py CELL_4WAY (30) and
+# CELL_JOIN (12) ground-truth dicts.
 SINGLE_DATASETS = ["DEEP", "SIFT", "FB", "SSN", "WIKI", "YFCC"]
 SINGLE_SFS = [1, 10]
-MULTI_4WAY_IMG = ["DEEP", "SIFT", "FB", "YFCC"]
-MULTI_JOIN_IMG = ["DEEP", "SIFT", "FB", "YFCC"]
+# v7-era multi cells (kept for backwards compatibility).
+MULTI_4WAY_IMG_V7 = ["DEEP", "SIFT", "FB", "YFCC"]
+MULTI_JOIN_IMG_V7 = ["DEEP", "SIFT", "FB", "YFCC"]
+# v9 ground truth — 30 partsupp_4way cells (mirrors measure_multi_paradigm
+# CELL_4WAY dict, with sf={1,10}). Two parts:
+#   (a) X_wiki cross-pairs (legacy v7) and v8 X_Y cross-pairs.
+#   (b) deep_sift legacy benchmarks at sf=1 and sf=10.
+# Cells with non-img names ("yfcc_pca", "wiki") are spelled in lower-case.
+MULTI_4WAY_CELLS = [
+    # legacy v7 (8) — partsupp_<img>_wiki_<sf>:
+    "partsupp_deep_wiki_1", "partsupp_deep_wiki_10",
+    "partsupp_sift_wiki_1", "partsupp_sift_wiki_10",
+    "partsupp_fb_wiki_1",   "partsupp_fb_wiki_10",
+    "partsupp_yfcc_wiki_1", "partsupp_yfcc_wiki_10",
+    # legacy benchmarks (2) — deep × sift:
+    "partsupp_deep_sift_1", "partsupp_deep_sift_10",
+    # v8 cross-pairs (20):
+    "partsupp_deep_fb_1", "partsupp_deep_fb_10",
+    "partsupp_deep_yfcc_1", "partsupp_deep_yfcc_10",
+    "partsupp_deep_yfcc_pca_1", "partsupp_deep_yfcc_pca_10",
+    "partsupp_sift_fb_1", "partsupp_sift_fb_10",
+    "partsupp_sift_yfcc_1", "partsupp_sift_yfcc_10",
+    "partsupp_sift_yfcc_pca_1", "partsupp_sift_yfcc_pca_10",
+    "partsupp_fb_yfcc_1", "partsupp_fb_yfcc_10",
+    "partsupp_fb_yfcc_pca_1", "partsupp_fb_yfcc_pca_10",
+    "partsupp_yfcc_yfcc_pca_1", "partsupp_yfcc_yfcc_pca_10",
+    "partsupp_yfcc_pca_wiki_1", "partsupp_yfcc_pca_wiki_10",
+]
+# v9 multi-join (12) — mirrors CELL_JOIN dict.
+MULTI_JOIN_CELLS = [
+    "multi_join_deep_wiki",       # historical (no sf — kept for back-compat)
+    "multi_join_deep_wiki_1",
+    "multi_join_sift_wiki_1",  "multi_join_sift_wiki_10",
+    "multi_join_fb_wiki_1",    "multi_join_fb_wiki_10",
+    "multi_join_yfcc_wiki_1",  "multi_join_yfcc_wiki_10",
+    "multi_join_yfcc_pca_wiki_1", "multi_join_yfcc_pca_wiki_10",
+    "multi_join_wiki_1",       "multi_join_wiki_10",
+]
 
+# Single (12).
 SINGLE_CELLS = [f"{ds}_sf{sf}" for ds in SINGLE_DATASETS for sf in SINGLE_SFS]
-MULTI_4WAY_CELLS = [f"partsupp_{img.lower()}_wiki_{sf}"
-                    for img in MULTI_4WAY_IMG for sf in SINGLE_SFS]
-MULTI_JOIN_CELLS = [f"multi_join_{img.lower()}_wiki_{sf}"
-                    for img in MULTI_JOIN_IMG for sf in SINGLE_SFS]
-ALL_CELLS = SINGLE_CELLS + MULTI_4WAY_CELLS + MULTI_JOIN_CELLS  # 12+8+8 = 28
+ALL_CELLS = SINGLE_CELLS + MULTI_4WAY_CELLS + MULTI_JOIN_CELLS  # 12 + 30 + 12 = 54
 
 CELL_KIND = {}
 for c in SINGLE_CELLS:
@@ -229,21 +372,56 @@ for c in MULTI_4WAY_CELLS:
 for c in MULTI_JOIN_CELLS:
     CELL_KIND[c] = "multi_join"
 
-# v7 §5: dim per cell. Single = embedding dim. Multi = concat of two dims.
-DIM_BY_DATASET = {"DEEP": 96, "SIFT": 128, "FB": 256, "SSN": 256,
-                  "WIKI": 768, "YFCC": 192}
+# v9 §5: dim per cell. Single = embedding dim. Multi = concat of two dims.
+DIM_BY_DATASET = {
+    "DEEP": 96, "SIFT": 128, "FB": 256, "SSN": 256,
+    "WIKI": 768, "YFCC": 192, "YFCC_PCA": 192,
+}
+# Lower-case alias map for parsing partsupp_<a>_<b>_<sf> cell names.
+DIM_BY_LCNAME = {k.lower(): v for k, v in DIM_BY_DATASET.items()}
+DIM_BY_LCNAME["yfcc_pca"] = 192  # explicit (lower-case canonical).
+
+
+def _infer_multi_dim(cell: str) -> Optional[int]:
+    """Best-effort dim inference for partsupp_<a>_<b>_<sf> / multi_join_<a>_<b>_<sf>."""
+    parts = cell.split("_")
+    # Strip ``partsupp`` / ``multi_join`` prefix and trailing sf token if any.
+    if parts[0] == "partsupp":
+        body = parts[1:]
+    elif parts[:2] == ["multi", "join"]:
+        body = parts[2:]
+    else:
+        return None
+    # Drop trailing sf integer (last token if numeric).
+    if body and body[-1].isdigit():
+        body = body[:-1]
+    # Now body is the embedding identifier sequence; map by greedy match
+    # against DIM_BY_LCNAME keys.
+    keys = sorted(DIM_BY_LCNAME.keys(), key=len, reverse=True)
+    name = "_".join(body)
+    dims = []
+    while name:
+        for k in keys:
+            if name == k or name.startswith(k + "_"):
+                dims.append(DIM_BY_LCNAME[k])
+                name = name[len(k):].lstrip("_")
+                break
+        else:
+            return None
+    return sum(dims) if dims else None
+
+
 CELL_DIM = {}
 for ds in SINGLE_DATASETS:
     for sf in SINGLE_SFS:
         CELL_DIM[f"{ds}_sf{sf}"] = DIM_BY_DATASET[ds]
-for img in MULTI_4WAY_IMG:
-    for sf in SINGLE_SFS:
-        CELL_DIM[f"partsupp_{img.lower()}_wiki_{sf}"] = (
-            DIM_BY_DATASET[img] + DIM_BY_DATASET["WIKI"])
-for img in MULTI_JOIN_IMG:
-    for sf in SINGLE_SFS:
-        CELL_DIM[f"multi_join_{img.lower()}_wiki_{sf}"] = (
-            DIM_BY_DATASET[img] + DIM_BY_DATASET["WIKI"])
+for c in MULTI_4WAY_CELLS + MULTI_JOIN_CELLS:
+    d = _infer_multi_dim(c)
+    if d is not None:
+        CELL_DIM[c] = d
+# Backwards-compat: historical "multi_join_deep_wiki" (no sf) — assume sf=10
+# dims (96 deep + 768 wiki = 864).
+CELL_DIM.setdefault("multi_join_deep_wiki", 96 + 768)
 
 # v7 §8.1 sample size: 5 sel × 5 seed × 100 query = 2500 paired observations.
 SELECTIVITIES = [0.01, 0.05, 0.10, 0.30, 0.50]
@@ -251,10 +429,39 @@ SEEDS = [0.1, 0.2, 0.3, 0.4, 0.5]
 QUERIES_PER_CELL = 100
 N_PAIRED_PER_CELL = len(SELECTIVITIES) * len(SEEDS) * QUERIES_PER_CELL
 
-# v7 §8.2 Bonferroni: α / 22 method = 0.05 / 22 ≈ 0.00227.
+# v9 §8.2 Bonferroni: family size depends on --methods-version.
 ALPHA = 0.05
-N_METHODS_FAMILY = 22
+N_METHODS_BY_VERSION = {"v7": 22, "v8": 27, "v9": 36}
+DEFAULT_METHODS_VERSION = "v9"
+N_METHODS_FAMILY = N_METHODS_BY_VERSION[DEFAULT_METHODS_VERSION]
 BONFERRONI_ALPHA = ALPHA / N_METHODS_FAMILY
+
+
+def select_methods_for_version(version: str) -> list[str]:
+    """Return the method list for a given portfolio version."""
+    if version == "v7":
+        return list(METHODS_LEGACY) + list(METHODS_V7_NEW)
+    if version == "v8":
+        return list(METHODS_LEGACY) + list(METHODS_V7_NEW) + list(METHODS_V8_NEW)
+    if version == "v9":
+        return list(METHODS_ALL)
+    raise ValueError(f"unknown methods version: {version!r}")
+
+
+# Multi-paradigm CSV directory roots (cache/rq3/...). The order matters —
+# earlier dirs win if duplicate cell-method pairs exist (most recent first).
+MULTI_CSV_SUBDIRS = [
+    "multi_paradigm_v9_existing_sf1",       # v9 +9 on existing sf=1
+    "multi_paradigm_v8_new_sf1",            # 27 methods on v8 NEW sf=1 cells
+    "multi_paradigm_v8_existing_sf1",       # v8 +5 on existing sf=1
+    "multi_paradigm_torch_existing",        # NeurAM/NeuroCard on existing
+    "multi_paradigm_newmethods_existing_v4",  # v7 +11 retry
+    "multi_paradigm_newmethods_existing",   # v7 +11 on existing sf=1
+    "multi_paradigm_new10",                 # v7 +11 on existing sf=10
+    "multi_paradigm",                       # original 11 methods
+    "multi_ensemble",                       # ensemble runs
+    "phase_f",                              # Phase F B1-B6 baselines
+]
 
 # Convergence threshold (v7 §8.6).
 CONVERGENCE_REL_THRESHOLD = 0.05  # |S_t − S_∞| / S_∞ < 5%.
@@ -299,44 +506,95 @@ def _read_table(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _normalize_method_name(name: str) -> str:
+    """Map alias method names to canonical (e.g. AMS_CountSketch → AMSCountSketch)."""
+    if not isinstance(name, str):
+        return name
+    return METHOD_ALIASES.get(name, name)
+
+
+def _expand_csv_search_dirs(roots: list[Path]) -> list[Path]:
+    """Expand cache/rq3 roots to include each MULTI_CSV_SUBDIRS subdirectory."""
+    out: list[Path] = []
+    for r in roots:
+        if not r.exists():
+            continue
+        out.append(r)
+        # Also include sibling cache/rq3/<subdir> if root is the rq3 cache.
+        for sub in MULTI_CSV_SUBDIRS:
+            cand = r / sub
+            if cand.exists():
+                out.append(cand)
+            # Some servers put dirs under cache/ alongside rq3.
+            cand2 = r.parent / sub
+            if cand2.exists() and cand2 not in out:
+                out.append(cand2)
+    return out
+
+
 def load_full_matrix(stats: LoadStats,
                      search_dirs: Optional[list[Path]] = None) -> pd.DataFrame:
-    """Load 22 method × 28 cell × 5 sel × 5 seed × 100 query parquets.
+    """Load 36 method × 56 cell × 5 sel × 5 seed × 100 query parquets / CSVs.
 
     Expected schema after ingest:
         cell, method, paradigm, tier, dim, cell_kind,
         selectivity, seed, query_id, true_card, est, q_error,
         sample_size_used, total_sample_size, wall_clock_ms, peak_rss_mb
+
+    Now also scans v9 cache/rq3/multi_paradigm_* CSV directories for
+    measure_multi_paradigm.py output (cell × method per CSV).
     """
     if search_dirs is None:
         search_dirs = [LOCAL_FULL_DIR, SERVER_FULL_DIR]
+    # Search both parquet and csv. CSV files are produced by
+    # measure_multi_paradigm.py (e.g. multi_paradigm_partsupp_deep_sift_10.csv).
     files = _scan_dirs(search_dirs, "rq3_full_matrix_*.parquet")
+    files += _scan_dirs(search_dirs, "rq3_full_matrix_*.csv")
+    files += _scan_dirs(search_dirs, "multi_paradigm_*.csv")
+    files += _scan_dirs(search_dirs, "multi_paradigm_*.parquet")
     if not files:
-        log.warning("no full-matrix files found in %s", search_dirs)
+        log.warning("no full-matrix or multi-paradigm files found in %s",
+                    search_dirs)
         return pd.DataFrame()
     rows = []
+    seen_files: set[str] = set()
     for fp in files:
+        if fp.name in seen_files:
+            continue
+        seen_files.add(fp.name)
         try:
             df = _read_table(fp)
         except Exception as exc:  # noqa: BLE001 — keep loop alive.
             log.warning("skip %s: %s", fp.name, exc)
             continue
-        # Filename: rq3_full_matrix_<cell>_<method>.parquet
-        stem = fp.stem.replace("rq3_full_matrix_", "")
-        # method is last token after the final '__'; cell is the rest.
-        # We use a unique sentinel '__' if measure scripts emit it; else
-        # rely on the parquet's own ``cell`` / ``method`` columns.
+        # Filename parsing fallbacks:
+        #   rq3_full_matrix_<cell>_<method>.parquet → cell + method tokens.
+        #   multi_paradigm_<cell>.csv  → cell only (method comes from column).
+        stem = fp.stem
         if "cell" not in df.columns or "method" not in df.columns:
-            # Fall back to filename parsing.
-            parts = stem.rsplit("_", 1)
-            if len(parts) == 2:
-                df = df.copy()
-                df["cell"] = parts[0]
-                df["method"] = parts[1]
+            df = df.copy()
+            if stem.startswith("rq3_full_matrix_"):
+                tail = stem.replace("rq3_full_matrix_", "")
+                parts = tail.rsplit("_", 1)
+                if len(parts) == 2:
+                    df["cell"] = parts[0]
+                    df["method"] = parts[1]
+                else:
+                    log.warning("cannot parse cell/method from %s", fp.name)
+                    continue
+            elif stem.startswith("multi_paradigm_"):
+                cell_name = stem.replace("multi_paradigm_", "")
+                if "cell" not in df.columns:
+                    df["cell"] = cell_name
+                if "method" not in df.columns:
+                    log.warning("multi_paradigm CSV missing 'method' col: %s",
+                                fp.name)
+                    continue
             else:
-                log.warning("cannot parse cell/method from %s", fp.name)
+                log.warning("unknown filename pattern: %s", fp.name)
                 continue
         df = df.copy()
+        df["method"] = df["method"].map(_normalize_method_name)
         df["paradigm"] = df["method"].map(PARADIGM).fillna("?")
         df["tier"] = df["method"].map(TIER).fillna("?")
         df["dim"] = df["cell"].map(CELL_DIM).fillna(np.nan).astype(float)
@@ -365,6 +623,9 @@ def load_baselines(stats: LoadStats,
     if search_dirs is None:
         search_dirs = [LOCAL_BASELINE_DIR, SERVER_BASELINE_DIR]
     files = _scan_dirs(search_dirs, "rq3_stage6_baselines_*.parquet")
+    files += _scan_dirs(search_dirs, "rq3_stage6_baselines_*.csv")
+    files += _scan_dirs(search_dirs, "phase_f_*.parquet")
+    files += _scan_dirs(search_dirs, "phase_f_*.csv")
     if not files:
         log.warning("no baseline files found in %s", search_dirs)
         return pd.DataFrame()
@@ -376,7 +637,11 @@ def load_baselines(stats: LoadStats,
             log.warning("skip %s: %s", fp.name, exc)
             continue
         if "cell" not in df.columns:
-            stem = fp.stem.replace("rq3_stage6_baselines_", "")
+            stem = fp.stem
+            for prefix in ("rq3_stage6_baselines_", "phase_f_"):
+                if stem.startswith(prefix):
+                    stem = stem[len(prefix):]
+                    break
             df = df.copy()
             df["cell"] = stem
         if "baseline" not in df.columns:
@@ -550,8 +815,16 @@ def section_g2(method_df: pd.DataFrame, baseline_df: pd.DataFrame) -> pd.DataFra
     bonf = np.full_like(p, np.nan, dtype=float)
     bonf[finite] = np.minimum(p[finite] * n_tests, 1.0)
     out["bonferroni_p"] = bonf
+    # BH-FDR (Benjamini-Hochberg) — reviewer attack B4 defense (5/10).
+    # less conservative than Bonferroni; controls FDR at α instead of FWER.
+    fdr_q = np.full_like(p, np.nan, dtype=float)
+    if finite.any():
+        _, q_vals, _, _ = multipletests(p[finite], alpha=ALPHA, method="fdr_bh")
+        fdr_q[finite] = q_vals
+    out["fdr_bh_q"] = fdr_q
     out["sig_raw_05"] = (out["wilcoxon_p"] < ALPHA) & np.isfinite(out["wilcoxon_p"])
     out["sig_bonf_05"] = (out["bonferroni_p"] < ALPHA) & np.isfinite(out["bonferroni_p"])
+    out["sig_fdr_05"] = (out["fdr_bh_q"] < ALPHA) & np.isfinite(out["fdr_bh_q"])
     return out
 
 
@@ -1025,11 +1298,121 @@ def section_g7(g1: pd.DataFrame, g2_summary: pd.DataFrame,
         "CoCluster_Nystrom": "Bipartite spectral co-clustering (Dhillon 2003).",
         "ConditionalAdaptive":
             "Selectivity-conditioned Adaptive variant (Lim+2025).",
+        # v8 +5
+        "ThompsonSampling":
+            "Bayesian bandit posterior sampling (Russo+2018, Marcus-Bao SIGMOD 2021).",
+        "EpsilonNetBaseline":
+            "VC-dimension epsilon-net floor (Haussler-Welzl SoCG 1986).",
+        "AdaptiveBucketProbing":
+            "Vector-native LSH+Chernoff bucket probing (Chen arXiv 2604.04603).",
+        "CCSketch":
+            "Multi-join FFT-conv count sketch (Heddes SIGMOD 2024).",
+        "FactorJoin":
+            "Factor-graph belief propagation join (Wu SIGMOD 2023).",
+        # v9 +9
+        "LpBound":
+            "Pessimistic LP upper bound via degree norms (Zhang-Suciu SIGMOD 2025 Best Paper).",
+        "MFMC":
+            "Multi-fidelity Monte Carlo control variates (Peherstorfer SIAM JSC 2016).",
+        "Tucker":
+            "Tucker tensor decomposition for joint distribution (Tucker 1966 / Kolda 2009).",
+        "VineCopula":
+            "Vine copula tree dependence model (Bedford-Cooke Annals Stat 2002).",
+        "HNSW_SS":
+            "HNSW level-0 connected-component stratifier (composition; pgvector index reuse).",
+        "HKBU_RepSample":
+            "Representative sampling for vector data (Wu SIGMOD 2026, HKBU).",
+        "LHS":
+            "Latin Hypercube Sampling (McKay Technometrics 1979).",
+        "kDPP":
+            "k-Determinantal Point Process repulsive sampling (Kulesza-Taskar ICML 2011).",
+        "OPQ":
+            "Optimized Product Quantization with rotation (Ge CVPR 2013 / PAMI 2014).",
     }
     out["english_descriptor"] = out["method"].map(descriptors).fillna("(legacy)")
     out = out.sort_values(["qualifies", "n_wins_total"],
                           ascending=[False, False])
     return out
+
+
+# ---------------------------------------------------------------------------
+# Section G8 — HKBU-RepSample reference comparison (v9, SIGMOD 2026)
+# ---------------------------------------------------------------------------
+HKBU_PAPER_URL = (
+    "https://www.comp.hkbu.edu.hk/~xinhuang/publications/pdfs/"
+    "SIGMOD26-Vector.pdf"
+)
+HKBU_METHOD = "HKBU_RepSample"
+
+
+def section_g8(g2: pd.DataFrame, g2_summary: pd.DataFrame) -> pd.DataFrame:
+    """HKBU-RepSample (Wu SIGMOD 2026) per-cell paired Δ% comparison.
+
+    Schema:
+        cell, cell_kind, hkbu_mean_delta_pct, hkbu_sig_bonf_05,
+        hkbu_better, top1_method, top1_mean_delta_pct,
+        v9_recovered_multi (True if any v9 +9 method beats B1 here while
+                            no v7-only method did).
+    """
+    if g2.empty:
+        return pd.DataFrame()
+    rows = []
+    v9_methods = set(METHODS_V9_NEW)
+    v7_methods = set(METHODS_LEGACY) | set(METHODS_V7_NEW)
+
+    for cell, g in g2.groupby("cell"):
+        # HKBU row.
+        hkbu_row = g[g["method"] == HKBU_METHOD]
+        if not hkbu_row.empty:
+            hkbu_delta = float(hkbu_row["mean_delta_pct"].iloc[0])
+            hkbu_sig = bool(hkbu_row["sig_bonf_05"].iloc[0]) \
+                if "sig_bonf_05" in hkbu_row.columns else False
+            hkbu_better = bool(hkbu_row["method_better"].iloc[0]) \
+                if "method_better" in hkbu_row.columns else False
+        else:
+            hkbu_delta = float("nan")
+            hkbu_sig = False
+            hkbu_better = False
+
+        # Top-1 method by paired Δ% on this cell (most negative = best).
+        better = g[g["method_better"]] if "method_better" in g.columns else g
+        if not better.empty and "mean_delta_pct" in better.columns:
+            top1 = better.sort_values("mean_delta_pct").iloc[0]
+            top1_method = str(top1["method"])
+            top1_delta = float(top1["mean_delta_pct"])
+        else:
+            top1_method = "(none)"
+            top1_delta = float("nan")
+
+        # v9 recovery flag — only meaningful for multi cells.
+        cell_kind = CELL_KIND.get(cell, "?")
+        v7_won = False
+        v9_won = False
+        if "method_better" in g.columns and "sig_bonf_05" in g.columns:
+            wins = g[g["method_better"] & g["sig_bonf_05"]]
+            v7_won = bool(any(m in v7_methods for m in wins["method"]))
+            v9_won = bool(any(m in v9_methods for m in wins["method"]))
+        v9_recovered_multi = bool(
+            cell_kind != "single" and v9_won and not v7_won
+        )
+
+        rows.append({
+            "cell": cell,
+            "cell_kind": cell_kind,
+            "hkbu_mean_delta_pct": hkbu_delta,
+            "hkbu_sig_bonf_05": hkbu_sig,
+            "hkbu_better": hkbu_better,
+            "top1_method": top1_method,
+            "top1_mean_delta_pct": top1_delta,
+            "v9_recovered_multi": v9_recovered_multi,
+        })
+    out = pd.DataFrame(rows)
+    out.attrs["paper_url"] = HKBU_PAPER_URL
+    out.attrs["paper_citation"] = (
+        "Wu, X. et al. (2026). Balancing Global and Local: Representative "
+        "Sampling for Large-Scale Vector Data. SIGMOD 2026 (HKBU)."
+    )
+    return out.sort_values(["cell_kind", "hkbu_mean_delta_pct"])
 
 
 # ---------------------------------------------------------------------------
@@ -1236,7 +1619,9 @@ def write_report(out_dir: Path,
                  g5: pd.DataFrame,
                  g6: pd.DataFrame,
                  g7: pd.DataFrame,
-                 stats: LoadStats) -> Path:
+                 g8: Optional[pd.DataFrame],
+                 stats: LoadStats,
+                 methods_version: str = DEFAULT_METHODS_VERSION) -> Path:
     """Render a 1500–2500 word academic narrative in REPORT.md."""
     rep = out_dir / "REPORT.md"
     n_methods = len(stats.methods_seen) if stats.methods_seen else 0
@@ -1259,20 +1644,25 @@ def write_report(out_dir: Path,
         qualifies_methods = g7[g7["qualifies"]]["method"].tolist()
 
     text = []
-    text.append("# Phase G — End-to-end Analysis Report (v7 22 method × 28 cell)")
+    n_methods_target = N_METHODS_BY_VERSION.get(methods_version, 36)
+    n_cells_target = len(ALL_CELLS)
+    text.append(f"# Phase G — End-to-end Analysis Report "
+                f"({methods_version} {n_methods_target} method × "
+                f"{n_cells_target} cell)")
     text.append("")
     text.append("**Data inventory.** This report consolidates all eight Phase G "
                 f"analytical sections over {n_methods} methods × {n_cells} cells "
-                f"ingested from {stats.n_method_files} method parquets "
+                f"ingested from {stats.n_method_files} method parquets/CSVs "
                 f"({n_meth_rows:,} rows) and {stats.n_baseline_files} Phase F "
-                f"baseline parquets ({n_base_rows:,} rows). The full design matrix "
-                "is 22 method × 28 cell × 5 selectivity × 5 seed × 100 query "
-                f"= 7.7M paired observations under the v7 plan; this run "
+                f"baseline parquets ({n_base_rows:,} rows). The full design "
+                f"matrix under the {methods_version} plan is "
+                f"{n_methods_target} method × {n_cells_target} cell × 5 "
+                "selectivity × 5 seed × 100 query paired observations; this run "
                 f"observed {len(stats.cells_seen)} cells "
-                f"(coverage {len(stats.cells_seen)}/28) and "
+                f"(coverage {len(stats.cells_seen)}/{n_cells_target}) and "
                 f"{len(stats.methods_seen)} methods "
-                f"(coverage {len(stats.methods_seen)}/22). Six baselines are "
-                "expected (B1–B6); this run saw "
+                f"(coverage {len(stats.methods_seen)}/{n_methods_target}). "
+                "Six baselines are expected (B1–B6); this run saw "
                 f"{sorted(stats.baselines_seen)}.")
     text.append("")
 
@@ -1316,10 +1706,10 @@ def write_report(out_dir: Path,
                 "100 query) which W1 sprint validated as a sufficient sample "
                 "size for power ≥ 0.8 at the proposed effect sizes. "
                 "Multiple-comparison control follows v7 §8.2 with a Bonferroni "
-                f"correction at α/22 ≈ {BONFERRONI_ALPHA:.4f} (family of 22 "
-                "method tests per cell), reported alongside raw p-values for "
-                "transparency. Mean Δ% confidence intervals are 1000-iteration "
-                "bootstrap percentiles per v7 §8.3.")
+                f"correction at α/{n_methods_target} ≈ {ALPHA / n_methods_target:.4f} "
+                f"(family of {n_methods_target} method tests per cell), reported "
+                "alongside raw p-values for transparency. Mean Δ% confidence "
+                "intervals are 1000-iteration bootstrap percentiles per v7 §8.3.")
     text.append("")
     if not g2_summary.empty:
         n_wins_table = g2_summary.head(min(8, len(g2_summary)))
@@ -1374,7 +1764,8 @@ def write_report(out_dir: Path,
     text.append("")
     text.append("Section G4 re-fits the v7 §8.5 regression "
                 "`log(q_error) = β₀ + β₁ log(dim) + β₂ sel + β₃ is_multi + "
-                "Σγ_p paradigm + Σδ_t tier` on the extended 22-method × 28-cell "
+                f"Σγ_p paradigm + Σδ_t tier` on the extended "
+                f"{n_methods_target}-method × {n_cells_target}-cell "
                 "matrix. The regression is the empirical bridge between the "
                 "Phase B failure-mode diagnosis and the Phase G new-method "
                 "evidence: positive β₁ corroborates Beyer 1999 / Geraci 2026 "
@@ -1466,6 +1857,94 @@ def write_report(out_dir: Path,
                     "and top_tier filters) to get a softer recommendation.")
     text.append("")
 
+    # ---- Tier breakdown across paradigms (v9 28 paradigms) ----
+    text.append("## Tier × Paradigm breakdown")
+    text.append("")
+    text.append("The v9 portfolio spans 28 paradigm anchors across 5 tiers "
+                "(L legacy, S/S+ multi-relation native, A general, B "
+                "multi-vector specialist, C single-only). Per-tier paired-"
+                "better win rates against B1 (Adaptive) summarise how each "
+                "tier contributes to the central thesis claim.")
+    text.append("")
+    if not g2.empty and "tier" in g2.columns:
+        text.append("| Tier | n cells×methods | n paired-better | win rate | "
+                    "n Bonferroni-sig |")
+        text.append("|---|---|---|---|---|")
+        for tier in ["L", "S+", "S", "A", "B", "C"]:
+            sub = g2[g2["tier"] == tier]
+            if sub.empty:
+                continue
+            n = len(sub)
+            n_better = int(sub["method_better"].sum()) \
+                if "method_better" in sub.columns else 0
+            n_sig = int((sub["sig_bonf_05"] & sub["method_better"]).sum()) \
+                if "sig_bonf_05" in sub.columns else 0
+            wr = (n_better / n * 100.0) if n else 0.0
+            text.append(f"| {tier} | {n} | {n_better} | {wr:.1f}% | {n_sig} |")
+    text.append("")
+
+    # ---- Multi-table specific section (v9 0/66 recovery) ----
+    text.append("## Multi-table specific results (v9 0/66 baseline recovery)")
+    text.append("")
+    text.append("The 5/9 11-method × 6-cell paradigm measurement established "
+                "a **0/66 paired-better baseline** in the multi-table domain "
+                "— no v7 portfolio method beat B1 with statistical "
+                "significance on any multi cell. The v9 +9 extension targets "
+                "this gap with multi-relation native estimators (LpBound, "
+                "FactorJoin, HKBU_RepSample), high-order joint distribution "
+                "models (Tucker, VineCopula), control-variate accelerators "
+                "(MFMC), and graph-stratified sampling (HNSW_SS).")
+    text.append("")
+    if g8 is not None and not g8.empty:
+        recovered = g8[g8["v9_recovered_multi"]]
+        if not recovered.empty:
+            text.append(f"**v9 recovery**: {len(recovered)} multi cells where "
+                        "a v9 +9 method beat B1 (Bonferroni-sig) while no v7 "
+                        "method did:")
+            text.append("")
+            text.append("| cell | top1 v9 method | mean Δ% | HKBU Δ% |")
+            text.append("|---|---|---|---|")
+            for _, r in recovered.head(min(12, len(recovered))).iterrows():
+                text.append(f"| {r['cell']} | {r['top1_method']} | "
+                            f"{r['top1_mean_delta_pct']:+.2f}% | "
+                            f"{r['hkbu_mean_delta_pct']:+.2f}% |")
+        else:
+            text.append("**v9 recovery**: no multi cells yet recovered "
+                        "(measurement still in progress, or v9 portfolio "
+                        "did not move the needle here — re-evaluate after "
+                        "full Phase E completes).")
+    text.append("")
+
+    # ---- G8 — HKBU-RepSample reference comparison ----
+    text.append("## G8 — HKBU-RepSample (SIGMOD 2026) reference comparison")
+    text.append("")
+    text.append("Section G8 places HKBU_RepSample (Wu et al. SIGMOD 2026, "
+                "*Balancing Global and Local: Representative Sampling for "
+                "Large-Scale Vector Data*; HKBU lab) into per-cell context "
+                "alongside our top-1 paired-better method. The HKBU paper "
+                "(see PDF: "
+                f"[{HKBU_PAPER_URL}]({HKBU_PAPER_URL})) is the closest "
+                "published precedent for our research question — its claim "
+                "is that representative sampling balances global coverage "
+                "with local density preservation. Our G8 measurements either "
+                "(i) confirm the claim in our cardinality-estimation regime, "
+                "or (ii) provide the first empirical evidence that the "
+                "representativeness benefit is regime-dependent.")
+    text.append("")
+    if g8 is not None and not g8.empty:
+        n_cells_g8 = len(g8)
+        n_hkbu_better = int(g8["hkbu_better"].sum())
+        n_hkbu_sig = int(g8["hkbu_sig_bonf_05"].sum())
+        text.append(f"Across {n_cells_g8} cells with HKBU measurement, "
+                    f"HKBU_RepSample improves on B1 in {n_hkbu_better} cells "
+                    f"({n_hkbu_better / n_cells_g8 * 100:.1f}%); "
+                    f"{n_hkbu_sig} of these reach Bonferroni-significance. "
+                    "Per-cell detail in `G8_hkbu_comparison.csv`.")
+    else:
+        text.append("HKBU_RepSample measurements not yet ingested — re-run "
+                    "after Phase E completes the v9 portfolio.")
+    text.append("")
+
     # Closing references
     text.append("## References")
     text.append("- Beyer, K., Goldstein, J., Ramakrishnan, R., & Shaft, U. (1999). When is 'Nearest Neighbor' meaningful? *ICDT*.")
@@ -1483,6 +1962,19 @@ def write_report(out_dir: Path,
     text.append("- Alon, N., Gibbons, P. B., Matias, Y., & Szegedy, M. (1999). Tracking join and self-join sizes. *PODS*.")
     text.append("- Yang, Z., et al. (2020). NeuroCard: One cardinality estimator for all tables. *VLDB*.")
     text.append("- Lim et al. (2025). Exqutor. arXiv:2512.09695v2 — main paper.")
+    text.append("- Russo, D., et al. (2018). A Tutorial on Thompson Sampling. *Foundations and Trends in ML*.")
+    text.append("- Marcus, R., Bao, R., et al. (2021). Bao: Making learned query optimization practical. *SIGMOD*.")
+    text.append("- Haussler, D., & Welzl, E. (1986). Epsilon-nets and simplex range queries. *SoCG*.")
+    text.append("- Heddes, M., et al. (2024). FFT-conv Count Sketch. *SIGMOD*.")
+    text.append("- Wu, Z., et al. (2023). FactorJoin: factor-graph BP for join cardinality. *SIGMOD*.")
+    text.append("- Zhang, K., & Suciu, D. (2025). LpBound: pessimistic upper bounds via ℓ_p degree norms. *SIGMOD/PODS Best Paper*.")
+    text.append("- Peherstorfer, B., et al. (2016). Multi-fidelity Monte Carlo. *SIAM J. Sci. Comput.*")
+    text.append("- Tucker, L. R. (1966). Some mathematical notes on three-mode factor analysis. *Psychometrika*; Kolda & Bader (2009). *SIAM Review*.")
+    text.append("- Bedford, T., & Cooke, R. M. (2002). Vines—a new graphical model for dependent random variables. *Annals of Statistics*.")
+    text.append(f"- Wu, X., et al. (2026). Balancing Global and Local: Representative Sampling for Large-Scale Vector Data. *SIGMOD 2026* (HKBU). PDF: {HKBU_PAPER_URL}")
+    text.append("- McKay, M. D., et al. (1979). A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output from a Computer Code. *Technometrics*.")
+    text.append("- Kulesza, A., & Taskar, B. (2011). k-DPPs: Fixed-size determinantal point processes. *ICML*.")
+    text.append("- Ge, T., et al. (2013). Optimized Product Quantization. *CVPR* / *PAMI 2014*.")
     text.append("")
     rep.write_text("\n".join(text), encoding="utf-8")
     return rep
@@ -1607,7 +2099,27 @@ def main(argv: Optional[list[str]] = None) -> int:
                         help="Override CSV output dir.")
     parser.add_argument("--fig-dir", type=str, default=str(FIG_DIR),
                         help="Override plot output dir.")
+    parser.add_argument("--methods-version",
+                        choices=list(N_METHODS_BY_VERSION.keys()),
+                        default=DEFAULT_METHODS_VERSION,
+                        help="Restrict the method portfolio to a given version "
+                             "(v7=22, v8=27, v9=36). Default: %(default)s.")
+    parser.add_argument("--include-paradigms", type=str, default=None,
+                        help="Comma-separated paradigms to keep (e.g. "
+                             "'P1_Cluster,P25_RepSampling'). Defaults to all.")
+    parser.add_argument("--exclude-paradigms", type=str, default=None,
+                        help="Comma-separated paradigms to drop.")
     args = parser.parse_args(argv)
+
+    methods_version = args.methods_version
+    selected_methods = set(select_methods_for_version(methods_version))
+    log.info("methods-version=%s → %d methods active",
+             methods_version, len(selected_methods))
+
+    include_par = set(p.strip() for p in args.include_paradigms.split(","))\
+        if args.include_paradigms else None
+    exclude_par = set(p.strip() for p in args.exclude_paradigms.split(","))\
+        if args.exclude_paradigms else set()
 
     out_dir = Path(args.out_dir)
     fig_dir = Path(args.fig_dir)
@@ -1628,19 +2140,43 @@ def main(argv: Optional[list[str]] = None) -> int:
         stats.methods_seen = set(method_df["method"].unique())
         stats.baselines_seen = set(baseline_df["baseline"].unique())
     else:
+        # Default search dirs — include local + server + all v9 multi_paradigm
+        # subdirectories under cache/rq3.
+        default_method_roots = [
+            LOCAL_FULL_DIR, SERVER_FULL_DIR,
+            ROOT / "_internal/cache/rq3",
+            Path("/mnt/hdd0/home/capstone2026/cache/rq3"),
+        ]
+        default_baseline_roots = [
+            LOCAL_BASELINE_DIR, SERVER_BASELINE_DIR,
+            ROOT / "_internal/cache/rq3",
+            Path("/mnt/hdd0/home/capstone2026/cache/rq3"),
+        ]
         method_dirs = [Path(d) for d in (args.input_method_dir or [])] \
-            or [LOCAL_FULL_DIR, SERVER_FULL_DIR]
+            or default_method_roots
         baseline_dirs = [Path(d) for d in (args.input_baseline_dir or [])] \
-            or [LOCAL_BASELINE_DIR, SERVER_BASELINE_DIR]
+            or default_baseline_roots
+        # Expand to include the v9 cache/rq3/multi_paradigm_* subdirectories.
+        method_dirs = _expand_csv_search_dirs(method_dirs)
+        baseline_dirs = _expand_csv_search_dirs(baseline_dirs)
         method_dirs = [d for d in method_dirs if d.exists()]
         baseline_dirs = [d for d in baseline_dirs if d.exists()]
-        log.info("scan method dirs: %s", method_dirs)
-        log.info("scan baseline dirs: %s", baseline_dirs)
+        log.info("scan method dirs (%d): %s", len(method_dirs), method_dirs)
+        log.info("scan baseline dirs (%d): %s", len(baseline_dirs),
+                 baseline_dirs)
         if args.dry_run:
-            n_m = len(_scan_dirs(method_dirs, "rq3_full_matrix_*.parquet"))
-            n_b = len(_scan_dirs(baseline_dirs, "rq3_stage6_baselines_*.parquet"))
-            log.info("[dry-run] method parquets found = %d, baseline parquets = %d",
-                     n_m, n_b)
+            n_m_p = len(_scan_dirs(method_dirs, "rq3_full_matrix_*.parquet"))
+            n_m_c = len(_scan_dirs(method_dirs, "multi_paradigm_*.csv"))
+            n_b_p = len(_scan_dirs(baseline_dirs,
+                                    "rq3_stage6_baselines_*.parquet"))
+            n_b_c = len(_scan_dirs(baseline_dirs, "phase_f_*.csv"))
+            log.info("[dry-run] method files: %d parquet + %d csv "
+                     "(multi_paradigm)", n_m_p, n_m_c)
+            log.info("[dry-run] baseline files: %d parquet + %d csv (phase_f)",
+                     n_b_p, n_b_c)
+            log.info("[dry-run] methods-version=%s expects %d methods × "
+                     "%d cells", methods_version,
+                     N_METHODS_BY_VERSION[methods_version], len(ALL_CELLS))
             return 0
         method_df = load_full_matrix(stats, method_dirs)
         baseline_df = load_baselines(stats, baseline_dirs)
@@ -1648,6 +2184,23 @@ def main(argv: Optional[list[str]] = None) -> int:
             log.error("no method data — re-run with --mini-run for scaffold check, "
                       "or wait for Phase E to complete.")
             return 2
+
+    # Apply --methods-version filter (drop methods not in the active set).
+    if not args.mini_run:
+        before = len(method_df)
+        method_df = method_df[method_df["method"].isin(selected_methods)]
+        log.info("method-filter: kept %d / %d rows for %s portfolio",
+                 len(method_df), before, methods_version)
+
+    # Apply --include / --exclude paradigm filter.
+    if include_par:
+        method_df = method_df[method_df["paradigm"].isin(include_par)]
+        log.info("paradigm-include: kept %d rows after %s filter",
+                 len(method_df), sorted(include_par))
+    if exclude_par:
+        method_df = method_df[~method_df["paradigm"].isin(exclude_par)]
+        log.info("paradigm-exclude: kept %d rows after dropping %s",
+                 len(method_df), sorted(exclude_par))
 
     log.info("ingest: method rows=%d, baseline rows=%d",
              stats.n_method_rows, stats.n_baseline_rows)
@@ -1702,21 +2255,68 @@ def main(argv: Optional[list[str]] = None) -> int:
     g7.to_csv(out_dir / "G7_production_top.csv", index=False)
     plot_g7_top(g7, fig_dir / "fig_g7_top_methods.png")
 
+    # ---- Section G8 — HKBU comparison (v9) ----
+    log.info("G8 (HKBU comparison) …")
+    g8 = section_g8(g2, g2_summary) if not g2.empty else pd.DataFrame()
+    g8.to_csv(out_dir / "G8_hkbu_comparison.csv", index=False)
+
+    # ---- 36 method × 56 cell matrix CSV (heatmap-friendly pivot) ----
+    if not method_df.empty:
+        log.info("emit method × cell q_error matrix …")
+        matrix = method_df.pivot_table(
+            index="method", columns="cell", values="q_error", aggfunc="mean"
+        )
+        matrix.to_csv(out_dir / "method_cell_qerror_matrix.csv")
+        # Optional heatmap if matplotlib is available.
+        try:
+            fig, ax = plt.subplots(
+                figsize=(min(2 + 0.4 * matrix.shape[1], 22),
+                         min(2 + 0.35 * matrix.shape[0], 16))
+            )
+            vals = matrix.to_numpy()
+            finite = vals[np.isfinite(vals)]
+            if finite.size:
+                vmin, vmax = float(np.nanpercentile(finite, 5)), \
+                    float(np.nanpercentile(finite, 95))
+            else:
+                vmin, vmax = 0.0, 1.0
+            im = ax.imshow(vals, cmap="viridis", aspect="auto",
+                           vmin=vmin, vmax=vmax)
+            ax.set_xticks(range(matrix.shape[1]))
+            ax.set_xticklabels(matrix.columns, rotation=80, ha="right",
+                               fontsize=5.5)
+            ax.set_yticks(range(matrix.shape[0]))
+            ax.set_yticklabels(matrix.index, fontsize=6.5)
+            ax.set_title(
+                f"Method × Cell mean q_error matrix ({methods_version}, "
+                f"{matrix.shape[0]} method × {matrix.shape[1]} cell)"
+            )
+            fig.colorbar(im, ax=ax, fraction=0.025).set_label("mean q_error")
+            fig.tight_layout()
+            fig.savefig(fig_dir / "fig_method_cell_matrix.png", dpi=140)
+            plt.close(fig)
+        except Exception as exc:
+            log.warning("method×cell heatmap failed: %s", exc)
+
     # ---- Report ----
     log.info("REPORT.md …")
     rep_path = write_report(out_dir, g1, g1_par, g2, g2_summary, g3,
-                            reg, curse, g5, g6, g7, stats)
+                            reg, curse, g5, g6, g7, g8, stats,
+                            methods_version=methods_version)
     log.info("wrote %s", rep_path)
 
     # Console summary.
+    n_cells_target = len(ALL_CELLS)
+    n_methods_target = N_METHODS_BY_VERSION[methods_version]
     print("\n=== Phase G summary ===")
-    print(f"method rows : {stats.n_method_rows:,} "
+    print(f"methods-version : {methods_version}")
+    print(f"method rows     : {stats.n_method_rows:,} "
           f"({stats.n_method_files} files)")
-    print(f"baseline rows: {stats.n_baseline_rows:,} "
+    print(f"baseline rows   : {stats.n_baseline_rows:,} "
           f"({stats.n_baseline_files} files)")
-    print(f"cells covered: {len(stats.cells_seen)}/28")
-    print(f"methods cov  : {len(stats.methods_seen)}/22")
-    print(f"baselines    : {sorted(stats.baselines_seen)}")
+    print(f"cells covered   : {len(stats.cells_seen)}/{n_cells_target}")
+    print(f"methods covered : {len(stats.methods_seen)}/{n_methods_target}")
+    print(f"baselines       : {sorted(stats.baselines_seen)}")
     if not g2_summary.empty:
         wins = g2_summary[g2_summary["win_single_multi_b1"]]
         print(f"win_single_multi_b1: {len(wins)} method(s)"
@@ -1725,6 +2325,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         q = g7[g7["qualifies"]]
         print(f"production-ready (4-filter): {len(q)} method(s)"
               + (f" — {', '.join(q['method'].tolist())}" if len(q) else ""))
+    if not g8.empty:
+        recovered = g8[g8["v9_recovered_multi"]]
+        print(f"v9 multi recovery: {len(recovered)} cells")
     return 0
 
 

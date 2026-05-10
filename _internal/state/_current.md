@@ -1,6 +1,18 @@
-# 현재 단계 (CLAUDE.md 분리, 5/9 16:12 Multi Ensemble running update)
+# 현재 단계 (5/10 01:25 v0 baseline reset)
 
-> **5/9 16:12 — 자문 메일 v5 박세은 톡방 공유 ready (256 KB / 2 페이지) + Multi Adaptive Ensemble 측정 background 진행 중 (Cell 1/6 완료, ETA 22:00) + (2)~(5) brainstorming 후보 코드 작성 대기. 다음 세션부터 agent 활용 적극 (메인 세션 보호).**
+> **5/10 01:25 KST — v0 FINAL SCOPE 확정**: 36 method × 26 cell + 3 SF=100 = 1,044 measurement.
+> 사용자 결정 ("이제 우리 방향성 정해졌다, v0 으로 reset") 에 따라 이전 모든 handoff (v13 ~ v18) archived.
+> 상세: `_internal/handoff_v0_FINAL_SCOPE_20260510_0125.md`
+>
+> **변경사항 요약**:
+> - HNSW-SS dropped (narrative 위반 — vector index 사용) → LPM2 (Grafström 2012) 추가
+> - YFCC_PCA dropped (Exqutor §VI 미수록) → 14 cell 폐기 + 48 file 격리
+> - image+image partsupp 4-way dropped (Exqutor Fig 8 image+text only) → 12 cell 폐기 + 44 file 격리
+> - multi_join_wiki self-join dropped (Exqutor Fig 9 image⋈text only) → 2 cell 폐기 + 8 file 격리
+> - SF=100 = Exqutor Fig 4-6 매치 3 cells (DEEP/SIFT/**SSN (SimSearchNet++)** × partsupp) 만
+> - **SSN (SimSearchNet++)** unified naming (5/10 결정) — 모든 문서·발표·논문 단일 표기, 서버 측 `fb_*` 파일명은 5/10 morning batch rename 예정
+>
+> **5/9 16:12 ~ 5/10 01:25** (이전 진행):
 > **5/9 13:30 ~ 16:12 KST 진행** (handoff_v17 참조):
 > - ✅ 자문 메일 v5 finalize (박세은 카톡 톡 100% align + code-reviewer agent 8건 필수 수정 적용)
 > - ✅ (가) Multi 11 method × Adaptive paired 분석 (paired-better 0/66 정량)

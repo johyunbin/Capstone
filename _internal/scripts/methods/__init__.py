@@ -64,10 +64,60 @@ Tier C — single-table single-vector selectivity-aware adaptive sampling
     per-query ``sample_size`` rather than per-row stratum ids; *not*
     applicable to the multi-vector pipeline.
 """
+from .adaptive_bucket_probing import (
+    AdaptiveBucketProbing,
+    stratify_method as adaptive_bucket_probing_strat,
+)
 from .ams_count_sketch import stratify_method as ams_count_sketch_strat
 from .bandit_ucb1_strat import (
     UCBStrataMetadata,
     stratify_method as bandit_ucb1_stratify,
+)
+from .cc_sketch import (
+    CCSketch,
+    stratify_method as cc_sketch_strat,
+)
+from .epsilon_net_strat import (
+    EpsilonNetMetadata,
+    stratify_method as epsilon_net_strat,
+)
+from .factor_join import (
+    FactorJoin,
+    stratify_method as factor_join_strat,
+)
+from .hkbu_repsample_strat import (
+    HKBURepSampleEstimator,
+    stratify_method as hkbu_repsample_strat,
+)
+# HNSW-SS dropped 5/10 00:10 — narrative violation (uses HNSW vector index,
+# but our scope is "vector index 없음" scenario). See _method_portfolio_v9.
+# from .hnsw_ss_strat import (
+#     HNSWStratifiedSampling,
+#     stratify_method as hnsw_ss_strat,
+# )
+from .kdpp_strat import stratify_method as kdpp_strat
+from .lhs_strat import stratify_method as lhs_strat
+from .lpm2_strat import stratify_method as lpm2_strat
+from .lp_bound import (
+    LpBoundEstimator,
+    stratify_method as lp_bound_strat,
+)
+from .mfmc_strat import (
+    MFMCEstimator,
+    stratify_method as mfmc_strat,
+)
+from .opq_strat import stratify_method as opq_strat
+from .thompson_sampling_strat import (
+    TSStrataMetadata,
+    stratify_method as thompson_sampling_strat,
+)
+from .tucker_strat import (
+    TuckerEstimator,
+    stratify_method as tucker_strat,
+)
+from .vine_copula_strat import (
+    VineCopulaEstimator,
+    stratify_method as vine_copula_strat,
 )
 from .cca_strat import (
     CCA1DMapper,
@@ -106,6 +156,23 @@ STRATIFY_FUNCTIONS = {
     # Tier B
     "cca1d": cca1d_strat,
     "coclustering_nystrom": coclustering_nystrom_strat,
+    # ---- v8 (5/9 22:35) — Tier S+/A new methods (research agent dispatch) ----
+    "thompson_sampling":       thompson_sampling_strat,    # Russo 2018 / Bao SIGMOD 2021
+    "epsilon_net":             epsilon_net_strat,          # Haussler-Welzl SoCG 1986
+    "adaptive_bucket_probing": adaptive_bucket_probing_strat,  # Chen arXiv 2604.04603
+    "cc_sketch":               cc_sketch_strat,            # Heddes SIGMOD 2024
+    "factor_join":             factor_join_strat,          # Wu SIGMOD 2023
+    # ---- v9 (5/9 23:30) — extreme-mode 9 additional methods ----
+    "lp_bound":                lp_bound_strat,             # Zhang/Suciu SIGMOD 2025 Best Paper
+    "mfmc":                    mfmc_strat,                 # Peherstorfer SIAM JSC 2016
+    "tucker":                  tucker_strat,               # Tucker 1966 / Mu CoDe 2025
+    "vine_copula":             vine_copula_strat,          # Bedford-Cooke 2002
+    # "hnsw_ss":               hnsw_ss_strat,             # DROPPED 5/10 00:10 — narrative violation
+    "hkbu_repsample":          hkbu_repsample_strat,       # Wu et al. SIGMOD 2026 (HKBU)
+    "lhs":                     lhs_strat,                  # McKay Technometrics 1979
+    "kdpp":                    kdpp_strat,                 # Kulesza-Taskar ICML 2011
+    "opq":                     opq_strat,                  # Ge CVPR 2013 / PAMI 2014
+    "lpm2":                    lpm2_strat,                 # Grafstrom 2012 / arXiv:2305.02446 (probabilistic spatially-balanced)
 }
 
 # Paper-display name -> canonical name (per measure_multi_paradigm METHOD_MAP convention)

@@ -119,6 +119,24 @@ METHOD_MAP = {
     "CoCluster_Nystrom": "coclustering_nystrom",  # Dhillon KDD 2003 + Nystrom
     # NeuroCard (latent-feature K-bin wrapper, drop-in compatible — option A)
     "NeuroCard":   "neurocard",     # Yang VLDB 2020 (lite reimpl)
+    # ---- 5/9 v8 신규 5 method (research agent + brainstorm dispatch) -----
+    # Tier S+ — cross-agent 합의, 즉시 구현
+    "ThompsonSampling":       "thompson_sampling",       # Russo 2018 / Marcus Bao SIGMOD 2021
+    "EpsilonNetBaseline":     "epsilon_net",             # Haussler-Welzl SoCG 1986 (theoretical floor)
+    "AdaptiveBucketProbing":  "adaptive_bucket_probing", # Chen arXiv 2604.04603 (vector-native LSH+Chernoff)
+    "CCSketch":               "cc_sketch",               # Heddes SIGMOD 2024 (multi-join FFT conv)
+    "FactorJoin":             "factor_join",             # Wu SIGMOD 2023 (factor-graph BP)
+    # ---- 5/9 v9 (23:30) extreme-mode 9 additional methods ----
+    "LpBound":                "lp_bound",                # Zhang/Suciu SIGMOD 2025 Best Paper
+    "MFMC":                   "mfmc",                    # Peherstorfer SIAM JSC 2016
+    "Tucker":                 "tucker",                  # Tucker 1966 / Mu 2025 CoDe
+    "VineCopula":             "vine_copula",             # Bedford-Cooke 2002
+    # "HNSW_SS":              "hnsw_ss",                # DROPPED 5/10 00:10 — narrative violation (uses HNSW vector index)
+    "HKBU_RepSample":         "hkbu_repsample",          # Wu SIGMOD 2026 (HKBU)
+    "LHS":                    "lhs",                     # McKay Technometrics 1979
+    "kDPP":                   "kdpp",                    # Kulesza-Taskar ICML 2011
+    "OPQ":                    "opq",                     # Ge CVPR 2013 / PAMI 2014
+    "LPM2":                   "lpm2",                    # Grafstrom-Lundstrom-Schelin 2012 (well-spread design)
 }
 
 # Paradigm 별 method 분류 (출력 / meta 용)
@@ -140,6 +158,23 @@ PARADIGM = {
     "Coreset":           "P13_AdaptiveSel",
     "NeuroCard":         "P14_Latent",
     "WanderJoin":        "S_MultiRelation",
+    # ---- 5/9 v8 신규 paradigm 라벨 ----
+    "ThompsonSampling":      "P15_BayesianBandit",
+    "EpsilonNetBaseline":    "P16_VCDimBaseline",
+    "AdaptiveBucketProbing": "P17_LSHChernoff",
+    "CCSketch":              "P18_SketchConv",
+    "FactorJoin":            "P19_FactorGraph",
+    # ---- 5/9 v9 paradigm 라벨 ----
+    "LpBound":            "P20_PessimisticLP",
+    "MFMC":               "P21_MultiFidelity",
+    "Tucker":             "P22_TensorDecomp",
+    "VineCopula":         "P23_CopulaTree",
+    # "HNSW_SS":          "P24_GraphStratify",       # DROPPED 5/10 00:10
+    "HKBU_RepSample":     "P25_RepSampling",
+    "LHS":                "P26_LatinHypercube",
+    "kDPP":               "P27_RepulsiveDiverse",
+    "OPQ":                "P28_RotatedQuant",
+    "LPM2":               "P29_PivotalDesign",
 }
 
 # 신규 10 method 의 stratify_method() 는 (emb1, emb2, K, seed) signature 사용 →
@@ -150,6 +185,13 @@ NEW_METHOD_CANONS: set[str] = {
     "pq", "coreset", "dense_rp", "bandit_ucb1", "neuram",
     "cca1d", "coclustering_nystrom",
     "neurocard",
+    # ---- 5/9 v8 신규 5 method ----
+    "thompson_sampling", "epsilon_net", "adaptive_bucket_probing",
+    "cc_sketch", "factor_join",
+    # ---- 5/9 v9 extreme-mode 9 method ----
+    "lp_bound", "mfmc", "tucker", "vine_copula",
+    # "hnsw_ss" DROPPED 5/10 00:10 — narrative violation
+    "hkbu_repsample", "lhs", "kdpp", "opq", "lpm2",
 }
 
 
@@ -158,13 +200,8 @@ NEW_METHOD_CANONS: set[str] = {
 # ---------------------------------------------------------------------------
 
 CELL_4WAY = {
-    # ---------- Existing sf=10 (PG / cache/rq1 NPY fast-path) ----------
-    "partsupp_deep_sift_10": {
-        "table": "partsupp_deep_sift_10",
-        "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
-        "emb2_col": "ps_embedding_sift", "emb2_dim": 128,
-        "kind": "4way",
-    },
+    # DROPPED 5/10 01:18 — partsupp_deep_sift (image+image, Exqutor scope 외)
+    # "partsupp_deep_sift_10": {...},
     "partsupp_deep_wiki_10": {
         "table": "partsupp_deep_wiki_10",
         "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
@@ -172,14 +209,8 @@ CELL_4WAY = {
         "kind": "4way",
     },
     # ---------- 5/9 added: existing sf=1 variants (NPY fast-path in cache/rq3) ----------
-    # cache/rq3/partsupp_deep_sift_1_emb1.npy / _emb2.npy already present —
-    # fetch_dual_vectors hits the {table}_emb1.npy fast-path automatically.
-    "partsupp_deep_sift_1": {
-        "table": "partsupp_deep_sift_1",
-        "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
-        "emb2_col": "ps_embedding_sift", "emb2_dim": 128,
-        "kind": "4way",
-    },
+    # DROPPED 5/10 01:18 — partsupp_deep_sift (image+image, Exqutor scope 외)
+    # "partsupp_deep_sift_1": {...},
     "partsupp_deep_wiki_1": {
         "table": "partsupp_deep_wiki_1",
         "emb1_col": "ps_embedding_deep", "emb1_dim": 96,
@@ -220,6 +251,36 @@ CELL_4WAY = {
         "emb1_dim": 192, "emb2_dim": 768,
         "kind": "4way",
     },
+    # ---------- 5/9 v8 added: 22 NEW 4-way pairs (build pending) ---------
+    # All prebuilt — relies on build_new_multi_cells.py producing emb1.npy / emb2.npy
+    # / partkeys.npy / strata.npy / query_pool.parquet / query_selectivity.parquet /
+    # true_card.parquet under /mnt/hdd0/home/capstone2026/cache/rq3/.
+    # Convention: <A>_<B> with dims = (dim_A, dim_B). dim refs:
+    #   deep=96, sift=128, fb=256, yfcc=192, yfcc_pca=192, wiki=768
+    # DROPPED 5/10 01:18 — image+image partsupp 4-way (Exqutor scope 외)
+    # Exqutor Fig 8: partsupp_X_WIKI 만 사용 (image+text). image+image 12 cells 폐기.
+    # "partsupp_deep_fb_1": {...},
+    # "partsupp_deep_fb_10": {...},
+    # "partsupp_deep_yfcc_1": {...},
+    # "partsupp_deep_yfcc_10": {...},
+    # "partsupp_deep_yfcc_pca_*": (already dropped 5/10 01:14)
+    # "partsupp_sift_fb_1": {...},
+    # "partsupp_sift_fb_10": {...},
+    # "partsupp_sift_yfcc_1": {...},
+    # "partsupp_sift_yfcc_10": {...},
+    # "partsupp_sift_yfcc_pca_*": (already dropped)
+    # "partsupp_fb_yfcc_1": {...},
+    # "partsupp_fb_yfcc_10": {...},
+    # "partsupp_fb_yfcc_pca_*": (already dropped)
+    # DROPPED 5/10 01:14 — fb × YFCC_PCA (Exqutor scope 외)
+    # "partsupp_fb_yfcc_pca_1": {...},
+    # "partsupp_fb_yfcc_pca_10": {...},
+    # DROPPED 5/10 01:14 — yfcc × YFCC_PCA (Exqutor scope 외)
+    # "partsupp_yfcc_yfcc_pca_1": {...},
+    # "partsupp_yfcc_yfcc_pca_10": {...},
+    # DROPPED 5/10 01:14 — YFCC_PCA × WIKI (Exqutor scope 외)
+    # "partsupp_yfcc_pca_wiki_1": {...},
+    # "partsupp_yfcc_pca_wiki_10": {...},
 }
 
 CELL_JOIN = {
@@ -275,6 +336,14 @@ CELL_JOIN = {
         "partsupp_emb_dim": 192, "part_emb_dim": 768,
         "kind": "join",
     },
+    # ---------- 5/9 v8 added: 4 NEW multi_join cells (build pending) ----------
+    # DROPPED 5/10 01:14 — multi_join YFCC_PCA × WIKI (Exqutor scope 외)
+    # "multi_join_yfcc_pca_wiki_1": {...},
+    # "multi_join_yfcc_pca_wiki_10": {...},
+    # DROPPED 5/10 01:18 — multi_join_wiki (wiki self-join, Exqutor scope 외)
+    # Exqutor Fig 9: partsupp(IMAGE) ⋈ part(WIKI) 만 사용. wiki self-join 미수록.
+    # "multi_join_wiki_1": {...},
+    # "multi_join_wiki_10": {...},
 }
 ALL_CELLS = list(CELL_4WAY.keys()) + list(CELL_JOIN.keys())
 

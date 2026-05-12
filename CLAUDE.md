@@ -8,18 +8,18 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/12 14:16 update — handoff_v14 추가, v3 storyline 정정)
+## 동적 state + 인계 (5/12 23:40 update — handoff_v15 추가, v4 deck 완성)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v14 + v12 2 file read 로 0% loss 인계**.
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v15 + v12 2 file read 로 0% loss 인계**.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v14_storyline_proper_+_seeun_brief_20260512_1416.md` (5/12 14:16, v3 storyline 정정 + 박세은 사전보고 자료 1+2 page + Capstone Design System tab v3 send) + `@_internal/handoff/active/handoff_v12_final_present_ready_20260512_0245.md` (5/12 02:45, 측정 18/18 회수 + REPORT v11)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v15_v4_deck_ready_+_seunseun_brief_complete_20260512_2340.md` (5/12 23:40, v4 deck 20 slide 완성 + 박세은/강재현 6건 피드백 반영 + 임채림 SAP 5/28 plan + 서버 사용 정책) + `@_internal/handoff/active/handoff_v12_final_present_ready_20260512_0245.md` (5/12 02:45, 측정 18/18 회수 + REPORT v11)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
 - **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`
 - **handoff 통합** (v0~v11 archive): `@_internal/handoff/archive/`
 - **57 method × 9 paradigm**: `@_internal/METHOD_REGISTRY.md`
 - **9 cells × 56 method × 3 modes matrix**: `@_internal/EXPERIMENT_REGISTRY.md`
 - **server 자원 + tmux**: `@_internal/SERVER_REGISTRY.md`
-- **5/27 발표 키노트 prompt v3 (사용자 storyline 7단계 verbatim)** ★ : `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v3_storyline_proper_20260512.md` (v2 폐기 — self-disclosure narrative 사용자 거부)
+- **★ 5/27 발표 키노트 deck v4 FINAL (20 slide, Capstone Design System)**: `@submission/_drafts/속도는벡터 · Capstone Final 5_27 (Keynote v4).pdf` + `.pptx` + `.html` (5/12 23:07 export, 박세은/강재현 6건 피드백 반영). v3 prompt + v3 정정 v2 prompt 는 reference: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v3_storyline_proper_20260512.md` + `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v3_정정v2_20260512_2250.md`
 - **5/27 발표 storyline v2**: `@plans/5_27_storyline_draft_20260511_1410.md`
 - **6/11 보고서 outline v2** (5/8 base) + **v3 update plan**: `@plans/최종보고서_outline_v2_20260508.md`, `@plans/6_11_보고서_outline_v3_update_plan_20260511.md`
 - **5/15 박광현 미팅 자료** (4 file, 5/12 11:56 PDF + 12:15 README update): `@submission/_drafts/박광현_5월15일_미팅/`

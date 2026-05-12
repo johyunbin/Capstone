@@ -8,29 +8,38 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state (별도 file 라우팅)
+## 동적 state + 인계 (5/12 12:25 update — handoff_v13 추가)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 동적 state 는 분리 (5/9 새벽 hygiene cleanup).
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v13 + v12 2 file read 로 0% loss 인계**.
 
-- **현재 단계 + W1 sprint 결과**: `@_internal/state/_current.md`
-- **실행 로드맵**: `@_internal/state/_roadmap.md`
-- **다음 단계** (5/9 morning trigger): `@_internal/state/_next.md`
-- **W1 산출 + 산출물 위치**: `@_internal/state/_artifacts.md`
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v13_deck_design_ready_20260512_1225.md` (5/12 12:25, 본 세션 README/카톡 stat 동기화 + commit 54be265) + `@_internal/handoff/active/handoff_v12_final_present_ready_20260512_0245.md` (5/12 02:45, 측정 18/18 회수 + 키노트 prompt v2 FINAL + REPORT v11)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
+- **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`
+- **handoff 통합** (v0~v11 archive): `@_internal/handoff/archive/`
+- **57 method × 9 paradigm**: `@_internal/METHOD_REGISTRY.md`
+- **9 cells × 56 method × 3 modes matrix**: `@_internal/EXPERIMENT_REGISTRY.md`
+- **server 자원 + tmux**: `@_internal/SERVER_REGISTRY.md`
+- **5/27 발표 키노트 prompt v2 FINAL** (claude.ai/design paste 용, 실측 데이터 반영): `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v2_FINAL.md`
+- **5/27 발표 storyline v2**: `@plans/5_27_storyline_draft_20260511_1410.md`
+- **6/11 보고서 outline v2** (5/8 base) + **v3 update plan**: `@plans/최종보고서_outline_v2_20260508.md`, `@plans/6_11_보고서_outline_v3_update_plan_20260511.md`
+- **5/15 박광현 미팅 자료** (4 file, 5/12 11:56 PDF + 12:15 README update): `@submission/_drafts/박광현_5월15일_미팅/`
+- **팀원 카톡 v2 (발송용)**: `@submission/_drafts/팀원_카톡_5_27_finalize_20260511.md`
 
-## 새 RQ 구조 (5/5 확정)
+## 새 RQ 구조 (5/5 확정 + 5/12 02:50 paper exact 실측 REPORT v11 반영)
 
-| RQ | 질문 | 메인 실험 |
-|---|---|---|
-| **RQ1** | 기존 random sampling 이 skew 데이터셋에서 얼마나 부정확한가? | 2x2 (Block vs Row × Normal vs Skew) — DEEP/SIFT |
-| **RQ2** | 분포 아는 상황에서 어떤 방식이 최적? | KM20 + Proportional / **Neyman** / **Anti-Neyman** 3-way ablation |
-| **RQ3** | 분포 모르는 상황에서 어떤 방식이 최적? | 5 paradigm × 11 method (P1 Cluster / P2 Spatial / P3 Streaming / P4 DimReduction / P5 Low-discrepancy), ★4 = sparse RP (Achlioptas 2003) |
+| RQ | 질문 | 메인 실험 | 핵심 결과 (5/12 02:50 실측) |
+|---|---|---|---|
+| **RQ1** | random sampling 이 skew 데이터셋에서 얼마나 부정확한가? | DEEP/SIFT/SSN sf=100 × Bernoulli vs KM20 stratified × sel{0.01, 0.10} | mean gap **+3.74%** (5 cell × 5 trial) |
+| **RQ2** | 분포 아는 상황에서 어떤 방식이 최적? | KM20 5-way: Bernoulli / Equal / Proportional / Neyman / Anti-Neyman | Bern→Prop **−9.53%** ✓. Anti 1.540 < Prop 1.580 < **Neyman 1.595 paradox** (σ_j range 1.3-1.6× narrow + N_i CV=0) → "분포 알면 prop allocation 답" + RQ3 자연 전환 |
+| **RQ3** | 분포 모르는 상황에서 어떤 방식이 최적? | 8 paradigm × 56 method × 9 cells × 2 modes (**1001 file**: B1 9 + CaseA 495 + CaseB 496, REPORT v11) | **paired CaseB < CaseA 92.5%** (455/492, p<1e-45) + **Cliff's δ large better 63.0%** (311/494) + Hedges' g large 55.7% (275/494) + one-sided p<0.05 outperform 45.3% (224/494). negative control: CaseA 단독 대체 **0/493 = 0%** (large worsening 37.1%). Fig.12 mean qe_trim 1.618 vs paper 1.69 = -4.3% 재현 ✓ |
 
-- **연구 방향**: Exqutor 가 미작동하는 단일 테이블 영역에 대한 분포 정보의 가치 정량화. (단일 → 멀티 일반화는 future work, 단일 정확성은 멀티 정확성의 *필요조건*만 성립.)
-- **본 연구 contribution**: (1) Normal/Skew × Block/Row 정량 비교 (2) Selectivity Gradient (3) Two-Level Decomposition (4) Recovery Rate Framework (5) 5 paradigm × 11 method framework
-- **Limitation**: KM20 oracle (production X) / 사전 계산 one-time cost / OLTP 범위 외 / 단일→멀티 future work + V7 method-level (Reservoir RANDOM20 proxy / LSH K=20 vs n_hp=5 misalignment / sparse_rp Li 2006 1/√D variant)
-- **설계안 v6** (5/5 확정): `plans/RQ재정립_20260505_2122.md`
-- **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `memory/reference_server.md`
+- **연구 방향**: Exqutor §V-B Adaptive Sampling 영역 paper exact 재현 + 분포 인지 stratification ensemble augment 의 정량적 가치 검증. ECQO §V-A 영역은 paper main result 그대로 인정.
+- **CaseB ensemble 정의** (사용자 5/9 23:18): `est_final = (est_b1 + est_method) / 2.0` simple average. paper §V-B Bernoulli (est_b1) + 우리 method KM20 stratified (est_method) 산술 평균. AdaptiveState (Eq 1-6) 그대로 paper exact 유지. sample budget 두 estimator 공유 (paper Eq 1 N=385).
+- **paradigm rollup 8 (CaseB mean Δ%, 실측 REPORT v11)**: P10 Density **−11.93** (n=1, 약함) / P9 InfoTheoretic **−7.60** (n=9) / P3 Streaming **−6.63** (n=44) / P4 DimReduction **−6.03** (n=104) / P2 Spatial **−5.57** (n=107) / P5 QMC +1.47 (n=62, paradigm-level 만 보고, method 4건 폐기) / P1 Cluster +2.04 (n=87) / P6 Quantization +8.44 (n=53)
+- **사용자 정책 폐기 method** (발표 자료 X, future work X): **정합성 위반 9** (halton/sobol/lhs/hammersley/dense_rp/random_projection/dbscan/ccsketch/lsh/ams_count_sketch — paper N=385 budget 위반) + **측정 미커버 6** (Tier 2 5: dirichlet/kernelpca/neuocard/birch/hdbscan + KDE 1: kde_parzen) + **algorithm audit drop 23 method**
+- **Honest limitation**: 측정 portfolio 1001 file 외 미커버 cells 9 카테고리 정직 분류 (REPORT §10) + byte-identical duplicates 7쌍 (REPORT §11) + ★3 hilbert PCA 2D lex sort alias (Faloutsos 1989 ❌, hilbert_real 별도 측정 9 cells × 2 modes) + ★4 sparse_rp Li-Hastie-Church 2006 reference 정정
+- **설계 history**: `plans/archive/RQ_재정립_과거_버전/` (5/5 + 5/9 evidence)
+- **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `_internal/SERVER_REGISTRY.md`
 
 ## 세션 시작 체크리스트
 
@@ -50,37 +59,46 @@
 - **개인 파일** (.claude, guideline): rsync
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
-## 디렉토리 구조 (2026-04-27 재정비)
+## 디렉토리 구조 (2026-05-11 정리 후)
 
 루트는 **팀원 핵심 5개 + 도구·양식 2개 + 내부용 1개** 로 정리됨. 팀원 진입 가이드는 루트 `README.md` 참조.
 
 ```
 Capstone/
-├── README.md              팀원 진입점
+├── README.md              팀원 진입점 (5/11 update — paper exact 결과 + 5/15 박광현 미팅)
 ├── CLAUDE.md              이 파일 (Claude Code 컨텍스트, 라우팅 + 안정 룰)
 │
-├── submission/            ⭐ 우리 팀의 모든 공식 문서 — README 있음
-│   ├── _drafts/           ⭐ 팀 공유 최신본 + archive — README 있음
+├── submission/            ⭐ 우리 팀의 모든 공식 문서
+│   ├── _drafts/           팀 공유 최신본 (발표 v3 + 자문메일 v5 + 연구지도확인서 v3 + 팀원 자료 3건)
+│   │   └── archive/       이전 버전 한글 폴더 12종 (5/11 정리: 발표자료_v3_source / 자문메일_v1_v2_초안 / 중간보고서_4월28일_source 등)
 │   └── 제출완료/          외부에 보낸 자료 (학교 공식 + 멘토 자문)
 │
-├── experiments/           ⭐ 실험 — README 있음
-│   ├── code/rq1/          서버 실험 스크립트
-│   ├── code/local_analysis/  로컬 분석 스크립트
-│   ├── results/rq1_motivation, rq2_aware/
-│   ├── figures/           시각화
+├── experiments/           ⭐ 실험
+│   ├── code/              실험 스크립트 (rq1/rq2/rq3/local_analysis)
+│   ├── results/           RQ1·RQ2·RQ3 measurement
+│   ├── figures/paper_exact_v7/  ⭐ 6 figure (5/11 신규)
+│   ├── figures/archive/W1_W4_초기실험_figure/  이전 figure 8 dir (5/11 정리)
 │   └── config/            파라미터
 │
-├── plans/                 연구 설계안 (RQ재정립_v6 + 보고서 outline_v2 + archive)
-├── reference/             참고 자료 (papers 69편 + summaries 82편 + analysis)
+├── plans/
+│   ├── 5_27_storyline_draft_20260511_1410.md  ⭐ 5/27 발표 storyline v2 (5/11 정정)
+│   ├── 최종보고서_outline_v2_20260508.md       ⭐ 6/11 보고서 outline base
+│   └── archive/RQ_재정립_과거_버전/ + 회의_outline_과거/
+├── reference/             참고 자료 (papers 69편 + summaries 82편 + exqutor_query_plans/)
 ├── templates/             캡스톤 학교 양식 샘플
 │
 └── _internal/             ⛔ 조현빈 개인 작업 (팀원 무시 OK)
-    ├── state/             동적 state (current/roadmap/next/artifacts/schedule)
+    ├── handoff/active/handoff_v8_*.md  ⭐ 새 세션 인계 anchor (1 file 0% loss)
+    ├── handoff/archive/   v0~v6 + validation_statistics
+    ├── MASTER_README.md / MASTER_HANDOFF.md / METHOD_REGISTRY.md / EXPERIMENT_REGISTRY.md / SERVER_REGISTRY.md / CHANGELOG.md / naming_convention.md
+    ├── state/_schedule.md + _next.md + archive/
     ├── records/           회의록 (kakaotalk + weekly)
-    ├── scripts/           문서 빌드 도구 (md2pdf, _build_docx_v1, analyze_*)
+    ├── scripts/           문서 빌드 도구 + 측정 script (active 32 + archive 43)
     ├── guideline/         Claude Code 자동화 지침 (활성 5 + archive 6)
-    ├── learning/          학습 자료
-    └── archive/           5/8 audit + supersed handoff 등 history
+    ├── method_audit/      method 검증 (5/10 P1-P6 audit + 5/11 Phase 4)
+    ├── validation/        4-layer audit + data/319
+    ├── learning/, cache/  학습 자료 + 분석 cache
+    └── 문서_archive/       5/11 정리 (이전_handoff/ + 5_8_시점_outdated_docs/ + state_과거_시점/ + 정리작업_log/)
 ```
 
 ## 지침 시스템

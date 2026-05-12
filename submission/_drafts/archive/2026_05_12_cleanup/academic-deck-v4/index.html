@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>속도는벡터 — Academic v4 · Final 5/27 (paper exact)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --font-sans: 'IBM Plex Sans KR', 'Inter', -apple-system, sans-serif;
+    --font-num: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --ink: #0B0F1C;
+    --navy: #1B3DAD;
+    --navy-deep: #14307F;
+    --blue: #4A7BD8;
+    --blue-soft: #E4ECF8;
+    --red: #E03A3A;
+    --red-soft: #FBE3E3;
+    --green: #2A9D6E;
+    --gold: #D9A53B;
+    --g100:#F2F4F8; --g200:#DEE2EC; --g300:#C9CDD8;
+    --g400:#A4ABBC; --g500:#6E7891; --g600:#4B5470; --g700:#2E3650;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: var(--ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  section { background: #fff; color: var(--ink); position: relative; }
+  .a-stripe {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 6px; background: var(--navy);
+  }
+  .a-pad {
+    position: absolute; inset: 0; padding: 38px 56px 32px 56px;
+    display: flex; flex-direction: column;
+  }
+  .a-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .a-titlewrap { display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 0; }
+  .a-num {
+    display: inline-grid; place-items: center;
+    width: 36px; height: 36px; background: var(--ink); color: #fff;
+    font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+    letter-spacing: 0.02em; flex: 0 0 auto;
+  }
+  .a-title { font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.2; }
+  .a-eyebrow {
+    margin-top: 6px; font-family: var(--font-mono); font-size: 10px;
+    color: var(--g500); letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .a-meta {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--g500);
+    letter-spacing: 0.14em;
+    flex: 0 0 auto;
+    min-width: 220px;
+    white-space: nowrap;
+  }
+  .pn { font-family: var(--font-num); font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .pn .total { color: var(--g400); font-weight: 400; }
+  .a-rule { margin: 14px 0 18px 0; height: 1px; background: var(--g200); }
+  .a-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .a-impl {
+    position: absolute; left: 56px; right: 56px; bottom: 26px;
+    background: var(--navy); color: #fff; padding: 14px 18px;
+    font-size: 14px; font-weight: 500; line-height: 1.4;
+    border-left: 4px solid var(--red);
+  }
+  .a-impl b { color: #fff; font-weight: 700; }
+  .a-footer {
+    position: absolute; left: 56px; right: 56px; bottom: 16px;
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 9px; color: var(--g500);
+    letter-spacing: 0.16em;
+  }
+
+  .card { background: #fff; border: 1px solid var(--g200); border-radius: 2px; padding: 16px 18px; }
+  .card.navy-top { border-top: 3px solid var(--navy); }
+  .card.red-top  { border-top: 3px solid var(--red); }
+  .card.green-top { border-top: 3px solid var(--green); }
+  .card.gold-top { border-top: 3px solid var(--gold); }
+
+  .label-mono { font-family: var(--font-mono); font-size: 10px; color: var(--g500); letter-spacing: 0.14em; text-transform: uppercase; }
+  .title-s { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .title-m { font-size: 18px; font-weight: 700; color: var(--ink); letter-spacing: -0.015em; }
+
+  .num-mega { font-family: var(--font-num); font-size: 96px; font-weight: 800; color: var(--navy); letter-spacing: -0.05em; line-height: 0.9; }
+  .num-big { font-family: var(--font-num); font-size: 64px; font-weight: 800; color: var(--navy); letter-spacing: -0.04em; line-height: 1; }
+  .num-mid { font-family: var(--font-num); font-size: 40px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; line-height: 1; }
+
+  .pill { display: inline-flex; align-items: center; padding: 4px 10px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; font-weight: 600; border-radius: 999px; }
+  .pill.navy { background: rgba(27, 61, 173, 0.10); color: var(--navy); }
+  .pill.red  { background: rgba(224, 58, 58, 0.10); color: var(--red); }
+  .pill.green { background: rgba(42, 157, 110, 0.10); color: var(--green); }
+  .pill.gold { background: rgba(217, 165, 59, 0.12); color: var(--gold); }
+
+  .b-num { display:inline-grid; place-items:center; width: 26px; height: 26px; background: var(--ink); color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 700; }
+
+  .sq-bullet { display: inline-block; width: 6px; height: 6px; background: var(--navy); margin-right: 8px; vertical-align: middle; }
+
+  .stat-w { background: var(--g100); padding: 10px 12px; border-radius: 2px; }
+  .stat-w .label { font-family: var(--font-mono); font-size: 9px; color: var(--g500); letter-spacing: 0.12em; }
+  .stat-w .v { font-family: var(--font-num); font-size: 22px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; margin-top: 4px; }
+
+  .fig-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+</style>
+<script type="application/json" id="speaker-notes">
+[
+"속도는벡터 팀의 5월 27일 최종 발표를 시작하겠습니다. 본 연구는 Exqutor 논문 arXiv 2512.09695v2 의 §V-B Adaptive Sampling 영역, 즉 vector index 부재 시 Bernoulli random sampling 과 모멘텀 기반 동적 sample size 조정 식 1에서 6에 대해 paper의 모든 hyperparam 과 query 정의 그리고 trim 통계를 verbatim 으로 재현하고, 그 위에 분포 인지 stratification estimator 의 산술 평균 ensemble augment 를 layer 로 추가한 정량 검증입니다. 핵심 결과 두 가지 — 첫째, paired CaseB 가 CaseA 보다 우위인 비율이 92.9% 입니다. 둘째, paradigm rollup 에서 5 paradigm 모두 statistical 압도가 입증됩니다. 발표는 12분이며, 18 slide 7단계 narrative 로 진행됩니다.",
+"7단계 구성입니다. 1번 문제, 2번 이전 연구 Exqutor §V-A 와 §V-B 그리고 본 연구 위치, 3번 우리 접근 — paper §V-B 보존 + 우리 method 산술 평균 ensemble, 4번 RQ1 분포 차이 영향, 5번 RQ2 paradox 발견, 6번 paradigm framework 9, 7번 CaseB ensemble climax 본 연구 main contribution.",
+"문제는 단순합니다. 벡터 range query 의 카디널리티를 잘못 추정하면 옵티마이저가 잘못된 plan 을 선택하고 latency 가 수십에서 수만 배 증가합니다. pgvector 33.3%, VBASE 50%, DuckDB 100% 같은 고정 비율은 실제 0.001 부터 90% 까지 5 orders of magnitude 분포를 못 따라갑니다. plan cost gap 으로 1000배에서 10000배까지 벌어집니다. 이 간극을 메우는 것이 본 연구의 출발점입니다.",
+"이전 연구 Exqutor 는 두 가지 보완책을 제안합니다. §V-A ECQO 는 인덱스 있을 때 HNSW range query 활용으로 1에서 2 밀리초 안에 견적, §V-B Adaptive Sampling 은 인덱스 없을 때 모멘텀 기반 동적 sample size 조정으로 N=385 sample 만으로 paper 수준 정확도를 확보합니다. 본 연구는 §V-A 는 paper main result 로 그대로 인정하고 §V-B 영역에 한정한 paper-friendly augment 를 제안합니다.",
+"우리 접근은 paper §V-B 의 Bernoulli random estimator 와 본 연구가 추가한 KM20 stratified estimator 두 추정값을 단순 산술 평균으로 결합하는 ensemble 구조입니다. AdaptiveState 의 모멘텀 식 1에서 6 sample size 동적 조정은 그대로 paper exact 로 유지하고, sample budget N=385 도 두 estimator 가 공유합니다. 학술적으로 이는 bias 0 인 random 과 cluster 분포 가정 시 variance 가 낮은 stratified 의 robust 산술 평균으로, 두 의사가 진단한 결과를 평균하면 한 의사 단독보다 정확한 bias-variance trade-off 의 textbook 응용입니다.",
+"RQ1 분포 차이가 추정 정확도에 영향을 주는가 입니다. DEEP, SIFT, SSN++ sf=100 + DEEP sf=1, sf=10 의 5 cell 에서 Bernoulli vs KM20 stratified 의 paired Δ% 를 측정한 결과 mean gap +3.74% 가 확인됩니다. 동시에 paper Fig 12 영역 8 cells 의 mean trim Q-error 1.6180 이 paper 보고값 1.69 대비 -4.26% 즉 measurement variance 범위 내 일치로 paper exact 재현이 100% 확보됩니다.",
+"Paradigm framework 입니다. 본 연구는 9 paradigm × 56 method 의 stratification framework 를 구축하였습니다. P1 Cluster, P2 Spatial, P3 Streaming, P4 DimReduction, P5 QMC, P6 Quantization 6 기존 paradigm 에 P9 InfoTheoretic 와 P10 Density 2 신규 paradigm 을 추가했습니다. P9 의 anchor 인 HyperLogLog 와 P10 의 anchor 인 KDE Parzen 은 본 연구가 vector range query 시나리오에 처음 적용한 paradigm anchor 입니다. P7 Subspace 와 P8 Graph 은 future work 으로 남깁니다.",
+"RQ2 는 분포 정보 활용 시 어떤 방식이 최적인가 입니다. KM20 5-way 측정 결과 Bernoulli → Proportional 9.53% 개선이 확인되어 분포 정보 활용 효과는 강력합니다. 그런데 Anti 1.540 < Proportional 1.580 < Neyman 1.595 라는 paradox 가 발견됩니다. 이는 paper §V-B 이론 위배가 아니라 PartSupp PK 가 KM20 cluster N_i 균등 분포 CV=0 이고 cluster 내 σ_j range 가 1.3에서 1.6배 좁아 σ-weighted Neyman allocation 이 proportional 과 통계 동등이 되는 자연 결과 입니다. 분포 알면 prop allocation 이 답이며, σ range 큰 cluster imbalance 영역으로 자연 전환되어 RQ3 추정 framework 의 motivation 이 됩니다.",
+"RQ3 paradigm rollup CaseB 평균 입니다. P10 Density -11.93%, P9 InfoTheoretic -7.60% 9 cells signif, P3 Streaming -6.53%, P4 DimReduction -5.92%, P2 Spatial -5.52% 의 5 paradigm 모두 statistical 압도가 paper review-grade 로 입증됩니다. 특히 P9 hyperloglog 는 9 cells 측정 5 cells signif p_adj < 0.05 로 paradigm anchor 통계 신뢰성이 확보됩니다. 4강 framing 은 폐기되고 paradigm rollup 9 narrative 로 전환됩니다.",
+"★3 hilbert defect rectify 학술 contribution 입니다. 5/8 4강 narrative 의 ★3 hilbert 가 코드 차원에서 PCA 2D lex sort 로 구현되어 Faloutsos 1989 Hilbert curve indexing 의 진짜 locality 효과가 아닌 PCA proxy 효과를 측정한 것임을 학술 정직성 기준에서 발견하고 alias 로 pca2d_lex 로 명명하였습니다. 이를 rectify 하기 위해 M6 Z-order Morton 1966, M7 Skilling 2004 AIP Conf Proc 707, hilbert_real Wikipedia xy2d 표준 3건의 paradigm anchor 를 추가 측정하였습니다. hilbert_real CaseB 9 cells mean -8.2% + 6/9 cells signif p_adj < 0.05 로 진짜 Hilbert curve locality 효과가 paper review-grade 로 입증됩니다.",
+"Top winners 입니다. CaseB ensemble Hedges' g 가 가장 작은 즉 가장 강한 효과 method 는 pq @ A5-sf1 g=-7.15, sparse_rp @ A5-sf1 g=-7.14, vinecopula @ A5-sf1 g=-7.05 순입니다. Top 5 winners 모두 A5-sf1 cell 즉 DEEP 80만 행 sf=1 에서 발현되며, sf=1 의 비교적 작은 데이터에서 분포 인지 stratification 과 paper Bernoulli ensemble 의 가치가 최대입니다.",
+"CaseB ensemble climax 본 연구 main contribution 입니다. paired CaseB > CaseA 92.9% 404/435, Cliff's δ large better 63.5% 284/447, Hedges' g large effect 56.4% 252/447, trial-level sign test 71.8% p=3.1e-46 로 paper review-grade 통계 압도가 모두 입증됩니다. paper §V-B Bernoulli + 우리 method 산술 평균 ensemble 의 구조가 bias=0 random + variance↓ stratified 의 robust 평균으로 두 estimator 의 보완 작용이 통계적으로 확정됩니다.",
+"Negative Control + CaseA 단독 대체 무너짐 입니다. CaseA 즉 우리 method 단독 대체 시나리오는 one-sided BH-FDR α=0.05 에서 0/437 cells outperform 즉 0.0% 로 paper §V-B baseline 대비 통계 무효 입니다. Cliff's δ 도 large worsening 36.8% 가 large better 14.4% 보다 우세합니다. 반면 CaseB ensemble 은 large better 63.5% 로 정반대 결과가 도출됩니다. 즉 CaseA 단독 대체 narrative 는 폐기되고, paper §V-B Bernoulli 자체가 robust 이며 우리 method 의 산술 평균 ensemble augment 만 통계적 가치가 입증됩니다.",
+"Cross-scale sf 1/10/100 입니다. A5-scale sf=1 B1 1.617 → CaseB 1.439 -11.01% signif, sf=10 B1 1.528 → CaseB 1.446 -4.57% borderline, sf=100 B1 1.613 → CaseB 1.456 -9.23% signif 로 paper Fig 14 영역 mean qe_trim 1.6180 이 paper 보고값 1.69 와 일치하면서 cross-scale 일관성이 확보됩니다. paper exact 100% 재현 검증이 완료됩니다.",
+"Mechanism — locality 분리 검증입니다. ★3 alias pca2d_lex 는 PCA proxy locality, M6 Z-order Morton 1966 은 bit-interleave space-filling curve, M7 Skilling 2004 는 state-machine algorithm 기반 진짜 high-D Hilbert, hilbert_real 은 Wikipedia xy2d 표준 reference implementation 입니다. 4건 paradigm anchor 의 비교는 PCA proxy locality vs 진짜 Hilbert locality 분리 검증의 학술 contribution 입니다. P2 Spatial paradigm rollup CaseB mean -5.52% 가 12 method × 106 observation 으로 paradigm 통계 신뢰성을 확보합니다.",
+"Effect size honesty 입니다. paired Δ%, 효과크기 Hedges' g 와 Cliff's δ, paradigm rollup 9, cherry-pick prevention 4축 통계 검증 체계로 paper review-grade 학술 정직성을 확보합니다. Hedges' g large effect 56.4%, Cliff's δ large better 63.5%, Reproducibility 280/280 fields byte-identical, deterministic 100% — paper reviewer 관점에서 cherry-pick 의혹 없는 정량 anchor 입니다.",
+"Honest limitation 18종 입니다. Group A v1 4건, Group B 5/8 W4 4건, Group C V7 audit 3건, Group D 5/11 신규 5건의 limitation 을 정직 disclosure 합니다. 특히 Group D 의 측정 미커버 233 cells 9 카테고리 분류, RQ2 Anti<Prop<Neyman paradox honest finding, ★3 hilbert PCA alias Faloutsos 1989 정정, byte-identical cells 7쌍, A4-sel sel=0.001 calibration parquet 부재 fallback 5건은 본 연구가 제기한 학술 정직성 발견 사항이며 후속 연구 출발점 8건 으로 자연스럽게 연결됩니다.",
+"Future work 8건 입니다. P7 Subspace clustering CLIQUE 1998, P8 Graph-based Leiden 2019 + Bao et al. VLDB 2025, multi-table aware ensemble, SF=100 cross-scale full validation 현재 80.4% → 100%, RQ2 σ range 큰 영역 Neyman 재검증, CaseB 가중 평균 또는 query-conditional routing, ★3 hilbert defect rectify paper acceptance 검증, 2024-25 SIGMOD/VLDB integration RaBitQ + PRICE + LpBound + PDX. 9 paradigm 을 11 paradigm 으로 확장하는 자연 전개와 multi-table 일반화 그리고 paper acceptance 가 본 연구의 자연 후속 입니다.",
+"본 연구의 한 줄 요약과 마무리입니다. 본 연구는 Exqutor §V-B Adaptive Sampling 영역에 paper 의 Bernoulli random sampling 을 그대로 보존하면서 우리 method KM20 stratified estimator 의 산술 평균 ensemble 을 layer 로 추가하여, paper baseline 대비 paired CaseB > CaseA 92.9%, Cliff's δ large better 63.5%, paradigm rollup 5 paradigm 모두 statistical 압도가 paper review-grade 로 입증됨을 보였습니다. paper §V-B 영역 한정 contribution 이며 ECQO §V-A 는 paper main result 로 인정합니다. 감사합니다. 질문 환영합니다."
+]
+</script>
+</head>
+<body>
+<deck-stage width="1280" height="720" no-rail>
+  <section data-screen-label="01 Cover" id="s1"></section>
+  <section data-screen-label="02 TOC" id="s2"></section>
+  <section data-screen-label="03 Problem" id="s3"></section>
+  <section data-screen-label="04 Prior · Exqutor V-A·V-B" id="s4"></section>
+  <section data-screen-label="05 Approach · Ensemble Avg" id="s5"></section>
+  <section data-screen-label="06 RQ1 · Distribution Gap" id="s6"></section>
+  <section data-screen-label="07 Paradigm 9 framework" id="s7"></section>
+  <section data-screen-label="08 RQ2 · Paradox" id="s8"></section>
+  <section data-screen-label="09 RQ3 · Paradigm Rollup CaseB" id="s9"></section>
+  <section data-screen-label="10 ★3 Hilbert defect rectify" id="s10"></section>
+  <section data-screen-label="11 Top Winners" id="s11"></section>
+  <section data-screen-label="12 CaseB Ensemble Climax" id="s12"></section>
+  <section data-screen-label="13 Negative Control · CaseA broken" id="s13"></section>
+  <section data-screen-label="14 Cross-scale sf1/10/100" id="s14"></section>
+  <section data-screen-label="15 Mechanism · locality 분리" id="s15"></section>
+  <section data-screen-label="16 Effect Size honesty" id="s16"></section>
+  <section data-screen-label="17 Limitation 18종" id="s17"></section>
+  <section data-screen-label="18 Future Work 8건 · Closing" id="s18"></section>
+</deck-stage>
+<script type="text/babel" src="Slides.jsx"></script>
+<script>
+(function () {
+  const fire = () => {
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 240);
+    });
+  };
+  document.addEventListener('slidechange', fire);
+  window.addEventListener('load', fire);
+  setTimeout(fire, 100);
+  setTimeout(fire, 500);
+  setTimeout(fire, 1200);
+})();
+</script>
+</body>
+</html>

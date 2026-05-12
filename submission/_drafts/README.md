@@ -1,112 +1,103 @@
-# _drafts — 팀과 공유할 작업본
+# 속도는벡터 · 발표 자료 안내
 
-이 폴더는 **현재 작업 중인 공유 문서** 를 둔다. 마감 후 정식 파일은 `submission/제출완료/` 로 이동하고, 작업 중간 버전은 `archive/` 로 보낸다.
-
-> **마지막 갱신**: 2026-05-08 22:30 KST — 회의 종료 후 cleanup 정리. v3/v4 active 만 _drafts/ 잔존, 이전 버전은 `archive/2026_05_08_drafts_cleanup/` 으로 이동.
-
----
-
-## 📌 현재 상태 (2026-05-08, W4 sprint 종료)
-
-**5/8 19:00 회의 자료 finalize.** RQ1+RQ2+RQ3 단일 100% 측정 + multi-vector 4강 일반화 + multi-table-join 4강 (STAGE 3, 5/8 17:50) 모두 완료. shrinkage chain 17.13 → 0.67 → 0.68% 25.2× 확정. 자문 메일 발송은 회의 후 ~5/15.
-
-5/8 회의 발표 본체는 **Claude Design 16-slide academic deck** (사용자 카톡 link 직접 공유). 본 _drafts 는 그 보조 문서들.
+> **5/27 캡스톤 최종 발표 + 5/15 박광현 교수 미팅 + 5/28 임채림 박사 SAP 미팅 용**  
+> **팀**: 박세은(팀장) · 강재현(발표자) · 조현빈 · 이동욱  
+> 연세대학교 2026-1 학기 · 박광현 교수님 지도 (BDAI 연구실)
 
 ---
 
-## 🎯 회의 보조 자료 — 3 파일 통합 narrative
+## 처음 보시는 분 — 다음 순서로 읽으세요
 
-목적별 3 파일로 통합 (구체적 / 핵심 요약 / 초보자용):
+### 1 단계 — 핵심 결과 빠른 파악 (3분)
 
-| 우선 | 파일 | 용도 | 사이즈 |
-|:-:|---|---|---:|
-| ⭐⭐⭐ | **`팀원_요약_20260508.{md,pdf}`** | 1장 핵심 요약 (5 결과 + 4 의제 + timeline) | ~2 KB md / ~420 KB PDF |
-| ⭐⭐ | **`팀원_슬라이드가이드_20260508.{md,pdf}`** | **초심자용** — slide 따라가는 풀어쓰기 + 비유 + 학술 용어 사전 | ~25 KB md / ~830 KB PDF |
-| ⭐ | **`팀원_이해용_종합_20260508.{md,pdf}`** | 학술 narrative 상세 (회의 본격 토론용) | ~38 KB md / 975 KB PDF |
+📄 **`속도는벡터 — 한 페이지 요약.pdf`** (A4 1장)
 
-**카톡 공유 권장 조합**:
-- (필수) Claude Design 16-slide deck **link** + `팀원_요약_20260508.pdf`
-- (옵션) `팀원_슬라이드가이드_20260508.pdf` (slide 보면서 함께 읽기)
+본 연구가 무엇을 했고, 어떤 결과를 얻었는지를 한 페이지로 정리한 자료입니다. 박광현 교수님, 임채림 박사, SAP 미팅 등 외부 share 에도 그대로 사용 가능합니다.
 
----
+### 2 단계 — 자세한 종합 가이드 (15-20분)
 
-## 📋 회의 후 active 자료 (W2 자문 발송 / 지도확인서)
+📄 **`속도는벡터 — 팀원 종합 가이드.pdf`** (A4 6-7장)
 
-| 자료 | 용도 | 비고 |
-|---|---|---|
-| `속도는벡터_연구지도확인서_20260508_v3.{md,pdf}` | 연구 지도 확인서 (5/22 미팅 + 6/11 보고서 reference) | v3, narrative 축소 → method 선정 단계까지만 |
-| `속도는벡터_자문메일_박성원멘토_20260508_v4.md` | 자문 발송용 (박성원 멘토, 5/15~5/20 발송 예정) | v4, W4 sprint 결과 반영 |
+발표 자료의 내용을 학술 산문 형태로 풀어 쓴 종합 가이드입니다. 발표 슬라이드의 본문은 키워드 위주라 압축되어 있으므로, 이 가이드를 먼저 읽으면 발표 슬라이드의 맥락이 더 명확해집니다.
 
-> 5/27 발표 outline 은 별도 plan 문서 대신 본 deck (`속도는벡터 — Academic v3 · Final 5_27.{pdf,pptx}`) 자체로 대체. 이전 outline plan PDF 는 archive/ 로 이동.
+전문 용어는 첫 등장 시 풀어 썼습니다. 통계학·데이터베이스 배경이 없어도 이해할 수 있는 수준입니다.
 
----
+### 3 단계 — 최종 발표 슬라이드 (10분)
 
-## 🎨 5/27 발표 deck (academic v3, W4 finalize)
+📄 **`속도는벡터 · Capstone Final 5_27 (Keynote v4).pdf`** (20 slide)
 
-| 자료 | 용도 | 사이즈 |
-|---|---|---:|
-| ⭐ **`속도는벡터 — Academic v3 · Final 5_27.pdf`** | **발표 본체 PDF** (Claude Design export, 5/8 17:58) | **936 KB, 16 pages** |
-| `속도는벡터 — Academic v3 · Final 5_27.pptx` | 발표 본체 PPTX (Claude Design export) | 1.05 MB |
-| `academic_deck_v3_source/academic-deck/` | source HTML (index.html, Slides.jsx, deck-stage.js) — Claude Design archive 적용 (5/8 17:40) | — |
-| `academic_deck_v3_W4_finalize.zip` (49 KB) | source 압축 — 카톡 첨부 가능 form | 49 KB |
+5/27 발표용 키노트 슬라이드입니다. 함께 첨부된 `.pptx` 는 편집 가능 PowerPoint, `.html` 은 standalone 웹 뷰입니다. 발표 직전 final 자료입니다.
 
-**deck 구성**: 16 slide (Cover / TOC / Problem / Prior+PDX / Approach / RQ1 / RQ2 / RQ3 4강 / Hilbert+Tier1 / MiniBatch / Sweet Spot / Cross-scale / Mechanism+Multi 25.4× / Effect / Limitation / Closing) + 한국어 speaker notes 16개 (12분 분량) + 차트 hand-coded SVG.
+### 4 단계 — 발표자 / Q&A 대비 (5-10분)
 
-**deck 사용**:
-- 카톡 공유 = Claude Design link 으로 직접 공유 (사용자 권장)
-- 또는 zip 다운로드 후 `index.html` 브라우저 열기
-- ⌘P → "PDF로 저장" 시 16 slide 1 페이지씩 print-friendly (deck-stage `@media print`)
+📄 **`속도는벡터 — 발표 storyline 가이드.pdf`** (A4 2-3장)
+
+발표자 (강재현) 가 각 슬라이드에서 청중에게 전달할 narrative 와 시간 분배를 정리한 가이드입니다.
+
+📄 **`속도는벡터 — 자주 묻는 질문.pdf`** (A4 3-4장)
+
+Q-error / Bernoulli baseline / paradigm / ensemble augment 등 자주 묻는 12 개 질문에 대한 답변입니다. 박광현 교수님 미팅, 발표 Q&A, SAP 미팅 등에서 활용 가능합니다.
 
 ---
 
-## 📊 분석 자료 (별도 dir, _drafts 외)
+## 핵심 일정
 
-회의 narrative 의 root 데이터:
-
-- `experiments/results/RQ1_RQ2_RQ3_종합_master_v6_draft_filled_partial.{md,pdf}` (1.6 MB PDF, 871+ lines) — 분석 본체 (§multi-2 + §10.6 multi 25.4× narrative 반영)
-- `experiments/results/10cell_narrative_종합_20260508.{md,pdf}` — 10 cell × 4강 method 종합
-- `_internal/handoff_v10_session_20260508_PM.{md,pdf}` — 5/8 16:20 인계
-- `_internal/handoff_v11_session_20260508_PostMeeting.md` — 회의 후 update skeleton
+| 일시 | event |
+|---|---|
+| **5/15 (금) 14:00** | 박광현 교수 미팅 (BDAI 연구실) |
+| 5/16 ~ 5/26 | 발표 deck finalize sprint (피드백 반영) |
+| 5/26 (월) | finalize 마감 |
+| **5/27 (화) 19:00** | **캡스톤 최종 발표** |
+| **5/28 (목)** | 임채림 박사 → SAP 미팅 (본 연구 활용 예정) |
 
 ---
 
-## 📂 archive/ 구조
+## 폴더 구성
 
 ```
-archive/
-├── 2026_05_08_drafts_cleanup/  ← 5/8 22:30 cleanup, v3/v4 로 superseded 된 파일들
-│   ├── 속도는벡터_연구지도확인서_20260508_v2.md (v3 로 superseded)
-│   ├── 속도는벡터_자문메일초안_W4_20260508_v6.pdf (v4 md 로 superseded)
-│   └── 속도는벡터_5월27일발표_plan_20260508.pdf (deck 으로 대체)
-├── 5_8_회의_v1_PPT/        ← 5/8 v1 PPT 관련 (Claude Design deck 으로 대체됨, 5/8 17:55 이동)
-│   ├── 속도는벡터_5월8일회의_v1.pptx (525 KB, 양식 99%)
-│   ├── 속도는벡터_5월8일회의_v1.{html,pdf}
-│   ├── 속도는벡터_5월8일회의_v1_image.pptx (image backup)
-│   ├── 속도는벡터_5월8일회의_PPT_outline.md (5/7 outline)
-│   └── academic_deck_5월8일회의/ (5/7 prototype HTML)
-├── W4_5월6일~7일_pre회의/   ← 5/6~7 pre-회의 work-in-progress (19 파일)
-├── 발표prototype/          ← RQ_interactive_prototype.html (5/7)
-├── 자문이메일/             ← 4/15 발송 archive (v1, v2)
-├── 중간발표/               ← 4/30 중간발표 archive (templates + history)
-├── 중간보고서/             ← 4/28 중간보고서 archive (history)
-├── 팀원온보딩/             ← 4/27 온보딩 archive
-└── 프로젝트설명서/         ← 4/28 프로젝트 설명서 archive
+submission/_drafts/
+├── README.md                                                       (이 파일)
+├── 속도는벡터 — 한 페이지 요약.{md,pdf}                              핵심 결과 1장
+├── 속도는벡터 — 팀원 종합 가이드.{md,pdf}                             자세한 학술 산문
+├── 속도는벡터 — 발표 storyline 가이드.{md,pdf}                       발표자 가이드
+├── 속도는벡터 — 자주 묻는 질문.{md,pdf}                               Q&A
+├── 속도는벡터 · Capstone Final 5_27 (Keynote v4).pdf                ★ 최종 발표 슬라이드
+├── 속도는벡터 · Capstone Final 5_27 (Keynote v4).pptx               편집 가능 PowerPoint
+├── 속도는벡터 · Capstone Final 5_27 (Keynote v4).html               standalone 웹 뷰
+│
+├── 박광현_5월15일_미팅/                                              5/15 미팅 자료 4 file
+└── archive/                                                       이전 작업 자료 (reference)
 ```
 
 ---
 
-## 🔄 파일 버저닝 규칙
+## 박광현 교수님 5/15 미팅 자료
 
-- **현재 작업본** = 본 폴더 (`_drafts/`)
-- **이전 버전** = `archive/` (회의 후 정리 시 이동)
-- **마감 후 정식** = `submission/제출완료/` (LearnUs 또는 멘토 발송 완료 자료)
+`박광현_5월15일_미팅/` 폴더에는 5/15 미팅 직전 사전 배포용 자료가 있습니다.
+
+| File | 용도 |
+|---|---|
+| `박광현+임채림_사전보고_간결_1page_20260512.pdf` | 1 페이지 간결 사전 보고 |
+| `박광현+임채림_5월15일_사전보고_요약_20260512.pdf` | 2 페이지 상세 사전 보고 |
+| `속도는벡터_박광현미팅_5월15일_slide_draft_20260511.pdf` | 미팅 slide draft + 부록 |
+| `박광현_미팅_예상질문_답변_가이드_20260511.pdf` | Q&A 가이드 |
+| `5_27_deck_update_plan_post_5월15일미팅.pdf` | 미팅 후 5/27 deck update plan |
 
 ---
 
-## 📅 다음 작업 (5/8 회의 종료 후)
+## 팀
 
-1. ✅ 회의 종료 (5/8 19:00~19:30, 비대면 전원) — 결정 3가지: Adaptive Sampling 비교 / 5/27 발표 / SF100 시간 여유 시
-2. 5/9~5/15: 자문 메일 v4 발송 (박성원 멘토) + 회신 대기 + Adaptive 비교 측정 launch
-3. 5/22 교수님 미팅 — 연구지도확인서 v3 reference
-4. 5/27 최종발표 — Academic v3 deck 본체 + 자문 합의 supplementary slide
-5. 6/11 최종보고서 (~38p) drafting
+| 이름 | 역할 |
+|---|---|
+| 박세은 | 팀장 |
+| 강재현 | 발표자 |
+| 조현빈 | 측정 + 분석 |
+| 이동욱 | limitation 정리 |
+
+지도교수: **박광현 교수님** (BDAI 연구실)  
+지도연구원: **임채림** 석사
+
+---
+
+작성: 2026-05-12 KST  
+GitHub: https://github.com/johyunbin/Capstone

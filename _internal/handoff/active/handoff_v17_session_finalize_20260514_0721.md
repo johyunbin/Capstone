@@ -82,12 +82,14 @@ ssh capstone2026 "ls /tmp/kde_parzen.flag 2>&1; tail -5 /tmp/kde_parzen.log; tmu
   - 결합 best (-6.58% sparse_rp α=0.5) < 단독 best (-10.17% minibatch_partial)
   - 결합의 가치 = "더 큰 개선" 이 아닌 "method 선택 robustness + cell spread 줄임"
 
-### 2.5 kde_chain (P10 anchor 보강, 진행 중)
+### 2.5 kde_chain (P10 anchor 보강, ★ 5/14 07:39 폐기 결정)
 
-- tmux session: `kde_chain` (5/13 21:00 launch)
+- tmux session: `kde_chain` (5/13 21:00 launch → 5/14 07:39 kill 완료)
 - scope: 8 cell × 2 mode = 16 measurement, 각 cell 4h timeout
-- 진행 status (5/14 07:30): A1-DEEP CaseA timeout → A1-DEEP CaseB timeout → A1-SIFT CaseA 진행 중
-- 본 연구 main 결론에 큰 영향 X (P10 Density paradigm anchor n=1 약점 보강용)
+- 진행 status (5/14 07:39 폐기 전): A1-DEEP CaseA timeout → A1-DEEP CaseB timeout → A1-SIFT CaseA 진행 중 (2.7h CPU)
+- **폐기 사유**: timeout 5/5 (결과 회수 0건), 남은 11 cell × 4h = 44h 추가 필요 = 실현 가능성 X, 효용 X
+- **main 결론 영향 X**: P10 Density paradigm anchor n=1 약점 보강용으로만 가치 — 시나리오 B 확정 narrative (단독 best -10.17% > 결합 best -7.37%) 와 무관
+- **자원 한계 폐기 7 종 분류** (Tier 2 6 + KDE 1, 5/14 07:40 _drafts 4 file + CLAUDE.md update 완료)
 
 ### 2.6 측정 file 위치 (서버)
 

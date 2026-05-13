@@ -236,7 +236,7 @@ multi-table cell (예: DEEP + WIKI cross) 에서 계층적 표집을 어떻게 �
 
 본문에 핵심 method 만 짚고 폐기 method 명 전체 list 는 이 부록으로 분리.
 
-**자원 한계 폐기 6 종**: birch, agglomerative, hdbscan, kde_parzen, dirichlet, kernelpca, neuocard.
+**자원 한계 폐기 7 종**: birch, agglomerative, hdbscan, kde_parzen, dirichlet, kernelpca, neuocard.
 
 **알고리즘 구현 결함 폐기 23 종**: 5월 10일 8-agent code audit 발견. 주요 사례 — kdtree (`idx % n_strata` 와 등가), vinecopula (rank+PCA1D 별칭), neuram (PCA1D 100% 동일), ams_count_sketch (lsh 와 한 줄씩 동일) 등.
 

@@ -222,7 +222,7 @@ Exqutor 의 Adaptive Sampling 모듈에 우리 세 원칙 조합 (단독 대체 
 
 (1) **알고리즘 정독 검토로 폐기한 23 method** — 5월 10일 8-agent 정독 검토에서 reference 위반이나 알고리즘 잘못 표기가 발견된 method 들. 예를 들어 vinecopula 는 rank + PCA 1 차원 정렬의 별칭으로 구현되어 있어서 Bedford-Cooke 1986 의 진짜 vine copula 가 아니다. neuram 은 코드 한 줄씩 검토한 결과 PCA1D 와 100% 동일하다. kdtree 는 leaf 인덱스가 단순한 modular hash (`idx % n_strata`) 로 처리되어 무작위 표집과 거의 동등하다. ams_count_sketch 는 lsh 와 코드가 한 줄씩 동일하다. 이런 알고리즘 본질적 결함은 학술 정직성 위반이므로 보고서에서 제외한다.
 
-(2) **자원 한계로 실행이 어려운 6 method** — birch CFNode tree 가 SF=100 cell 에서 50 ~ 200GB RSS 폭증, agglomerative 가 256d 차원에서 OOM, hdbscan 이 데이터셋 일부에서 KMeans 로 fallback, kde_parzen 이 한 cell 측정 4 시간 timeout, dirichlet/kernelpca/neuocard 가 자원이나 구현 안정성 문제. A1-SSN cell 의 80GB NPY fetch 가 method 당 37 ~ 88 분 소요로 timeout 인 점도 같은 카테고리.
+(2) **자원 한계로 실행이 어려운 7 method** — birch CFNode tree 가 SF=100 cell 에서 50 ~ 200GB RSS 폭증, agglomerative 가 256d 차원에서 OOM, hdbscan 이 데이터셋 일부에서 KMeans 로 fallback, kde_parzen 이 한 cell 측정 4 시간 timeout, dirichlet/kernelpca/neuocard 가 자원이나 구현 안정성 문제. A1-SSN cell 의 80GB NPY fetch 가 method 당 37 ~ 88 분 소요로 timeout 인 점도 같은 카테고리.
 
 (3) **정합성 위반 9 method** — halton, sobol, lhs, hammersley, dense_rp, random_projection, dbscan, ccsketch, lsh, ams_count_sketch. 큰 데이터셋에서 추정값이 외곽 값으로 나타나서 paper 의 sample budget 안에서 estimator 정합성을 보장하지 못한다.
 
@@ -361,7 +361,7 @@ K granularity 변화와 multi-table 재계층화 두 측정에서 method 별 민
 
 본문에 핵심 method 만 짚고 폐기 method 명 전체 list 는 이 부록으로 분리.
 
-**자원 한계 폐기 6 종**: birch, agglomerative, hdbscan, kde_parzen, dirichlet, kernelpca, neuocard.
+**자원 한계 폐기 7 종**: birch, agglomerative, hdbscan, kde_parzen, dirichlet, kernelpca, neuocard.
 
 **알고리즘 구현 결함 폐기 23 종**: 5월 10일 8-agent code audit 발견. 주요 사례 — kdtree (`idx % n_strata` 와 등가), vinecopula (rank+PCA1D 별칭), neuram (PCA1D 100% 동일), ams_count_sketch (lsh 와 한 줄씩 동일) 등. 자세한 method 별 발견 사항은 부록 F 참조.
 

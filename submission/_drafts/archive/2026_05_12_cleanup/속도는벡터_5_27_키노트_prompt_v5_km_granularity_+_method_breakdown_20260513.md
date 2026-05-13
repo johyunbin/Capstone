@@ -156,7 +156,85 @@ claude.ai/design reset 5/16 wait 보다 manual edit 가 빠를 수도 (5/13 ~ 5/
 - `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact_km30/` — K=30 40 measurement
 - `_internal/analysis/method_level_breakdown_20260513.md` — paradigm 내 분산
 - `_internal/analysis/km_granularity_sensitivity_3way_K10_K20_K30_20260513.md` — 3-way 비교
+- `_internal/analysis/multi_cell_km_based_learning_comparison_20260513.md` — multi cell 학습 방식 간접 비교
+- `experiments/results/rq1_motivation/sift_rq1_2026_05_06/` — SYSTEM vs BERN raw 측정 (parquet)
 
 ---
 
-작성: 2026-05-13 03:05 KST · km10/20/30 3-way 완성 + method-level breakdown + v5 정정 plan finalize
+## ★ 정정 5 (5/13 12:09 박세은 결정) — S7 RQ1 narrative SYSTEM vs BERN 재배치
+
+박세은 12:09 verbatim: "RQ1 내러티브 자체를 system vs bern으로 재배치해서 17.32% gap 을 가져가는 세번째 방식이 좋습니다"
+
+**기존 S7 (v4 deck)**: Bernoulli vs KM20 stratified breakdown — 4 cells × 5 trials, max 8.64% (SIFT sel=0.10).
+
+**정정 S7 (v5 deck)** — SYSTEM vs BERN cross-dataset 정량화:
+
+```jsx
+<SlideShell secn="2." title="RQ1 — random sampling 의 부정확성">
+  
+  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, height: '100%'}}>
+    
+    // 좌측 — MAX gap BigStat
+    <div style={{textAlign: 'center'}}>
+      <div eyebrow>SIFT s=0.05 (SYSTEM vs BERN)</div>
+      <div fontSize=200 brand red>+17.32%</div>
+      <div fontSize=24>random sampling 의 부정확성 — MAX gap</div>
+      <div fontSize=16 fg3>paired Wilcoxon p ≤ 1×10⁻⁴⁹ · paper review-grade</div>
+    </div>
+    
+    // 우측 — 5 selectivity breakdown table (DEEP vs SIFT)
+    <div>
+      <div eyebrow fontSize=14 brand red>SYSTEM &gt; BERN cross-dataset</div>
+      <table fontSize=16>
+        <thead>
+          <tr><th>sel</th><th>SIFT</th><th>DEEP</th><th>격차 (SIFT−DEEP)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0.01</td><td brand red>+10.27%</td><td>+4.66%</td><td brand red>+5.61%p</td></tr>
+          <tr><td>0.05</td><td brand red>+17.32%</td><td>+12.61%</td><td brand red>+4.71%p</td></tr>
+          <tr><td>0.10</td><td>+16.68%</td><td>+14.85%</td><td>+1.83%p</td></tr>
+          <tr><td>0.30</td><td>+14.85%</td><td>+13.45%</td><td>+1.40%p</td></tr>
+          <tr><td>0.50</td><td>+14.36%</td><td>+12.44%</td><td>+1.92%p</td></tr>
+        </tbody>
+      </table>
+      <div fontSize=14 fg3>
+        모든 sel SIFT &gt; DEEP — skew dataset 에서 부정확성 증폭<br/>
+        좁은 sel (s=0.01) 에서 격차 가장 큼
+      </div>
+    </div>
+    
+  </div>
+  
+  <caption>PostgreSQL TABLESAMPLE SYSTEM (block) vs BERNOULLI (row-wise) paired Δ%. 두 random sampling 방식 모두 paper §V-B Adaptive Sampling 영역의 baseline 후보이며, block sampling 이 row-wise 보다 모든 selectivity 에서 +10~17% 더 부정확. skew dataset 에서 부정확성 증폭의 정량 입증.</caption>
+</SlideShell>
+```
+
+**speaker note 정정**:
+> RQ1 결과입니다. random sampling 의 부정확성을 정량 측정하기 위해 PostgreSQL 의 두 sampling 방식 — SYSTEM 의 block 단위 random sampling 과 BERNOULLI 의 row-wise random sampling — 을 paired 비교했습니다. 가장 극단 case 인 SIFT s=0.05 에서 SYSTEM 이 BERN 보다 17.32 퍼센트 더 부정확하며, 5 selectivity 모든 점에서 SIFT 가 DEEP 보다 격차가 더 큰 패턴을 보입니다. 좁은 selectivity (s=0.01) 에서 격차가 가장 크고 (+5.61 퍼센트p), skew dataset 에서 random sampling 의 부정확성이 증폭됨이 정량 입증됩니다. paired Wilcoxon p-value 가 1×10⁻⁴⁹ 이하 — paper review-grade 통계 robust 결과입니다.
+
+**narrative arc 정리**:
+- S7 (정정): SYSTEM vs BERN — random sampling 자체의 한계 정량 (17.32% max)
+- S8 (기존): RQ2 5-way allocation — 분포 알 때 Proportional 최적 (Bern→Prop -9.53%)
+- S9: RQ3 — 분포 모를 때 paradigm search
+- S14 (기존): 대체(CaseA) vs 증강(CaseB) framework
+- S15 (정정 v5 prompt): paradigm rollup + method-level breakdown
+- S16 (신규): 왜 replace 만으로 안 되는가
+- S17 (정정): anchor method consistency
+- S18 (신규 v5 prompt): K-sensitivity by method
+- climax: 92.5% paired CaseB < CaseA
+
+**기존 Bernoulli vs KM20 (8.64% max) 처리**:
+S7 에서 빠지고 S14 framework slide 또는 별도 sub-slide ("분포 인지 stratification 의 안정성 출발점") 로 재배치. 또는 RQ2 narrative 안에 embedded (KM20 stratification 자체의 효과 검증).
+
+---
+
+## 측정 source (SYSTEM vs BERN)
+
+- `experiments/results/rq1_motivation/sift_rq1_2026_05_06/sift_rq1_system.parquet`
+- `experiments/results/rq1_motivation/sift_rq1_2026_05_06/sift_rq1_bernoulli.parquet`
+- 5/6 측정 완료, 5 sel × 2 dataset (SIFT/DEEP) × 5 seed × 100 query
+- paired Wilcoxon p ≤ 1e-4 ~ 1e-49 (BH-FDR 보정 robust)
+
+---
+
+작성: 2026-05-13 12:15 KST · 박세은 12:09 옵션 C 결정 반영 · RQ1 narrative SYSTEM vs BERN 재배치 + max 17.32% gap 강조

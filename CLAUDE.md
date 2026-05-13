@@ -8,11 +8,11 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/13 12:38 update — handoff_v16 추가, multi-join in-flight)
+## 동적 state + 인계 (5/14 07:21 update — handoff_v17 추가, 시나리오 B 확정 + _drafts 4 file 4차 정정 + PDF 4종)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v16 + v12 2 file read 로 0% loss 인계**.
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v17 + v16 read 로 0% loss 인계**.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v16_km_granularity_+_multijoin_inflight_20260513_1238.md` (5/13 12:38, km granularity 80 회수 + 분석 7 commits + multi-join re-stratification 측정 진행 중 ETA 15:30 + PG 자체 시작 framework + v5 deck 정정 prompt 6 정정 finalized + 박세은/강재현 카톡 답변 7건) + `@_internal/handoff/active/handoff_v12_final_present_ready_20260512_0245.md` (5/12 02:45, 측정 18/18 회수 + REPORT v11)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` (5/14 07:21, 본 세션 18.5h 종합 — multi-join + Centroid tuple + B1/B2/B3 cheap 근사 + α sweep + A2-Fig8 측정 80 회수 + 시나리오 B 확정 + 자원 효율 Pareto + _drafts 4 file 4차 정정 + PDF 4종 + 박세은 12:13 피드백 반영) + `@_internal/handoff/active/handoff_v16_km_granularity_+_multijoin_inflight_20260513_1238.md` (5/13 12:38 multi-join in-flight 시점)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
 - **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`
 - **handoff 통합** (v0~v11 archive): `@_internal/handoff/archive/`

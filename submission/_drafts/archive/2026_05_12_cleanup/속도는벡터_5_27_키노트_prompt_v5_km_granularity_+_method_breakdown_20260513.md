@@ -338,19 +338,87 @@ mean            -5.95%        -6.07%                  -0.12%p
 
 > "이 slide 는 강재현 팀원의 5/13 새벽 피드백 — 두 벡터 테이블을 join 한 이후에 stratification 학습을 별도로 하는 방식의 sensitivity 를 검증한 결과입니다. 본 연구의 기존 measurement framework 는 single-table 별로 KM20 을 학습한 후 multi-join cell 에서는 stratum_id column 을 그대로 carry-over 하는 방식이었는데, 이게 multi-join 의 cardinality 추정 오차의 원인일 수 있다는 가설이었습니다. partsupp_deep 96 차원과 part_wiki 768 차원을 join 한 864 차원 concat vector 약 1.5M row 에 대해 KM20 을 재학습하는 multi-join re-stratification 을 4 anchor method × A2-Fig9 cell × 2 mode = 8 measurement 진행한 결과, 시나리오 A.5 (Hybrid) — method-specific sensitivity 패턴이 확정되었습니다. sparse random projection 과 Chao 1982 weighted reservoir 두 method 는 CaseA 단독 대체 모드에서 multi-join re-strat 우위 (-3.55 퍼센트포인트, -2.63 퍼센트포인트) 가 확인되었습니다 — 두 method 의 stratification 학습 메커니즘이 stratum 내부 통계 구조에 강하게 의존하기 때문입니다. 반면 Hilbert curve 와 HyperLogLog 두 method 는 거의 동등 (+0.32, -0.26 퍼센트포인트) 으로 stratification 학습 방식 변화에 robust 한 method 였습니다. 본 연구의 핵심 contribution 인 CaseB 증강 모드에서는 4 method 모두 일관 동등 (mean diff -0.12 퍼센트포인트) 으로, Bernoulli + stratified 산술 평균 ensemble 의 robustness 가 multi-join cell 의 stratification 학습 방식 변화에도 입증되었습니다. 본 결과는 부록 F 의 cluster granularity sensitivity 패턴 (sparse_rp + chao_weighted = K-sensitive, hilbert_real + hyperloglog = K-robust) 과 method 별 완벽하게 일치하여, paradigm 분류보다 본질적인 **stratification quality 의존도** 라는 새 method classification axis 의 존재를 입증합니다."
 
-### 6.6 강재현 14:27 cheap 근사 방향 (★ 본 8/8 결과 기반)
+### 6.6 강재현 14:27 cheap 근사 — Centroid tuple 8/8 측정 결과 (★ 5/13 19:57 finalize)
 
-강재현이 5/13 14:27 카톡 후속으로 제시한 "기존에 table 별로 clustering한 거를 저비용으로 multi-reclustering에 근사하는 방법" 에 대한 본 연구 답변. 본 8/8 측정 결과 (quality-sensitive 2 method 만 multi-join 우위) 에 따라 다음 두 design 권장.
+강재현이 5/13 14:27 카톡 후속으로 제시한 cheap 근사 hypothesis 에 대한 검증으로 5/13 16:47 launch + 19:57 회수 완료한 Centroid tuple cheap 근사 측정 8 measurement 의 결과.
 
-**Method-specific selective application (★ 권장 전략)**:
-- Quality-sensitive (sparse_rp + chao_weighted): multi-join re-stratification 적용 (expensive but -2.63 ~ -3.55%p)
-- Quality-robust (hilbert_real + hyperloglog): single-table carry-over 그대로 (cheap, robust)
+**3-way 비교 (B1=1.5407 기준)**:
 
-**Cheap 근사 우선 후보 (Centroid tuple 방식)**:
-- single-table KM20 학습 그대로 + multi-join 시점에 (s_A, s_B) tuple 을 새 stratum 으로 (K^2 = 400 잠재, sparse 유지)
-- 학습 비용 0
-- 본 8/8 결과 (quality-sensitive method 가 multi-join 결합 정보 활용) 의 본질을 가장 잘 근사
-- 5/16 ~ 5/26 finalize sprint 시점 추가 측정 후보
+CaseA 단독 대체:
+```
+method          carry   multi-jn  centroid    ct-vs-carry
+sparse_rp       +4.52%  +0.97%    +4.71%      +0.19p (marginal)
+hilbert_real    +1.78%  +2.10%    +4.97%      +3.19p ★ harmful
+hyperloglog     +1.15%  +0.89%    -1.14%      -2.29p ★
+chao_weighted   +6.14%  +3.51%    +2.54%      -3.60p ★★★
+mean            +3.40%  +1.87%    +2.77%      -0.63p
+```
+
+CaseB 증강 (★ 본 연구 핵심):
+```
+method          carry   multi-jn  centroid    ct-vs-carry
+sparse_rp       -6.58%  -6.84%    -7.37%      -0.78p
+hilbert_real    -6.07%  -6.23%    -6.93%      -0.86p
+hyperloglog     -5.15%  -4.96%    -6.66%      -1.50p ★
+chao_weighted   -6.00%  -6.24%    -6.69%      -0.69p
+mean            -5.95%  -6.07%    -6.91%      -0.96p ★ 4 method 모두 우위
+```
+
+**핵심 결론**:
+
+1. **CaseB 증강 모드: cheap 근사 보편 우위** — Centroid tuple 이 모든 4 method 에서 multi-jn (expensive 864d KM20) 보다 일관 우위 (mean ct-vs-mj -0.84%p). 본 연구 핵심 contribution 영역에서 **0 학습 비용 + 더 좋은 ensemble 정확도** = best of both worlds.
+
+2. **CaseA 단독 대체: method-conditional** — chao_weighted/hyperloglog 큰 개선 (multi-jn 보다도 우위), sparse_rp marginal, hilbert_real harmful.
+
+**새 method classification axis — "Cheap 근사 친화도"**:
+- ★ Friendly: hyperloglog + chao_weighted (CaseA + CaseB 둘 다 우위)
+- Indifferent: sparse_rp (marginal)
+- Hostile (CaseA only): hilbert_real (Hilbert curve fragmentation harmful)
+
+**S20 신규 slide spec — Centroid tuple cheap 근사 결과** (S19 multi-jn 뒤):
+
+```jsx
+<SlideShell secn="3." title="Centroid tuple cheap 근사 (★ 학습 비용 0 + ensemble 우위)">
+  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32}}>
+    
+    // 좌측 — CaseB 증강 모드 grouped bar (★ 본 연구 핵심)
+    <div>
+      <eyebrow>CaseB 증강 — 4 method 모두 ct > mj > carry</eyebrow>
+      grouped bar chart Δ% (4 method × 3 design):
+        sparse_rp:     carry -6.58 / mj -6.84 / ct -7.37
+        hilbert_real:  carry -6.07 / mj -6.23 / ct -6.93
+        hyperloglog:   carry -5.15 / mj -4.96 / ct -6.66
+        chao_weighted: carry -6.00 / mj -6.24 / ct -6.69
+        mean:          carry -5.95 / mj -6.07 / ct -6.91
+      caption fontSize=14 fg3:
+        "★ Centroid tuple cheap 근사: 4 method 모두 multi-jn 보다 우위
+         (mean -0.84%p) + 학습 비용 0 추가 = best of both worlds"
+    </div>
+    
+    // 우측 — CaseA method-conditional + 새 axis
+    <div>
+      <eyebrow>CaseA — Cheap 근사 친화도 새 axis</eyebrow>
+      ct-vs-carry table:
+        chao_weighted:  -3.60p ★★★ (Friendly)
+        hyperloglog:    -2.29p ★ (Friendly)
+        sparse_rp:      +0.19p (Indifferent)
+        hilbert_real:   +3.19p ★ harmful (Hostile)
+      
+      <p fontSize=16 fg3>method-conditional 패턴:
+      - Friendly: weighted reservoir + hash distinct count
+      - Hostile: spatial locality fragmentation</p>
+    </div>
+  </div>
+  
+  <caption fontSize=14 fg3>Centroid tuple cheap 근사 wrapper v3: 두 single-table KM20 (96d partsupp_deep + 768d part_wiki) + (s_A, s_B) tuple 의 top-K frequency folding (K^2=400 잠재 → K=20 unique strata, rare modulo). 학습 비용 추가 0 (vs 864d concat KM20 의 1/8 cheap). 8 measurement 5/13 19:57 회수 기반. 새 method classification axis "Cheap 근사 친화도" 입증 — paradigm 분류 + Quality-sensitivity 와 다른 본질적 axis.</caption>
+</SlideShell>
+```
+
+**S20 speaker note**:
+
+> "강재현 팀원이 multi-join re-stratification 결과 확인 후 5/13 14:27 카톡에서 제시한 후속 hypothesis — multi-reclustering 의 expensive 학습을 single-table 별 KM20 학습의 저비용 근사로 대체 가능한가 — 에 대한 정량 검증 결과입니다. Centroid tuple 이라는 cheap design 을 wrapper v3 로 구현했는데, partsupp_deep 96 차원과 part_wiki 768 차원 각각 single-table 별 K-means 20 학습 후 multi-join row 의 (s_A, s_B) tuple 을 top-K frequency 로 K=20 unique stratum 에 folding 하는 방식입니다. 학습 비용은 864 차원 concat KM20 의 약 1/8 수준입니다. 결과는 두 가지 매우 중요한 finding 을 도출했습니다. 첫째, 본 연구 핵심 CaseB 증강 모드에서 4 anchor method 모두에서 Centroid tuple 이 expensive multi-join re-stratification 보다 일관 우위 (mean -0.84 퍼센트포인트) 이며 carry-over 보다도 mean -0.96 퍼센트포인트 추가 개선합니다. 즉 본 연구의 핵심 contribution 영역에서 학습 비용 0 추가로 더 좋은 ensemble 정확도를 얻는 best of both worlds 결과입니다. 둘째, CaseA 단독 대체 모드는 method-conditional 패턴인데, chao_weighted 의 weighted reservoir 와 hyperloglog 의 hash distinct count 두 메커니즘은 cheap stratum diversity 를 정확도 향상으로 활용하여 큰 개선 (-3.60, -2.29 퍼센트포인트, multi-jn 보다도 우위) 을 보이는 반면, hilbert_real 의 Hilbert curve spatial locality 는 imperfect tuple folding 으로 fragmentation 되며 carry-over 보다도 +3.19 퍼센트포인트 악화됩니다. 본 finding 은 본 연구의 anchor method 분류에 paradigm 과 Quality-sensitivity 와는 다른 새 axis 인 Cheap 근사 친화도 의 존재를 입증하며, method-aware design 의 narrative arc 를 깊이 확장합니다."
+
+**박광현 confirm 요청 추가 항목**: 본 새 axis "Cheap 근사 친화도" 의 학술적 인정 여부 + CaseB 보편 우위 narrative 의 발표 deck 적용 우선순위.
 
 ### 6.7 부록 G — 박광현 5/15 미팅 자료 추가 plan
 

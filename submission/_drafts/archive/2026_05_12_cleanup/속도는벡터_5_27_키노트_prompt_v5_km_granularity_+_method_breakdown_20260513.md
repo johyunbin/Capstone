@@ -237,11 +237,13 @@ S7 에서 빠지고 S14 framework slide 또는 별도 sub-slide ("분포 인지 
 
 ---
 
-## ★ 정정 6 (5/13 15:30 ~ 16:30 회수 예정) — multi-join re-stratification 결과 narrative
+## ★ 정정 6 (5/13 16:20 FINALIZED 8/8) — multi-join re-stratification 결과 narrative
 
-> **status (5/13 12:50)**: tmux mj_restrat session 진행 중. 8 measurement 회수 후 데이터 채워질 placeholder 형태.
+> **status**: ★ **8/8 회수 완료 (5/13 16:13 KST)**, 시나리오 A.5 (Hybrid) 확정
 
 강재현 5/13 0:20 verbatim: "벡터 테이블 multi-join한 이후에 stratification 학습해서 하는 것도 한번 테스트 해보면 좋을듯, 각 single 테이블에서 하다보니 생각보다 cardinality 추정 오차가 생기나?"
+
+강재현 5/13 14:27 후속 verbatim: "기존에 table 별로 clustering한 거를 저비용으로 multi-reclustering에 근사하는 방법 같은거"
 
 **위치 plan**: S19 (Limitation 직전) 또는 S18 K-sensitivity 뒤 신규 slide.
 
@@ -253,79 +255,104 @@ S7 에서 빠지고 S14 framework slide 또는 별도 sub-slide ("분포 인지 
 - wrapper: `/tmp/launch_multijoin_restrat.py`
 - output: `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact_mj_restrat/`
 
-### 6.2 3-way 비교 plan (회수 후 데이터 채워짐)
+### 6.2 3-way 비교 결과 (★ 8/8 finalized)
 
+A2-Fig9 cell, B1 baseline qe_trim 1.5407 기준, paired Δ% — **8/8 회수 완료**:
+
+**CaseA 단독 대체 모드**:
 ```
-A2-Fig9 cell — paired Δ% (CaseB ensemble vs B1)
+method          carry-over    multi-join re-strat    diff
+sparse_rp       +4.52%        +0.97%                  ★ -3.55%p
+hilbert_real    +1.78%        +2.10%                  +0.32%p
+hyperloglog     +1.15%        +0.89%                  -0.26%p
+chao_weighted   +6.14%        +3.51%                  ★ -2.63%p
+mean            +3.40%        +1.87%                  -1.53%p
+```
 
-method            (a) carry-over    (b) 자체 K-means     (c) multi-join re-strat
-                  (single KM20)     (method 자체 학습)    (864d fresh KM20)
-─────────────────────────────────────────────────────────────────────────────
-sparse_rp         -6.58% (실측)     n/a (CCSketch 같은)   [TBD]
-hilbert_real      -6.07% (실측)     n/a                   [TBD]
-hyperloglog       -5.15% (실측)     n/a                   [TBD]
-chao_weighted     -6.00% (실측)     n/a                   [TBD]
-minibatch         -7.25% (간접 비교) n/a (자체 학습)        n/a
+**CaseB 증강 모드** (★ 본 연구 핵심 contribution):
+```
+method          carry-over    multi-join re-strat    diff
+sparse_rp       -6.58%        -6.84%                  -0.26%p
+hilbert_real    -6.07%        -6.23%                  -0.16%p
+hyperloglog     -5.15%        -4.96%                  +0.19%p
+chao_weighted   -6.00%        -6.24%                  -0.24%p
+mean            -5.95%        -6.07%                  -0.12%p
 ```
 
 **비교 axis 의미**:
 - (a) carry-over = 기존 본 연구 measurement framework (single-table KM20 학습 후 multi-table 에서 join 후 stratum_id column 재사용)
-- (b) 자체 K-means = method 가 자체 stratification 학습 framework (minibatch 등)
-- (c) multi-join re-stratification = 두 테이블 join 후 별도 KM20 학습 (5/13 12:25 launch, 본 정정 6 의 신규 axis)
+- (b) 자체 K-means = method 가 자체 stratification 학습 framework (minibatch 등, scope 외 참조)
+- (c) multi-join re-stratification = 두 테이블 join 후 864d concat vector KM20 fresh 학습 + 96d query space return (wrapper v2 design, 본 정정 6 의 신규 axis)
 
-### 6.3 narrative arc 예상 (회수 후 finalize)
+### 6.3 narrative arc — ★ 시나리오 A.5 (Hybrid) 확정
 
-회수 결과에 따라 두 narrative 분기:
+8/8 측정 결과는 4 anchor method 가 두 그룹의 분명한 sensitivity 패턴으로 분기됨을 입증하여 **시나리오 A.5 (Hybrid)** 가 확정되었다.
 
-**시나리오 A — re-stratification 우위 (carry-over 보다 -2~-3%p 추가 개선)**:
-> "multi-join re-stratification 이 carry-over 방식보다 추가 개선을 보임. 두 테이블 join 후 stratification 학습이 cardinality 추정에 유의한 개선 효과를 발휘한다. 향후 multi-table stratification 의 design space 가 확장됨."
+**Quality-sensitive group (sparse_rp + chao_weighted)** — CaseA 단독 대체 모드에서 multi-join re-strat 우위 (-3.55%p, -2.63%p). 두 method 의 stratification 학습 메커니즘이 stratum 내부 통계 구조에 강하게 의존하여 multi-join 결합 학습 (864d concat) 이 추가 정보 효과를 발휘함.
 
-**시나리오 B — re-stratification 동등 / 미세 개선 (-0~-1%p)**:
-> "multi-join re-stratification 과 carry-over 가 거의 동등한 성능. 본 연구의 single-table KM20 carry-over 방식이 이미 multi-table cell 에서도 robust 함이 입증된다. 학습 방식 차이가 결정적 X — method 자체 특성이 더 결정적."
+**Quality-robust group (hilbert_real + hyperloglog)** — CaseA 거의 동등 (+0.32%p, -0.26%p). Hilbert curve 의 space-filling locality 와 HyperLogLog 의 hash-based distinct count 가 stratum 내부 통계 구조와 독립적으로 작동.
 
-**시나리오 C — carry-over 우위 (multi-join re-stratification 이 worse)**:
-> "carry-over 가 더 우수 — multi-join 후 864d concat 의 KM20 학습이 single-table KM20 carry-over 보다 unstable. high-dim vector 의 K-means clustering 한계 (curse of dimensionality)."
+**CaseB 증강 모드 — 4 method 모두 동등 (mean diff -0.12%p)**. 본 연구의 핵심 contribution 인 Bernoulli + stratified 산술 평균 ensemble 의 robustness 가 multi-join cell 의 stratification 학습 방식 변화에도 입증됨. ensemble augment 의 핵심 강점.
 
-### 6.4 slide spec (placeholder, 회수 후 데이터 채움)
+**부록 F (K-sensitivity) 와의 완벽 일치 패턴**: K-sensitive 였던 sparse_rp + chao_weighted 가 본 부록 G 에서도 multi-join sensitive, K-robust 였던 hilbert_real + hyperloglog 가 본 부록에서도 robust. 두 분석 패턴 일치는 **"stratification quality 의존도"** 라는 새 method classification axis 의 존재를 입증.
+
+### 6.4 slide spec (★ 8/8 finalized)
 
 ```jsx
-<SlideShell secn="3." title="multi-join re-stratification (★ 강재현 1번 검증)">
+<SlideShell secn="3." title="multi-join re-stratification (★ 강재현 1번 검증, 8/8 finalize)">
   <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32}}>
     
-    // 좌측 — 3-way bar chart (CaseB mean, 4 anchor)
+    // 좌측 — CaseA grouped bar chart (★ method-specific sensitivity)
     <div>
-      grouped bar chart:
-        [carry-over single KM20]  [multi-join re-strat 864d KM20]
-        sparse_rp: -6.58 vs [TBD]
-        hilbert_real: -6.07 vs [TBD]
-        hyperloglog: -5.15 vs [TBD]
-        chao_weighted: -6.00 vs [TBD]
+      <eyebrow>CaseA 단독 대체 — method 별 sensitivity</eyebrow>
+      grouped bar chart Δ% (B1=1.5407 기준):
+        [carry-over]  [multi-join re-strat]
+        sparse_rp:     +4.52 vs +0.97  ★ -3.55%p
+        chao_weighted: +6.14 vs +3.51  ★ -2.63%p
+        hilbert_real:  +1.78 vs +2.10     +0.32%p
+        hyperloglog:   +1.15 vs +0.89     -0.26%p
+      caption fontSize=14 fg3:
+        "quality-sensitive 2 method 만 multi-join 우위"
     </div>
     
-    // 우측 — narrative + framework note
+    // 우측 — CaseB 동등 + narrative
     <div>
-      <eyebrow>★ 강재현 5/13 0:20 추가 검증</eyebrow>
-      <p fontSize=20>"각 single 테이블에서 학습 → multi-join 후 carry-over 가
-      cardinality 추정 오차의 원인인가?" 검증 결과:</p>
+      <eyebrow>CaseB 증강 — 4 method 모두 동등</eyebrow>
+      bar chart Δ%:
+        sparse_rp:     -6.58 vs -6.84  -0.26%p
+        chao_weighted: -6.00 vs -6.24  -0.24%p
+        hilbert_real:  -6.07 vs -6.23  -0.16%p
+        hyperloglog:   -5.15 vs -4.96  +0.19%p
+        mean: -5.95 vs -6.07           -0.12%p
       
-      <p fontSize=18 bold>[TBD - 회수 후]:
-      - re-strat Δ avg [TBD]% vs carry-over -5.95% avg
-      - 결론: [carry-over 충분 / re-strat 추가 개선 / re-strat 한계]</p>
-      
-      <p fontSize=14 fg3>method 자체 학습 (minibatch -7.25%) 와도 비교 가능.
-      세 학습 방식 차이가 [결정적 / 결정적 X].</p>
+      <p fontSize=16 fg3>본 연구 ensemble augment 의 robustness
+      — multi-join cell stratification 학습 방식 변화에 무관</p>
     </div>
   </div>
   
-  <caption>multi-join (partsupp_deep_10 ⨝ part_wiki_10, 864d × 1.5M row) 의 stratification 학습 방식 3-way 비교. carry-over 방식은 single-table KM20 학습 결과를 multi-join 후 그대로 적용, multi-join re-stratification 은 두 테이블 join 후 864d concat vector 에 fresh KM20 재학습. 8 measurement (4 anchor × 2 mode) 5/13 회수 기반.</caption>
+  <caption fontSize=14 fg3>multi-join (partsupp_deep_10 ⨝ part_wiki_10, 864d × 1.5M row) 의 stratification 학습 방식 비교. wrapper v2: 864d concat KM20 fresh 학습 + 96d query space return. 8 measurement 5/13 16:13 회수. 부록 F K-sensitivity 패턴 (sparse_rp + chao_weighted = K-sensitive, hilbert_real + hyperloglog = K-robust) 과 완벽 일치 — "stratification quality 의존도" 새 method axis 입증.</caption>
 </SlideShell>
 ```
 
-### 6.5 speaker note (placeholder)
+### 6.5 speaker note (★ 8/8 finalized)
 
-> "이 slide 는 강재현 팀원의 5/13 새벽 피드백 — 두 벡터 테이블을 join 한 이후에 stratification 학습을 별도로 하는 방식의 sensitivity 를 검증한 결과입니다. 본 연구의 기존 measurement framework 는 single-table 별로 KM20 을 학습한 후 multi-join cell 에서는 stratum_id column 을 그대로 carry-over 하는 방식인데, 이게 multi-join 의 cardinality 추정 오차의 원인일 수 있다는 가설이었습니다. partsupp_deep (96d) 과 part_wiki (768d) 를 join 한 864d concat vector 약 1.5M row 에 대해 KM20 을 재학습하는 multi-join re-stratification 측정을 진행한 결과, [TBD - 시나리오별 narrative]. 본 finding 은 향후 multi-table stratification 의 design space 가 [확장 가능 / 이미 robust / curse of dimensionality 한계] 임을 시사합니다."
+> "이 slide 는 강재현 팀원의 5/13 새벽 피드백 — 두 벡터 테이블을 join 한 이후에 stratification 학습을 별도로 하는 방식의 sensitivity 를 검증한 결과입니다. 본 연구의 기존 measurement framework 는 single-table 별로 KM20 을 학습한 후 multi-join cell 에서는 stratum_id column 을 그대로 carry-over 하는 방식이었는데, 이게 multi-join 의 cardinality 추정 오차의 원인일 수 있다는 가설이었습니다. partsupp_deep 96 차원과 part_wiki 768 차원을 join 한 864 차원 concat vector 약 1.5M row 에 대해 KM20 을 재학습하는 multi-join re-stratification 을 4 anchor method × A2-Fig9 cell × 2 mode = 8 measurement 진행한 결과, 시나리오 A.5 (Hybrid) — method-specific sensitivity 패턴이 확정되었습니다. sparse random projection 과 Chao 1982 weighted reservoir 두 method 는 CaseA 단독 대체 모드에서 multi-join re-strat 우위 (-3.55 퍼센트포인트, -2.63 퍼센트포인트) 가 확인되었습니다 — 두 method 의 stratification 학습 메커니즘이 stratum 내부 통계 구조에 강하게 의존하기 때문입니다. 반면 Hilbert curve 와 HyperLogLog 두 method 는 거의 동등 (+0.32, -0.26 퍼센트포인트) 으로 stratification 학습 방식 변화에 robust 한 method 였습니다. 본 연구의 핵심 contribution 인 CaseB 증강 모드에서는 4 method 모두 일관 동등 (mean diff -0.12 퍼센트포인트) 으로, Bernoulli + stratified 산술 평균 ensemble 의 robustness 가 multi-join cell 의 stratification 학습 방식 변화에도 입증되었습니다. 본 결과는 부록 F 의 cluster granularity sensitivity 패턴 (sparse_rp + chao_weighted = K-sensitive, hilbert_real + hyperloglog = K-robust) 과 method 별 완벽하게 일치하여, paradigm 분류보다 본질적인 **stratification quality 의존도** 라는 새 method classification axis 의 존재를 입증합니다."
 
-### 6.6 부록 G — 박광현 5/15 미팅 자료 추가 plan
+### 6.6 강재현 14:27 cheap 근사 방향 (★ 본 8/8 결과 기반)
+
+강재현이 5/13 14:27 카톡 후속으로 제시한 "기존에 table 별로 clustering한 거를 저비용으로 multi-reclustering에 근사하는 방법" 에 대한 본 연구 답변. 본 8/8 측정 결과 (quality-sensitive 2 method 만 multi-join 우위) 에 따라 다음 두 design 권장.
+
+**Method-specific selective application (★ 권장 전략)**:
+- Quality-sensitive (sparse_rp + chao_weighted): multi-join re-stratification 적용 (expensive but -2.63 ~ -3.55%p)
+- Quality-robust (hilbert_real + hyperloglog): single-table carry-over 그대로 (cheap, robust)
+
+**Cheap 근사 우선 후보 (Centroid tuple 방식)**:
+- single-table KM20 학습 그대로 + multi-join 시점에 (s_A, s_B) tuple 을 새 stratum 으로 (K^2 = 400 잠재, sparse 유지)
+- 학습 비용 0
+- 본 8/8 결과 (quality-sensitive method 가 multi-join 결합 정보 활용) 의 본질을 가장 잘 근사
+- 5/16 ~ 5/26 finalize sprint 시점 추가 측정 후보
+
+### 6.7 부록 G — 박광현 5/15 미팅 자료 추가 plan
 
 회수 결과 ready 시 박광현 5/15 미팅 자료에도 부록 G 추가:
 

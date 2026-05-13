@@ -13,6 +13,7 @@
 > CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v17 + v16 read 로 0% loss 인계**.
 
 - **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` (5/14 07:21, 본 세션 18.5h 종합 — multi-join + Centroid tuple + B1/B2/B3 cheap 근사 + α sweep + A2-Fig8 측정 80 회수 + 시나리오 B 확정 + 자원 효율 Pareto + _drafts 4 file 4차 정정 + PDF 4종 + 박세은 12:13 피드백 반영) + `@_internal/handoff/active/handoff_v16_km_granularity_+_multijoin_inflight_20260513_1238.md` (5/13 12:38 multi-join in-flight 시점)
+- **★ 본 연구 narrative 최종 정리 v1 (5/14 07:55, 박세은 review + 박광현 5/15 + 5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` (10 단계: 문제 → 탐색 → 폐기 39 → 단독 대체 best −10.17% → 결합 시도 best −7.37% → 결합 한계 발견 → 결합 진짜 가치 (안정성 + 변동성 감소) → 자원 효율 (정확도 best 5 = 파레토 best 5) → 권장 (단독 우선 + 결합 보조) → 다중 테이블) + PDF
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
 - **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`
 - **handoff 통합** (v0~v11 archive): `@_internal/handoff/archive/`

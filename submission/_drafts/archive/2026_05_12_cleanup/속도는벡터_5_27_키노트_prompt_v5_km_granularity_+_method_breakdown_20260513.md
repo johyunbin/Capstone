@@ -237,4 +237,118 @@ S7 에서 빠지고 S14 framework slide 또는 별도 sub-slide ("분포 인지 
 
 ---
 
+## ★ 정정 6 (5/13 15:30 ~ 16:30 회수 예정) — multi-join re-stratification 결과 narrative
+
+> **status (5/13 12:50)**: tmux mj_restrat session 진행 중. 8 measurement 회수 후 데이터 채워질 placeholder 형태.
+
+강재현 5/13 0:20 verbatim: "벡터 테이블 multi-join한 이후에 stratification 학습해서 하는 것도 한번 테스트 해보면 좋을듯, 각 single 테이블에서 하다보니 생각보다 cardinality 추정 오차가 생기나?"
+
+**위치 plan**: S19 (Limitation 직전) 또는 S18 K-sensitivity 뒤 신규 slide.
+
+### 6.1 측정 framework
+
+- scope: 4 anchor (sparse_rp / hilbert_real / hyperloglog / chao_weighted) × A2-Fig9 multi-join cell × 2 mode (CaseA / CaseB) = **8 measurement**
+- data: partsupp_deep_10 (96d) ⨝ part_wiki_10 (768d) ON ps_partkey = p_partkey → 864d concat × ~1.5M row
+- stratification: **fresh KM20 학습** (carry-over single-table KM20 와 별개) on 864d concat vector
+- wrapper: `/tmp/launch_multijoin_restrat.py`
+- output: `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact_mj_restrat/`
+
+### 6.2 3-way 비교 plan (회수 후 데이터 채워짐)
+
+```
+A2-Fig9 cell — paired Δ% (CaseB ensemble vs B1)
+
+method            (a) carry-over    (b) 자체 K-means     (c) multi-join re-strat
+                  (single KM20)     (method 자체 학습)    (864d fresh KM20)
+─────────────────────────────────────────────────────────────────────────────
+sparse_rp         -6.58% (실측)     n/a (CCSketch 같은)   [TBD]
+hilbert_real      -6.07% (실측)     n/a                   [TBD]
+hyperloglog       -5.15% (실측)     n/a                   [TBD]
+chao_weighted     -6.00% (실측)     n/a                   [TBD]
+minibatch         -7.25% (간접 비교) n/a (자체 학습)        n/a
+```
+
+**비교 axis 의미**:
+- (a) carry-over = 기존 본 연구 measurement framework (single-table KM20 학습 후 multi-table 에서 join 후 stratum_id column 재사용)
+- (b) 자체 K-means = method 가 자체 stratification 학습 framework (minibatch 등)
+- (c) multi-join re-stratification = 두 테이블 join 후 별도 KM20 학습 (5/13 12:25 launch, 본 정정 6 의 신규 axis)
+
+### 6.3 narrative arc 예상 (회수 후 finalize)
+
+회수 결과에 따라 두 narrative 분기:
+
+**시나리오 A — re-stratification 우위 (carry-over 보다 -2~-3%p 추가 개선)**:
+> "multi-join re-stratification 이 carry-over 방식보다 추가 개선을 보임. 두 테이블 join 후 stratification 학습이 cardinality 추정에 유의한 개선 효과를 발휘한다. 향후 multi-table stratification 의 design space 가 확장됨."
+
+**시나리오 B — re-stratification 동등 / 미세 개선 (-0~-1%p)**:
+> "multi-join re-stratification 과 carry-over 가 거의 동등한 성능. 본 연구의 single-table KM20 carry-over 방식이 이미 multi-table cell 에서도 robust 함이 입증된다. 학습 방식 차이가 결정적 X — method 자체 특성이 더 결정적."
+
+**시나리오 C — carry-over 우위 (multi-join re-stratification 이 worse)**:
+> "carry-over 가 더 우수 — multi-join 후 864d concat 의 KM20 학습이 single-table KM20 carry-over 보다 unstable. high-dim vector 의 K-means clustering 한계 (curse of dimensionality)."
+
+### 6.4 slide spec (placeholder, 회수 후 데이터 채움)
+
+```jsx
+<SlideShell secn="3." title="multi-join re-stratification (★ 강재현 1번 검증)">
+  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32}}>
+    
+    // 좌측 — 3-way bar chart (CaseB mean, 4 anchor)
+    <div>
+      grouped bar chart:
+        [carry-over single KM20]  [multi-join re-strat 864d KM20]
+        sparse_rp: -6.58 vs [TBD]
+        hilbert_real: -6.07 vs [TBD]
+        hyperloglog: -5.15 vs [TBD]
+        chao_weighted: -6.00 vs [TBD]
+    </div>
+    
+    // 우측 — narrative + framework note
+    <div>
+      <eyebrow>★ 강재현 5/13 0:20 추가 검증</eyebrow>
+      <p fontSize=20>"각 single 테이블에서 학습 → multi-join 후 carry-over 가
+      cardinality 추정 오차의 원인인가?" 검증 결과:</p>
+      
+      <p fontSize=18 bold>[TBD - 회수 후]:
+      - re-strat Δ avg [TBD]% vs carry-over -5.95% avg
+      - 결론: [carry-over 충분 / re-strat 추가 개선 / re-strat 한계]</p>
+      
+      <p fontSize=14 fg3>method 자체 학습 (minibatch -7.25%) 와도 비교 가능.
+      세 학습 방식 차이가 [결정적 / 결정적 X].</p>
+    </div>
+  </div>
+  
+  <caption>multi-join (partsupp_deep_10 ⨝ part_wiki_10, 864d × 1.5M row) 의 stratification 학습 방식 3-way 비교. carry-over 방식은 single-table KM20 학습 결과를 multi-join 후 그대로 적용, multi-join re-stratification 은 두 테이블 join 후 864d concat vector 에 fresh KM20 재학습. 8 measurement (4 anchor × 2 mode) 5/13 회수 기반.</caption>
+</SlideShell>
+```
+
+### 6.5 speaker note (placeholder)
+
+> "이 slide 는 강재현 팀원의 5/13 새벽 피드백 — 두 벡터 테이블을 join 한 이후에 stratification 학습을 별도로 하는 방식의 sensitivity 를 검증한 결과입니다. 본 연구의 기존 measurement framework 는 single-table 별로 KM20 을 학습한 후 multi-join cell 에서는 stratum_id column 을 그대로 carry-over 하는 방식인데, 이게 multi-join 의 cardinality 추정 오차의 원인일 수 있다는 가설이었습니다. partsupp_deep (96d) 과 part_wiki (768d) 를 join 한 864d concat vector 약 1.5M row 에 대해 KM20 을 재학습하는 multi-join re-stratification 측정을 진행한 결과, [TBD - 시나리오별 narrative]. 본 finding 은 향후 multi-table stratification 의 design space 가 [확장 가능 / 이미 robust / curse of dimensionality 한계] 임을 시사합니다."
+
+### 6.6 부록 G — 박광현 5/15 미팅 자료 추가 plan
+
+회수 결과 ready 시 박광현 5/15 미팅 자료에도 부록 G 추가:
+
+```
+부록 G: multi-join re-stratification 측정 결과
+
+G.1 측정 framework (시나리오 + 데이터)
+G.2 3-way 비교 (carry-over vs 자체 K-means vs multi-join re-strat)
+G.3 narrative 해석 — 세 학습 방식 차이의 의미
+G.4 향후 연구 방향 — multi-table stratification design space 확장 / robust 확인 / 한계 명시
+```
+
+---
+
+## 측정 source (multi-join re-stratification)
+
+- 측정 launch: 5/13 12:25 KST tmux mj_restrat
+- 출력 dir: `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact_mj_restrat/`
+- wrapper: `/tmp/launch_multijoin_restrat.py`
+- 회수 ETA: **5/13 15:30 ~ 16:30 KST**
+- 회수 후 분석 file: `_internal/analysis/multi_join_restratification_results_20260513.md` (작성 예정)
+
+---
+
 작성: 2026-05-13 12:15 KST · 박세은 12:09 옵션 C 결정 반영 · RQ1 narrative SYSTEM vs BERN 재배치 + max 17.32% gap 강조
+업데이트: 2026-05-13 12:50 KST · 정정 6 placeholder 추가 (multi-join re-stratification 회수 form)

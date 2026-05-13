@@ -81,10 +81,10 @@ halton, sobol, lhs, hammersley, dense_rp, random_projection, dbscan, ccsketch, l
 
 - **평균 우위 약 40%**: 56 방법 중 약 40% 가 평균적으로는 베르누이 기준선보다 정확했다.
 - **통계 일관 우위 7.6% (15/197)**: 그러나 같은 method 라도 데이터셋과 cell 마다 효과의 편차가 컸다. 통계 검정 (BH-FDR 보정 + paired Wilcoxon p<0.05) 으로 cell 전반에서 안정적으로 베르누이를 우위로 누른 method 는 7.6% 정도다.
-- **15 method 의 평균 개선폭 -5 ~ -12%**: 통계 일관 우위를 보인 15 method 의 개선폭은 -5% 에서 -12% 수준으로, paper 자체 재현 변동 (-4.3% 차이) 과 비슷한 범위의 효과다.
+- **15 method 의 평균 개선폭 -5 ~ -12%**: 단독 대체로 통계 일관 우위인 15 method 의 평균 개선폭은 -5 ~ -12% 다. 이는 paper 자체 재현 시 발생하는 측정 변동 (paper Fig 12 영역 -4.3%) 보다 1.2 ~ 3 배 큰 의미 있는 개선이다. 즉 단독 대체로도 noise floor 를 넘는 실제 개선이 가능한 method 가 존재한다.
 - **selectivity / dataset 별 일관성**: 일관 우위 15 method 중에서도 selectivity 0.01 같은 작은 쿼리와 0.10 같은 큰 쿼리에서 효과가 다르고, DEEP / SIFT / SSN 사이에서도 효과가 다르다.
 
-결론은 이렇게 정리된다. **단독 대체로도 일부 method 와 일부 cell 에서는 가능하지만, 56 방법 전체에 걸쳐 산업 적용을 보장할 만한 압도적 우위는 아니다.** 그리고 이 안정성 부족 자체가 다음 단계 — 결합 framework 검토 — 의 motivation 이다.
+결론은 이렇게 정리된다. **단독 대체로 noise floor 를 넘는 개선이 가능한 method 가 일부 존재하지만 (15/197 = 7.6%), 56 방법 전체에 걸쳐 산업 적용을 보장할 만한 압도적 우위는 아니다.** 그리고 이 안정성 부족 자체가 다음 단계 — 결합 framework 검토 — 의 motivation 이다.
 
 ---
 
@@ -137,7 +137,7 @@ multi-table cell (예: DEEP + WIKI cross) 에서 계층적 표집을 어떻게 �
 
 산업 적용 영역은 두 가지다. (1) PostgreSQL pgvector 의 default sampling 메커니즘에 우리 method 의 stratified estimator 를 산술 평균으로 추가하면 옵티마이저 카디널리티 추정의 안정성이 향상된다. (2) Exqutor 의 §V-B 모듈에 우리 안 (산술 평균 + cheap 근사 + method-aware) 을 통합하면 paper 본문 성과 (1만 배 속도 개선) 위에 추가적인 정확도 layer 를 얹을 수 있다.
 
-본 연구는 또한 method 가 환경 변화에 보이는 민감도 패턴이 method 의 내부 메커니즘 차이를 반영한다는 부수 발견을 정리하였다 (자세한 내용은 부록 참조).
+본 연구는 또한 추가 가설 두 가지 — multi-table 재계층화의 정확도 영향과 저비용 근사 가능성 — 도 정량 검증하였다. 측정 결과 method 가 환경 변화에 보이는 민감도 패턴이 method 의 내부 메커니즘 차이를 반영하는 부수 발견도 정리하였다 (자세한 내용은 부록 참조).
 
 ---
 
@@ -147,31 +147,44 @@ multi-table cell (예: DEEP + WIKI cross) 에서 계층적 표집을 어떻게 �
 
 가장 중요한 한계는 측정 범위다. 9 cells × 56 method × 2 modes 의 매트릭스에서 비교 실험군에 해당하는 method 는 9 cells × 2 modes 모두 완료했지만, 미커버 영역을 9 가지 카테고리로 정직하게 분류한다. 가장 큰 비중은 자원 한계 (birch 메모리 50-200GB 폭증, A1-SSN cell 의 80GB NPY fetch timeout), 알고리즘 정독 검토 (5월 10일 8-agent code audit 으로 발견한 reference 위반 23 method 폐기), 그리고 본 논문 §V-A multi-table 영역과의 경계 (우리는 §V-B 영역에 한정) 다.
 
-향후 연구 방향은 여섯 가지로 정리한다. (1) 다른 데이터셋 일반화 — YFCC, GLOVE 등에서 동일 패턴 검증, (2) 논문 동적 framework 와 완전 정합 — Q-error 신호 source 명시, (3) 이론적 분산 분해 — Cochran 1977 §11.10 composite estimator 적용, (4) 다른 결합 방식 비교 — 가중치 sweep, 기하 평균, 분산 기반 결합, (5) 다른 cheap 근사 후보 — PCA preprocessing, Iterative refinement, Hash bucketing, (6) 실제 시스템 적용 — pgvector 또는 Exqutor 의 prototype 통합 측정.
+본 연구는 산술 평균이라는 가장 단순한 결합 방식부터 측정을 시작하여 결합 framework 자체의 효과를 baseline 수준에서 입증하였다. 실제 산업 적용을 위해서는 데이터셋의 분포 특성, 차원, 질의 선택도에 따라 결합 방식이 동적으로 결정되는 data-aware ensemble framework 가 필요하다. 본 연구의 산술 평균 결과는 그 framework 의 출발점이며, 향후 연구는 두 그룹으로 나뉜다.
 
-가까운 시일의 일정은 두 가지다. 5월 28일 임채림 박사님과의 SAP 미팅에서 본 연구 결과를 추가 검증한다. 6월 11일 최종 보고서에서 위 여섯 가지 향후 방향 중에서 다음 분기에 우선순위로 둘 영역을 명시한다.
+**Group A — Data-aware ensemble framework 5 방향**: (A1) Distribution-aware ensemble — skew / dense 데이터셋에 따라 결합 가중치 동적 결정, (A2) Dimensionality-aware ensemble — 차원 별 결합 방식 선택 (예: 차원 큰 → PCA preprocessing 결합), (A3) Estimator-confidence-aware (BLUE, Best Linear Unbiased Estimator) — 각 estimator 의 분산 추정 기반 분산 최소화 가중치, (A4) Query-aware ensemble — selectivity 별 결합 방식 변경, (A5) Meta-learning adaptive ensemble — 측정 환경 feature 를 입력으로 ML 모델로 결합 가중치 학습.
+
+**Group B — 일반 확장 6 방향**: (B1) 다른 데이터셋 일반화 — YFCC, GLOVE 등에서 동일 패턴 검증, (B2) 논문 동적 framework 와 완전 정합 — Q-error 신호 source 명시, (B3) 이론적 분산 분해 — Cochran 1977 §11.10 composite estimator 적용, (B4) 다른 결합 방식 비교 — 가중치 sweep, 기하 평균, 분산 기반 결합 (Group A 의 baseline 비교), (B5) 다른 cheap 근사 후보 — PCA preprocessing, Iterative refinement, Hash bucketing, (B6) 실제 시스템 적용 — pgvector 또는 Exqutor 의 prototype 통합 측정.
+
+가까운 시일의 일정은 두 가지다. 5월 28일 임채림 박사님과의 SAP 미팅에서 본 연구 결과를 추가 검증한다. 6월 11일 최종 보고서에서 위 두 그룹 (Group A 5 방향 + Group B 6 방향) 의 향후 방향 중에서 다음 분기에 우선순위로 둘 영역을 명시한다.
 
 ---
 
 ## 부록 — Method 메커니즘 분석 (Q&A 참조용)
 
-이 부록은 발표 본문에서 한 줄로만 짚은 method-level consistency 와 3-axis sensitivity 일치 패턴을 풀어 둔 것이다. 청자가 Q&A 에서 묻거나, 박광현 교수님 / 임채림 박사님 같은 도메인 전문가가 본 연구의 method 분류 axis 에 대해 질문할 경우의 참조용이다.
+이 부록은 발표 본문에서 한 줄로만 짚은 method-level consistency 와 3-axis sensitivity 분석 (2 axis 일치 + 1 axis 다른 분류) 패턴을 풀어 둔 것이다. 청자가 Q&A 에서 묻거나, 박광현 교수님 / 임채림 박사님 같은 도메인 전문가가 본 연구의 method 분류 axis 에 대해 질문할 경우의 참조용이다.
 
 ### 부록 A — Method-level consistency
 
 본 연구의 결과를 paradigm 단위로만 보면 paradigm 우위를 단정 짓기 어렵다. paradigm 안에 wavelet_hist (P1 클러스터링, +68% 더 나빠짐), lp_bound (P4 차원 축소, +16% 더 나빠짐) 같은 극단값 method 가 평균을 끌어 올리거나 끌어 내리기 때문이다. 진짜 finding 은 12 개의 anchor method 가 다양한 환경 (데이터셋, cell, 선택도) 에서 모두 비슷한 정도로 (cell 전반에서 -9 ~ -10%) 일관되게 개선한다는 것이다. paradigm 분류 자체보다는 method 안의 internal sampling 메커니즘 — 클러스터 quality 에 얼마나 의존하는지, hash 기반인지 space-filling curve 기반인지 — 이 더 본질적인 분류 기준이라는 시사점이다.
 
-### 부록 B — 3-axis sensitivity 일치
+### 부록 B — 3-axis sensitivity 분석 (2 axis 일치 + 1 axis 다른 분류)
 
-5월 12 ~ 13 일에 진행한 세 가지 추가 측정 영역에서 method 별로 일관된 분기 패턴이 발견되었다.
+5월 12 ~ 13 일에 진행한 세 가지 추가 측정 영역에서 method 별 민감도 패턴을 측정했다.
 
-(1) **K granularity 민감도**: 클러스터 개수 K 를 10, 20, 30 으로 바꾼 측정. sparse_rp 는 K=20 에서 -10.6%, K=10 에서 +5.05% (더 나빠짐), K=30 에서 -6.78% 의 U 모양을 보인다. 반면 Hilbert curve, HyperLogLog, Chao 의 세 method 는 K 값에 거의 영향을 받지 않는다 (어느 K 에서도 -9 ~ -10% 안정).
+(1) **K granularity 민감도**: 클러스터 개수 K 를 10, 20, 30 으로 바꾼 측정. sparse_rp 는 K=20 에서 -10.6%, K=10 에서 +5.05% (더 나빠짐), K=30 에서 -6.78% 의 U 모양을 보인다 (K-sensitive). chao_weighted 는 K=20 sweet spot 패턴. 반면 hilbert_real 과 hyperloglog 두 method 는 K 값에 거의 영향을 받지 않는다 (K-robust).
 
-(2) **multi-join 재학습**: 두 벡터 테이블을 864 차원으로 합쳐서 KM20 재학습한 8 measurement. sparse_rp 와 chao_weighted 는 CaseA 모드에서 -2.6 ~ -3.5%p 추가 개선, Hilbert curve 와 HyperLogLog 는 거의 차이 없음. CaseB 산술 평균 모드에서는 4 method 모두 차이 없음 (평균 -0.12%p).
+(2) **multi-join 재학습 민감도**: 두 벡터 테이블을 864 차원으로 합쳐서 KM20 재학습한 8 measurement. sparse_rp 와 chao_weighted 는 CaseA 모드에서 -2.6 ~ -3.5%p 추가 개선 (multi-jn sensitive), hilbert_real 과 hyperloglog 는 거의 차이 없음 (robust). CaseB 산술 평균 모드에서는 4 method 모두 차이 없음 (평균 -0.12%p).
 
-(3) **Centroid tuple cheap 근사**: 비싼 multi-join 재학습 대신 single-table 클러스터의 (s_A, s_B) tuple folding 으로 cheap 근사. CaseB 산술 평균 모드에서 4 method 모두 비싼 재학습보다 평균 -0.84%p 추가 정확도.
+(3) **Centroid tuple cheap 근사 친화도**: 비싼 multi-join 재학습 대신 single-table 클러스터의 (s_A, s_B) tuple folding 으로 cheap 근사. CaseB 산술 평균 모드에서 4 method 모두 평균 -0.84%p 추가 정확도이지만, 친화도 분류는 method 별로 다르다 — hyperloglog 와 chao_weighted 가 가장 큰 추가 개선 (Friendly), sparse_rp 는 중간 (Indifferent), hilbert_real 은 CaseA 단독 대체에서 harmful (Hostile).
 
-세 분석의 method 별 분기 패턴이 일치한다 — sparse_rp + chao_weighted 두 method 가 K-민감 + multi-join 재학습 민감 + Centroid tuple 친화도가 다른 양상이고, hilbert_real + hyperloglog 두 method 는 K-안정 + multi-join 안정 + Centroid tuple 친화. 세 다른 측정 영역 (K granularity, multi-join, 저비용 근사) 에서 같은 method 분류 패턴이 나오는 일치는 method 의 internal sampling 메커니즘 차이를 반영하는 것으로 해석된다.
+3-axis 분류 매트릭스:
+
+| Method | K granularity sensitivity | Multi-jn sensitivity | Cheap 근사 친화도 |
+|---|---|---|---|
+| sparse_rp | K-sensitive (U-shape) | sensitive (-3.55p) | Indifferent |
+| chao_weighted | K=20 sweet | sensitive (-2.63p) | **Friendly** |
+| hilbert_real | K-robust | robust | Hostile (CaseA harmful) |
+| hyperloglog | K-robust | robust | **Friendly** |
+
+본 연구는 K granularity 변화와 multi-table 재계층화 두 측정에서 method 별 민감도 패턴이 일치 (sparse_rp + chao_weighted sensitive vs hilbert_real + hyperloglog robust) 함을 확인하였다. 그러나 저비용 근사 친화도는 다른 분류 패턴 (Friendly: hyperloglog + chao_weighted) 을 보였다. 즉 method 의 내부 메커니즘이 측정 영역에 따라 다른 영향을 미친다. 3 axis 중 2 axis 일치는 본 연구의 method-level consistency 의 evidence 이지만, 1 axis 다른 분류는 method 의 메커니즘 차이가 단순 sensitivity 분류로 환원되지 않음을 시사한다.
 
 ---
 
@@ -183,7 +196,7 @@ multi-table cell (예: DEEP + WIKI cross) 에서 계층적 표집을 어떻게 �
 베르누이 무작위 샘플링은 편향 (bias) 이 0 이지만 분산 (variance) 이 크다. 클러스터 기반 계층적 표집 추정량은 분포 가정이 맞을 때는 분산이 작지만, 가정이 빗나가면 편향이 생길 수 있다. 두 추정값을 산술 평균하면 한 쪽이 실패할 때 다른 쪽이 보완해 주는 안정적인 구조가 된다. 측정 결과로는 92.5% 의 cell 에서 단일 베르누이보다 더 정확하다. 다만 산술 평균이 가장 좋은 결합 방식인지는 아직 모르며, 가중치 평균이나 기하 평균과의 비교는 future work 다.
 
 **Q2. CaseA 단독 대체의 효과는 어떻게 보아야 하는가?**
-56 방법 중 약 40% 가 평균적으로는 베르누이 기준선보다 정확했다. 그러나 같은 method 라도 데이터셋과 cell 마다 효과의 편차가 컸다. 통계 검정 (BH-FDR 보정 + paired Wilcoxon p<0.05) 으로 cell 전반에서 안정적으로 베르누이를 우위로 누른 method 는 7.6% (15/197) 정도였다. 이 15 method 의 평균 개선폭은 -5 ~ -12% 로 paper 자체 재현 변동 (-4.3%) 과 비슷한 범위다. 즉 단독 대체는 일부 method 와 일부 cell 에서는 가능하지만, 산업 적용을 위한 안정성은 부족하다. 이 안정성 부족이 CaseB (산술 평균) 검토의 motivation 이다.
+56 방법 중 약 40% 가 평균적으로는 베르누이 기준선보다 정확했다. 그러나 같은 method 라도 데이터셋과 cell 마다 효과의 편차가 컸다. 통계 검정 (BH-FDR 보정 + paired Wilcoxon p<0.05) 으로 cell 전반에서 안정적으로 베르누이를 우위로 누른 method 는 7.6% (15/197) 정도였다. 이 15 method 의 평균 개선폭은 -5 ~ -12% 인데, paper 자체 재현 시 발생하는 측정 변동 (-4.3%) 보다 1.2 ~ 3 배 큰 의미 있는 개선이다. 즉 단독 대체로도 noise floor 를 넘는 실제 개선이 가능한 method 가 일부 존재하지만, 산업 적용을 위한 안정성은 부족하다. 이 안정성 부족이 CaseB (산술 평균) 검토의 motivation 이다.
 
 **Q3. paradigm 평균이 극단값에 의해 영향을 받는다면, 우리 결과의 정직성은 어떻게 확보되는가?**
 이 점은 5월 13일 새벽에 강재현이 지적한 부분이다. 우리는 paradigm 평균과 함께 12 개의 각 paradigm 대표 방법 (anchor method) 별로 -9 ~ -10% 의 일관된 개선폭과 2 ~ 3 의 안정적 표준편차를 보여주는 method 단위 분석을 별도로 제시한다. 즉 "paradigm 우위" 보다 "anchor method 일관성" 이 우리의 진짜 결과다.

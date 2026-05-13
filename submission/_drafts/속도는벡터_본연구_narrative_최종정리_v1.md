@@ -99,13 +99,98 @@
 
 ---
 
-## 사용 시 안내
+## 11. 사용 method 깊이 소개 (핵심 6)
 
-- **5/15 박광현 미팅**: §1 ~ §10 흐름 그대로 base. §9 권장 + §10 다중 테이블 부분이 자문 질문 대비 핵심.
-- **5/27 최종 발표**: §3 폐기 정직성, §4 단독 대체 main finding, §6 ~ §7 결합 한계 + 진짜 가치, §8 자원 효율 + reservoir O(1) 가 분량 비중.
-- **6/11 최종 보고서**: §1 ~ §10 그대로 보고서 4.3 RQ3 본문 base. 각 단락 1 ~ 2 page 로 확장.
-- **팀원 공유**: §1 ~ §10 그대로 peer 톤 변환 (~해 / ~지) 으로 1 ~ 2 page 압축.
+§4 ~ §9 에 등장한 결과를 만든 method 들 중 본 narrative 의 핵심 6 개를 알고리즘 메커니즘 + 이론적 근거 + 실측 결과로 정리한다. 17 사용 method 전체 list 는 §12 부록 table + 자원 효율 분석 file (`_internal/analysis/resource_efficiency_pareto_20260513.md`) 참조.
+
+### 11.1 minibatch_partial — 클러스터링 갈래, 단독 대체 best
+
+**방법** — 데이터를 청크 단위로 흘려보내면서 K=20 클러스터 중심을 점진적으로 학습한다 (partial_fit). 전체 데이터를 메모리에 올리지 않고 stream 처럼 처리.
+
+**이론적 근거** — Sculley (WWW 2010) 의 Web-scale K-means 변형. scikit-learn 의 MiniBatchKMeans 의 partial_fit API 직접 활용.
+
+**실측 결과** — 단독 대체 모드 9 측정 환경 평균 **−10.17%** (본 portfolio 단독 best). 학습 시간 0.5 초, 메모리 사용량 작음 (청크 × 차원 D), 측정 환경별 변동성 std 3.33. 단독 대체로 갈아끼울 때 가장 큰 정확도 개선을 가져오는 method.
+
+### 11.2 sparse_rp — 차원 축소 갈래, 학습 시간 가장 짧음
+
+**방법** — 데이터 차원 D 를 sparse random matrix (Achlioptas density 1/3, 즉 +1 / 0 / −1 의 sparse entries) 로 곱해 낮은 차원 k 로 사영한다. 그 후 K=20 클러스터로 stratum 분할.
+
+**이론적 근거** — Achlioptas (JCSS 2003) 의 sparse Bernoulli projection + Li-Hastie-Church (KDD 2006) 의 매우 sparse 변형. Johnson-Lindenstrauss lemma 의 distance preservation 보장 위에서 sparse 화로 계산 비용을 크게 낮춤.
+
+**실측 결과** — 결합 모드 9 측정 환경 평균 **−9.43%**, 학습 시간 **0.1 초** (본 portfolio 최단), 메모리 O(D × k) 매우 작음, std 3.30. 정확도와 자원 두 axis 에서 모두 Pareto frontier 위에 있는 method.
+
+### 11.3 chao_weighted — 스트리밍 갈래, Pareto Top 정확도
+
+**방법** — 가중 reservoir 표집. 청크 단위로 들어오는 데이터에서 weight 기반 sampling 으로 분포 정보를 streaming 으로 유지한다.
+
+**이론적 근거** — Chao M-T (Biometrika 1982) 의 weighted reservoir sampling. 각 sample 의 probability of inclusion 이 weight 에 비례하도록 보장.
+
+**실측 결과** — 결합 모드 9 측정 환경 평균 **−9.60%** (Pareto frontier 정확도 Top 1), 학습 시간 0.5 초, 메모리 O(K) 매우 작음, std 6.36. 정확도는 가장 좋으나 측정 환경별 변동성은 다소 큼.
+
+### 11.4 hilbert_real — 공간 분할 갈래, 진짜 Hilbert curve 구현
+
+**방법** — 데이터 차원 D 를 그대로 유지한 채 Hilbert space-filling curve indexer 로 1 차원 좌표 매핑. 그 후 매핑된 1 차원 좌표를 K=20 stratum 으로 분할.
+
+**이론적 근거** — Faloutsos (SIGMOD 1989) 의 진짜 D 차원 Hilbert space-filling curve. 본 연구의 이전 hilbert method 는 코드 정독 검토 결과 PCA 2 차원 정렬의 별칭으로 발견되어 (★3 정정), 진짜 Hilbert curve 구현인 hilbert_real 을 별도 method 로 측정.
+
+**실측 결과** — 결합 모드 9 측정 환경 평균 **−9.27%**, 학습 시간 0.5 초, 메모리 O(N), std 3.12. 공간 분할 paradigm 의 진짜 anchor.
+
+### 11.5 hyperloglog — 정보 이론 갈래, 가장 안정
+
+**방법** — hash 기반 분포 카디널리티 추정량. K=20 stratum 별로 trailing zero 의 max 를 추적해 cardinality 를 streaming 으로 추정.
+
+**이론적 근거** — Flajolet et al (DMTCS 2007) 의 HyperLogLog. 분포의 unique element 수를 매우 적은 메모리로 정확히 추정하는 정보 이론 기반 알고리즘.
+
+**실측 결과** — 결합 모드 9 측정 환경 평균 **−8.65%**, 학습 시간 0.5 초, 메모리 O(K log K), std **2.73** (본 portfolio ⭐⭐ Best + ⭐ Excellent 19 method 中 가장 안정). 정확도와 안정성을 모두 잡은 method.
+
+### 11.6 reservoir — 스트리밍 갈래, 메모리 O(1)
+
+**방법** — 가장 단순한 reservoir sampling. 청크 단위 데이터에서 K 개를 균등 확률로 sampling 한다.
+
+**이론적 근거** — Vitter (TOMS 1985) 의 reservoir sampling. 데이터 크기 N 을 미리 모르더라도 K 개의 균등 random sample 을 한 번의 pass 로 얻는 알고리즘.
+
+**실측 결과** — 결합 모드 9 측정 환경 평균 **−9.25%**, 학습 시간 **0.1 초**, 메모리 사용량 **O(1)** (sample size K 만 보존, 데이터 크기 N 과 무관), std 3.00. **§8 의 산업 적용 핵심 finding** — 모바일 / 임베디드 / 스트리밍처럼 메모리가 제약인 환경에 그대로 적용 가능한 가장 강력한 method.
 
 ---
 
-작성: 2026-05-14 07:55 KST
+## 12. 17 사용 method 전체 list (부록)
+
+39 폐기 후 남은 17 사용 method 의 paradigm 분포 + 결합 모드 평균 + 자원 효율 등급 + 이론적 근거. 자세한 자원 정량 (학습 시간 + 메모리 + SF=100 feasibility) 은 `_internal/analysis/resource_efficiency_pareto_20260513.md` 참조.
+
+| paradigm | method | CaseB Δ% | 자원 등급 | 이론적 근거 |
+|---|---|---:|---|---|
+| P1 클러스터링 | minibatch_partial | −6.98% | ⭐ Excellent | Sculley 2010 (partial fit) |
+| P1 클러스터링 | minibatch | −9.28% | ⭐ Excellent | Sculley 2010 |
+| P1 클러스터링 | gmm | +2.45% | Good | Dempster 1977 EM (marginal) |
+| P2 공간 분할 | hilbert_real | −9.27% | ⭐⭐ Best | Faloutsos 1989 진짜 |
+| P2 공간 분할 | zorder_morton | −9.26% | ⭐ Excellent | Morton 1966 bit-interleaving |
+| P2 공간 분할 | skilling_hilbert | −9.01% | ⭐ Excellent | Skilling 2004 변형 |
+| P2 공간 분할 | lpm2 | −9.45% | ⭐⭐ Best | Grafström 2012 local pivot |
+| P3 스트리밍 | chao_weighted | −9.60% | ⭐⭐ Best | Chao 1982 weighted reservoir |
+| P3 스트리밍 | reservoir | −9.25% | ⭐⭐ Best | Vitter 1985, **메모리 O(1)** |
+| P3 스트리밍 | thompson_sampling | −8.98% | ⭐ Excellent | Thompson 1933 Beta posterior |
+| P3 스트리밍 | cum_sqrtf | −8.45% | Good | Cochran 1977 sqrt(F) |
+| P4 차원 축소 | sparse_rp | −9.43% | ⭐⭐ Best | Li-Hastie-Church 2006 |
+| P4 차원 축소 | neuram | −9.97% | ⭐⭐ Best | autoencoder (PCA1D 등가 audit) |
+| P4 차원 축소 | pca1d | −9.63% | ⭐ Excellent | Pearson 1901 PCA |
+| P4 차원 축소 | rsvd | −8.49% | ⭐ Excellent | Halko-Martinsson 2011 |
+| P6 양자화 | pq | −9.25% | ⭐ Excellent | Jégou 2011 product quantization |
+| P9 정보 이론 | hyperloglog | −8.65% | ⭐⭐ Best | Flajolet 2007 HyperLogLog |
+
+* CaseB Δ% = 결합 모드 9 측정 환경 평균 (음수가 클수록 정확도 개선). 학습 시간 모두 0.1 ~ 1 초 범위.
+* 자원 효율 등급: ⭐⭐ Best (fit < 1s + 메모리 O(N) 이하 + SF=100 OK + Δ% < −9%) / ⭐ Excellent (fit < 2s + Δ% < −8%) / Good (fit < 2s + Δ% −5 ~ −8%) / Marginal (Δ% −3 ~ −5%).
+* P5 준 무작위 / P10 밀도 추정 paradigm 은 모두 폐기되어 사용 method 없음.
+* §11 의 핵심 6 method (minibatch_partial / sparse_rp / chao_weighted / hilbert_real / hyperloglog / reservoir) 는 paradigm 다양성 + Pareto frontier + 본 narrative §4 ~ §9 핵심 등장 기준으로 선정.
+
+---
+
+## 사용 시 안내
+
+- **5/15 박광현 미팅**: §1 ~ §10 흐름 + §11 핵심 6 method 깊이 소개 base. §9 권장 + §10 다중 테이블 + §11.6 reservoir 부분이 자문 질문 대비 핵심.
+- **5/27 최종 발표**: §3 폐기 정직성, §4 단독 대체 main finding, §6 ~ §7 결합 한계 + 진짜 가치, §8 자원 효율 + reservoir O(1), §11 핵심 method 6 소개가 분량 비중.
+- **6/11 최종 보고서**: §1 ~ §12 그대로 보고서 4.3 RQ3 본문 base. 각 단락 1 ~ 2 page 로 확장.
+- **팀원 공유**: §1 ~ §10 그대로 peer 톤 변환 (~해 / ~지) + §11 핵심 6 method 만 1 page 압축.
+
+---
+
+작성: 2026-05-14 07:55 KST · §11 ~ §12 method 깊이 소개 + 17 사용 method 부록 추가: 2026-05-14 08:25 KST

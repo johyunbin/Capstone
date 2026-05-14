@@ -7,8 +7,8 @@
 ```
 results/
 ├── README.md                                [본 파일]
-├── 연구_한계점_4종_명시_5월5일회의록_기반.md                [5/5 회의록 line 122-126, Limitation 표준]
-├── Exqutor_§V-B_Adaptive_Sampling_의사코드.md                          [Algorithm 1, B1 baseline 의사코드, reviewer attack defense]
+│
+
 │
 ├── analysis/                                [9 분석 file, 5/13 ~ 5/14]
 │   ├── README.md                             [analysis 인덱스]

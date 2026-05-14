@@ -169,6 +169,7 @@ m=0.9 / η₀=0.1 / α=50 / β=1.5 / γ=0.99 / period=50 / N=385 (paper p.7 우�
 | 11 | "Bernoulli → Neyman −10%" narrative → 실제 측정 X (POOL −5~7%, 단일 cell best SIFT sel=0.1 −9.16%) | 박세은 9:54 + RQ2 csv 직접 verify | RQ2 narrative |
 | 12 | 회의 PDF v2 §3.2 line 532-533 "Proportional −9.61% / Neyman −8.75%" wording → csv 직접 aggregate 값과 차이 (출처 source verify 필요) | 본 verify 발견 | RQ2 narrative |
 | 13 | RQ2 5-way 측정 = SF=100 (DEEP+SIFT) **한정**. SF=1/SF=10/SSN 미측정 | RQ2 csv file 명 + 사용자 22:05 confirm | RQ2 SF coverage |
+| 14 | "Anti-Neyman > Neyman = Neyman 가설 무효" → 정확 의미: **Neyman 가설 자체는 유효** but **본 데이터셋이 Neyman 의 가정 조건 (cluster 간 분산 다양함) 불만족** + selectivity-dependent (sel=0.01 paradox / sel=0.1 정합). σ_j 직접 측정 추가 검증 필요 (현재 oracle 가정) | 박세은 10:15 + Cochran 1977 partial | RQ2 narrative |
 
 ---
 
@@ -472,10 +473,13 @@ m=0.9 / η₀=0.1 / α=50 / β=1.5 / γ=0.99 / period=50 / N=385 (paper p.7 우�
 - 신규: server `cache/rq3/run_km_sf_axis.sh` (K granularity SF axis wrapper)
 - PDF 생성: `_internal/scripts/md2pdf.py` (Trading S43 v6 + 학술 보강 + admonition callout + 한글 anchor + H2 break + H3 keep)
 
-### 15.7 VPN keep-alive (★ 17:55 영구 설치, 맥미니 + 맥북 동기화)
+### 15.7 VPN keep-alive (★ 5 Layer → 4 Layer, 5/14 22:18 update)
 
-- LaunchAgent: `~/Library/LaunchAgents/com.user.capstone-{caffeinate,vpn-ping,vpn-watchdog,autossh}.plist`
-- 맥북 = vpn-watchdog 제거 (autossh + vpn-ping + caffeinate 만)
+- LaunchAgent (active): `~/Library/LaunchAgents/com.user.capstone-{caffeinate,vpn-ping,autossh}.plist` (3 active)
+- **vpn-watchdog 제거** (맥미니 + 맥북 동일 form, 5/14 22:18): backup `~/Library/LaunchAgents/com.user.capstone-vpn-watchdog.plist.bak_20260514_2218`
+- 이유: SecuwaySSL U 자동 재실행 영역이 사용자 종료해도 다시 켜는 원인 (사용자 22:15 요청)
+- 4 Layer: L1 caffeinate (sleep 방지) + L2 vpn-ping (ping keep-alive) + L3 ★ autossh (SSH 트래픽, 가장 결정적) + L5 SSH config (ServerAliveInterval 15s)
+- L4 (vpn-watchdog) 영역 = 사용자 manual control (필요 시 SecuwaySSL U 직접 시작)
 
 ---
 

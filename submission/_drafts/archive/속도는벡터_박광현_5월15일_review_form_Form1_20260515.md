@@ -147,7 +147,41 @@ RQ2 5-way csv (rq2_DEEP_sf100_5way_allocation.csv + rq2_SIFT_sf100_5way_allocati
 
 ---
 
-## 7. 정직 disclosure 13 영역 (cherry-picking 회피, 사전 명시)
+## 6.7 박세은 9:09 #2 영역 (block + row hybrid) + 본문 답변 form 압축
+
+박세은 9:09 #2 영역 (5/14 카톡): "block 단위 추출이 아니라 block + row hybrid 일 가능성?"
+
+paper §V-B Eq 1 (N=385 초기 sample budget) 이 unstratified random row 추출이고, Eq 5 (sampling_size_{t+1} 동적 update) 가 row 단위. block sample 영역은 paper §V-B 자체 명시 X (paper §IV.6 row group block 영역과 영역 다름 — §IV.6 = HDF 데이터 layout, §V-B = sampling allocation). **본 연구 contribution scope = 추출 방식 random → stratified 정정, block/row 구조 outside**. paper source code level verify 미완 (정직 disclosure #9).
+
+박광현 정확 framing 권장?
+
+**박세은 9 영역 답변 form 압축** (agent_J §1 base, full form 47.9 KB 자세 contents = `_internal/handoff/active/agent_J_박세은_6영역_통합대응_답변form_20260515_0500.md`):
+
+1. (★★★) 분포 알면 ECQO? → paper §V "without index" anchor. ECQO = HNSW (data graph, fit O(n log n) + memory base×1.x~2x), 본 = K-means K=20 메타 (15KB). cost 2-3 order 차이. complementary scenario (high-frequency stable = ECQO / ad-hoc/shifting = Form 1, paper §VI-B align).
+2. RQ3 사전 학습 → 1001 file = batch baseline (cold start 1 회 fit 0.1-0.5초 + query ms). Form 1 streaming axis = per-tuple incremental online maintenance.
+3. 0.1~0.5초 매 query? → fit time SF=1 한정, cold start 1 회. 매 query fit X (paper period P=50 가정). Form 1 = per-tuple amortized.
+4. L1/L2/L3 → L1 (global skew flag, HHI) / L2 (cluster centroid, K-means K=20) / L3 (+σ_j Neyman). RQ2 = L3 oracle 가정. L_index = paper §V-A 영역 (Form 1 outside).
+5. AS single-table 不可 → 구조 X = 구현 코드 한계 (paper §V-B 자체는 OK). 임채림 자문 base (5/14 회의 14:57).
+6. Neyman paradox → sel=0.01 한정 (Anti 1.540 < Prop 1.580 < Neyman 1.595). sel=0.1 = Neyman best (classical theory 정합, §6.6 표).
+
+---
+
+## 6.8 박세은 10:15 영역 (Anti-Neyman > Neyman = Neyman 가설 무효?)
+
+박세은 10:15 카톡: "anti-neyman 이 neyman 보다 좋으면 neyman 가설 자체가 무효 아닌가?"
+
+**Neyman 가설 (n_j ∝ N_j × σ_j 가 분산 최소) 자체 = 유효** (Neyman 1934 + Cochran 1977 §5.5 partial). 본 측정 데이터셋이 **Neyman 가정 (cluster 간 σ_j range 다양 + N_i CV ≠ 0) 불만족 + selectivity-dependent**:
+
+- **sel=0.01**: σ_j range 1.3-1.6× narrow + N_i CV=0 (cluster size uniform) → Neyman 의 σ-가중 효과 약함 → Anti-Neyman 1.540 > Proportional 1.580 > Neyman 1.595 (paradox)
+- **sel=0.1**: σ_j range 더 확보 (sample size 증가 → variance 더 spread) + N_i CV ≠ 0 → Neyman 본래 가설 정합 → Neyman best (SIFT sel=0.1 −9.16% = csv 가장 큰 단일 cell)
+
+→ "Neyman 가설 무효" 영역 = **데이터셋 가정 위반 + selectivity-dependent 의 결과**. 가설 자체 무효 X. **σ_j oracle 가정 + 직접 측정 추가 검증 필요** (현재 RQ2 = L3 oracle, 본 측정 자체 σ_j 직접 estimate X).
+
+박광현 정확 해석 권장? Cochran 1977 §5.5 (stratification with unequal variance) 추가 reference 가능성?
+
+---
+
+## 7. 정직 disclosure 14 영역 (cherry-picking 회피, 사전 명시)
 
 (Agent A-J 7 + 박세은 6 통합)
 
@@ -164,6 +198,7 @@ RQ2 5-way csv (rq2_DEEP_sf100_5way_allocation.csv + rq2_SIFT_sf100_5way_allocati
 11. paper §V-B 영역 = "without index" 가정 — paper p.5 verbatim 명시 (Form 1 anchor)
 12. RQ3 = 사전 학습 batch baseline. Form 1 streaming axis = phase 1 measurement 미완
 13. 0.1~0.5초 fit time = SF=1 (1M rows) 한정. SF=10/100 미측정 (선형 scale-up SF=10 ≈ 1~5s, SF=100 ≈ 10~50s 추정)
+14. **Anti-Neyman > Neyman ≠ Neyman 가설 무효** — Neyman 가설 (n_j ∝ N_j × σ_j 가 분산 최소) 자체 유효 (Neyman 1934 + Cochran 1977 §5.5 partial). 본 측정 데이터셋이 Neyman 가정 (cluster 간 σ_j range 다양 + N_i CV ≠ 0) 불만족 + selectivity-dependent (sel=0.01 paradox / sel=0.1 정합). σ_j oracle 가정 + 직접 측정 추가 검증 필요
 
 ---
 

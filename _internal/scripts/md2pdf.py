@@ -92,7 +92,7 @@ h1 {
     line-height: 1.35;
 }
 
-/* H2 — Apple 스타일 (subtle bg + 좌측 navy 바) */
+/* H2 — Apple 스타일 (subtle bg + 좌측 navy 바) — ★ 각 H2 마다 페이지 break */
 h2 {
     font-size: 14pt;
     font-weight: 700;
@@ -100,11 +100,19 @@ h2 {
     background: #f5f5f7;
     border-left: 5px solid #1a2c4e;
     padding: 9px 16px;
-    margin: 22px 0 10px 0;
+    margin: 0 0 10px 0;
     border-radius: 0 6px 6px 0;
     letter-spacing: -0.01em;
     page-break-after: avoid;
     break-after: avoid;
+    page-break-before: always;        /* 각 H2 = 새 페이지 시작 */
+    break-before: page;
+}
+/* 첫 H2 (보통 ## 목차) 는 H1 + 메타 와 같은 페이지 시작 */
+body > h2:first-of-type,
+.meta + h2 {
+    page-break-before: avoid !important;
+    break-before: auto !important;
 }
 
 /* H3 — 단단한 weight + 좌측 얇은 회색 바 */

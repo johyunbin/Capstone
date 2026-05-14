@@ -1,6 +1,8 @@
-# Handoff v25 — B1 Variance Root Cause + 측정 미커버 영역 종합 inventory (5/15 02:35)
+# Handoff v25 — B1 Variance Root Cause + 측정 미커버 영역 종합 inventory + Pareto/K dim cross-validation (5/15 03:15)
 
 > **목적**: 새 mini session (5/15 01:20 시작) 의 자동 진행 결과 종합. 사용자 아침 7-9시 확인 base entry point.
+>
+> **업데이트 03:15**: Pareto Top 5 cross-validation + K granularity dim-K 가설 검증 보고서 2개 추가 (commit 1ae3ad6 push 완료)
 
 ---
 
@@ -17,8 +19,19 @@
    - paper exact base coverage: 9 cell × 56 method = **98.2% 유효** (495/504, A2-Fig8 scope 외 제외)
    - paper Fig 13 sel sweep: sel=0.001 (A4-sel) + sel=0.01 (A1-DEEP) ✓, **sel=0.10 미측정**
    - K granularity 9 cell 확장: 9 × 4 × 3 × 2 = 216 file (현재 5 cell 만)
-3. **A4-sel × K granularity 재launch readiness 확보** (단, 코드 수정 필요 → 사용자 승인 후 launch)
-4. **claude.ai/design v7 + 박광현 PDF v3 readiness 확인**
+3. **★ Pareto Top 5 cross-validation** (03:00 추가 분석)
+   - 5 method (sparse_rp/chao/neuram/pca1d/hilbert) × 9 cell = **100% coverage** 확인
+   - **paired CaseB < CaseA = 97.78%** (44/45, 1 outlier neuram A1-SSN)
+   - 전체 56 method = 91.46% (450/492)
+   - robustness rank: hilbert (std 1.55%) > pca1d > sparse_rp > chao_weighted > neuram
+   - ★ 박세은 review answer 강화 anchor
+4. **★ K granularity × dimension 종합 검증** (03:10 추가 분석)
+   - 5/12 base: K=10 best 55%, K=20 25%, K=30 20%
+   - 5/14 SF axis: A5-scale K=10 모두 positive (CaseB > CaseA), K=30 모두 negative
+   - 동일 DEEP 96d K=10 인데 5/12 (-9.5%) vs 5/14 (+10.3%) = **measurement run-level bias 재확인**
+   - dimension-dependent K best 가설 = 약한 evidence
+5. **A4-sel × K granularity 재launch readiness 확보** (단, 코드 수정 필요 → 사용자 승인 후 launch)
+6. **claude.ai/design v7 + 박광현 PDF v3 readiness 확인**
 
 ---
 
@@ -256,6 +269,8 @@ python3 cache/rq3/measure_paper_exact.py --cell A4-sel-0.10 --K 30
 ### 7.1 분석 보고서 (★ 사용자 read 권장)
 - `experiments/results/analysis/B1_variance_root_cause_종합분석_20260515_0150.md` — B1 variance 정량 + 권장안 3안
 - `experiments/results/analysis/측정_미커버_영역_종합_inventory_20260515_0205.md` — paper Fig 매핑 + 우선순위
+- `experiments/results/analysis/Pareto_Top5_method_cell_cross_validation_20260515_0250.md` — Pareto Top 5 paired 97.78% 강력 증거
+- `experiments/results/analysis/K_granularity_dimension_dependent_종합검증_20260515_0310.md` — dim-K 가설 검증 + run-level bias
 
 ### 7.2 handoff
 - `_internal/handoff/active/handoff_v25_b1_variance_root_cause_+_미커버_inventory_20260515_0235.md` ← 본 file
@@ -265,6 +280,12 @@ python3 cache/rq3/measure_paper_exact.py --cell A4-sel-0.10 --K 30
 - `/tmp/b1_analysis_pt2.py` — sparse_rp outlier 분리 + K granularity 일관성
 - `/tmp/b1_analysis_pt3.py` — 5/14 SF axis + 종합 비교
 - `/tmp/inventory_unmeasured.py` — cell × method coverage matrix
+- `/tmp/pareto_top5_check.py` — Pareto Top 5 method × cell coverage
+- `/tmp/k_granularity_dim.py` — K granularity × dimension cross-validation
+
+### 7.4 commit chain
+- `9cbd61c` (02:35) — B1 variance + 미커버 inventory + handoff v25
+- `1ae3ad6` (03:15) — Pareto Top 5 + K dim 가설 검증
 
 ---
 

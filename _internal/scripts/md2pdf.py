@@ -317,26 +317,16 @@ h4 + p, h4 + table, h4 + blockquote, h4 + ul, h4 + ol {
     page-break-before: avoid;
     break-before: avoid;
 }
-/* 블록 보호 */
-ul, ol, dl, table, blockquote, pre {
+/* 블록 보호 — table 만 split 방지 (긴 blockquote/리스트는 자연 흐름) */
+table, pre, blockquote {
     page-break-inside: avoid;
     break-inside: avoid;
 }
-p, li, td { orphans: 3; widows: 3; }
+p, li, td { orphans: 2; widows: 2; }
 
-/* H2 단위 keep-together 시도 (overflow 시 통째 다음 페이지) */
-div.section-keep {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-}
-div.section-keep > * {
-    break-before: avoid !important;
-    page-break-before: avoid !important;
-}
-div.section-keep h2 {
-    break-before: auto !important;
-    page-break-before: auto !important;
-}
+/* section-keep — H2 단위 통째 page push 는 비활성 (자연 흐름 허용).
+   keep-together 가 강하면 페이지 위쪽만 채우고 빈 공간이 생긴다. */
+div.section-keep { /* no-op 유지, 과거 CSS 호환만 */ }
 """
 
 
@@ -527,13 +517,39 @@ def _wrap_section_keep(html: str) -> str:
     return "".join(result)
 
 
+def _slugify_korean(value, separator):
+    """한글 + 영문 + 숫자 유지 slugify (markdown toc anchor 용, GFM 호환).
+
+    Python markdown 기본 slugify 는 한글을 strip 해서 PDF 내 anchor link 가
+    잘못된 ID 를 가리킨다. 본 함수는 GFM (GitHub Flavored Markdown) 규칙대로:
+    1. lowercase
+    2. 공백 → separator
+    3. 한글/영문/숫자/`-`/`_` 외 모두 제거 (`. , ( ) [ ] / * + → ` 등)
+
+    이렇게 하면 md 안 `[제목](#한국어-anchor)` 의 anchor 와 heading 의 id 가 일치.
+    """
+    # GFM 규칙: lowercase 먼저
+    value = value.strip().lower()
+    # 공백 → separator
+    value = re.sub(r'[\s]+', separator, value)
+    # 특수문자 제거 (한글 + 영숫자 + `-` + `_` 만 유지)
+    value = re.sub(r'[^\w가-힣ㄱ-ㅎㅏ-ㅣ一-鿿\-]', '', value, flags=re.UNICODE)
+    return value
+
+
 def _md_to_html(md_text: str) -> str:
-    """Markdown → HTML 변환 (GFM 테이블·코드블록·codehilite·toc 지원) + section keep."""
+    """Markdown → HTML 변환 (GFM 테이블·코드블록·codehilite·toc 지원, 한글 anchor)."""
     html = markdown.markdown(
         md_text,
         extensions=["tables", "fenced_code", "codehilite", "toc", "md_in_html"],
+        extension_configs={
+            "toc": {
+                "slugify": _slugify_korean,
+                # markdown 의 link [a](#b) 는 raw 이므로 anchor ID 와 일치시키려면
+                # 각 heading 의 id 를 위 slugify 로 생성한다.
+            },
+        },
     )
-    html = _wrap_section_keep(html)
     return html
 
 

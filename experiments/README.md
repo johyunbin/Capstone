@@ -1,115 +1,137 @@
-# Experiments — "쏠림 → 성능 저하 → 공간 인식 Sampling 개선"
+# experiments/ — 본 연구 측정 (5/14 update)
 
-## 개요
+> **현 단계** (2026-05-14): paper exact 측정 1001 file (server-only) + 본 세션 추가 64 file = **총 1065 file portfolio**. 단독 best −10.17% (minibatch_partial, 9-cell mean) + 결합 best −7.37% (Centroid tuple sparse_rp, A2-Fig9). 5/15 박광현 D-1 + 5/27 최종 발표 D-13 + 6/11 보고서 D-28.
 
-Exqutor(arXiv:2512.09695v2)의 uniform BERNOULLI sampling이 벡터 데이터의 공간 밀도 비균일성(쏠림)에 의해 카디널리티 추정 정확도가 저하되는 문제를 실증하고, 공간 인식 stratified sampling(KM20)으로 이를 개선한다. RANDOM20 대조 실험으로 "쏠림이 원인"임을 직접 증명.
-
-## 환경
-
-- **서버**: BDAI Lab GPU 서버 (`165.132.140.240`)
-- **DB**: Exqutor-patched PostgreSQL 16.9 (port 55436) + pgvector 0.7.1
-- **데이터**: TPC-H SF10 + DEEP 96d (8M), SIFT 128d (1.5M)
-- **주 실험 테이블**: `partsupp_deep_10_subset_1m` (1M, KM20 stratum_id 부여)
-
-## 디렉토리 구조
+## 활성 디렉토리
 
 ```
 experiments/
-├── config/                     실험 파라미터
-│   └── experiment_params.yaml
-├── code/rq1/                   실험 스크립트 (서버에서 실행)
-│   ├── phase4_native.py        Pivot A: SYSTEM vs BERNOULLI
-│   ├── phase5_local_skew.py    로컬 skewness 4지표
-│   ├── phase6_strat_native.py  KM20 stratified native 측정
-│   ├── phase6_multiseed.py     Phase 6 multi-seed (5 seeds)
-│   ├── random20_control.py     ★ RANDOM20 대조 실험 (s=0.500)
-│   ├── random20_low_sel.py     ★ RANDOM20 저selectivity (s=0.010, 0.050)
-│   ├── hhi_python.py           ★ Per-selectivity HHI (Python 거리계산)
-│   ├── phase7_8m_redo.py       8M 외적 타당성 (D_target 재계산)
-│   └── ...
-├── results/rq1_motivation/     실험 결과
-│   ├── unified_random20_analysis.md  ★ 통합 분석 (핵심 참조 문서)
-│   ├── random20_selectivity_gradient.md  selectivity gradient 분석
-│   ├── summary.md              Phase 1~7 상세 (717줄)
-│   ├── direction_pivot_rationale.md  Pivot 경위 (187줄)
-│   ├── phase7_artifact_verification_20260415.md  Phase 7 artifact 검증
-│   ├── deep_review_20260415.md  3축 딥리뷰
-│   ├── *.json                  측정 데이터 (meta, paired, summary)
-│   └── *.parquet               원시 데이터 (per-query Q-error)
-├── results/rq2_aware/          (예정)
-├── results/rq3_agnostic/       (예정)
-└── figures/rq1_motivation/     시각화
+├── README.md                                [본 파일, 5/14 update]
+├── _DROPPED_README.md                       [dropped scope audit log]
+├── config/
+│   └── experiment_params.yaml               [YAML 파라미터 정의, 4/16 기준]
+├── plans/
+│   └── RQ1_motivation_pipeline_20260414_162857.md  [W1 RQ1 motivation 설계]
+│
+├── figures/
+│   ├── paper_exact_v7/                      [★ 활성 6 figure, 5/27 발표 anchor]
+│   │   ├── F1_paradigm_rollup_caseB.png
+│   │   ├── F2_cliffs_delta_bucket.png
+│   │   ├── F3_caseA_vs_caseB.png
+│   │   ├── F4_top_winners.png
+│   │   ├── F5_effect_size.png
+│   │   └── F6_narrative_diagram.png
+│   └── archive/                             [W1~W4 sprint 옛 figure 8 sub-dir]
+│
+├── results/                                 [활성 3 건만, W1~W4 sprint 는 archive 로]
+│   ├── RQ_Limitation_4종_명시.md            [★ 5/5 회의록 line 122-126, Limitation 4종 표준]
+│   ├── phase_f/
+│   │   └── algorithm1_box.md                [B1 baseline Algorithm 1 의사코드, reviewer attack defense]
+│   └── archive/                             [W1~W4 sprint 정리됨, 5/14]
+│       ├── README.md
+│       ├── w1_w4_sprint_results/            [신규 archive, 5/14]
+│       │   ├── master_drafts/               [W1~W4 master draft 5 건]
+│       │   ├── 10cell_narrative/            [5/8 회의 자료]
+│       │   ├── w2_sprint/                   [W2 5/7 sprint 종합]
+│       │   ├── rq1_motivation/              [97 file, W1 4/16 RQ1 motivation]
+│       │   ├── rq2_aware/                   [14 file, W3 5/6-5/7 KM20 alloc]
+│       │   ├── rq3_agnostic/                [245 file, W4 5/8 RQ3 16 method]
+│       │   ├── cache_rq1/                   [434 file, 5/8-5/9 server mirror]
+│       │   └── phase_g/                     [REPORT.md (5/10, paper-exact 직전)]
+│       └── 2026_05_08_cleanup/              [기존 archive, 5/7 옛 km/opq/reservoir 등]
+│
+└── code/                                    [활성 측정 script 없음 — paper-exact 는 _internal/scripts/]
+    ├── README.md
+    └── archive/
+        └── w1_w4_scripts/                   [W1~W4 sprint script 4 subdir]
+            ├── rq1/                         [27 file]
+            ├── rq2/                         [5 file]
+            ├── rq3/                         [43 file]
+            └── local_analysis/              [42 file, figure generation]
 ```
 
-## 실험 Phase 매핑
+## 본 연구 핵심 자료 위치
 
-### RQ1 — 벡터 데이터의 공간 밀도 비균일성과 uniform sampling의 편향
+### 1. 측정 portfolio (server-only)
 
-| Phase | 실험 | 결과 | 파일 |
-|-------|------|------|------|
-| Stage 1~5 | 100 query × 6 sel × 5 seed 기초 데이터 | — | `stage*_meta.json` |
-| Phase 1~2 | 글로벌 skew 4지표 × 6 sel = 24 조합 | 전부 \|ρ\|<0.2 → H1 기각 | `stage5_summary.json` |
-| Phase 3 | Exqutor design constraint 검증 | 5종 발견 | `equivalence_check.md` |
-| Phase 5 | 로컬 skew 4지표 × 6 sel = 24 조합 | 전부 \|ρ\|<0.2 → 재확인 | `phase5_local_skew_*.json` |
-| **HHI** | **Per-selectivity cluster 집중도** | **s=0.001 HHI 12.5× → s=0.500 1.3×** | `hhi_python_summary.json` |
+paper exact 측정 raw json 은 server `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact/` 에 1001 file. 본 세션 추가 회수 64 file 는 별도 디렉토리:
 
-### RQ2 — Distribution-Aware Stratified Sampling
+- `paper_exact_mj_restrat/` (8) — multi-join 재계층화
+- `paper_exact_centroid_tuple/` (8) — Centroid tuple cheap 근사
+- `paper_exact_b1_hash/` (8) — Hash bucketing
+- `paper_exact_b2_pca/` (8) — PCA preprocessing
+- `paper_exact_b3_iter/` (8) — Iterative refinement
+- `paper_exact_a2fig8_mv/` (8) — A2-Fig8 multi-vector
+- `paper_exact_alpha_sweep/` (16) — α sweep 4×4
 
-| Phase | 실험 | 결과 | 파일 |
-|-------|------|------|------|
-| Phase 4 | Pivot A: SYSTEM→BERNOULLI | +3.8~9.6% (4구간 p<0.001) | `phase4_*.json` |
-| Phase 6 | KM20 stratified native | **+1.64% CI [1.25, 2.02]** (5-seed) | `phase6_multiseed_summary.json` |
-| Phase 7 | 8M/SIFT 외적 확장 | artifact 철회 | `phase7_artifact_verification*.md` |
-| Phase 7 redo | 8M D_target 재계산 + 재측정 | 진행 중 | `phase7_8m_redo_summary.json` |
-| **RANDOM20** | **대조 실험 (s=0.500)** | **KM20 ≈ RANDOM20** | `random20_control_summary.json` |
-| **RANDOM20 low-sel** | **대조 실험 (s=0.010, 0.050)** | **KM20 +8.93% vs RAND −10.67%** | `random20_low_sel_summary.json` |
+server 접속: `ssh capstone2026@165.132.140.240`.
 
-### RQ3 — Distribution-Agnostic (최종발표, W7)
+### 2. 분석 file (local, `_internal/analysis/`)
 
-예정: KDE-pilot, LSH-bucket
+- `multi_join_restratification_results_20260513.md` (시나리오 A.5 Hybrid)
+- `centroid_tuple_cheap_approximation_results_20260513.md` (★ 새 method axis)
+- `resource_efficiency_pareto_20260513.md` (Pareto + reservoir O(1))
+- `alpha_sweep_results_20260514.md` (★ 시나리오 B 확정)
+- `cheap_approximation_extended_results_20260514.md` (cheap 4 후보 종합)
+- `multi_cell_km_based_learning_comparison_20260513.md`
+- `km_granularity_sensitivity_3way_K10_K20_K30_20260513.md` (K=10/20/30)
+- `km_granularity_sensitivity_K10_vs_K20_20260513.md`
+- `method_level_breakdown_20260513.md`
 
-## 핵심 결과 요약
+### 3. 측정 script (local, `_internal/scripts/`)
 
-### RANDOM20 Selectivity Gradient (본 연구 최강 증거)
+paper exact 측정 main script:
+- `measure_paper_exact.py` — paper §V-B 재현 + 우리 method 측정 (1100 line)
+- `_measure_common.py` — 공통 측정 library + N_STRATA=20 default
+- `analyze_paper_exact.py` — 측정 결과 분석
+- `figures_paper_exact.py` — paper_exact_v7/F1~F6.png 생성
 
-| sel | HHI (ratio) | KM20 vs BERN | RAND vs BERN | KM20−RAND |
-|-----|------------|-------------|-------------|-----------|
-| 0.010 | 0.50 (10.1×) | +8.93% | −10.67% | **19.6%p** |
-| 0.050 | 0.29 (5.8×) | +1.85% | +0.79% | 1.1%p |
-| 0.500 | 0.07 (1.3×) | +1.64% | +2.20% | ~0 |
+### 4. handoff (현재 상태)
 
-### Two-Level Decomposition
+`_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` — 5/14 07:21 finalize, 본 세션 18.5h 종합.
 
-- **Level 1** (Proportional Allocation): partition 무관, 보편적 → s=0.500에서 지배
-- **Level 2** (Spatial Awareness): selectivity-dependent → s=0.010에서 지배
+### 5. narrative (저녁 회의 base)
 
-## 재현 방법
+- `submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` (5/14, 10 단계 산문 + §11 핵심 6 method + §12 17 사용 method)
+- `submission/_drafts/속도는벡터_프로젝트_종합이해_v1.md` (5/14, 종합 이해 문서 733 line)
+- `submission/_drafts/속도는벡터_5_15_박광현미팅_핵심정리_v1.md` (5/15 미팅 자료)
+- `submission/_drafts/속도는벡터_5_27_최종발표_storyline_v1.md` (5/27 발표 storyline)
+- `submission/_drafts/속도는벡터_6_11_최종보고서_outline_v1.md` (6/11 보고서 outline)
+- `submission/_drafts/속도는벡터_팀원_상황공유_v1.md` (팀원 공유)
+- `submission/_drafts/속도는벡터_5_27_deck_v6_update_plan_20260514.md` (5/27 deck v6 plan)
 
-```bash
-# 서버 접속
-ssh capstone2026@165.132.140.240
-cd /mnt/hdd0/home/capstone2026
+## 정리 history
 
-# Exqutor PG 기동 확인
-PG_BIN=Exqutor/PostgreSQL/pgvector/psql/bin
-$PG_BIN/pg_ctl status -D exqutor_sf10
+- **4/16 ~ 5/8**: W1~W4 sprint (RQ1 motivation + RQ2 KM20 + RQ3 16 method 비교) → archive
+- **5/9 ~ 5/14**: paper exact 측정 framework launch + 1065 file portfolio 회수
+- **5/14 15:42**: 본 정리 작업 (회의 의견 #9 반영, archive 디렉토리 신규 생성 + W1~W4 sprint 결과 이동 + README 3 건 작성)
 
-# 실험 스크립트 실행 (예: RANDOM20)
-python3 cache/rq1_random20_control.py
+## 활성 vs archive 분류 기준
 
-# 결과 확인
-cat cache/rq1/random20_control_summary.json | python3 -m json.tool
-```
+- **활성**: 5/27 최종 발표 + 6/11 보고서에 직접 인용되는 자료 (paper_exact_v7 6 figure + RQ_Limitation + phase_f algorithm1 + _DROPPED_README)
+- **archive**: 중간 발표 (4/28) 시점 자료 + paper exact 측정으로 superseded 된 W1~W4 sprint 산출물
 
-## 지표
+archive 안 자료는 paper exact REPORT v11 (server) + 본 narrative v1 으로 superseded 되어 직접 인용은 안 되지만, 측정 변천 timeline 의 reference 로 보존.
 
-- **Q-error**: max(estimated/actual, actual/estimated) — hook_est 기준
-- **Paired Wilcoxon**: signed-rank test (alternative: strat < bern)
-- **HHI** (Herfindahl-Hirschman Index): cluster 집중도 (1/K=균일, 1.0=단일 cluster)
-- **Bootstrap 95% CI**: 5-seed mean diff% 의 bootstrap resampling
+## 본 연구 narrative 요약
 
-## 참조
+본 연구는 Exqutor 논문 (arXiv:2512.09695v2) 의 §V-B Adaptive Sampling 영역 (인덱스 부재 시 Bernoulli + 모멘텀 기반 동적 sample size) 에 대해 paper exact 재현 + 분포 인지 stratification ensemble augment 의 정량 가치를 검증.
 
-- Exqutor 논문: arXiv:2512.09695v2
-- 연구 재설계안: `plans/연구재설계안_20260415_131400.md`
-- 통합 분석: `experiments/results/rq1_motivation/unified_random20_analysis.md`
+핵심 narrative 흐름 (10 단계):
+1. 문제: skew 영역 베르누이 부정확
+2. 탐색: 56 method × 8 갈래 × 9 측정 환경
+3. 폐기: 39 method (자원 7 + audit 23 + 정합성 9)
+4. 단독 대체: best minibatch_partial −10.17% (CaseA, 9-cell mean)
+5. 결합 시도: best Centroid tuple −7.37% (CaseB, A2-Fig9)
+6. 결합 한계: 결합 < 단독
+7. 결합 진짜 가치: method 선택 안정성 + cell spread 줄임
+8. 자원 효율: Pareto Top 5 = 12 anchor consistency 일치, reservoir O(1) 산업 적용
+9. 권장: 단독 대체 우선 + 결합 보조 + method-aware
+10. 다중 테이블: Centroid tuple 로 원칙 그대로 적용
+
+자세한 내용은 `submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` 또는 `submission/_drafts/속도는벡터_프로젝트_종합이해_v1.md` 참조.
+
+---
+
+작성: 2026-05-14 15:42 KST · 회의 의견 #9 반영 archive 정리 완료 (W1~W4 sprint → archive, paper exact 시점 narrative 로 update)
+이전 README (W1 시점 narrative) 는 git history 에 보존.

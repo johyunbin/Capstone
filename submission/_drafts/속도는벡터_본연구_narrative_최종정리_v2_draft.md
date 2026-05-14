@@ -1,8 +1,12 @@
 # 속도는벡터 — 본 연구 narrative 최종 정리 v2 draft
 
-> 본 세션 22.5h 종합 (Form 1 fix + Agent A-J 10 호출 + 박세은 9 영역 + 정정 룰 14 + 정직 disclosure 13 + K granularity SF axis + Neyman selectivity-dependent) 반영하여 v1 (10 단계) 를 12 단계 + 부록 5 종으로 확장한다. 박세은 review + 박광현 5/15 미팅 + 5/27 최종 발표 + 6/11 최종 보고서 **공통 base**. 박세은 5/13 12:13 피드백 (method 개수 축소 + 숫자/공식 최소화) + 5/14 9:09 ~ 10:15 9 영역 자문 반영. 학부생 톤 + 학술 서사적 산문.
+> 본 세션 22.5h 종합 (Form 1 fix + Agent A-J 10 호출 + 박세은 9 영역 + 정정 룰 14 + 정직 disclosure 13 + K granularity SF axis + Neyman selectivity-dependent) 반영하여 v1 (10 단계 + method 깊이) 영역을 v2 (14 단계 본문 + 13 부록 §A-§M) 영역으로 확장한다. 박세은 review + 박광현 5/15 미팅 + 5/27 최종 발표 + 6/11 최종 보고서 **공통 base**. 박세은 5/13 12:13 피드백 (method 개수 축소 + 숫자/공식 최소화) + 5/14 9:09 ~ 10:15 9 영역 자문 반영. 학부생 톤 + 학술 서사적 산문.
 
-작성: 2026-05-14 22:32 KST · 측정 portfolio 1065 file (기존) + K granularity SF axis 48 file (추가) = 1113 file · 본 세션 회의 transition 후 narrative v3 폐기 + Form 1 (Streaming-aware Distribution-Conscious Cardinality Estimation for VAQ: Extending Exqutor's §V-B Framework) fix.
+작성: 2026-05-14 22:32 KST · 측정 portfolio 1065 file (기존) + K granularity SF axis 48 file (추가) = **1113 file** · 본 세션 회의 transition 후 narrative v3 폐기 + **Form 1 (Streaming-aware Distribution-Conscious Cardinality Estimation for VAQ: Extending Exqutor's §V-B Framework) fix**.
+
+본 v2 영역의 구조:
+- 본문: §0 main theme + paper §V-B "without index" anchor / §1-§3 출발점 + 탐색 + 폐기 / §4-§7 Form 1 Component A+B+C+D / §8 Component 통합 axis (17-step) / §9-§10 1001 file batch baseline 재해석 + Pareto frontier / §11-§12 K granularity SF axis + Neyman selectivity-dependent 정정 / §13-§14 권장 설계 + positioning + 측정 plan + publication path + timeline
+- 부록: §A 정직 disclosure 16 (13 기본 + 3 보충) / §B 박세은 9 영역 답변 form (카톡 복붙) / §C paper §V verbatim + 17-step pseudo-code / §D 정정 룰 14 / §E v1 → v2 diff summary / §F 17 사용 method 깊이 + 측정 portfolio 세부 / §G Related Work / §H 측정 protocol / §I Form 1 측정 script template / §J Agent A-J 10 호출 결과 종합 / §K 5/27 + 6/11 + 5/15 deliverable mapping / §L measurement evidence 추가 정리 / §M paper §V-B source code reference
 
 ---
 
@@ -3067,4 +3071,4 @@ v1 §11 (사용 method 깊이 소개 핵심 6) + §12 (17 사용 method 전체 l
 
 ---
 
-작성: 2026-05-14 22:32 KST · v1 (10 단계, 5/14 07:55) → v2 (12 단계 + 부록 5 종, 5/14 22:32) update · 본 세션 22.5h 종합 + Form 1 fix (Streaming-aware Distribution-Conscious Cardinality Estimation for VAQ) + Agent A-J 10 호출 (paper 재정독 / 검증 / 8 옵션 deep dive / paper §VI 한계 / Form 1 구체화 / 측정 plan / paper Eq 1-6 verbatim / 1001 file batch baseline 재해석 / 5/27 + 6/11 outline / 박세은 6 영역) + 박세은 9 영역 (9:09 영역 1-5 + 9:27 영역 6 + 9:42 + 9:54 + 10:15 selectivity + over-statement + 가설 verify + 8:50 K granularity) + 정정 룰 14 (Agent 발견 2 + 박세은 9 + 본 verify 3) + 정직 disclosure 13 (Agent 7 + 박세은 6) + K granularity SF axis 48 file 추가 측정 완료 + Neyman selectivity-dependent 정정 반영 · 박세은 review + 박광현 5/15 미팅 + 5/27 최종 발표 + 6/11 최종 보고서 공통 base · fix 모드 (main theme + 4 측면 + paper §V-B "without index" 가정 변경 X)
+작성: 2026-05-14 22:32 KST · v1 (10 단계, 5/14 07:55) → v2 (14 단계 본문 + 13 부록 §A-§M, 5/14 22:32) update · 본 세션 22.5h 종합 + Form 1 fix (Streaming-aware Distribution-Conscious Cardinality Estimation for VAQ) + Agent A-J 10 호출 (paper 재정독 / 검증 / 8 옵션 deep dive / paper §VI 한계 / Form 1 구체화 / 측정 plan / paper Eq 1-6 verbatim / 1001 file batch baseline 재해석 / 5/27 + 6/11 outline / 박세은 6 영역) + 박세은 9 영역 (9:09 영역 1-5 + 9:27 영역 6 + 9:42 + 9:54 + 10:15 selectivity + over-statement + 가설 verify + 8:50 K granularity) + 정정 룰 14 (Agent 발견 2 + 박세은 9 + 본 verify 3) + 정직 disclosure 16 (13 기본 + 3 보충) + K granularity SF axis 48 file 추가 측정 완료 + Neyman selectivity-dependent 정정 반영 · 박세은 review + 박광현 5/15 미팅 + 5/27 최종 발표 + 6/11 최종 보고서 공통 base · fix 모드 (main theme + 4 측면 + paper §V-B "without index" 가정 변경 X)

@@ -349,6 +349,48 @@ cell 별 paired Δ% 표와 통계 검정 결과.
 
 K granularity 변화와 multi-table 재계층화 두 측정에서 method 별 민감도 패턴이 일치 (sparse_rp + chao_weighted sensitive vs hilbert_real + hyperloglog robust) 함을 확인하였다. 그러나 저비용 근사 친화도는 다른 분류 패턴 (Friendly: hyperloglog + chao_weighted) 을 보였다. paradigm 분류보다 method 의 클러스터 quality 의존도와 cheap 근사 결합 친화도 두 axis 가 더 본질적인 method 분류 기준이 될 수 있다.
 
+**E.5 핵심 6 method 의 알고리즘 메커니즘 + 이론적 근거 + 실측 결과 (narrative v1 §11 산문 base)**
+
+본문 §4.3.3 의 핵심 5-6 method 의 메커니즘과 이론적 근거를 method 단위로 정리한다.
+
+**minibatch_partial (P1 클러스터링 갈래, 단독 대체 best)** — 데이터를 청크 단위로 흘려보내면서 K=20 클러스터 중심을 점진적으로 학습 (partial_fit). 전체 데이터를 메모리에 올리지 않고 stream 처럼 처리. Sculley (WWW 2010) 의 Web-scale K-means 변형 + scikit-learn 의 MiniBatchKMeans 의 partial_fit API 직접 활용. 단독 대체 모드 9 측정 환경 평균 −10.17% (본 portfolio 단독 best). 학습 시간 0.5 초, 메모리 사용량 작음 (청크 × 차원 D), 측정 환경별 변동성 std 3.33.
+
+**sparse_rp (P4 차원 축소 갈래, 학습 시간 가장 짧음)** — 데이터 차원 D 를 sparse random matrix (Achlioptas density 1/3, 즉 +1 / 0 / −1 의 sparse entries) 로 곱해 낮은 차원 k 로 사영. 그 후 K=20 클러스터로 stratum 분할. Achlioptas (JCSS 2003) 의 sparse Bernoulli projection + Li-Hastie-Church (KDD 2006) 의 매우 sparse 변형. Johnson-Lindenstrauss lemma 의 distance preservation 보장 위에서 sparse 화로 계산 비용을 크게 낮춤. 결합 모드 9 측정 환경 평균 −9.43%, 학습 시간 0.1 초 (본 portfolio 최단), 메모리 O(D × k) 매우 작음, std 3.30.
+
+**chao_weighted (P3 스트리밍 갈래, Pareto Top 정확도)** — 가중 reservoir 표집. 청크 단위로 들어오는 데이터에서 weight 기반 sampling 으로 분포 정보를 streaming 으로 유지. Chao M-T (Biometrika 1982) 의 weighted reservoir sampling 으로, 각 sample 의 probability of inclusion 이 weight 에 비례하도록 보장한다. 결합 모드 9 측정 환경 평균 −9.60% (Pareto frontier 정확도 Top 1), 학습 시간 0.5 초, 메모리 O(K) 매우 작음, std 6.36.
+
+**hilbert_real (P2 공간 분할 갈래, 진짜 Hilbert curve 구현)** — 데이터 차원 D 를 그대로 유지한 채 Hilbert space-filling curve indexer 로 1 차원 좌표 매핑. 그 후 매핑된 1 차원 좌표를 K=20 stratum 으로 분할. Faloutsos (SIGMOD 1989) 의 진짜 D 차원 Hilbert space-filling curve. 본 연구의 이전 hilbert method 는 코드 정독 검토 결과 PCA 2 차원 정렬의 별칭으로 발견되어 (★3 정정), 진짜 Hilbert curve 구현인 hilbert_real 을 별도 method 로 측정. 결합 모드 9 측정 환경 평균 −9.27%, 학습 시간 0.5 초, 메모리 O(N), std 3.12.
+
+**hyperloglog (P9 정보 이론 갈래, 가장 안정)** — hash 기반 분포 카디널리티 추정량. K=20 stratum 별로 trailing zero 의 max 를 추적해 cardinality 를 streaming 으로 추정. Flajolet et al (DMTCS 2007) 의 HyperLogLog 로, 분포의 unique element 수를 매우 적은 메모리로 정확히 추정하는 정보 이론 기반 알고리즘이다. 결합 모드 9 측정 환경 평균 −8.65%, 학습 시간 0.5 초, 메모리 O(K log K), std 2.73 (본 portfolio Best / Excellent 19 method 중 가장 안정).
+
+**reservoir (P3 스트리밍 갈래, 메모리 O(1) — 산업 적용 핵심)** — 가장 단순한 reservoir sampling. 청크 단위 데이터에서 K 개를 균등 확률로 sampling. Vitter (TOMS 1985) 의 reservoir sampling 으로, 데이터 크기 N 을 미리 모르더라도 K 개의 균등 random sample 을 한 번의 pass 로 얻는 알고리즘이다. 결합 모드 9 측정 환경 평균 −9.25%, 학습 시간 0.1 초, 메모리 사용량 O(1) (sample size K 만 보존, 데이터 크기 N 과 무관), std 3.00. 본 §4.3.5 의 산업 적용 reservoir O(1) finding 의 핵심 method — 모바일 / 임베디드 / 스트리밍처럼 메모리가 제약인 환경에 그대로 적용 가능하다.
+
+**E.6 17 사용 method 전체 list (paradigm × CaseB Δ% × 자원 등급 × 이론적 근거)**
+
+39 폐기 후 남은 17 사용 method 의 paradigm 분포 + 결합 모드 평균 + 자원 효율 등급 + 이론적 근거 reference. 자세한 자원 정량 (학습 시간 + 메모리 + SF=100 feasibility) 은 자원 효율 분석 file (`_internal/analysis/resource_efficiency_pareto_20260513.md`) 참조.
+
+| paradigm | method | CaseB Δ% | 자원 등급 | 이론적 근거 |
+|---|---|---:|---|---|
+| P1 클러스터링 | minibatch_partial | −6.98% | ⭐ Excellent | Sculley 2010 partial fit |
+| P1 클러스터링 | minibatch | −9.28% | ⭐ Excellent | Sculley 2010 |
+| P1 클러스터링 | gmm | +2.45% | Good | Dempster 1977 EM (marginal) |
+| P2 공간 분할 | hilbert_real | −9.27% | ⭐⭐ Best | Faloutsos 1989 진짜 |
+| P2 공간 분할 | zorder_morton | −9.26% | ⭐ Excellent | Morton 1966 bit-interleaving |
+| P2 공간 분할 | skilling_hilbert | −9.01% | ⭐ Excellent | Skilling 2004 변형 |
+| P2 공간 분할 | lpm2 | −9.45% | ⭐⭐ Best | Grafström 2012 local pivot |
+| P3 스트리밍 | chao_weighted | −9.60% | ⭐⭐ Best | Chao 1982 weighted reservoir |
+| P3 스트리밍 | reservoir | −9.25% | ⭐⭐ Best | Vitter 1985, **메모리 O(1)** |
+| P3 스트리밍 | thompson_sampling | −8.98% | ⭐ Excellent | Thompson 1933 Beta posterior |
+| P3 스트리밍 | cum_sqrtf | −8.45% | Good | Cochran 1977 sqrt(F) |
+| P4 차원 축소 | sparse_rp | −9.43% | ⭐⭐ Best | Li-Hastie-Church 2006 |
+| P4 차원 축소 | neuram | −9.97% | ⭐⭐ Best | autoencoder (PCA1D 등가 audit) |
+| P4 차원 축소 | pca1d | −9.63% | ⭐ Excellent | Pearson 1901 PCA |
+| P4 차원 축소 | rsvd | −8.49% | ⭐ Excellent | Halko-Martinsson 2011 |
+| P6 양자화 | pq | −9.25% | ⭐ Excellent | Jégou 2011 product quantization |
+| P9 정보 이론 | hyperloglog | −8.65% | ⭐⭐ Best | Flajolet 2007 HyperLogLog |
+
+CaseB Δ% 는 결합 모드 9 측정 환경 평균 (음수가 클수록 정확도 개선). 학습 시간 모두 0.1 ~ 1 초 범위. 자원 효율 등급 정의 — ⭐⭐ Best (fit < 1s + 메모리 O(N) 이하 + SF=100 OK + Δ% < −9%) / ⭐ Excellent (fit < 2s + Δ% < −8%) / Good (fit < 2s + Δ% −5 ~ −8%). P5 준 무작위 / P10 밀도 추정 paradigm 은 모두 폐기되어 사용 method 없음.
+
 ### 부록 F — 알고리즘 정독 검토로 폐기한 23 method 결정 근거 정리
 
 5월 10일 8-agent 정독 검토 결과의 method 별 발견 사항의 코드 line 수준 정리.

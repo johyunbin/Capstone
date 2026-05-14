@@ -49,6 +49,6 @@ cell 별 Δ%:
 ## 출처
 
 - 측정 script: `_internal/scripts/measure_paper_exact.py`
-- 분석 file: `experiments/results/paper_exact_v7/analysis/method_level_breakdown_20260513.md`
+- 분석 file: `experiments/results/analysis/method_level_breakdown_20260513.md`
 - handoff: `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` §10
 - 본 narrative §4 / §11.1: 단독 대체 best

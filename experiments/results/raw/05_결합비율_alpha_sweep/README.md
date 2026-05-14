@@ -44,5 +44,5 @@ paper N=385 budget 안에서 두 estimator 공유.
 
 - 측정 script: server `/mnt/hdd0/.../cache/rq3/measure_paper_exact_alpha.py` (line 1067 의 `est_final` 계산을 `ALPHA_SWEEP` env var 받는 형태로 변경)
 - tmux session: `alpha_sweep` (5/13 23:55 launch, 00:13 회수)
-- 분석 file: `experiments/results/paper_exact_v7/analysis/alpha_sweep_results_20260514.md`
+- 분석 file: `experiments/results/analysis/alpha_sweep_results_20260514.md`
 - 본 narrative §5 가중치 sweep: 시나리오 B 확정의 핵심

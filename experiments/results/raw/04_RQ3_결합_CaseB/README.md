@@ -12,7 +12,7 @@ paper §V-B Bernoulli 추정값 + 우리 method 의 추정값 산술 평균 (α=
 - **paired CaseB < CaseA: 92.5%** (455/492, p<1e-45) → 결합이 단독 대체보다 정확 (handoff_v12)
 - 결합 best (−7.37%) < 단독 best (−10.17%) → **결합으로 단독 능가 X**
 - 결합의 진짜 가치: method 선택 안정성 + cell spread 줄임 (더 큰 정확도 X)
-- α sweep 결과: 4 method 중 3 method 가 α=0.5 (산술 평균) best (자세한 sweep 결과는 05_α_sweep)
+- α sweep 결과: 4 method 중 3 method 가 α=0.5 (산술 평균) best (자세한 sweep 결과는 05_결합비율_alpha_sweep)
 
 ## 디렉토리
 
@@ -48,6 +48,6 @@ paper §V-B Bernoulli 추정값 + 우리 method 의 추정값 산술 평균 (α=
 
 ## 출처
 
-- 분석 file: `experiments/results/paper_exact_v7/analysis/centroid_tuple_cheap_approximation_results_20260513.md`
+- 분석 file: `experiments/results/analysis/centroid_tuple_cheap_approximation_results_20260513.md`
 - handoff: `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` §10
 - 본 narrative §5 / §7: 결합 시도 + 결합 진짜 가치

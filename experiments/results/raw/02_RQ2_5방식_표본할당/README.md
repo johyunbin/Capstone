@@ -23,5 +23,5 @@
 ## 출처
 
 - 측정 script: `_internal/scripts/measure_paper_exact.py` (5-way allocation 함수)
-- 분석 file: `experiments/results/paper_exact_v7/analysis/method_level_breakdown_20260513.md`
+- 분석 file: `experiments/results/analysis/method_level_breakdown_20260513.md`
 - 본 narrative §3.3: RQ2 천장 측정 결과

@@ -98,7 +98,7 @@ paper exact 직전 intermediate (5/8-5/9 hyperparam, 본 연구 narrative 인용
 
 `experiments/results/` 직속에 활성 유지:
 
-- `RQ_Limitation_4종_명시.md` (5/5 회의록 line 122-126 Limitation 표준)
+- `연구_한계점_4종_명시_5월5일회의록_기반.md` (5/5 회의록 line 122-126 Limitation 표준)
 - `phase_f/algorithm1_box.md` (B1 baseline Algorithm 1 의사코드)
 
 ---

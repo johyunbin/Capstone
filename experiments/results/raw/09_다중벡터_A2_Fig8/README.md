@@ -12,7 +12,7 @@ paper §VI experimental setup 의 multi-vector 시나리오:
 ## 측정 file (8 file)
 
 ```
-09_A2-Fig8_multi_vector/
+09_다중벡터_A2_Fig8/
 ├── A2-Fig8_CaseA_sparse_rp.json
 ├── A2-Fig8_CaseA_chao_weighted.json
 ├── A2-Fig8_CaseA_hilbert_real.json
@@ -34,4 +34,4 @@ A2-Fig8 = paper Fig 8 multi-vector cell, 4 method × 2 mode = 8 file.
 ## 출처
 
 `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` §10 (A2-Fig8 측정 80 회수 추가)
-`10_full_portfolio_CaseA_CaseB_B1/REPORT_분석/REPORT_paper_exact_v11.md` §10
+`10_전체측정_백업/REPORT_분석/REPORT_paper_exact_v11.md` §10

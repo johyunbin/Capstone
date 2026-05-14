@@ -12,7 +12,7 @@ paper §V-B 는 단일 table 시나리오. 우리는 다음 시나리오:
 ## 측정 file (8 file)
 
 ```
-08_multi_join_재학습/
+08_다중조인_재학습/
 ├── A2-Fig9_CaseA_sparse_rp.json     ← multi-join 재학습 후
 ├── A2-Fig9_CaseA_chao_weighted.json
 ├── A2-Fig9_CaseA_hilbert_real.json
@@ -38,4 +38,4 @@ A2-Fig9 = DEEP+WIKI cross join (multi-table scenario), 4 method × 2 mode = 8 fi
 ## 출처
 
 `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` §10
-`10_full_portfolio_CaseA_CaseB_B1/REPORT_분석/REPORT_paper_exact_v11.md` §9
+`10_전체측정_백업/REPORT_분석/REPORT_paper_exact_v11.md` §9

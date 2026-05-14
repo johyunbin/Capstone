@@ -5,7 +5,7 @@
 ## 디렉토리 구조
 
 ```
-10_full_portfolio_CaseA_CaseB_B1/
+10_전체측정_백업/
 ├── B1_baseline_9cell/                       [9 file = paper §V-B Bernoulli baseline]
 ├── CaseA_단독대체_495/                     [495 file = 55 method × 9 cell - 미측정 5]
 ├── CaseB_결합_496/                          [496 file = 55 method × 9 cell - 미측정 4 + 1 extra]

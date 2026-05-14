@@ -43,6 +43,6 @@
 
 - wrapper script (server /tmp/): `launch_centroid_tuple.py` / `launch_hash_bucketing.py` / `launch_pca_lowdim.py` / `launch_iter_refine.py`
 - 분석 file:
-  - `experiments/results/paper_exact_v7/analysis/centroid_tuple_cheap_approximation_results_20260513.md`
-  - `experiments/results/paper_exact_v7/analysis/cheap_approximation_extended_results_20260514.md`
+  - `experiments/results/analysis/centroid_tuple_cheap_approximation_results_20260513.md`
+  - `experiments/results/analysis/cheap_approximation_extended_results_20260514.md`
 - 본 narrative §10 다중 테이블: Centroid tuple = "더 싸고 더 좋은" best-of-both-worlds

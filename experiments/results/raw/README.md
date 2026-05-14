@@ -15,14 +15,14 @@
 
 | 항목 | 정량 | 출처 raw |
 |---|---|---|
-| paper Fig 12 재현 | mean qe_trim **1.618** (paper 1.69 vs **−4.3%**) | `01_RQ1_paper_baseline/` 9 B1 cell |
-| RQ1 random sampling 부정확 | bernoulli mean=1.638 (sel 0.01) vs km20=1.582 | `01_RQ1_paper_baseline/rq1_*.csv` |
-| RQ2 5-way allocation 우위 | Bern→Prop **−9.53%** (paradox: Anti 1.540 < Prop 1.580 < Neyman 1.595) | `02_RQ2_5way_allocation/rq2_*.csv` |
-| 단독 best (RQ3 CaseA) | minibatch_partial **−10.17%** (9-cell mean) | `03_RQ3_CaseA_단독대체/단독_best_minibatch_partial/` |
-| 결합 best (RQ3 CaseB) | Centroid tuple sparse_rp **−7.37%** (A2-Fig9 cell) | `04_RQ3_CaseB_결합/결합_best_Centroid_tuple/` |
-| 결합 평균 vs 단독 평균 | paired CaseB < CaseA **92.5%** (455/492, p<1e-45) | `10_full_portfolio_CaseA_CaseB_B1/REPORT_분석/` |
+| paper Fig 12 재현 | mean qe_trim **1.618** (paper 1.69 vs **−4.3%**) | `01_RQ1_논문_baseline_재현/` 9 B1 cell |
+| RQ1 random sampling 부정확 | bernoulli mean=1.638 (sel 0.01) vs km20=1.582 | `01_RQ1_논문_baseline_재현/rq1_*.csv` |
+| RQ2 5-way allocation 우위 | Bern→Prop **−9.53%** (paradox: Anti 1.540 < Prop 1.580 < Neyman 1.595) | `02_RQ2_5방식_표본할당/rq2_*.csv` |
+| 단독 best (RQ3 CaseA) | minibatch_partial **−10.17%** (9-cell mean) | `03_RQ3_단독대체_CaseA/단독_best_minibatch_partial/` |
+| 결합 best (RQ3 CaseB) | Centroid tuple sparse_rp **−7.37%** (A2-Fig9 cell) | `04_RQ3_결합_CaseB/결합_best_Centroid_tuple/` |
+| 결합 평균 vs 단독 평균 | paired CaseB < CaseA **92.5%** (455/492, p<1e-45) | `10_전체측정_백업/REPORT_분석/` |
 | Pareto Top 5 (정확도 + 자원 효율) | sparse_rp / chao_weighted / pca1d / hilbert_real / hyperloglog | `03/pareto_top5_5method/` + `04/pareto_top5_5method/` |
-| α sweep 시나리오 B 확정 | α=0.5 default 가 4 α (0.3, 0.4, 0.5, 0.6, 0.7) 中 안정 | `05_α_sweep/` |
+| α sweep 시나리오 B 확정 | α=0.5 default 가 4 α (0.3, 0.4, 0.5, 0.6, 0.7) 中 안정 | `05_결합비율_alpha_sweep/` |
 
 ---
 
@@ -31,26 +31,26 @@
 ```
 raw/
 ├── README.md  (본 file)
-├── 01_RQ1_paper_baseline/                     [9 B1 cell + 5 RQ1 csv]
-├── 02_RQ2_5way_allocation/                    [2 csv = 5-way allocation 모드별 raw]
-├── 03_RQ3_CaseA_단독대체/                     [Pareto Top 5 × 9 cell + minibatch_partial × 9 cell]
+├── 01_RQ1_논문_baseline_재현/                     [9 B1 cell + 5 RQ1 csv]
+├── 02_RQ2_5방식_표본할당/                    [2 csv = 5-way allocation 모드별 raw]
+├── 03_RQ3_단독대체_CaseA/                     [Pareto Top 5 × 9 cell + minibatch_partial × 9 cell]
 │   ├── pareto_top5_5method/                    [45 file = 5 method × 9 cell]
 │   └── 단독_best_minibatch_partial/           [9 file = 9 cell CaseA]
-├── 04_RQ3_CaseB_결합/                         [Pareto Top 5 × 9 cell + Centroid tuple]
+├── 04_RQ3_결합_CaseB/                         [Pareto Top 5 × 9 cell + Centroid tuple]
 │   ├── pareto_top5_5method/                    [45 file = 5 method × 9 cell]
 │   └── 결합_best_Centroid_tuple/              [8 file = A2-Fig9 × 4 method × 2 mode]
-├── 05_α_sweep/                                 [16 file = 4 α × 4 method + 4 file alpha 0.5 default]
+├── 05_결합비율_alpha_sweep/                                 [16 file = 4 α × 4 method + 4 file alpha 0.5 default]
 │   ├── alpha_0.3/  alpha_0.4/                  [shrinkage = paper default 보다 약함]
 │   ├── alpha_0.5_default/                       [paper §V-B Eq 5 default (paper_exact_centroid_tuple 와 동일)]
 │   └── alpha_0.6/  alpha_0.7/                   [shrinkage = paper default 보다 강함]
-├── 06_K_granularity/                           [K=10/20/30 비교]
+├── 06_클러스터수_K_민감도/                           [K=10/20/30 비교]
 │   ├── K10/  K20_default_paper/  K30/          [120 file = 5 cell × 4 method × 2 mode × 3 K]
-├── 07_cheap_근사_4후보/                       [Centroid + Hash B1 + PCA B2 + Iter B3]
+├── 07_저비용_근사_4후보/                       [Centroid + Hash B1 + PCA B2 + Iter B3]
 │   ├── centroid_tuple/   hash_bucketing_B1/    [A2-Fig9 cell × 4 method × 2 mode = 8 file 각]
 │   ├── pca_preprocessing_B2/  iterative_refinement_B3/
-├── 08_multi_join_재학습/                       [8 file = mj_restrat A2-Fig9 4 method × 2 mode]
-├── 09_A2-Fig8_multi_vector/                    [8 file = a2fig8_mv 4 method × 2 mode]
-└── 10_full_portfolio_CaseA_CaseB_B1/           [전체 1009 file 백업 + REPORT.md + csv]
+├── 08_다중조인_재학습/                       [8 file = mj_restrat A2-Fig9 4 method × 2 mode]
+├── 09_다중벡터_A2_Fig8/                    [8 file = a2fig8_mv 4 method × 2 mode]
+└── 10_전체측정_백업/           [전체 1009 file 백업 + REPORT.md + csv]
     ├── B1_baseline_9cell/                       [9 paper §V-B Bernoulli baseline]
     ├── CaseA_단독대체_495/                     [495 = 55 method × 9 cell - 미측정 5]
     ├── CaseB_결합_496/                          [496 = 55 method × 9 cell - 미측정 4 + 1 extra]
@@ -68,7 +68,7 @@ raw/
 - method: 영어 원표기 (`sparse_rp`, `chao_weighted`, `hilbert_real`, `hyperloglog`, `pca1d`, `minibatch_partial` 등)
 
 ### B1 (paper §V-B Bernoulli baseline)
-- 형식: `{cell}_B1.json` 또는 `{cell}_B1_paper_baseline.json` (`01_RQ1_paper_baseline/` 에서)
+- 형식: `{cell}_B1.json` 또는 `{cell}_B1_paper_baseline.json` (`01_RQ1_논문_baseline_재현/` 에서)
 - paper Eq 1-6 의 unstratified Bernoulli 추정 (m=0.9, η₀=0.1, α=50, β=1.5, γ=0.99, period=50, N=385)
 
 ### α sweep
@@ -147,7 +147,7 @@ TBD: REPORT §10 자원 효율 Pareto frontier 에서 정량 확인.
 
 ## 검증 자료
 
-- `10_full_portfolio_CaseA_CaseB_B1/REPORT_분석/REPORT_paper_exact_v11.md` (1362 line) — Phase A/B/C/D 전체 분석 + Wilcoxon + Cliff's δ + Hedges' g
+- `10_전체측정_백업/REPORT_분석/REPORT_paper_exact_v11.md` (1362 line) — Phase A/B/C/D 전체 분석 + Wilcoxon + Cliff's δ + Hedges' g
 - `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` §10 — 본 세션 18.5h 종합
 
 ## 출처 + 재현

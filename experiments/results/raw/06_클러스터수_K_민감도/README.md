@@ -46,6 +46,6 @@ SF=10 영역 (A5-scale-sf10) 에서 K=20 이 best 인지는 본 측정 portfolio
 ## 출처
 
 - 분석 file:
-  - `experiments/results/paper_exact_v7/analysis/km_granularity_sensitivity_3way_K10_K20_K30_20260513.md`
-  - `experiments/results/paper_exact_v7/analysis/km_granularity_sensitivity_K10_vs_K20_20260513.md`
+  - `experiments/results/analysis/km_granularity_sensitivity_3way_K10_K20_K30_20260513.md`
+  - `experiments/results/analysis/km_granularity_sensitivity_K10_vs_K20_20260513.md`
 - 본 narrative 부록 (3-axis sensitivity 분석)

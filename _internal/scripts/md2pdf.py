@@ -166,6 +166,82 @@ blockquote p {
 }
 blockquote strong { color: #1a2c4e; }
 
+/* ─── Admonition callout boxes (회의 가독성 강화) ─── */
+.admonition {
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 8px;
+    border-left: 5px solid;
+    page-break-inside: avoid;
+    font-size: 10pt;
+    line-height: 1.7;
+}
+.admonition-title {
+    font-weight: 800;
+    font-size: 10.5pt;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.01em;
+}
+.admonition p { margin: 6px 0; color: #1d1d1f; }
+.admonition ul, .admonition ol { margin: 6px 0; padding-left: 22px; }
+.admonition li { margin: 3px 0; }
+
+/* warning — 검증 필요, 한계 (빨간/주황) */
+.admonition.warning {
+    background: #fff4e5;
+    border-left-color: #d84315;
+}
+.admonition.warning .admonition-title { color: #d84315; }
+.admonition.warning .admonition-title::before { content: "⚠️ "; }
+
+/* info — 회의 숙지 요점, 참고 (파란) */
+.admonition.info, .admonition.note {
+    background: #e3f2fd;
+    border-left-color: #1565c0;
+}
+.admonition.info .admonition-title,
+.admonition.note .admonition-title { color: #1565c0; }
+.admonition.info .admonition-title::before { content: "💡 "; }
+.admonition.note .admonition-title::before { content: "📝 "; }
+
+/* success — 핵심 발견, 확정 (초록) */
+.admonition.success, .admonition.tip {
+    background: #e8f5e9;
+    border-left-color: #2e7d32;
+}
+.admonition.success .admonition-title,
+.admonition.tip .admonition-title { color: #2e7d32; }
+.admonition.success .admonition-title::before { content: "✅ "; }
+.admonition.tip .admonition-title::before { content: "💎 "; }
+
+/* danger — paradox, 모순 (진한 빨강) */
+.admonition.danger, .admonition.error {
+    background: #ffebee;
+    border-left-color: #c62828;
+}
+.admonition.danger .admonition-title,
+.admonition.error .admonition-title { color: #c62828; }
+.admonition.danger .admonition-title::before { content: "🚨 "; }
+
+/* quote — 회의록, 인용 (회색) */
+.admonition.quote, .admonition.abstract {
+    background: #f5f5f5;
+    border-left-color: #607d8b;
+}
+.admonition.quote .admonition-title,
+.admonition.abstract .admonition-title { color: #455a64; }
+.admonition.quote .admonition-title::before { content: "💬 "; }
+
+/* 핵심 수치 highlight — strong 안 mark/highlight */
+mark {
+    background: linear-gradient(180deg, transparent 60%, #fff59d 60%);
+    padding: 0 2px;
+    color: #1d1d1f;
+}
+/* strong 보강 — navy 색 + 살짝 weight 강조 */
+strong { color: #1a2c4e; font-weight: 700; }
+strong em, em strong { color: #b85c00; }
+
 /* 메타 (타이틀 직후 작성자/일자/목적) */
 .meta {
     color: #546e7a;
@@ -580,13 +656,14 @@ def _md_to_html(md_text: str) -> str:
     """Markdown → HTML 변환 (GFM 테이블·코드블록·codehilite·toc 지원, 한글 anchor)."""
     html = markdown.markdown(
         md_text,
-        extensions=["tables", "fenced_code", "codehilite", "toc", "md_in_html"],
+        extensions=[
+            "tables", "fenced_code", "codehilite", "toc", "md_in_html",
+            "admonition",  # !!! warning/info/note 박스 — 회의 callout 가독성 강화
+            "attr_list",   # {.callout-warning} 같은 inline class
+            "sane_lists",  # 리스트 구분 명확
+        ],
         extension_configs={
-            "toc": {
-                "slugify": _slugify_korean,
-                # markdown 의 link [a](#b) 는 raw 이므로 anchor ID 와 일치시키려면
-                # 각 heading 의 id 를 위 slugify 로 생성한다.
-            },
+            "toc": {"slugify": _slugify_korean},
         },
     )
     # H3 단위 keep-together wrap (짤림 방지, 사용자 5/14 16:32 요청)

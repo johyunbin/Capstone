@@ -325,16 +325,23 @@ h4 + p, h4 + table, h4 + blockquote, h4 + ul, h4 + ol {
     page-break-before: avoid;
     break-before: avoid;
 }
-/* 블록 보호 — table 만 split 방지 (긴 blockquote/리스트는 자연 흐름) */
+/* 블록 보호 */
 table, pre, blockquote {
     page-break-inside: avoid;
     break-inside: avoid;
 }
 p, li, td { orphans: 2; widows: 2; }
 
-/* section-keep — H2 단위 통째 page push 는 비활성 (자연 흐름 허용).
-   keep-together 가 강하면 페이지 위쪽만 채우고 빈 공간이 생긴다. */
+/* section-keep — H2 단위 통째 page push 는 비활성 (자연 흐름) */
 div.section-keep { /* no-op 유지, 과거 CSS 호환만 */ }
+
+/* H3 section keep-together — 짤림 방지 (사용자 요청, 5/14 16:32)
+   각 H3 section (### 1.3, ### 2.2 등) 이 페이지 하단에서 짤리면 다음 페이지로 넘김.
+   단 H3 section 자체가 한 페이지 이상이면 자연 분할 (avoid 가 absolute X). */
+div.subsection-keep {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
 """
 
 
@@ -510,9 +517,8 @@ def _extract_meta_block(md_text: str) -> tuple[str, str]:
 def _wrap_section_keep(html: str) -> str:
     """각 H2 ~ 다음 H2 직전까지 <div class="section-keep"> 로 wrap.
 
-    Trading npc_briefing_pdf 와 동일 — H2 section 이 페이지 중간에 잘리지 않고
-    overflow 시 통째로 다음 페이지로 push 됨 (CSS break-inside: avoid 가
-    div 통째 적용). 학술 보고서에서도 섹션 단위 가독성 향상.
+    H2 단위 keep 은 CSS 에서 no-op (사용자 5/14 16:23 지적: 강제 keep 시 빈 페이지 발생).
+    H2 단위 wrap 은 호환성으로만 유지.
     """
     parts = re.split(r"(<h2(?:\s[^>]*)?>)", html, flags=re.IGNORECASE)
     if len(parts) < 3:
@@ -522,6 +528,31 @@ def _wrap_section_keep(html: str) -> str:
         h2_tag = parts[i]
         body = parts[i + 1] if i + 1 < len(parts) else ""
         result.append(f'<div class="section-keep">{h2_tag}{body}</div>')
+    return "".join(result)
+
+
+def _wrap_subsection_keep(html: str) -> str:
+    """각 H3 ~ 다음 H3/H2 직전까지 <div class="subsection-keep"> 로 wrap.
+
+    사용자 요청 (5/14 16:32): H3 section 이 페이지 하단에서 짤리면 다음 페이지로
+    넘김. 예: 4pg 의 1.3 skew 가 핵심 가정 → 5pg 로 이동.
+    """
+    # H3 또는 H2 의 시작 위치에서 split
+    parts = re.split(r"(<h3(?:\s[^>]*)?>)", html, flags=re.IGNORECASE)
+    if len(parts) < 3:
+        return html
+    result = [parts[0]]
+    for i in range(1, len(parts), 2):
+        h3_tag = parts[i]
+        body = parts[i + 1] if i + 1 < len(parts) else ""
+        # body 안 다음 H2 가 있으면 그 직전까지만 wrap (다음 H2 는 새 page break)
+        h2_match = re.search(r"<h2(?:\s[^>]*)?>", body, flags=re.IGNORECASE)
+        if h2_match:
+            wrapped = body[: h2_match.start()]
+            after = body[h2_match.start():]
+            result.append(f'<div class="subsection-keep">{h3_tag}{wrapped}</div>{after}')
+        else:
+            result.append(f'<div class="subsection-keep">{h3_tag}{body}</div>')
     return "".join(result)
 
 
@@ -558,6 +589,8 @@ def _md_to_html(md_text: str) -> str:
             },
         },
     )
+    # H3 단위 keep-together wrap (짤림 방지, 사용자 5/14 16:32 요청)
+    html = _wrap_subsection_keep(html)
     return html
 
 

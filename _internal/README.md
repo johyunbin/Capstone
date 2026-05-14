@@ -2,22 +2,22 @@
 
 이 폴더는 **조현빈 개인의 작업 파일과 세션 상태**를 모은 곳이다. 팀 공유가 필요 없는 자료들이며, 팀원이 보아야 할 것은 루트의 `README.md` 가 안내한다.
 
-> **마지막 update**: 2026-05-14 07:25 KST — multi-join 8/8 + Centroid tuple 8/8 + cheap 근사 4 후보 32 + α sweep 16 + A2-Fig8 8 측정 완료, 시나리오 B 확정, _drafts/ 4 file 4차 정정 + PDF 4종 finalize.
+> **마지막 update**: 2026-05-14 16:05 KST — 9 분석 file `_internal/analysis/` → `experiments/results/paper_exact_v7/analysis/` 이동 + server raw 1304 file → `experiments/results/paper_exact_v7/raw/` 10 sub-dir (한국어 narrative 단위) + README 11 건 + server_wrappers backup archive. 환각 정정 7 건 일괄 적용 + 새 PDF template 적용.
 
 ## 새 세션 진입 anchor (1 file read 만으로 0% loss)
 
 - **`handoff/active/handoff_v17_session_finalize_20260514_0721.md`** (5/14 07:21, 본 세션 18.5h 종합 + 시나리오 B 확정 + _drafts 4 file 4차 정정 + PDF 4종)
 - **`handoff/active/handoff_v16_km_granularity_+_multijoin_inflight_20260513_1238.md`** (5/13 12:38, multi-join in-flight 시점 reference)
 
-## 분석 file 5건 (5/13 ~ 5/14 신규)
+## 실험 결과 (★ 5/14 16:00 이동)
 
-| File | 내용 |
-|---|---|
-| `analysis/multi_join_restratification_results_20260513.md` | multi-join 8/8 finalize, 시나리오 A.5 (Hybrid) |
-| `analysis/centroid_tuple_cheap_approximation_results_20260513.md` | Centroid tuple 8/8 + 새 method axis (Cheap 근사 친화도) |
-| `analysis/resource_efficiency_pareto_20260513.md` | Pareto Top 5 + 산업 적용 3 영역 + reservoir O(1) finding |
-| `analysis/alpha_sweep_results_20260514.md` | α sweep 16, 시나리오 B 확정 |
-| `analysis/cheap_approximation_extended_results_20260514.md` | cheap 근사 4 후보 32 종합 |
+**위치 이동**: `_internal/analysis/` → **`experiments/results/paper_exact_v7/analysis/`**
+**실험 raw**: server 1304 file → **`experiments/results/paper_exact_v7/raw/`** (10 한국어 sub-dir)
+**figures**: `experiments/figures/paper_exact_v7/` (6 figure, 5/27 발표 anchor)
+
+전체 인덱스: `experiments/results/paper_exact_v7/README.md`
+
+본 _internal/ 안 분석 file 디렉토리 (`_internal/analysis/`) 는 제거됨.
 
 ## 핵심 file (active 9건, root)
 
@@ -42,12 +42,12 @@
 | `validation/` | 4-layer audit + data/319 |
 | `scripts/{active, archive/5월8일_scripts_정리}/` | 문서 빌드 도구 (md2pdf 등) + 측정 script (analyze_paper_exact / figures_paper_exact / method_phase4_extra 등) |
 | `cache/` | 분석 결과 cache (multi_paradigm_raw / rq3 / single_ensemble_raw / phase_g_analysis 등 67M) |
-| `guideline/` | Claude Code 자동화 지침 (활성 5 + archive 6) |
+| `guideline/` | Claude Code 자동화 지침 (활성 5 + archive 6) — 인덱스 `guideline/README.md` |
 | `learning/` | 학습 자료 (kr/us + 클로드코드활용지침) |
 | `records/` | 회의록 (kakaotalk + weekly + raw_export) |
 | `archive/` | 이전 시점 history — `5월7일_dawn_chain_분석/` + `5월8일_정리흔적/` + `5월9일_method_audit/` + `handoff_v0_v18_초기_세션/` |
 | `문서_archive/` | 5/11 정리 작업 archive — `이전_handoff/` + `5_8_시점_outdated_docs/` + `state_과거_시점/` + `정리작업_log/` |
-| `server_wrappers_backup_20260507/` | 5/7 server wrapper backup (8KB) |
+| ~~`server_wrappers_backup_20260507/`~~ | 5/14 `archive/server_wrappers_20260507/` 로 이동 |
 
 ## 디렉토리 분리 이유 (2026-04-15 강재현 피드백 해소)
 

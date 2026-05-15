@@ -1,8 +1,14 @@
-# Handoff v25 — B1 Variance Root Cause + 측정 미커버 영역 종합 inventory + Pareto/K dim cross-validation (5/15 03:15)
+# Handoff v25 — B1 Variance + 미커버 inventory + Pareto/K dim + raw/ reorganize + 박세은 query/threshold + fit_time launch (5/15 11:50)
 
-> **목적**: 새 mini session (5/15 01:20 시작) 의 자동 진행 결과 종합. 사용자 아침 7-9시 확인 base entry point.
+> **목적**: 새 mini session (5/15 01:20 시작) + morning session (11:05 ~ 11:50) 의 자동 진행 결과 종합. 사용자 박광현 미팅 14:00 전 + post-미팅 base entry point.
 >
-> **업데이트 03:15**: Pareto Top 5 cross-validation + K granularity dim-K 가설 검증 보고서 2개 추가 (commit 1ae3ad6 push 완료)
+> **업데이트 11:50**: morning session 진행 사항 추가
+> - raw/ dataset 단일 기준 reorganize (1352 file git mv, commit e570311)
+> - measure_paper_exact.py 영역 fit_time / cache_time field 추가 (CaseA + CaseB) + Pareto Top 5 × 9 cell × 2 mode = 90 file launch
+> - 박세은 11:34 요청 — 임채림용 query vector + threshold 패키지 (5 dataset × 100 query × 5 selectivity D_target, commit 507c7c9)
+> - REPORT v11 §12 추가 (B1 variance + Pareto + K dim + 미커버 + fit_time launch reference)
+> - narrative v2 깨진 3 라인 fix
+> - K_granularity_dim 보고서 깨진 한국어 정상화
 
 ---
 
@@ -286,6 +292,21 @@ python3 cache/rq3/measure_paper_exact.py --cell A4-sel-0.10 --K 30
 ### 7.4 commit chain
 - `9cbd61c` (02:35) — B1 variance + 미커버 inventory + handoff v25
 - `1ae3ad6` (03:15) — Pareto Top 5 + K dim 가설 검증
+- `ebce316` (03:20) — handoff v25 update (Pareto + K dim 통합)
+- `e570311` (11:25) — raw/ dataset 단일 기준 reorganize (1352 file git mv)
+- `507c7c9` (11:42) — 박세은 query/threshold 패키지 + REPORT v11 §12 + K_dim 정상화
+
+### 7.5 morning session (11:05 ~ 11:50) 추가 산출물
+- `submission/_drafts/박세은_채림_5_15_query_threshold/` — 5 dataset × 100 query vector + selectivity threshold + README
+- `experiments/results/raw/` 영역 dataset 단일 기준 reorganize (DEEP_96d / SIFT_128d / SSN_256d / YFCC_192d / DEEP+WIKI_864d / DEEP+CC3M_multi-vector_scope외 / TPCDS_ECQO_scope외)
+- `cache/rq3/paper_exact_fittime/` (server) — Pareto Top 5 × 9 cell × 2 mode = 90 file fit_time 측정 진행 중
+
+### 7.6 fit_time 측정 launch 영역 caveat ★
+
+- 첫 patch (patch_fittime.py) 영역 일부 fail (CaseB result assertion error) → file write 영역 X
+- 결과: 처음 launch 된 6 file (A1-DEEP CaseA × 5 + A1-SIFT CaseA × sparse_rp) 영역 fit_time 영역 영역 X
+- 영역 patch (patch_caseb_result + patch_caseb_timing + patch_casea_timing) 영역 영역 적용 → 영역 measurement 영역 fit_time 영역 영역
+- **영역 6 file 영역 retry 영역**: fittime session 종료 후 별도 launch 또는 사용자 결정
 
 ---
 

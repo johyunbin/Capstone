@@ -308,7 +308,7 @@ Form 1 의 넷째 Component 는 K=20 cluster 의 sample budget 을 cluster 별�
 
 **Proportional allocation** = n_j = N × N_j / Σ_k N_k = N × N_j / N_total. cluster size 에 비례 분배. 정보 수준 L3 (+ N_j) 에 대응. 본 mode 의 필요 정보 = cluster size N_j (BIRCH CF tuple 의 N_j 영역 직접 활용).
 
-**Neyman allocation** = n_j = N × N_j · σ_j / Σ_k (N_k · σ_k). cluster size 와 cluster 내 분산의 곱에 비례 분배. 정보 수준 L4 (+ σ_j) 에 대응. 본 mode 의 필요 정보 = cluster size N_j + cluster variance σ_j (BIRCH CF tuple 의 SS_j 영역 + N_j 영역 영역 algebraic combination).
+**Neyman allocation** = n_j = N × N_j · σ_j / Σ_k (N_k · σ_k). cluster size 와 cluster 내 분산의 곱에 비례 분배. 정보 수준 L4 (+ σ_j) 에 대응. 본 mode 의 필요 정보 = cluster size N_j + cluster variance σ_j (BIRCH CF tuple 의 SS_j 와 N_j 의 algebraic combination).
 
 **Anti-Neyman allocation** = n_j = N × N_j / σ_j / Σ_k (N_k / σ_k). Neyman 의 역 방향. RQ2 의 negative control 영역으로 측정. 본 mode 는 정확도 향상 목적이 아니라 stratified sampling theory 영역의 negative control 영역의 발현이다.
 
@@ -648,11 +648,11 @@ Equality (Δ(Var) = 0) condition:
 
 ### 12.7 Neyman 가설 verify 영역의 future work 영역
 
-본 §12 영역의 future work 영역은 Neyman 가설 영역의 직접 verify 영역의 추가 측정 영역이다. 현 RQ2 영역의 σ_j 영역은 oracle 가정 (offline batch K-means 의 σ_j 직접 사용) 영역이며, σ_j 영역의 직접 측정 영역 (cluster 별 분산 영역의 정확 verify) 영역은 본 연구의 future work 영역이다.
+본 §12 의 future work 는 Neyman 가설 의 직접 verify 를 위한 추가 측정이다. 현 RQ2 의 σ_j 는 oracle 가정 (offline batch K-means 의 σ_j 직접 사용) 으로 되어 있으며, σ_j 의 직접 측정 (cluster 별 분산 의 정확 verify) 은 본 연구의 future work 영역이다.
 
-본 future work 영역의 핵심 영역은 (a) σ_j 영역의 직접 측정 영역의 protocol 영역의 development (offline batch K-means 의 σ_j 영역과 BIRCH CF tuple 의 σ_j 영역의 비교, 5-15% drift 영역의 정량 verify), (b) Neyman 가설 영역의 가정 영역 (stratum 간 σ_j 영역의 heterogeneity 영역) 영역의 정량 verify 영역의 추가 측정 (sel=0.10 영역의 σ_j range 영역의 정확 verify, sel=0.10 영역의 Neyman best 영역의 발현 영역의 evidence), (c) sel + dataset 영역의 axis 영역의 추가 측정 (SSN / YFCC / WIKI dataset 영역 + sel=0.001 / sel=0.01 / sel=0.05 / sel=0.10 영역의 4 sel 영역 영역) 의 3 영역이다.
+본 future work 의 핵심은 (a) σ_j 직접 측정 protocol 의 development (offline batch K-means 의 σ_j 와 BIRCH CF tuple 의 σ_j 비교, 5-15% drift 의 정량 verify), (b) Neyman 가설 의 가정 (stratum 간 σ_j heterogeneity) 의 정량 verify 추가 측정 (sel=0.10 의 σ_j range 정확 verify, sel=0.10 에서 Neyman best 발현 evidence), (c) sel + dataset axis 의 추가 측정 (SSN / YFCC / WIKI dataset + sel=0.001 / sel=0.01 / sel=0.05 / sel=0.10 의 4 sel sweep) 의 3 영역이다.
 
-본 future work 영역의 cost 산정 영역은 (a) σ_j 직접 측정 영역 ~20-30h, (b) sel axis 추가 측정 영역 ~30-50h, (c) dataset axis 추가 측정 영역 ~40-60h 의 3 영역 total ~90-140h 영역이다. 본 영역은 phase 2 (paper-grade future work, post-6/11) 영역으로 분담된다.
+본 future work 의 cost 산정은 (a) σ_j 직접 측정 ~20-30h, (b) sel axis 추가 측정 ~30-50h, (c) dataset axis 추가 측정 ~40-60h 의 3 영역 total ~90-140h 이다. 본 영역은 phase 2 (paper-grade future work, post-6/11) 로 분담된다.
 
 ---
 
@@ -820,7 +820,7 @@ method 선택에 자신이 없거나 안정성이 중요한 환경에서 산술 
 | 7 | SIGMOD short paper | 11월 | ~20% | framework + paper §V-B 후속 |
 | 8 | VLDB demo track | 4-6월 | ~50% | demo 환경 추가 필요 |
 
-**Agent E + G 권장**: **EDBT short paper (10월 deadline) + VLDB short paper / industry track (4월 또는 11월)** 의 2 venue 영역. EDBT short paper 영역이 acceptance rate ~30% 영역의 high + database + sampling 영역 fit + 10월 deadline 영역의 6/11 보고서 영역 + 6-7월 측정 영역 + 8-9월 draft 영역 영역의 timeline 영역 fit.
+**Agent E + G 권장**: **EDBT short paper (10월 deadline) + VLDB short paper / industry track (4월 또는 11월)** 의 2 venue. EDBT short paper 영역이 acceptance rate ~30% 의 high + database + sampling 분야 fit + 10월 deadline 이 6/11 보고서 + 6-7월 측정 + 8-9월 draft 의 timeline 과 fit.
 
 **co-author 6 영역**: 박광현 corresponding + 임채림 first + 학부생 4 명 (박세은 / 강재현 / 조현빈 / 이동욱).
 

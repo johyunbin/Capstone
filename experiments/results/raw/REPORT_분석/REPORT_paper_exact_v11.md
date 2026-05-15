@@ -1361,3 +1361,77 @@ km20_paper_exact_prop   0.01         1.622   1.312
 - σ_j range 1.3-1.6× (좁음) + KM20 cluster N_i CV=0 (균등) → Neyman reweighting max 8.5%p
 - budget=385 hit count noise (~50/seed @ sel=0.1) > Neyman signal (~30 표본)
 - Anti ≤ Prop ≤ Neyman 패턴 = **알고리즘 부족 X, KM20 cluster + 데이터 분포의 자연 결과** (학술 honest finding)
+
+---
+
+## 12. 본 mini session (5/15 01:20 ~ 03:15) 추가 분석 4건
+
+### 12.1 B1 random variance root cause 정량 (analysis/B1_variance_root_cause_종합분석_20260515_0150.md)
+
+| 영역 | 정량 |
+|---|---|
+| paper exact B1 inherent trial CV | **6.33%** (range 1.79% ~ 9.35%, n=10 trial) |
+| 5/12 K granularity vs paper | **-23.02%** (n=60, all negative bias) |
+| 5/12 non-sparse only | **-18.84%** std 3.86% (tight bias) |
+| 5/14 SF axis K=10 | **+24.27%** std 23.84% (positive, 5/12 와 반대) |
+| 5/15 archive K=10 | **+10.49%** std 21.42% (positive) |
+
+→ **inherent CV 6% 만으로 ±20% systematic bias 설명 불가** = measurement run 별 systematic difference 존재.
+→ **권장**: paper exact base B1 만 reliable denominator 로 사용 (안 A). paired narrative 는 robust (영향 없음).
+
+### 12.2 Pareto Top 5 cross-validation (analysis/Pareto_Top5_method_cell_cross_validation_20260515_0250.md)
+
+| Method | n | paired Δ% mean | paired Δ% std |
+|---|---:|---:|---:|
+| sparse_rp | 9 | -7.57% | 2.77% |
+| chao_weighted | 9 | -13.86% | 4.00% |
+| neuram | 9 | -4.76% | 4.90% |
+| pca1d | 9 | -6.82% | 2.71% |
+| hilbert | 9 | -7.37% | 1.55% |
+| **합계 (5 method × 9 cell)** | **45** | **-8.08%** | (avg) |
+
+★ **Pareto Top 5 paired CaseB < CaseA = 97.78%** (44/45, 1 outlier neuram A1-SSN)
+- 전체 56 method aggregate = 91.46% (450/492) — REPORT §3 의 92.5% (455/492) 와 5 file 차이 (calculation method 차이)
+- robustness rank: hilbert (std 1.55%) > pca1d > sparse_rp > chao_weighted > neuram
+- **9 cell × 5 method = 100% coverage** ★ (추가 측정 불필요)
+
+### 12.3 K granularity × dimension cross-validation (analysis/K_granularity_dimension_dependent_종합검증_20260515_0310.md)
+
+dimension-dependent K best 가설 (handoff v23) 의 evidence = **약함**:
+
+| Dim | n | K=10 best % | K=20 best % | K=30 best % |
+|---:|---:|---:|---:|---:|
+| 96 (DEEP) | 4 | 50% | 25% | 25% |
+| 128 (SIFT) | 4 | 50% | 25% | 25% |
+| 192 (YFCC) | 4 | 75% | 25% | 0% |
+| 256 (SSN) | 4 | 75% | 25% | 0% |
+| 864 (DEEP+WIKI) | 4 | 50% | 25% | 25% |
+
+★ **5/12 A1-DEEP K=10 -9.5%** vs **5/14 A5-scale-sf100 K=10 +10.3%** (동일 DEEP 96d, 동일 K=10) = run-level systematic bias 명확
+→ K granularity finding 은 measurement run noise 가 큼. **paper default K=20 이 robust default**.
+
+### 12.4 측정 미커버 영역 종합 inventory (analysis/측정_미커버_영역_종합_inventory_20260515_0205.md)
+
+| paper Fig | cell | 측정 |
+|---|---|---|
+| Fig 5/6/7/9/12/14 | A1 + A2-Fig7/9 + A5-scale-sf{1,10,100} | ✓ 100% |
+| Fig 8 (multi-vector) | A2-Fig8 | ⚠️ scope 외 (paper §V-A) |
+| Fig 10/11 (ECQO) | A3-TPCDS | ⚠️ scope 외 |
+| **Fig 13 (sel sweep)** | A4-sel sel=0.001 ✓ + A1-DEEP sel=0.01 ✓ + **sel=0.10 ★ 미측정** | ⚠️ |
+
+**미측정 영역 우선순위**:
+1. ★★★ A4-sel × K granularity (~48 file, 6-12h) — paper Fig 13 완성
+2. ★★ K granularity 9 cell × 4 method (~216 file, 12-24h) — dim-K verify
+3. ★ shifting workloads (paper §VI-B, ~720 file, 30-50h) — phase 1 measurement
+
+### 12.5 fit_time 측정 launch (5/15 11:30 진행 중)
+
+- measure_paper_exact.py 영역 fit_time_sec + cache_time_sec field 추가 (CaseA + CaseB)
+- Pareto Top 5 × 9 cell × 2 mode = 90 file 측정
+- output: `cache/rq3/paper_exact_fittime/`
+- 예상 완료: 6-12h
+- 본 측정 영역 narrative 의 §8 자원 효율 Pareto 영역 보강 가치 (현재는 정성적 fit time 만)
+
+---
+
+작성 추가: 2026-05-15 11:35 KST · 본 mini session 4 분석 + fit_time 측정 launch 통합 reference

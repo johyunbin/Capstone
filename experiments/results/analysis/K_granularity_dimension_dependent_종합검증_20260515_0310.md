@@ -2,7 +2,7 @@
 
 > **작성**: 2026-05-15 03:10 KST · **base**: 5/12 paper exact base K granularity (120 file, 5 cells × 4 method × 3 K × 2 mode) + 5/14 SF axis (48 file, 3 cells × 4 method × 2 K × 2 mode)
 >
-> **목적**: handoff v23 의 "dimension-dependent K best 잠정 가설" (DEEP 96d K=20 sweet vs SIFT/SSN 128/256d K=30 best) 영역 verify
+> **목적**: handoff v23 의 "dimension-dependent K best 잠정 가설" (DEEP 96d K=20 sweet vs SIFT/SSN 128/256d K=30 best) 검증
 
 ---
 
@@ -11,12 +11,12 @@
 1. **dimension-dependent K best 가설 = 약한 evidence** (현재 데이터 기준)
    - 96d / 128d / 864d cells: K=10 best 50%, K=20 best 25%, K=30 best 25% (비슷한 pattern)
    - 192d (YFCC) / 256d (SSN): K=10 best 75%, K=20 best 25%, K=30 best 0% (약간 다름)
-   - → dimension 영역 명확한 monotone pattern 없음
+   - → dimension 별 명확한 monotone pattern 없음
 2. **★ measurement run-level systematic bias 재확인**:
    - 5/12 A1-DEEP (96d) K=10: 모두 negative (CaseB < CaseA)
    - 5/14 A5-scale-sf100 (같은 96d DEEP) K=10: 모두 positive (CaseB > CaseA)
    - 동일 dataset / dimension 인데 measurement run 만 다른데 K=10 결과 정반대
-3. **K granularity finding 영역 narrative 영역 caveat 명시 필요**: measurement run noise 가 K granularity signal 영역 영역 가능성
+3. **K granularity finding 의 narrative 적용 시 caveat 명시 필요**: measurement run noise 가 K granularity signal 을 압도할 가능성
 
 ---
 
@@ -58,7 +58,7 @@
 | 864 (DEEP+WIKI) | 4 | 50% | 25% | 25% | -20.36% |
 | **합계** | **20** | **55%** | **25%** | **20%** | -19.42% |
 
-→ **K=10 영역 best 가장 많음** (55%, 11/20). 단 sparse_rp K=10 outlier (Δ% -36~-49%, CaseA 영역 불안정 영역 영역) 영역 영역 영역.
+→ **K=10 이 best 가장 많음** (55%, 11/20). 단 sparse_rp K=10 outlier (Δ% -36~-49%, CaseA 가 매우 불안정한 case) 의 효과가 큰 부분 차지.
 
 ### 1.3 sparse_rp outlier 분리
 
@@ -69,7 +69,7 @@ sparse_rp 제외 시 K best %:
 - K=20 best: 5/16 = 31.25%
 - K=30 best: 5/16 = 31.25%
 
-→ sparse_rp 영역 영역 매우 균일. **dimension-dependent K best pattern 매우 약함**.
+→ sparse_rp 제외 시 분포 매우 균일. **dimension-dependent K best pattern 매우 약함**.
 
 ---
 
@@ -94,17 +94,17 @@ sparse_rp 제외 시 K best %:
 
 ### 2.2 핵심 발견 ★
 
-**A5-scale-sf{1,10,100} K=10 영역 paired Δ% 모두 positive** (chao/hilbert/hyperloglog) — CaseB > CaseA (악화)
+**A5-scale-sf{1,10,100} K=10 의 paired Δ% 모두 positive** (chao/hilbert/hyperloglog) — CaseB > CaseA (악화)
 - A5-scale-sf1 K=10: +5 ~ +13% (4/4 positive)
 - A5-scale-sf10 K=10: +4 ~ +8% (3/4 positive, sparse_rp -28.75%)
 - A5-scale-sf100 K=10: +8 ~ +11% (3/4 positive, sparse_rp -10.55%)
 
-**A5-scale-sf{1,10,100} K=30 영역 paired Δ% 거의 모두 negative** (chao/hilbert/hyperloglog) — CaseB < CaseA (개선)
+**A5-scale-sf{1,10,100} K=30 의 paired Δ% 거의 모두 negative** (chao/hilbert/hyperloglog) — CaseB < CaseA (개선)
 - A5-scale-sf1 K=30: -11 ~ -12% (3/4 negative)
 - A5-scale-sf10 K=30: -5 ~ -11% (3/4 negative)
 - A5-scale-sf100 K=30: -1 ~ -12% (3/4 negative)
 
-→ **5/14 SF axis 영역 K=10 이 worst, K=30 이 best**. 5/12 영역 정반대 (K=10 best).
+→ **5/14 SF axis 의 K=10 이 worst, K=30 이 best**. 5/12 결과와 정반대 (5/12 는 K=10 best).
 
 ---
 
@@ -122,20 +122,20 @@ sparse_rp 제외 시 K best %:
 
 ### 3.2 implication for dimension-dependent K best 가설
 
-- dimension 만으로 K best 가 결정되지 않음 (run-level noise 영역 영역)
+- dimension 만으로 K best 가 결정되지 않음 (run-level noise 영향 큼)
 - **handoff v23 의 "dimension-dependent K best 잠정 가설" 영역 = 강하지 않음**
-- K granularity finding 영역 narrative 영역 매우 cautiously 영역 reporting 필요
+- K granularity finding 의 narrative 적용 시 매우 cautiously reporting 필요
 
 ---
 
-## 4. narrative 영역 implication
+## 4. narrative 의 implication
 
-### 4.1 K granularity 영역 narrative 영역 caveat
+### 4.1 K granularity finding 의 narrative 적용 시 caveat
 
 기존 (handoff v23): "DEEP 96d K=20 sweet vs SIFT/SSN 128/256d K=30 best 잠정 가설"
-**개정 (본 분석)**: "K granularity 영역 measurement run-level noise 영역 영역. 5/12 paper exact base 영역 K=10 best 55% (sparse_rp outlier 영역). 5/14 SF axis 영역 K=10 worst + K=30 best. dimension-dependent K best 영역 = 약한 evidence, 추가 측정 필요"
+**개정 (본 분석)**: "K granularity 측정 결과 = measurement run-level noise 가 큼. 5/12 paper exact base 의 K=10 best 55% (sparse_rp outlier 영향). 5/14 SF axis 의 K=10 worst + K=30 best. dimension-dependent K best 가설 = 약한 evidence, 추가 측정 필요"
 
-### 4.2 narrative 영역 K granularity 활용
+### 4.2 narrative 에서 K granularity 활용
 
 - **단순한 K=20 default (paper exact) 가 robust default**
 - K granularity sensitivity 가 method 별로 다른 점 = paper §V-B 의 limitation 으로 언급
@@ -143,25 +143,25 @@ sparse_rp 제외 시 K best %:
 
 ### 4.3 박세은 review answer 강화
 
-박세은 5/15 review 의 "K granularity 영역 어떻게 되나?" 질문 답변:
-- **답변 sub-claim 1**: K granularity finding 영역 measurement noise 큼 — robust default = K=20
-- **답변 sub-claim 2**: dimension-dependent K best 가설 영역 약한 evidence (현재 측정), 추가 측정 필요 영역 honest disclosure
+박세은 5/15 review 의 "K granularity 가 어떻게 되나?" 질문 답변:
+- **답변 sub-claim 1**: K granularity finding 의 measurement noise 큼 — robust default = K=20
+- **답변 sub-claim 2**: dimension-dependent K best 가설 = 약한 evidence (현재 측정), 추가 측정 필요한 부분 honest disclosure
 - **답변 sub-claim 3**: 본 narrative 의 핵심 finding = **paired CaseB < CaseA 97.78% (Pareto Top 5)** — K granularity 부속 finding
 
 ---
 
-## 5. 향후 추가 측정 영역 priority
+## 5. 향후 추가 측정 priority
 
-### 5.1 K granularity 영역 9 cell 확장 가치 = ★ (단 caveat)
+### 5.1 K granularity 9 cell 확장 가치 = ★ (단 caveat)
 
 - 현재 5 cell × 4 method × 3 K = 60 paired (5/12) + 3 cell × 4 method × 2 K = 24 paired (5/14)
 - 9 cell × 4 method × 3 K × 2 mode = **216 file** 추가 측정 시 cover 가능
 - ★ 단 **measurement run-level systematic bias 가 큰 영역이라 단일 run 추가 측정만으로는 부족** — 같은 run 안에서 모든 cell × K × mode 측정 보장 필요
-- 권장: 9 cell 영역 측정을 같은 run 안에서 sequential 로 launch → run-level bias 최소화
+- 권장: 9 cell 측정을 같은 run 안에서 sequential 로 launch → run-level bias 최소화
 
 ### 5.2 multi-run 평균 (rigorous)
 
-- 같은 (cell, method, K) 영역 3 별도 run 측정 후 → CaseA / CaseB / B1 trio 영역 averaged
+- 같은 (cell, method, K) 마다 3 별도 run 측정 후 → CaseA / CaseB / B1 trio 모두 averaged
 - 216 file × 3 = 648 file → server time 24-48h
 - 학술 narrative 의 paper-grade 보장 가능
 
@@ -177,4 +177,4 @@ sparse_rp 제외 시 K best %:
 
 ---
 
-작성: 2026-05-15 03:10 KST · K granularity × dimension cross-validation + measurement run-level bias 재확인 + dimension-dependent K best 가설 영역 약한 evidence 결론
+작성: 2026-05-15 03:10 KST · K granularity × dimension cross-validation + measurement run-level bias 재확인 + dimension-dependent K best 가설 = 약한 evidence 결론

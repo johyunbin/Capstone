@@ -60,6 +60,7 @@ DATASET_ALIAS = {
     "YFCC": "YFCC",
     "WIKI": "WIKI",
     "DEEP+WIKI": "DEEP",        # Fig 8 multi-vector: ps_image_emb[DEEP] query
+    "DEEP+SIFT": "DEEP",        # v7 ext multi 중차원: ps_embedding_deep[DEEP] query
     "DEEP+WIKI cross": "DEEP",  # Fig 9 cross-table: partsupp[DEEP] query
 }
 
@@ -309,6 +310,44 @@ def build_cell_specs() -> list[CellSpec]:
         queries=["q3", "q10", "q12"],
         selectivities=[PAPER_SEL_DEFAULT],
         threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q10", "q12"]},
+        mode_pool=["B1", "CaseA", "CaseB"],
+    ))
+
+    # === v7 extras (5/15 23:25 미커버 3 cell, LAION 제외 PG 적재 dataset 모두 cover) ===
+    # A6-WIKI-sf1: small 고차원 single
+    cells.append(CellSpec(
+        sub="A6-WIKI-sf1",
+        fig="v7 ext small 고차원 single",
+        dataset="WIKI", sf=1,
+        table="partsupp_wiki_1",
+        embed_col="ps_embedding", vec_dim=768,
+        queries=["q3", "q10", "q12"],
+        selectivities=[PAPER_SEL_DEFAULT],
+        threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q10", "q12"]},
+        mode_pool=["B1", "CaseA", "CaseB"],
+    ))
+    # A7-YFCC-sf1: small 중차원 single
+    cells.append(CellSpec(
+        sub="A7-YFCC-sf1",
+        fig="v7 ext small 중차원 single",
+        dataset="YFCC", sf=1,
+        table="partsupp_yfcc_1",
+        embed_col="ps_embedding", vec_dim=192,
+        queries=["q3", "q10", "q12"],
+        selectivities=[PAPER_SEL_DEFAULT],
+        threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q10", "q12"]},
+        mode_pool=["B1", "CaseA", "CaseB"],
+    ))
+    # A8-DEEP+SIFT-sf10: medium multi 224d
+    cells.append(CellSpec(
+        sub="A8-DEEP+SIFT-sf10",
+        fig="v7 ext multi 중차원",
+        dataset="DEEP+SIFT", sf=10,
+        table="partsupp_deep_sift_10",
+        embed_col="ps_embedding_deep", vec_dim=96,
+        queries=TPC_H_QUERIES,
+        selectivities=[PAPER_SEL_DEFAULT],
+        threshold_map={q: TPC_H_THRESHOLD for q in TPC_H_QUERIES},
         mode_pool=["B1", "CaseA", "CaseB"],
     ))
 

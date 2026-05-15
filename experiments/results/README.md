@@ -1,6 +1,20 @@
-# experiments/results/ — 본 연구 실험 결과 (5/14 정리)
+# experiments/results/ — 본 연구 실험 결과 (5/15 22:00 update)
 
-> **본 연구** (Exqutor §V-B Adaptive Sampling 재현 + 분포 인지 stratification ensemble augment) **의 모든 측정 결과 + 분석 + 부속 자료**. 5/15 박광현 미팅 + 5/27 최종 발표 + 6/11 보고서 base.
+> **본 연구** (Exqutor §V-B Adaptive Sampling 재현 + 분포 인지 stratification ensemble augment) **의 모든 측정 결과 + 분석 + 부속 자료**. v5 narrative 4 type + dynamic method selection axis base. 5/27 최종 발표 + 6/11 보고서 base.
+
+## 5/15 update (v5 narrative extension)
+
+본 1352 file 측정 portfolio 위에 v5 narrative 4 type matrix evidence 보강을 위한 추가 측정 launch (5/15 21:45):
+
+| Type | 기존 cell | v5_ext 추가 cell | 측정 영역 |
+|---|---|---|---|
+| Type 1 (small sf=1) | DEEP A5-sf1 (140 file) | SIFT/SSN A5-sf1 | P1 |
+| Type 2 (medium sf=10) | DEEP A5-sf10 (138 file) | SIFT/SSN A5-sf10 | P1 |
+| Type 3 (large sf=100) | 5 cells (693 file) | SIFT/SSN K=10/30 K granularity | P5 |
+| Type 4a (large multi 288d) | DEEP+YFCC A2-Fig7 (146 file) | (P2 multi-table build 보류) | — |
+| Type 4b (large multi 864d) | DEEP+WIKI A2-Fig9 (214 file, 정리 후 209) | WIKI single sf=10 baseline | P3a |
+
+추가 측정 server 위치: `/mnt/hdd0/home/capstone2026/results_v5_ext_20260515_1245/` (91 file, 5/16 새벽 완료 예상).
 
 ## 디렉토리 구조 (★ 사용자 정리 후, 5/14 16:00)
 

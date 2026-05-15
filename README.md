@@ -2,7 +2,7 @@
 
 연세대학교 2026-1학기 인공지능 종합설계 (캡스톤 디자인)
 
-> **현 단계 (2026-05-11 18:10 KST):** Exqutor §V-B 영역 paper exact 재현 측정 완료 (**908 file, coverage 80.4%**, ★3 hilbert_real 12 cells 추가 회수 포함). Fig 12 영역 8 cells mean Q-error **1.6180** vs paper 1.69 (**−4.26%**, paper review-grade 일치). CaseB ensemble 우리 method 가 paper baseline 대비 Cliff's δ large better **63.5%** + Hedges' g large **56.4%** + paired **92.9%** outperform. ★3 hilbert_real (Wikipedia xy2d 표준) CaseB 9 cells mean ~-8.2% + 6/9 cells signif(p_adj<0.05)로 P2 Spatial paradigm rollup -5.52% 강력 anchor. 5/15 박광현 교수님 미팅 (D-4) + 5/27 최종발표 (D-16) 준비 단계.
+> **현 단계 (2026-05-16 01:16 KST):** Framing 단순화 단계 진행 중 — **"sample selection 영역만 우리 contribution + paper §V-B Adaptive Eq 1-6 그대로 활용"** (박세은 5/15 20:49 의도 일치). v8 chain stop (50 method 영역 framing 불일치) → **v10 chain launch** (사용 16 method × 12 cell × CaseB ≈ 129 file, Pareto Top 5 ★ + paradigm rep 11). 측정 portfolio 1001 file (B1 9 + CaseA 폐기 + CaseB 996 + 신규 v10) base 위 Exqutor §V-B 재현 100% 유지. 5/27 발표 prompt v11 (3 part) paste 대기 + 5/22 박광현 미팅 자료 준비 단계.
 
 ---
 

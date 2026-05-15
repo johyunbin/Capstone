@@ -8,11 +8,11 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/15 21:35 update — handoff_v27 추가, narrative v5 + 박세은 5/15 20:49 정리 반영)
+## 동적 state + 인계 (5/16 01:16 update — handoff_v32 추가, framing 단순화 + v10 chain 진행 중)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v27 + v26 read 로 0% loss 인계**.
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v32 + v31 read 로 0% loss 인계**.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v27_5_15_narrative_v5_reframing_20260515_2135.md` (5/15 21:35, narrative v2 → v5 4 단계 진화 종합 — 박세은 5/15 20:49 정리 + 박광현 D-Day 미팅 input 종합 · 데이터셋 4 type + dynamic method selection axis · commit fdb9e04 narrative v5 본문 + storyline v4 + prompt v9 + outline v5 + 추가 측정 plan) + `@_internal/handoff/active/handoff_v26_5_15_박광현후_narrative_정리_20260515_1705.md` (5/15 17:05 base)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v32_5_16_v10chain진행중_20260516_0116.md` (5/16 01:16, framing 단순화 = "sample selection 영역만 contribution + paper §V-B 영역 Adaptive Eq 1-6 그대로" — 박세은 5/15 20:49 의도 일치 · v8 chain stop (50 method) → v10 chain (16 method × 12 cell, framing 일치) launch · K=10 KeyError fix + A8 NPY symlink + chain monitor PID 87193 작동 · prompt v11 3 part paste 대기) + `@_internal/handoff/active/handoff_v31_5_16_세션마무리_chain진행중_20260516_0020.md` (5/16 00:20 base) + `@_internal/handoff/active/handoff_v27_5_15_narrative_v5_reframing_20260515_2135.md` (5/15 21:35 narrative v5 진화 종합)
 - **★ 본 연구 narrative 최종 정리 v1 (5/14 07:55, 박세은 review + 박광현 5/15 + 5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` (10 단계: 문제 → 탐색 → 폐기 39 → 단독 대체 best −10.17% → 결합 시도 best −7.37% → 결합 한계 발견 → 결합 진짜 가치 (안정성 + 변동성 감소) → 자원 효율 (정확도 best 5 = 파레토 best 5) → 권장 (단독 우선 + 결합 보조) → 다중 테이블) + PDF
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
 - **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`

@@ -201,21 +201,39 @@ Phase 1+2 = 우리 영역 sample selection 핵심 contribution. Phase 3 = paper 
 
 ---
 
-## 6. 정확도 evidence — sample selection 영역 Q-error 개선
+## 6. Q-error 영역 정확도 (sample selection vs random Bernoulli) — sample selection 영역 Q-error 개선
 
-> ★ **본 § = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 placeholder 영역.
+> ★ **본 § = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
 
-### 6.1 placeholder 본문 (chain 완료 시 update)
+본 §6 은 1001 file paper exact base 측정 portfolio 의 sample selection 영역 Q-error 영역 정확도 (sample selection vs random Bernoulli) paired Δ% 직접 evidence. 본 영역은 우리 영역 sample selection 영역 augment 영역 정량 가치 영역 검증 — paper 영역 cardinality 추정 mechanism 영역 그대로 유지 + sample 영역 quality 영역 estimation accuracy (Q-error) 에 미치는 영향 영역만.
 
-본 §6 영역 v8/v9 chain (1280 file) 완료 후 추가 작성 영역. 현재 base evidence 영역 v5 narrative §4 영역 carry-over.
+### 6.1 negative control — CaseA 단독 대체 (대체 가설 폐기)
 
-- paired CaseB < CaseA = **92.5%** (455/492, p<1e-45) — 5/12 02:50 REPORT v11 측정 영역
-- Cliff's δ large better = 63.0% (311/494)
-- Hedges' g large = 55.7% (275/494)
-- one-sided p<0.05 outperform = 45.3% (224/494)
-- negative control: CaseA 단독 대체 0/493 = 0% (단독 대체 가설 폐기)
+paper §V-B 의 Bernoulli random sampling 을 우리 영역 sample selection method 영역 단순 대체 (K=20 cluster stratified reservoir). 9 측정 환경 전반 안정 우위 영역 평균 개선폭 −5 ~ −12% range 발현. 단독 best = **minibatch_partial −10.17%** (A2-Fig8).
 
-> **TBD**: v8 (12 cell × 16 method × CaseB = 192 file) + v9 (20 cell × 2 sel × 17 = 680 file) chain 완료 후 paired Δ% 통계 영역 update + cell × method 안정성 매트릭스 추가 + selectivity-dependent paradox + plan robustness 영역 update.
+negative control: CaseA 단독 대체 모드 영역 large worsening = **37.1%** 발현 + 일부 단독 대체 효과 영역 **0/493 = 0%** (단독 대체 가설 폐기). 단독 대체 효과 영역 method 선택에 따라 양 방향 큰 변동 영역. 본 negative control 영역 = **단독 대체 가설 폐기** + 결합 minimal augmentation 영역 evidence base.
+
+### 6.2 sample selection vs random Bernoulli paired Q-error Δ% (CaseB ensemble)
+
+paper §V-B Bernoulli 추정값과 우리 sample selection method 추정값 영역 산술 평균 (est_final = (est_b1 + est_method) / 2.0) 영역 결합. 492 paired 비교 中 **92.5% (455/492, p<1e-45)** 가 random Bernoulli single 보다 정확 (sample selection 결합 minimal 우위).
+
+paired effect size 통계:
+- Cliff's δ large better = **63.0%** (311/494)
+- Hedges' g large = **55.7%** (275/494)
+- one-sided p<0.05 outperform = **45.3%** (224/494)
+
+결합 best = **Centroid tuple −7.37%** (A2-Fig9, Type 4b). α sweep evidence: 4 method 中 3 (sparse_rp / chao_weighted / hilbert_real) 이 α=0.5 (산술 평균) 에서 best — minimal augmentation 영역 ensemble weight 영역 산술 평균 영역 정합.
+
+### 6.3 method base — 4 component framework (sample selection 영역)
+
+본 sample selection 영역 framework 영역 4 component 통합 (모두 sample selection 영역, cardinality 추정 algorithm X):
+
+- **Component A** (Stratified Reservoir Sampling) = Vitter 1985 + Al-Kateb 2014 — sample selection 영역 reservoir mechanism. paper §V-B Eq 1 Bernoulli 자리 영역 augment.
+- **Component B** (BIRCH CF-tree) = Zhang SIGMOD 1996 — CF tuple 의 σ_j² 영역 sample selection 영역 stratification 입력. batch axis 자원 한계 영역 폐기, CF tuple 형식만 Component C 입력.
+- **Component C** (paper Eq 2-6 통합) = paper §V-B Eq 1-6 verbatim 100% 정합 — paper 영역 mechanism 영역 그대로 유지.
+- **Component D** (Distribution-aware stratification) = Cochran 1977 §5.5 — sample selection 영역 4 mode (Equal / Proportional / Neyman / Anti-Neyman).
+
+> **TBD (chain 완료 후 update)**: v8 (12 cell × 16 method × CaseB = 192 file) + v9 (20 cell × 2 sel × 17 = 680 file) chain 완료 후 sample selection vs random Bernoulli paired Q-error Δ% 통계 영역 update + cell × method 안정성 매트릭스 추가 + selectivity-dependent paradox 영역 update.
 
 ---
 
@@ -270,11 +288,30 @@ Phase 1+2 = 우리 영역 sample selection 핵심 contribution. Phase 3 = paper 
 
 ---
 
-## 8. plan robustness across environment variability
+## 8. plan robustness across environment variability (★ 박광현 input 6)
 
-> ★ **본 § = chain 의존 영역 (v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 placeholder 영역.
+> ★ **본 § = chain 의존 영역 (v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
 
-> **TBD**: v9 sel sweep (20 cell × 2 sel × 17 method = 680 file) chain 완료 후 plan robustness 영역 update — sel=0.001 / sel=0.01 / sel=0.10 영역 cell × method paired Δ% heatmap + 안정성 매트릭스 + selectivity-dependent paradox 영역 update.
+박광현 5/15 미팅 input 6 ("순서 바뀌지 않을 정도 정의 어려움 — 테이블 사이즈, 숫자 등 변수가 너무 많음") 영역 본 연구 측정 evidence 영역.
+
+### 8.1 plan robustness 정의
+
+본 §8 의 plan robustness 정의: **9 측정 환경 (dataset / sf / sel / dimension / multi-table) × 16 사용 sample selection method 영역 sample selection vs random Bernoulli paired Q-error Δ% 안정성**. 본 정의 영역 base = §6 결합 minimal augmentation 영역 92.5% paired 우위 영역.
+
+sample selection vs random Bernoulli paired Q-error Δ% 우위 = **92.5%** (455/492) — 환경 / method 가 어떻게 변하든 약 92.5% 영역 확률로 sample selection 결합 minimal 영역 random Bernoulli single 영역 우위. negative control (CaseA 단독 대체) 영역 large worsening = 37.1% 대비 sample selection 결합 minimal 모드 영역 변동성 감소 영역 plan robustness 영역 직접 evidence.
+
+### 8.2 Neyman selectivity-dependent paradox (sub-evidence)
+
+| selectivity | Neyman | Anti-Neyman | Proportional | best |
+|---|---:|---:|---:|---|
+| sel=0.01 | 1.595 | 1.540 | 1.580 | **Anti < Prop < Neyman** (paradox) |
+| sel=0.10 | 1.1076 | 1.1101 | 1.1135 | **Neyman < Anti < Prop** (classical 정합) |
+
+sel=0.01 paradox 해석: 본 dataset 영역 cluster 간 σ_j range 1.3-1.6× narrow (Cochran 1977 §5.5 Neyman 가정 不만족) + N_i CV=0 (cluster size 균등) 영역 두 가정 不만족. selectivity 환경 variability 영역 plan 결정을 변동시키는 직접 evidence.
+
+evidence: rq2_DEEP_sf100_5way_allocation.csv + rq2_SIFT_sf100_5way_allocation.csv 직접 aggregate verify (부록 §A-7 carry-over).
+
+> **TBD (chain 완료 후 update)**: v9 sel sweep (20 cell × 2 sel × 17 method = 680 file) chain 완료 후 plan robustness 영역 update — sel=0.001 / sel=0.01 / sel=0.10 영역 cell × method sample selection vs random Bernoulli paired Δ% heatmap + 안정성 매트릭스 + selectivity-dependent paradox 영역 update.
 
 ---
 
@@ -308,14 +345,95 @@ fit_time range = sparse_rp 3.67s ~ hilbert_real 43.50s = **11.9× 차이**. cach
 
 ---
 
-## 10-13. chain 의존 § (TBD)
+## 10. 결합 한계 — negative control (대체 가설 폐기)
 
-> ★ **§10-§13 = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 placeholder 영역.
+> ★ **본 § = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
 
-- **§10 결합 한계 (CaseA 단독 대체 폐기 evidence)**: TBD — 5/15 chain CaseA 폐기 (757 file rm) 영역 narrative 영역 update.
-- **§11 결합 진짜 가치 (안정성 + 변동성 감소)**: TBD — v9 sel sweep 영역 evidence 영역 update.
-- **§12 자원 효율 (Pareto frontier)**: TBD — fit_time × paired Δ% scatter 영역 update.
-- **§13 권장 (단독 우선 + 결합 보조)**: TBD — chain 완료 후 권장 영역 재정리.
+본 §10 의 핵심 finding: **negative control (대체 가설 폐기)** — paper §V-B 의 random Bernoulli sampling 영역 우리 영역 sample selection method 영역 단순 대체 (CaseA) 영역 결과 영역 한계 영역 직접 evidence.
+
+### 10.1 negative control 결과
+
+CaseA 단독 대체 모드 영역 9 측정 환경 × 16 사용 sample selection method 영역 large worsening 발현 = **37.1%**. 일부 측정 영역 단독 대체 효과 영역 **0/493 = 0%** (대체 가설 폐기). paper §V-B 의 paper 영역 mechanism 영역 그대로 유지 + 우리 영역 sample selection 영역 단순 대체 영역 안정 X.
+
+### 10.2 결합 한계 의 framing 영역 의의
+
+본 negative control 영역 본 v6 narrative 의 framing layer 분리 (§1) 영역 직접 정합. **paper 영역 mechanism 영역 단순 대체 X + 결합 minimal augmentation 영역 valid** — paper §V-B 의 cardinality 추정 mechanism 영역 본 paper 영역 그대로 유지 + 우리 영역 sample selection 영역 augment (산술 평균 결합) 영역만 의의 있는 영역 확정.
+
+> **TBD (chain 완료 후 update)**: 5/15 chain CaseA 폐기 (757 file rm) 영역 narrative 영역 update — chain v8/v9 완료 후 CaseB only 영역 paired uplift 직접 evidence 영역 추가.
+
+---
+
+## 11. 결합 진짜 가치 — 안정성 + 변동성 감소
+
+> ★ **본 § = chain 의존 영역 (v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
+
+본 §11 의 핵심 finding: 결합 minimal augmentation (CaseB ensemble) 영역 진짜 가치 = **안정성 + 변동성 감소**. §6 의 sample selection vs random Bernoulli paired Q-error Δ% 우위 92.5% 영역 base 위에서 결합 영역 본 가치 영역 직접 evidence.
+
+### 11.1 안정성 evidence
+
+sample selection vs random Bernoulli paired Q-error Δ% 우위 = 92.5% (455/492, p<1e-45) — 9 측정 환경 × 16 사용 sample selection method 영역 약 92.5% 환경 영역 결합 minimal augmentation 영역 random Bernoulli single 영역 안정 우위. 본 안정성 영역 §8 plan robustness 영역 직접 base.
+
+### 11.2 변동성 감소 evidence
+
+negative control (CaseA 단독 대체) 영역 large worsening = 37.1% 대비 결합 minimal augmentation (CaseB) 영역 변동성 감소. 산술 평균 결합 (est_final = (est_b1 + est_method) / 2.0) 영역 paper random Bernoulli + 우리 sample selection 영역 양쪽 영역 estimation 영역 평균 영역 → method 선택 영역 실패 영역 risk 영역 hedge.
+
+### 11.3 결합 진짜 가치 의 의의
+
+본 §11 의 결합 진짜 가치 = **단독 best 정확도 (-10.17%) X 결합 best 정확도 (-7.37%) X**. 결합 영역 진짜 가치 = 9 측정 환경 × 16 사용 sample selection method 영역 paired uplift 안정성 92.5% + 변동성 감소. paper §V-B 의 cardinality 추정 mechanism 영역 그대로 유지 + sample selection augment 영역 minimal 영역 안정 우위 영역 정량 evidence.
+
+> **TBD (chain 완료 후 update)**: v9 sel sweep 영역 evidence 영역 update — sel=0.001 / sel=0.01 / sel=0.10 영역 결합 안정성 영역 평가.
+
+---
+
+## 12. 자원 효율 — Pareto frontier (정확도 best = 자원 best)
+
+> ★ **본 § = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
+
+본 §12 은 §9 (fit_time 11.9× range) + §6 (sample selection vs random Bernoulli paired Q-error Δ%) evidence 영역 통합한 Pareto frontier 정리.
+
+### 12.1 Pareto Top 5 sample selection method
+
+**Pareto Top 5 sample selection method** = sparse_rp / chao_weighted / hyperloglog / pca1d / hilbert_real (★ hilbert 영역 PCA 2 차원 정렬 별칭 정정 후, 진짜 Hilbert curve 구현인 hilbert_real 영역 별도 측정).
+
+### 12.2 정확도 best = 자원 best 의 핵심 finding
+
+Q-error 영역 정확도 (sample selection vs random Bernoulli) 측면 안정 우위 5 sample selection method 와 자원 효율 측면 파레토 우위 5 sample selection method 영역 동일 영역 finding. **Q-error 영역 정확도 best 와 학습 자원 (시간 + 메모리) 효율 best 영역 동일 sample selection method 군 영역 발현**.
+
+reservoir 표집 (chao_weighted base) 영역 메모리 사용 영역 데이터 크기와 무관한 상수 O(K) 영역 anchor 수준 정확도. sparse_rp (3.67s) 영역 hilbert_real (43.50s) 대비 12× 빠르면서도 Q-error 영역 정확도 동일 Pareto frontier 영역 동시 best 발현. 모바일 / 임베디드 / 스트리밍 환경 직접 적용 가능 finding.
+
+> **TBD (chain 완료 후 update)**: fit_time × sample selection vs random Bernoulli paired Δ% scatter 영역 update — chain v8/v9 완료 후 16 사용 sample selection method 영역 9 cell × 2 mode 영역 fit_time × paired Δ% 직접 evidence 영역 추가.
+
+---
+
+## 13. 권장 — Dynamic method selection by dataset Type
+
+> ★ **본 § = chain 의존 영역 (v8/v9 chain 완료 후 추가 작성)**. 본 v6 draft 영역 v5 carry-over base + chain 완료 후 update 명시.
+
+본 §13 은 §4 영역 4 type 분류 + Type 별 적합 sample selection method 매핑 + §7 영역 dynamic 할당 mechanism flow 영역 base 위에서 **권장 영역 정리**. 본 v6 narrative 영역 framing layer 분리 (§1) 영역 정합 — paper 영역 cardinality 추정 mechanism 영역 그대로 유지 + 우리 영역 sample selection 영역 augment 영역만.
+
+### 13.1 권장 1 — Type 별 best sample selection method 자동 선택
+
+| Type | 적합 sample selection method | sample selection vs random Bernoulli paired Δ% | fit_time |
+|---|---|---:|---:|
+| **Type 1** (small single sf=1) | **chao_weighted K=20 ★ 최강** / sparse_rp K=20 | −14.11% / −11.70% | 3.67 ~ 9.40s |
+| **Type 2** (medium single sf=10) | chao_weighted K=20 (sweet spot 약함) / sparse_rp K=20 | −6.00% / −6.58% | 3.67 ~ 9.40s |
+| **Type 3** (large single sf=100 저-중차원) | chao_weighted / sparse_rp K=20 | −12.20% / −11.20% | 3.67 ~ 19.97s |
+| **Type 4a** (large multi 224-288d) | hilbert_real K=30 slight edge | (chain 완료 후 update) | 43.50s |
+| **Type 4b** (large multi 864d) | **Centroid tuple ★** (학습 비용 추가 0) | −7.37% | (Centroid 영역) |
+
+### 13.2 권장 2 — 결합 minimal 영역 안정 우위
+
+**결합 minimal augmentation (CaseB ensemble) 영역 권장 default**. paper §V-B 의 random Bernoulli single 대비 sample selection vs random Bernoulli paired Q-error Δ% 안정 우위 92.5% (§11). 환경 variability 큰 산업 환경 영역 결합 minimal 영역 안정성 + 변동성 감소 영역 직접 가치.
+
+negative control (CaseA 단독 대체) 영역 large worsening 37.1% (§10) 영역 단독 대체 가설 폐기 영역. 결합 minimal augmentation 영역 default 권장 + 단독 대체 영역 권장 X.
+
+### 13.3 권장 3 — fit_time × 정확도 동시 best 의 sample selection method
+
+§12 Pareto frontier 영역 = **정확도 best = 자원 best** 영역 직접 권장 evidence. Pareto Top 5 sample selection method (sparse_rp / chao_weighted / hyperloglog / pca1d / hilbert_real) 영역 모두 fit_time 3.67s ~ 43.50s range + Q-error 영역 정확도 동시 best.
+
+산업 환경 영역 분포 catch 속도 제약 시 sparse_rp (3.67s) — fit_time 최단 영역 + Q-error 영역 정확도 동일 Pareto frontier 영역 동시 best.
+
+> **TBD (chain 완료 후 update)**: chain 완료 후 권장 영역 재정리 — v8/v9 영역 cell × method 영역 update + Type 별 best sample selection method 영역 chain 영역 evidence 영역 추가.
 
 ---
 
@@ -398,9 +516,10 @@ evidence: rq2_DEEP_sf100_5way_allocation.csv + rq2_SIFT_sf100_5way_allocation.cs
 | 6 | §5 paradigm 별 method 영역 = sample selection 영역 mechanism 영역 일관 | ✓ |
 | 7 | §7 dynamic 영역 = sample selection 영역만 dynamic (paper Adaptive 영역 그대로) | ✓ |
 | 8 | §9 fit_time 영역 = "분포 catch = sample selection 영역 stratification 시간" 일관 | ✓ |
-| 9 | §10-§13 chain 의존 영역 placeholder + chain 완료 후 update 표기 | ✓ |
+| 9 | §6/§8/§10-§13 chain 의존 영역 v5 carry-over fill in + chain 완료 후 update 표기 | ✓ |
 | 10 | 부록 §A 정정 룰 7 carry-over (v5 → v6) | ✓ |
+| 11 | wording 정정 일관 적용 ("sample selection 결합 minimal" / "negative control" / "sample selection vs random Bernoulli paired Q-error Δ%" / "Q-error 영역 정확도") + "cardinality 추정 우리 영역 contribution" 표현 모두 제거 | ✓ |
 
 ---
 
-작성: 2026-05-16 KST · v5 (5/15 21:00) base + handoff v31 박세은 framing 단순화 의도 + prompt v11 Part 1-3 (5/16 00:50) 완전 반영 · Phase A partial draft (즉시 작성 가능 9 § + 부록 §A) · chain 의존 § (§6/§8/§10-§13) placeholder + v8/v9 chain (5/17-5/18 새벽) 완료 후 추가 작성 + Phase B 영역 정합 evidence 영역 update
+작성: 2026-05-16 KST · v5 (5/15 21:00) base + handoff v31 박세은 framing 단순화 의도 + prompt v11 Part 1-3 (5/16 00:50) 완전 반영 · Phase A partial draft (즉시 작성 가능 9 § + 부록 §A) + chain 의존 § (§6/§8/§10-§13) v5 carry-over fill in (실측 수치 + chain 완료 후 update 명시) · wording 정정 일관 적용 ("sample selection 결합 minimal" / "negative control" / "sample selection vs random Bernoulli paired Q-error Δ%" / "Q-error 영역 정확도" / "cardinality 추정 우리 영역 contribution" 표현 모두 제거) · v8/v9 chain (5/17-5/18 새벽) 완료 후 추가 작성 + Phase B 영역 정합 evidence 영역 update

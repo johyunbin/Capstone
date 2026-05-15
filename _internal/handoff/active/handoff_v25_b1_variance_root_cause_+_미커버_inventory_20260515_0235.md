@@ -308,6 +308,20 @@ python3 cache/rq3/measure_paper_exact.py --cell A4-sel-0.10 --K 30
 - 영역 patch (patch_caseb_result + patch_caseb_timing + patch_casea_timing) 영역 영역 적용 → 영역 measurement 영역 fit_time 영역 영역
 - **영역 6 file 영역 retry 영역**: fittime session 종료 후 별도 launch 또는 사용자 결정
 
+### 7.7 fit_time preliminary finding (12:00 KST, 9 file 영역)
+
+| Method | n | mean fit_time | range |
+|---|---:|---:|---|
+| sparse_rp | 1 | 5.16s | (가장 빠름) |
+| neuram | 2 | 10.60s | 8.99 ~ 12.22s |
+| chao_weighted | 1 | 13.73s | - |
+| pca1d | 3 | 26.85s | 21.93 ~ 29.40s |
+| **hilbert_real** | 2 | **66.75s** | 61.77 ~ 71.74s (가장 느림) |
+
+★ **fit_time range 5s ~ 67s = 13× 차이** (sparse_rp vs hilbert_real). 본 narrative 의 §8 자원 효율 Pareto 영역 paper-grade 정량 source.
+★ cache_time 은 cell 영역 (DEEP 14s, SIFT 17s) — vector dim 영역 의존.
+★ 90 file 모두 완료 시 5 method × 9 cell × 2 mode = 모든 cell 영역 fit_time 정량 가능 (예상 6-9시간 영역 추가).
+
 ---
 
 ## 8. 사용자 아침 확인 사항 (★ 우선순위)

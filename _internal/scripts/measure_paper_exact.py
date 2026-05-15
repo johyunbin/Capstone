@@ -356,7 +356,7 @@ def measure_b1_paper(cell: CellSpec, n_queries: int = 1000,
     # 1. Vector + KM20 cluster fetch (paper §VI cluster size 영향 X — Bernoulli flat)
     print(f"[{mc.kst()}] fetching {cell.table} vectors (KM20 strata)...")
     all_vecs, km20_sids = mc.fetch_all_vectors_safe(ds)
-    samples, sizes = mc.cache_cluster_samples_inmem(all_vecs, km20_sids, seed=42)
+    samples, sizes = mc.cache_cluster_samples_inmem(all_vecs, km20_sids, n_strata=mc.N_STRATA, seed=42)
     total_rows = sum(sizes.values())
     print(f"[{mc.kst()}] total_rows={total_rows} cluster sizes mean={total_rows//mc.N_STRATA}")
 
@@ -976,7 +976,7 @@ def measure_case_a(cell: CellSpec, method_name: str, n_queries: int = 1000,
     method_sids = _get_method_strata(method_name, all_vecs, n_strata=mc.N_STRATA)
     fit_time_sec = time.time() - t_fit_start
     t_cache_start = time.time()
-    samples, sizes = mc.cache_cluster_samples_inmem(all_vecs, method_sids, seed=42)
+    samples, sizes = mc.cache_cluster_samples_inmem(all_vecs, method_sids, n_strata=mc.N_STRATA, seed=42)
     cache_time_sec = time.time() - t_cache_start
     print(f"[{mc.kst()}] strata fit={fit_time_sec:.2f}s + cache={cache_time_sec:.2f}s, "
           f"sizes mean={total_rows//mc.N_STRATA}")
@@ -1074,14 +1074,14 @@ def measure_case_b(cell: CellSpec, method_name: str, n_queries: int = 1000,
     total_rows = len(all_vecs)
 
     # B1 samples (KM20 stratum)
-    samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids, seed=42)
+    samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids, n_strata=mc.N_STRATA, seed=42)
     # CaseA samples (method-specific stratum)
     print(f"[{mc.kst()}] computing {method_name} strata...")
     t_fit_start = time.time()
     method_sids = _get_method_strata(method_name, all_vecs, n_strata=mc.N_STRATA)
     fit_time_sec = time.time() - t_fit_start
     t_cache_start = time.time()
-    samples_method, sizes_method = mc.cache_cluster_samples_inmem(all_vecs, method_sids, seed=42)
+    samples_method, sizes_method = mc.cache_cluster_samples_inmem(all_vecs, method_sids, n_strata=mc.N_STRATA, seed=42)
     cache_time_sec = time.time() - t_cache_start
     print(f"[{mc.kst()}] strata fit={fit_time_sec:.2f}s + cache={cache_time_sec:.2f}s")
 

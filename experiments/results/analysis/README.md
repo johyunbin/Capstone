@@ -1,8 +1,17 @@
-# experiments/results/analysis/ — 본 연구 9 분석 file (5/13 ~ 5/14)
+# experiments/results/analysis/ — 본 연구 13 분석 file (5/13 ~ 5/15)
 
-본 디렉토리는 본 연구 narrative 의 **정량 수치 source**. 각 분석 file 은 server 1065 file portfolio 위에서 측정 결과를 정량 분석한 결과.
+본 디렉토리는 본 연구 narrative 의 **정량 수치 source**. 각 분석 file 은 server 1352 file portfolio 위에서 측정 결과를 정량 분석한 결과.
 
-## 9 분석 file 인덱스
+## 5/15 추가 4 분석 (mini session 자동 진행)
+
+| File | 작성 | 핵심 finding | narrative 위치 |
+|---|---|---|---|
+| `B1_variance_root_cause_종합분석_20260515_0150.md` | 5/15 01:50 | **B1 inherent CV 6.33%** (n=10 trial) + **measurement run-level systematic bias ±10-25%** (random variance 만으로 설명 불가). 5/12 -23%, 5/14 K=10 +24%, 5/15 archive K=10 +10%. → paper exact base B1 만 reliable denominator | §7 paired narrative caveat |
+| `측정_미커버_영역_종합_inventory_20260515_0205.md` | 5/15 02:05 | **paper exact base 98.2% 유효 cover** (495/504, A2-Fig8 scope 외 제외). paper Fig 13 sel sweep 중 **sel=0.10 미측정**. K granularity 9 cell 확장 = 216 file 추가 측정 cover | §10 정직 disclosure |
+| `Pareto_Top5_method_cell_cross_validation_20260515_0250.md` | 5/15 02:50 | **★ Pareto Top 5 (sparse_rp/chao/neuram/pca1d/hilbert) × 9 cell = 100% coverage**. paired CaseB < CaseA = **97.78%** (44/45). 전체 56 method 91.46%. robustness rank: hilbert (std 1.55%) > pca1d > sparse_rp > chao_weighted > neuram | §8 자원 효율 + §7 결합 가치 강화 |
+| `K_granularity_dimension_dependent_종합검증_20260515_0310.md` | 5/15 03:10 | **dimension-dependent K best 가설 = 약한 evidence**. K=10 best 55%, K=20 25%, K=30 20%. **same DEEP 96d K=10 인데 5/12 (-9.5%) vs 5/14 (+10.3%) = run-level bias 명확**. paper default K=20 robust | 부록 (K granularity caveat 추가) |
+
+## 5/13 ~ 5/14 9 분석 file 인덱스
 
 | File | 작성 | 핵심 finding | narrative 위치 |
 |---|---|---|---|
@@ -24,12 +33,16 @@
 | §5 결합 best | −7.37% (Centroid tuple sparse_rp A2-Fig9) | `centroid_tuple_cheap_approximation_results_20260513.md` |
 | §5 α sweep | α=0.5 best, U-shape | `alpha_sweep_results_20260514.md` |
 | §6 결합 < 단독 | −7.37% < −10.17% | `alpha_sweep_results_20260514.md` |
-| §7 결합 가치 | 92.5% paired CaseB < CaseA, cell spread 줄임 | `method_level_breakdown_20260513.md` (handoff_v12 v11 base) |
+| §7 결합 가치 | 92.5% paired CaseB < CaseA, cell spread 줄임 | `method_level_breakdown_20260513.md` |
+| §7 강화 | **Pareto Top 5 paired 97.78%** (44/45) | `Pareto_Top5_method_cell_cross_validation_20260515_0250.md` ★ |
+| §7 caveat | B1 systematic bias ±10-25% (paired narrative 영향 X) | `B1_variance_root_cause_종합분석_20260515_0150.md` ★ |
 | §8 Pareto Top 5 | sparse_rp / chao / neuram / pca1d / hilbert | `resource_efficiency_pareto_20260513.md` |
 | §8 reservoir O(1) | fit <0.1s + 메모리 O(1) + −9.25% Δ% | `resource_efficiency_pareto_20260513.md` |
+| §8 robustness rank | hilbert std 1.55% > pca1d > sparse_rp > chao_weighted > neuram | `Pareto_Top5_method_cell_cross_validation_20260515_0250.md` ★ |
 | §10 시나리오 A.5 | quality-sensitive vs quality-robust | `multi_join_restratification_results_20260513.md` |
 | §10 cheap 근사 | Centroid tuple −0.84%p (4 method 모두) | `cheap_approximation_extended_results_20260514.md` |
-| 부록 K granularity | sparse_rp K=20 sweet, hilbert_real K-robust | `km_granularity_sensitivity_3way_K10_K20_K30_20260513.md` |
+| §10 정직 disclosure | paper Fig 13 sel=0.10 미측정 + 9 cell coverage 98.2% | `측정_미커버_영역_종합_inventory_20260515_0205.md` ★ |
+| 부록 K granularity | sparse_rp K=20 sweet, hilbert_real K-robust + dim-K 가설 약한 evidence + run-level bias | `km_granularity_sensitivity_3way_K10_K20_K30_20260513.md` + `K_granularity_dimension_dependent_종합검증_20260515_0310.md` ★ |
 
 ## 환각 검증 (5/14 환각 검증 agent 결과)
 
@@ -40,23 +53,29 @@
   3. CLAUDE.md "+3.74%" mean gap — 실측 표와 방향 충돌
   4. SIFT 1.5M (4/17 옛 측정) vs SIFT 80M (paper exact) 분리
 
-## 측정 raw 와의 연결
+## 측정 raw 와의 연결 (5/15 reorganize 후 dataset 단일 기준 그룹화)
 
 각 분석 file 의 raw 측정 데이터:
-- `analysis/multi_join_*` ↔ `raw/08_다중조인_재학습/`
-- `analysis/centroid_tuple_*` ↔ `raw/07_저비용_근사_4후보/centroid_tuple/`
-- `analysis/cheap_approximation_extended_*` ↔ `raw/07_저비용_근사_4후보/` (전체 4 후보)
-- `analysis/alpha_sweep_*` ↔ `raw/05_결합비율_alpha_sweep/`
-- `analysis/km_granularity_*` ↔ `raw/06_클러스터수_K_민감도/`
-- `analysis/method_level_breakdown` ↔ `raw/03_RQ3_단독대체_CaseA/` + `raw/04_RQ3_결합_CaseB/`
-- `analysis/resource_efficiency_pareto` ↔ `raw/10_전체측정_백업/` (분석 종합)
+- `analysis/multi_join_*` ↔ `raw/DEEP+WIKI_864d/A2-Fig9_multi_join_restratification/`
+- `analysis/centroid_tuple_*` ↔ `raw/DEEP+WIKI_864d/A2-Fig9_cheap_approximation/centroid_tuple/`
+- `analysis/cheap_approximation_extended_*` ↔ `raw/DEEP+WIKI_864d/A2-Fig9_cheap_approximation/` (전체 4 후보)
+- `analysis/alpha_sweep_*` ↔ `raw/DEEP+WIKI_864d/A2-Fig9_alpha_sweep/`
+- `analysis/km_granularity_*` ↔ `raw/{dataset}/{cell}_K_granularity/`
+- `analysis/method_level_breakdown` ↔ `raw/{dataset}/{cell}_paper_main/`
+- `analysis/resource_efficiency_pareto` ↔ `raw/REPORT_분석/` + `raw/{dataset}/{cell}_paper_main/`
+- `analysis/B1_variance_root_cause_*` ↔ `raw/{dataset}/B1_baseline_paper_exact/` + `raw/{dataset}/{cell}_K_granularity/`
+- `analysis/측정_미커버_영역_*` ↔ raw 전체 + `raw/REPORT_분석/REPORT_paper_exact_v11.md`
+- `analysis/Pareto_Top5_*` ↔ `raw/{dataset}/{cell}_paper_main/`
+- `analysis/K_granularity_dimension_*` ↔ `raw/{dataset}/{cell}_K_granularity/`
 
 ## 정리 history
 
 - **5/13 ~ 5/14**: 본 9 분석 file 작성 (각 측정 회수 직후)
 - **5/14 16:00**: `_internal/analysis/` → `experiments/results/paper_exact_v7/analysis/` 이동
 - **5/14 16:05**: 사용자 정리 — `paper_exact_v7/` 제거 → `experiments/results/analysis/` 직속
+- **5/15 01:50 ~ 03:15**: mini session 자동 진행 — 4 신규 분석 file 추가 (B1 variance + 미커버 inventory + Pareto Top 5 + K dim)
+- **5/15 11:25**: raw/ dataset 단일 기준 reorganize (사용자 명시 정책 적용, 1352 file git mv)
 
 ---
 
-작성: 2026-05-14 16:10 KST · narrative 매핑 + raw 연결 명시
+작성: 2026-05-14 16:10 KST · narrative 매핑 + raw 연결 명시 · 5/15 11:55 update — 4 신규 분석 + dataset reorganize 반영

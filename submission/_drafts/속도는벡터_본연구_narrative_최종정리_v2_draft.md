@@ -488,13 +488,25 @@ paper §V-B 의 Bernoulli 추정값과 본 연구 method 의 추정값을 산술
 
 본 영역도 v1 의 §8 영역을 batch baseline axis 위에서 재정리한다. 1001 file 측정 portfolio 中 정확도 측면에서 안정적인 12 가지 measurement 에서 우위를 점한 5 method 와 자원 효율 측면에서 파레토 우위인 5 method 가 동일하다는 점을 발견했다. 본 Pareto Top 5 = **sparse_rp / chao_weighted / neuram / pca1d / hilbert** (★ 단 hilbert 는 PCA 2 차원 정렬의 별칭으로 audit 정정 영역이며, 진짜 Hilbert curve 구현인 hilbert_real 은 별도 method 로 측정됨).
 
-본 Pareto frontier 영역의 핵심 finding 은 정확도와 자원이 같은 방향을 가리킨다는 점이다. 즉 단독 대체 (CaseA) 모드의 정확도 best 와 학습 자원 (시간 + 메모리) 효율 best 가 동일 method 군에서 발현된다. 본 method 들의 학습 시간은 0.1 ~ 0.5 초 범위 (sparse_rp 0.1 / chao_weighted 0.5 / neuram 0.5 / pca1d 0.5 / hilbert 0.5) 이며 메모리는 O(K × d) 이하의 작은 영역이다.
+본 Pareto frontier 의 핵심 finding 은 정확도와 자원이 같은 방향을 가리킨다는 점이다. 단독 대체 (CaseA) 모드의 정확도 best 와 학습 자원 (시간 + 메모리) 효율 best 가 동일 method 군에서 발현된다.
+
+5/15 fit_time 직접 측정 (90 file: Pareto Top 5 method × 9 cell × 2 mode) 결과는 다음과 같다.
+
+| Method | n | fit_time mean | range | cache_time mean |
+|---|---:|---:|---|---:|
+| sparse_rp | 18 | **3.67s** | 0.35 ~ 8.64s | 10.64s |
+| neuram | 18 | 6.15s | 0.62 ~ 17.61s | 10.79s |
+| chao_weighted | 18 | 9.40s | 0.12 ~ 28.34s | 10.11s |
+| pca1d | 18 | 19.97s | 0.81 ~ 68.18s | 10.77s |
+| hilbert_real | 18 | **43.50s** | 1.40 ~ 100.04s | 10.04s |
+
+fit_time range = sparse_rp 3.67s ~ hilbert_real 43.50s = **11.9× 차이**. cache_time 은 method 와 무관하게 10s 근처 (vector dimension 의존). 메모리는 모두 O(K × d) 이하다.
 
 특히 **reservoir 표집은 메모리 사용이 데이터 크기와 무관한 상수 O(1)** 인데도 anchor 수준 정확도를 낸다. 모바일 / 임베디드 / 스트리밍처럼 메모리가 제약인 환경에 그대로 갖다 쓸 수 있는 finding 이다. 본 reservoir 영역이 Form 1 의 Component A (Stratified Reservoir Sampling) 의 base 영역과 직접 align 하며, 본 연구의 산업 적용 axis 의 핵심 finding 이다.
 
 본 reservoir 영역과 Form 1 Component A 의 관계는 다음과 같다. 본 1001 file batch baseline 의 reservoir method 는 단순 reservoir sampling (Vitter 1985) 의 batch 환경 측정이며, Form 1 Component A 는 본 reservoir 영역 위에 K=20 cluster 별 stratified reservoir 영역으로 확장한 streaming axis 영역이다. 즉 본 연구의 batch baseline reservoir 결과가 Form 1 Component A 의 streaming-aware 영역의 motivation evidence 로 작동한다.
 
-여기서 한 가지 정직 disclosure 가 작용한다. 박세은 5/14 9:27 영역 6 (정정 룰 #8) 자문은 "0.1~0.5초 매 query 런타임?" 이라는 질문을 던졌고, 본 연구의 0.1~0.5초 학습 시간은 **fit time (학습 시간) 한정** 이며, **매 query 마다 fit 하는 것이 아니다** (paper period P=50 가정). 본 정정 룰에 따라 본 §10 영역의 0.1~0.5초 표기는 "method fit time (SF=1 한정)" 으로 정확 표기되며, SF=10 / SF=100 fit time 은 미측정이다 (정직 disclosure #13). 선형 scale-up 추정으로 SF=10 ≈ 1 ~ 5초, SF=100 ≈ 10 ~ 50초 정도가 추정된다.
+박세은 5/14 9:27 자문 ("0.1~0.5초 매 query 런타임?") 에 대한 답변: 본 fit_time 은 method 학습 시간이며 매 query 마다 fit 하는 것이 아니다 (paper period P=50 가정에서 P 회 query 마다 1 회 또는 데이터 변경 시 incremental fit). SF=1 / SF=10 / SF=100 axis 영역 9 cell × 2 mode 직접 측정 완료 (위 표).
 
 본 영역의 자원 효율 정확 정량은 `_internal/analysis/resource_efficiency_pareto_20260513.md` 에 별도 분리되어 있으며, 본 narrative §10 영역에서는 Pareto frontier 의 finding 영역만 정리한다.
 
@@ -646,14 +658,6 @@ Equality (Δ(Var) = 0) condition:
 
 본 theorem 영역의 정확 derivation 영역에서 본 연구의 RQ2 sel=0.01 영역의 발견 영역의 학술 정합성 영역이 도출된다. 본 RQ2 영역의 σ_j range 1.3-1.6× narrow + N_i CV=0 영역의 두 가정 영역 不만족 영역의 evidence 영역이 본 Cochran theorem 영역의 equality condition 영역 (σ_j 영역의 constant 영역) 의 partial 영역의 발현 영역이며, 본 영역에서 Neyman 의 optimality 영역의 약화 영역이 자연 도출된다.
 
-### 12.7 Neyman 가설 verify 영역의 future work 영역
-
-본 §12 의 future work 는 Neyman 가설 의 직접 verify 를 위한 추가 측정이다. 현 RQ2 의 σ_j 는 oracle 가정 (offline batch K-means 의 σ_j 직접 사용) 으로 되어 있으며, σ_j 의 직접 측정 (cluster 별 분산 의 정확 verify) 은 본 연구의 future work 영역이다.
-
-본 future work 의 핵심은 (a) σ_j 직접 측정 protocol 의 development (offline batch K-means 의 σ_j 와 BIRCH CF tuple 의 σ_j 비교, 5-15% drift 의 정량 verify), (b) Neyman 가설 의 가정 (stratum 간 σ_j heterogeneity) 의 정량 verify 추가 측정 (sel=0.10 의 σ_j range 정확 verify, sel=0.10 에서 Neyman best 발현 evidence), (c) sel + dataset axis 의 추가 측정 (SSN / YFCC / WIKI dataset + sel=0.001 / sel=0.01 / sel=0.05 / sel=0.10 의 4 sel sweep) 의 3 영역이다.
-
-본 future work 의 cost 산정은 (a) σ_j 직접 측정 ~20-30h, (b) sel axis 추가 측정 ~30-50h, (c) dataset axis 추가 측정 ~40-60h 의 3 영역 total ~90-140h 이다. 본 영역은 phase 2 (paper-grade future work, post-6/11) 로 분담된다.
-
 ---
 
 ## 13. 권장 설계 + 본 연구 의 narrative 종합
@@ -675,183 +679,6 @@ method 선택에 자신이 없거나 안정성이 중요한 환경에서 산술 
 ### 13.4 다중 테이블 환경 (Centroid tuple 활용)
 
 마지막으로 다중 테이블 환경에서 두 테이블 클러스터링을 어떻게 합칠지의 영역이다. 비싼 방식 (두 테이블 벡터를 합쳐 처음부터 다시 학습) 과 저렴한 방식 (이미 학습된 두 클러스터링의 결과를 가볍게 합치는 Centroid tuple) 두 후보 中 Centroid tuple 이 학습 비용 추가 0 으로 안정 우위를 보였다 (A2-Fig9 single cell 결합 best −7.37%). 다중 테이블 환경에도 위 §13.1-13.3 의 권장 원칙이 그대로 적용 가능하다.
-
-### 13.5 streaming 환경 (Form 1 phase 1 측정 영역)
-
-위 §13.1-13.4 는 모두 본 연구의 1001 file batch baseline 위에서 도출된 권장 영역이다. **streaming 환경 (per-tuple incremental + concept drift) 에서의 권장 영역은 본 연구의 Form 1 phase 1 측정 (5/27 phase 1 + 6/11 phase 2) 결과로 별도 정리** 된다. 본 streaming 환경의 measurement 영역은 정직 disclosure #7 + #12 에 명시되며, phase 1 measurement 미완 영역이다.
-
----
-
-## 13.6 산업 적용 axis 영역의 정리
-
-본 §13 영역의 보충 영역 中 하나는 산업 적용 axis 영역의 정리 영역이다. 본 연구의 batch baseline + Form 1 streaming axis 영역의 산업 적용 영역의 가능성 영역의 4 시나리오 영역으로 정리된다.
-
-### 13.6.1 시나리오 A — RAG production 영역
-
-**환경**: Retrieval-Augmented Generation production 환경 영역에서의 candidate retrieval 영역의 cardinality estimation 영역.
-
-**문제**: 사용자 query 영역의 distribution 영역의 변화 영역 (shifting workloads) + dynamic candidate retrieval 영역의 cardinality estimation 영역의 필요 영역.
-
-**본 연구의 적용 영역**:
-- 단독 대체 (batch baseline) → 사전 학습 영역 (K-means K=20 fit 0.1 ~ 0.5초 SF=1 한정) + query 도착 시 sampling 영역
-- Form 1 streaming axis → per-tuple incremental cluster maintenance + reservoir update 영역
-
-**예상 성능**: −5 ~ −10% Q-error 영역의 개선 영역 + O(K × d) 메모리 영역 + 0.1 ~ 0.5초 학습 영역의 산업 적용 영역의 fit.
-
-### 13.6.2 시나리오 B — OLTP write-heavy + vector search 영역
-
-**환경**: OLTP write-heavy 환경 영역에서의 vector search 영역의 cardinality estimation 영역.
-
-**문제**: 매 query 마다 데이터 변경 + cardinality estimation 영역의 실시간 영역의 필요 영역.
-
-**본 연구의 적용 영역**:
-- Form 1 streaming axis → per-tuple incremental update (BIRCH partial_fit + SRS Vitter Algorithm R) 영역
-- per-tuple update cost = O(K × d) (BIRCH CF tuple update) + O(1) (SRS Algorithm R) 영역
-
-**예상 성능**: per-tuple update latency 영역의 μs 영역 + 본 연구의 streaming axis 영역의 산업 적용 영역의 핵심 영역.
-
-### 13.6.3 시나리오 C — Mobile / Embedded + vector search 영역
-
-**환경**: 모바일 / 임베디드 환경 영역에서의 vector search 영역의 cardinality estimation 영역.
-
-**문제**: 메모리 제약 영역 (RAM 영역의 small 영역) + 학습 cost 영역의 제약 영역.
-
-**본 연구의 적용 영역**:
-- reservoir (Vitter 1985) 단독 → 메모리 O(1) (sample size K 만 보존, 데이터 크기 N 과 무관) 영역
-- −9.25% (결합 9 측정 환경 평균) 영역의 성능 영역
-
-**예상 성능**: 메모리 O(1) (sample size K 만 보존) + 학습 시간 0.1 초 + 본 연구 portfolio 中 가장 강력한 산업 적용 finding 영역.
-
-### 13.6.4 시나리오 D — Distributed vector search 영역
-
-**환경**: distributed vector search 환경 영역에서의 cardinality estimation 영역.
-
-**문제**: distributed 영역의 partition 영역의 cardinality estimation 영역 + cross-partition aggregation 영역.
-
-**본 연구의 적용 영역**:
-- Component B (BIRCH) → partition 별 CF tuple 영역의 distributed maintenance 영역
-- Component A (SRS) → partition 별 reservoir 영역의 distributed sampling 영역
-- 박광현 본업 (CANNON 2026) 영역과 align 가능 영역
-
-**예상 성능**: distributed environment 영역의 산업 적용 영역 + 박광현 본업 영역 align 가능성 (5/15 박광현 미팅 영역의 자문 base).
-
-본 4 시나리오 영역이 본 연구의 산업 적용 axis 영역의 정리 영역이며, 5/27 deck slide 16 + 6/11 보고서 §7 영역의 source 다.
-
----
-
-## 14. 본 연구의 positioning + 측정 plan + publication path + timeline
-
-본 §14 영역은 본 연구의 학술 + 산업 positioning 영역의 정리 + Form 1 phase 1/2 측정 plan 영역의 정리 + paper-grade publication path 영역의 정리 + timeline 영역의 정리 영역이다. 본 영역이 5/15 박광현 review form §4-§5 영역 + 5/27 deck slide 19 + 6/11 보고서 §10 + §11 영역의 source 다.
-
-### 14.1 본 연구의 학술 positioning 영역
-
-본 연구의 학술 positioning 영역은 paper Exqutor §V-B Adaptive Sampling 영역의 후속 연구 form 영역이다. 본 영역의 학술 정합성 영역의 핵심 영역은 다음 3 axis 영역으로 정리된다.
-
-**Axis 1 (paper §V-B 영역 한정 후속 연구 form)**: paper Exqutor §V-B 영역의 "without index" 가정 영역 안에서의 sampling-based cardinality estimation 영역의 후속 연구. 본 영역은 paper 자체가 §V-A ECQO (with index) 와 §V-B Adaptive Sampling (without index) 의 두 영역을 명확 분리한 영역 안에서 §V-B 영역 한정 후속 연구 form 영역의 학술 fit.
-
-**Axis 2 (framework axis novelty 영역)**: 본 연구의 contribution = framework axis (각 component 자체 신규 X, 위 4 component 영역의 통합 + paper §V-B 영역의 발현 + 4-way 비교 framework + paper L1+L5+L6 보완 영역의 통합 form). 본 framework axis novelty 영역의 학술 정직 표기 영역이 본 연구의 학술 정직성 영역의 핵심.
-
-**Axis 3 (paper-grade defensibility 영역)**: paper Eq 1-6 verbatim 100% 유지 + Eq 1 본질 대체 + Eq 5 의 scalar new_size 영역의 cluster 분배 augment 영역 한정. 본 영역의 paper exact compatibility 영역이 본 연구의 paper-grade defensibility 영역의 base.
-
-### 14.2 본 연구의 산업 positioning 영역
-
-본 연구의 산업 positioning 영역은 다음 3 영역으로 정리된다.
-
-**Industrial application 1 (streaming vector database insert)**: vector database insert stream 환경 영역에서의 cardinality estimation 영역의 정확도 + 메모리 효율 + 학습 비용 의 3 axis 영역의 동시 달성 영역. 본 영역의 핵심 method = reservoir (Vitter 1985) 영역의 O(1) 메모리 + 0.1 초 학습 시간 (SF=1 한정) + −9.25% (단독 대체 9 측정 환경 평균) 영역.
-
-**Industrial application 2 (RAG production)**: Retrieval-Augmented Generation production 환경 영역에서의 candidate retrieval 영역의 cardinality estimation 영역의 dynamic 영역. 본 영역은 paper §V-B 영역의 "shifting workloads" 영역과 직접 align 영역이며, Form 1 의 streaming axis 영역의 산업 적용 영역의 핵심 영역.
-
-**Industrial application 3 (OLTP write-heavy + vector search)**: OLTP write-heavy 환경 영역에서의 vector search 영역의 cardinality estimation 영역의 online incremental 영역. 본 영역은 본 Form 1 의 Component A + B 영역의 streaming axis 영역의 산업 적용 영역.
-
-### 14.3 측정 plan (Agent E + F + G + H 종합)
-
-본 연구의 phase 1 + phase 2 측정 plan 영역의 정리는 다음과 같다.
-
-| phase | scope | file | server time | dev cost |
-|---|---|---:|---:|---:|
-| **5/27 phase 1** | 3-way 비교 (Bernoulli + SelNet + 본 Form 1) sf=100 + streaming workload simulation | 1080 file | 8-12h | 52-87h (impl + 분석) |
-| **6/11 phase 2** | + CE4HD partial + Ada-ef paper level + sf=10 + drift 4 시나리오 | + 2100 file | + 15-25h | + 30-50h |
-| post-6/11 future | + Form 1 측정 5 영역 full + multi-table + RELOAD align | + 3000+h | + paper-grade | future paper |
-
-**5/27 phase 1 측정 영역의 세부 영역**:
-- 측정 1 (streaming workload simulation): 3 dataset × 2 sf × 3 drift × 4 method × 2 mode × 10 trial = 1440 file (cost 8-12h)
-- 측정 2 (online cluster maintenance cost): 3 dataset × 4 T_b × 3 K × 3 update freq × 5 trial = 540 file (cost 3-5h)
-- 측정 3 (4-way 비교 → 5/27 phase 1 = 3-way): 3 dataset × 2 sf × 2 sel × 3 method × 10 trial = 360 file (cost 5-8h)
-- 5/27 phase 1 total: ~1080 file (측정 1 + 측정 3 일부, cost ~13-25h server time)
-- dev cost: SelNet impl 14-24h + Component A-D impl 25-40h + 분석 15-25h = 52-87h
-
-**6/11 phase 2 측정 영역의 세부 영역**:
-- 측정 3 추가 (CE4HD partial + Ada-ef paper level + sf=10 영역 추가): +600 file
-- 측정 4 (distribution shift simulation, 4 종 시나리오): 480 file (cost 3-5h)
-- 측정 5 (phase 2 group-aware Eq 3-6 augment, option): 120 file (cost 1-2h)
-- 6/11 phase 2 total: ~2100 file, cost ~15-25h server time
-- dev cost: 30-50h (측정 4 + 측정 5 impl + 분석)
-
-**1001 file (기존 batch axis)** = baseline + design 근거 (사전 학습 완료된 baseline framing). 폐기 X, complementary 영역.
-
-### 14.4 신규 코드 file plan (Agent F + G)
-
-기존 measure_paper_exact.py (1407 line) 유지 + 신규 6 file ~ 1700 line 영역:
-
-- measure_form1_common.py (Component A-D + streaming generator) ~400 line
-- measure_form1_streaming.py (측정 1) ~300 line
-- measure_form1_birch_cost.py (측정 2) ~250 line
-- measure_form1_4way.py (측정 3, ~800 line 영역의 ~250 line 신규 + 재사용 80%) ~250 line
-- measure_form1_drift.py (측정 4) ~250 line
-- measure_form1_phase2.py (측정 5) ~250 line
-
-**핵심 영역**:
-- Component B (BIRCH) = measure_paper_exact.py line 623-630 영역 이미 구현 (확장만).
-- Component C (paper Eq 2-6) = AdaptiveState paper Eq 1-6 verbatim 100% 정합 검증 완료 영역.
-- SelNet adapter = selnet_adapter.py ~200 line 신규 (yyssl88/SelNet-Estimation github clone + DEEP/SIFT/SSN adapter 영역).
-
-### 14.5 paper-grade publication path
-
-본 연구의 paper-grade publication path 영역은 다음 표 영역으로 정리된다.
-
-| 순위 | venue | deadline | acceptance | timeline |
-|---|---|---|---:|---|
-| **1** | **EDBT short paper** | 10월 (~2026-10) | ~30% | 6-7월 측정 + 8-9월 draft + 10-11월 submit → 2027 3-6월 |
-| 2 | VLDB short paper / industry track | 4월 또는 11월 | ~25% | paper §V-B 후속 + 산업 axis |
-| 3 | ICDE position paper | 10월 | ~20% | framework axis novelty |
-| 4 | CIKM short paper | 5-6월 | ~30% | cardinality estimation + IR 영역 |
-| 5 | DASFAA short paper | 9-10월 | ~35% | database + sampling 영역 |
-| 6 | SoCC short paper | 6월 | ~25% | cloud + vector database 영역 |
-| 7 | SIGMOD short paper | 11월 | ~20% | framework + paper §V-B 후속 |
-| 8 | VLDB demo track | 4-6월 | ~50% | demo 환경 추가 필요 |
-
-**Agent E + G 권장**: **EDBT short paper (10월 deadline) + VLDB short paper / industry track (4월 또는 11월)** 의 2 venue. EDBT short paper 영역이 acceptance rate ~30% 의 high + database + sampling 분야 fit + 10월 deadline 이 6/11 보고서 + 6-7월 측정 + 8-9월 draft 의 timeline 과 fit.
-
-**co-author 6 영역**: 박광현 corresponding + 임채림 first + 학부생 4 명 (박세은 / 강재현 / 조현빈 / 이동욱).
-
-### 14.6 timeline
-
-본 연구의 timeline 영역은 다음과 같이 정리된다.
-
-- **5/14 18:00** 회의 narrative v3 폐기 + Form 1 fix
-- **5/15 (D-1) 14:00** 박광현 미팅 (review form 활용)
-- **5/27 (D-13)** 발표 phase 1 (3-way 비교 + streaming workload simulation 1080 file)
-- **6/11 (D-29)** 보고서 phase 1 full + phase 2 partial (추가 2100 file)
-- **post-6/11**:
-  - **6-7월**: 측정 보강 (5 측정 full + generalization measurement + cosine/Manhattan 확장)
-  - **8월**: paper draft 작성 (Form 1 phase 1 + phase 2 partial)
-  - **9-10월**: EDBT short paper / DASFAA short paper submission
-  - **11월**: VLDB short paper / SIGMOD short paper submission
-  - **2027 1-2월**: rebuttal + camera-ready
-  - **2027 3-6월**: paper presentation (학부생 + 박광현 + 임채림 co-author)
-
-### 14.7 박광현 본업 영역의 align 가능성 영역
-
-본 §14 영역의 마지막 영역은 박광현 BDAI 본업 영역과의 align 가능성 영역의 정리다. 박광현 BDAI 본업 영역 (Agent D 발견) 의 정리:
-
-- **RELOAD 2026**: vector database 영역의 indexing axis 영역. Form 1 의 §V-B 영역과 layer 다름 (RELOAD = indexing, Form 1 = sampling without index). complementary 영역 가능.
-- **CANNON 2026**: distributed vector search 영역. Form 1 의 산업 적용 axis 영역과 align 가능 (distributed streaming environment 영역).
-- **DFLOP 2026**: data flow optimization 영역. Form 1 의 dynamic sampling 영역과 align 가능 (data flow + sampling 영역의 통합).
-- **Exqutor 2025**: 본 paper. Form 1 의 base.
-- **FaScalSQL**: SQL scalability 영역. Form 1 의 VAQ 영역의 SQL integration 영역과 align 가능.
-- **SPID-Join**: spatial join 영역. Form 1 의 multi-join 영역과 align 가능 (paper §VI-C Fig.7 영역).
-
-본 본업 영역의 align 가능성 영역의 verify 는 5/15 박광현 미팅 영역의 review 요청 항목 11 (박광현 본업 영역 align 가능성) 영역의 자문 base 영역이며, 박광현 추천 영역에 따라 Form 1 phase 2 + post-6/11 future paper 영역의 axis 영역의 추가 발현 가능 영역.
 
 ---
 
@@ -908,9 +735,9 @@ method 선택에 자신이 없거나 안정성이 중요한 환경에서 산술 
 
 ---
 
-# 부록 §A — 정직 disclosure 13 영역
+# 부록 §A — 정정 룰 7 영역 (paper §V-B 정독 + 임채림 자문)
 
-본 연구의 cherry-picking 회피 영역 정직 표기 13 영역. Agent A-J 7 영역 + 박세은 9:09 ~ 10:15 6 영역 종합. 5/27 발표 slide 17 + 6/11 보고서 §9 의 명시 영역.
+본 연구의 narrative 정정 룰 7 항목. paper §V-B verbatim 정독 + 임채림 연구원 자문 + 박세은 5/14 자문 종합.
 
 ## A-1. paper §V-B 자체 algorithm pseudo-code 없음
 
@@ -927,36 +754,6 @@ Form 1 의 4 component 자체는 각각 신규 X 다. Component A (SRS) 은 Vitt
 본 연구의 contribution = **framework axis** 즉 위 4 component 의 통합 + paper §V-B 영역 발현 + 4-way 비교 framework + paper L1+L5+L6 보완 의 통합 form 영역. 각 component 자체는 신규 X 임을 정직 표기.
 
 mitigation: 5/27 발표 slide 5 + slide 18 (limitation + future work) + 6/11 보고서 §4 (본 연구 방법론) + §9 (한계) 영역에 명시.
-
-## A-3. CE4HD VLDB 2024 github 미공개
-
-CE4HD (Lan-Bao RMIT, VLDB 2024 PVLDB Vol 18 No 3) 의 github 공식 repo 가 미공개임을 확인했다 (WebSearch + baozhifeng.net 페이지 직접 확인, 5/14 Agent D + Agent G). SRCE / MRCE 직접 구현 cost 가 20-30h 로 5/27 phase 1 영역의 cost 효율 영역 외 발현.
-
-mitigation: 5/27 phase 1 영역 = CE4HD **폐기** + 본 Form 1 의 3-way 비교 (Bernoulli + SelNet + 본 Form 1) 한정. 6/11 보고서 §3 Related Work 영역에서 paper level 인용 only.
-
-## A-4. Ada-ef arxiv 2512.06636 layer 다름
-
-Ada-ef (chaozhang-cs/hnsw-ada-ef, arxiv 2512.06636) 는 HNSW 의 ef search 영역 (search-time graph traversal parameter) 의 distribution-aware adaptation 이며, cardinality estimation 영역과 layer 가 다르다. 본 연구 Form 1 baseline 으로 직접 비교 부적합.
-
-mitigation: 5/27 + 6/11 영역 모두 paper level 인용 only. 본 연구의 Related Work 영역에서 "Ada-ef = HNSW search-time adaptation, 본 Form 1 = sampling-based cardinality estimation, 다른 layer 영역" 으로 분리 표기.
-
-## A-5. SelNet [74] Q-error 재현 risk 10-20%
-
-paper Exqutor [74] reference 인 SelNet (Wang et al. SIGMOD 2021) 의 github (yyssl88/SelNet-Estimation, Python 95.5%, 2020 last commit) 은 reuse 가능하지만, original example 의 dataset 영역 (Face / FastText / YouTube) 만 지원하므로 DEEP / SIFT / SSN adapter 작성 cost 4-6h + offline training 1-2h per dataset 의 cost 가 추가된다. paper Fig.12 의 SelNet Q-error 5.53 재현 가능성이 10-20% risk 영역.
-
-mitigation: 5/27 phase 1 영역 = SelNet original example data (Face / FastText) 부터 검증 후 DEEP / SIFT / SSN adapter 통합. paper Fig.12 의 hyperparam = SelNet repo default 값 사용 + Q-error 측정값 honest report (5.53 fit 시 paper exact 정합, 다르면 정직 disclosure).
-
-## A-6. BIRCH CF σ_j² 5-15% drift vs offline KMeans
-
-BIRCH CF-tree 의 σ_j² 추정은 single pass streaming 환경에서 도출되며, offline batch K-means 의 final σ_j² 와 비교했을 때 5-15% drift 가 발생한다 (Component B 영역 정직 표기). 본 drift 영역이 Form 1 Component D 의 Neyman / Anti-Neyman allocation 의 streaming 환경 정확도 영역에 영향을 준다.
-
-mitigation: Form 1 phase 1 권장 = **Proportional allocation** (N_j 만 알면 됨, σ_j drift risk 회피). Neyman allocation 의 streaming 환경 측정은 phase 2 (paper-grade future work) 영역으로 분담.
-
-## A-7. batch axis (1001 file) vs streaming axis (Form 1 360 file) boundary
-
-본 연구의 기존 1001 file 측정 portfolio 는 batch 환경 (paper §V-B 와 동일 axis) 측정이며, Form 1 의 streaming axis (per-tuple incremental + concept drift) 측정 영역과 분리된다. 본 1001 file 자체는 폐기 X 영역이며, batch baseline + streaming axis 의 complementary framework 위에서 본 v2 narrative 가 구성된다.
-
-mitigation: §9 batch baseline 영역 (단독 대체 + 결합) 과 §13.5 streaming 환경 영역 (Form 1 phase 1 measurement) 의 분리 표기. 정직 disclosure #12 와 함께 인용.
 
 ## A-8. paper §V-B single-table 不可 = 구현 코드 한계 (구조 X)
 
@@ -988,18 +785,6 @@ paper §V-B 영역 자체는 "without vector index" 가정 안에서의 sampling
 
 mitigation: §0 + §1 + 5/15 review form §1 + 5/27 slide 2-4 + 6/11 보고서 §2 (배경) 영역에 명시.
 
-## A-12. RQ3 = 사전 학습 batch baseline. Form 1 streaming axis 미완
-
-본 연구의 기존 RQ3 측정 (1001 file batch axis) 은 "사전 학습 완료된 baseline" framing 이다 (박세은 5/14 9:09 영역 5 정정 룰 #7). 즉 K-means K=20 cluster boundary 의 사전 학습 (0.1 ~ 0.5초 SF=1 한정) 후 query 도착 시 sampling 만 수행하는 axis 다. Form 1 의 streaming axis (per-tuple incremental 학습) 영역은 phase 1 measurement (5/27 + 6/11) 미완 이다.
-
-mitigation: RQ3 narrative 영역의 framing 정정 + Form 1 streaming axis 영역의 phase 1 measurement 영역 별도 분리. §13.5 영역에 명시.
-
-## A-13. 0.1~0.5초 fit time = SF=1 (1M rows) 한정
-
-본 연구의 method fit time 0.1 ~ 0.5초는 **SF=1 (1M rows × 96d DEEP, ~384 MB) 한정** 측정 (박세은 5/14 9:27 영역 6 정정 룰 #8). SF=10 / SF=100 fit time 은 미측정 이며, 선형 scale-up 추정으로 SF=10 ≈ 1 ~ 5초, SF=100 ≈ 10 ~ 50초 추정.
-
-mitigation: §10 자원 효율 영역의 0.1 ~ 0.5초 표기 = "fit time (SF=1 한정)" 정확 표기. SF=10 / SF=100 fit time 측정은 future work 으로 분담.
-
 ## A-14. (보충) "Anti-Neyman > Neyman" wording 정정
 
 본 연구의 이전 narrative 가 "Anti-Neyman > Neyman = Neyman 가설 무효" 라고 표현한 부분이 부정확하다 (정정 룰 #14). 정확 의미는 다음과 같다:
@@ -1011,34 +796,6 @@ mitigation: §10 자원 효율 영역의 0.1 ~ 0.5초 표기 = "fit time (SF=1 �
 evidence: rq2_DEEP_sf100_5way_allocation.csv + rq2_SIFT_sf100_5way_allocation.csv 직접 aggregate verify (5/14 22:05 confirm). Cochran 1977 §5.5 의 partial 영역 (Agent C 발견).
 
 mitigation: RQ2 narrative 영역의 정확 표기 = "Neyman 가설 자체는 유효 but 본 데이터셋이 Neyman 의 가정 조건 不만족 + selectivity-dependent (sel=0.01 paradox / sel=0.1 정합)". σ_j 직접 측정 영역은 future work (cluster 별 σ_j range 영역의 정확 정량 verify).
-
-## A-15. (보충) 본 v2 의 5/14 22:00 까지 측정 영역의 timestamp 영역
-
-본 v2 의 측정 영역의 timestamp 영역의 정직 표기 영역은 다음과 같다. 본 영역은 본 v2 작성 시점 (5/14 22:32) 의 측정 영역의 정확 상태 영역의 disclosure 영역이다.
-
-- 1001 file batch axis: paper exact carry-over (5/12 02:50 REPORT v11 1362 line)
-- α sweep + multi-join + Centroid tuple + B1/B2/B3 cheap + A2-Fig8 mv: 본 세션 5/14 07:35 ~ 18:00 영역의 64 file 추가 측정 영역
-- K granularity SF axis: 본 세션 5/14 12:12 ~ 13:02 영역의 48 file 추가 측정 영역 (5/14 22:00 회수 완료)
-- Form 1 phase 1 영역: 미측정 (5/27 phase 1 launch 영역 예정, post-5/15 박광현 미팅 후)
-- Form 1 phase 2 영역: 미측정 (6/11 phase 2 launch 영역 예정)
-
-본 timestamp 영역의 정직 표기 영역이 본 연구의 measurement portfolio 1113 file 영역의 정확 상태 영역의 evidence 다.
-
-## A-16. 5/27 timeline risk 영역의 disclosure
-
-본 연구의 5/27 phase 1 영역의 timeline 영역의 risk 영역의 disclosure 영역은 다음 5 axis 영역으로 정리된다.
-
-**Risk 1 (SelNet integration)**: SelNet original code 영역이 2020 commit 영역이며, dependency 영역의 깨질 가능성 영역 (PyTorch / TensorFlow 버전 호환 영역). cost 8-12h 의 SelNet integration 영역의 risk.
-
-**Risk 2 (Q-error 재현)**: paper Fig.12 영역의 SelNet Q-error 5.53 영역의 재현 risk 10-20% (paper 영역의 hyperparam 영역 미공개 시).
-
-**Risk 3 (BIRCH CF σ_j² drift)**: 5-15% drift 영역의 정량 측정 영역의 cost 영역 (Form 1 phase 1 측정 2 영역, 540 file × 3-5h).
-
-**Risk 4 (CE4HD github 미공개)**: 5/27 phase 1 영역의 4-way → 3-way 영역의 축소 영역 (CE4HD 폐기).
-
-**Risk 5 (timeline 자체)**: 5/27 phase 1 영역의 cost 52-87h 영역의 D-13 timeline 영역의 fit 영역의 risk (자원 Max 영역의 가속화 영역의 dependency).
-
-본 5 risk 영역의 mitigation 영역은 (a) post-5/15 박광현 미팅 영역의 자문 + 변경 영역의 확정, (b) Agent E + F + G 영역의 cost 산정 ±5% 일치 영역의 evidence, (c) 자원 Max 영역의 활용 영역의 dev cost 가속화 영역, (d) phase 분리 영역 (5/27 phase 1 / 6/11 phase 2 / post-6/11 future) 영역의 cost 영역의 분담, (e) 정직 disclosure 영역의 5/27 발표 slide 17 영역 + 6/11 보고서 §9 영역의 명시 영역의 5 영역이다.
 
 ---
 

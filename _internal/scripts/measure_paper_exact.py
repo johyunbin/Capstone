@@ -42,6 +42,11 @@ try:
     # paper-exact: active PG instance = 55435 (채림님 메일 + 5/10 검증)
     # _measure_common.py 의 PORT=55436 은 stale → override
     mc.PORT = 55435
+    # P5 K granularity override (5/15 v5 night): STRATA_K env → mc.N_STRATA
+    import os as _os
+    if _os.environ.get('STRATA_K'):
+        mc.N_STRATA = int(_os.environ['STRATA_K'])
+        print(f"[OVERRIDE] STRATA_K env → mc.N_STRATA = {mc.N_STRATA}")
 except ImportError:
     SERVER = False
     print("[WARN] _measure_common.py 미발견 — local dry-run only")
@@ -274,6 +279,38 @@ def build_cell_specs() -> list[CellSpec]:
             threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q5", "q20"]},
             mode_pool=["B1", "CaseA", "CaseB"],
         ))
+
+    # === v5 narrative extension (5/15 night) — measurement gap 보강 ===
+    # P1: Type 1/2 SF axis 확장 (SIFT/SSN sf=1/sf=10) — A5 패턴 그대로
+    for ds_short, ds_full, tbl_short, dim in [
+        ("SIFT", "SIFT", "sift", 128),
+        ("SSN", "SimSearchNet++", "fb", 256),
+    ]:
+        for sf in [1, 10]:
+            cells.append(CellSpec(
+                sub=f"A5-scale-sf{sf}-{ds_short}",
+                fig=f"v5 ext Type {1 if sf == 1 else 2}",
+                dataset=ds_full, sf=sf,
+                table=f"partsupp_{tbl_short}_{sf}",
+                embed_col="ps_embedding", vec_dim=dim,
+                queries=["q3", "q5", "q20"],
+                selectivities=[PAPER_SEL_DEFAULT],
+                threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q5", "q20"]},
+                mode_pool=["B1", "CaseA", "CaseB"],
+            ))
+
+    # P3a: WIKI single sf=10 (Type 4b 고차원 single, multi 864d 비교 baseline)
+    cells.append(CellSpec(
+        sub="A6-WIKI-sf10",
+        fig="v5 ext Type 4b single",
+        dataset="WIKI", sf=10,
+        table="partsupp_wiki_10",
+        embed_col="ps_embedding", vec_dim=768,
+        queries=["q3", "q10", "q12"],
+        selectivities=[PAPER_SEL_DEFAULT],
+        threshold_map={q: TPC_H_THRESHOLD for q in ["q3", "q10", "q12"]},
+        mode_pool=["B1", "CaseA", "CaseB"],
+    ))
 
     return cells
 
@@ -935,10 +972,13 @@ def measure_case_a(cell: CellSpec, method_name: str, n_queries: int = 1000,
     total_rows = len(all_vecs)
 
     print(f"[{mc.kst()}] computing {method_name} strata...")
-    t_strata = time.time()
+    t_fit_start = time.time()
     method_sids = _get_method_strata(method_name, all_vecs, n_strata=mc.N_STRATA)
+    fit_time_sec = time.time() - t_fit_start
+    t_cache_start = time.time()
     samples, sizes = mc.cache_cluster_samples_inmem(all_vecs, method_sids, seed=42)
-    print(f"[{mc.kst()}] strata fit+cache in {time.time() - t_strata:.1f}s, "
+    cache_time_sec = time.time() - t_cache_start
+    print(f"[{mc.kst()}] strata fit={fit_time_sec:.2f}s + cache={cache_time_sec:.2f}s, "
           f"sizes mean={total_rows//mc.N_STRATA}")
 
     qp, qs_full, qvecs = mc._load_query_pool(ds)
@@ -988,6 +1028,8 @@ def measure_case_a(cell: CellSpec, method_name: str, n_queries: int = 1000,
         "mode": "CaseA", "method": method_name,
         "n_queries": n_queries, "trials": trials,
         "avg_q_error_trimmed": avg_q_error_trimmed,
+        "fit_time_sec": fit_time_sec,
+        "cache_time_sec": cache_time_sec,
         "final_size_mean": float(np.mean([r["final_size"] for r in trial_results])),
         "final_size_std": float(np.std([r["final_size"] for r in trial_results])),
         "trial_results": trial_results,
@@ -1035,8 +1077,13 @@ def measure_case_b(cell: CellSpec, method_name: str, n_queries: int = 1000,
     samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids, seed=42)
     # CaseA samples (method-specific stratum)
     print(f"[{mc.kst()}] computing {method_name} strata...")
+    t_fit_start = time.time()
     method_sids = _get_method_strata(method_name, all_vecs, n_strata=mc.N_STRATA)
+    fit_time_sec = time.time() - t_fit_start
+    t_cache_start = time.time()
     samples_method, sizes_method = mc.cache_cluster_samples_inmem(all_vecs, method_sids, seed=42)
+    cache_time_sec = time.time() - t_cache_start
+    print(f"[{mc.kst()}] strata fit={fit_time_sec:.2f}s + cache={cache_time_sec:.2f}s")
 
     qp, qs_full, qvecs = mc._load_query_pool(ds)
 
@@ -1091,6 +1138,8 @@ def measure_case_b(cell: CellSpec, method_name: str, n_queries: int = 1000,
         "ensemble_strategy": "simple_average",
         "n_queries": n_queries, "trials": trials,
         "avg_q_error_trimmed": avg_q_error_trimmed,
+        "fit_time_sec": fit_time_sec,
+        "cache_time_sec": cache_time_sec,
         "final_size_mean": float(np.mean([r["final_size"] for r in trial_results])),
         "final_size_std": float(np.std([r["final_size"] for r in trial_results])),
         "trial_results": trial_results,

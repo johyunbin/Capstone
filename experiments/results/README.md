@@ -1,117 +1,216 @@
-# experiments/results/ — 본 연구 실험 결과 (5/15 22:00 update)
+# experiments/results/ — 측정 데이터 사전 (외부 공개용)
 
-> **본 연구** (Exqutor §V-B Adaptive Sampling 재현 + 분포 인지 stratification ensemble augment) **의 모든 측정 결과 + 분석 + 부속 자료**. v5 narrative 4 type + dynamic method selection axis base. 5/27 최종 발표 + 6/11 보고서 base.
-
-## 5/15 update (v5 narrative extension)
-
-본 1352 file 측정 portfolio 위에 v5 narrative 4 type matrix evidence 보강을 위한 추가 측정 launch (5/15 21:45):
-
-| Type | 기존 cell | v5_ext 추가 cell | 측정 영역 |
-|---|---|---|---|
-| Type 1 (small sf=1) | DEEP A5-sf1 (140 file) | SIFT/SSN A5-sf1 | P1 |
-| Type 2 (medium sf=10) | DEEP A5-sf10 (138 file) | SIFT/SSN A5-sf10 | P1 |
-| Type 3 (large sf=100) | 5 cells (693 file) | SIFT/SSN K=10/30 K granularity | P5 |
-| Type 4a (large multi 288d) | DEEP+YFCC A2-Fig7 (146 file) | (P2 multi-table build 보류) | — |
-| Type 4b (large multi 864d) | DEEP+WIKI A2-Fig9 (214 file, 정리 후 209) | WIKI single sf=10 baseline | P3a |
-
-추가 측정 server 위치: `/mnt/hdd0/home/capstone2026/results_v5_ext_20260515_1245/` (91 file, 5/16 새벽 완료 예상).
-
-## 디렉토리 구조 (★ 사용자 정리 후, 5/14 16:00)
-
-```
-results/
-├── README.md                                [본 파일]
-│
-
-│
-├── analysis/                                [9 분석 file, 5/13 ~ 5/14]
-│   ├── README.md                             [analysis 인덱스]
-│   └── (9 *.md, 본 narrative 정량 source)
-│
-├── raw/                                     [server 측정 raw, 1304 json + 15 csv + 12 md]
-│   ├── README.md                             [raw 종합 인덱스]
-│   ├── 01_RQ1_논문_baseline_재현/                [paper §V-B B1 baseline 9 cell + RQ1 5 csv]
-│   ├── 02_RQ2_5방식_표본할당/               [Bernoulli/Equal/Proportional/Neyman/Anti 5-way]
-│   ├── 03_RQ3_단독대체_CaseA/                [단독 best minibatch_partial −10.17% (9-cell)]
-│   ├── 04_RQ3_결합_CaseB/                    [결합 best Centroid tuple −7.37% (A2-Fig9)]
-│   ├── 05_결합비율_alpha_sweep/                           [α=0.3/0.4/0.5/0.6/0.7, ★ 시나리오 B 확정]
-│   ├── 06_클러스터수_K_민감도/                     [K=10/20/30, method 별 sensitivity]
-│   ├── 07_저비용_근사_4후보/                  [Centroid + Hash + PCA + Iterative]
-│   ├── 08_다중조인_재학습/                 [A2-Fig9 multi-join 864d concat]
-│   ├── 09_다중벡터_A2_Fig8/              [A2-Fig8 single-table multi-column]
-│   └── 10_전체측정_백업/     [전체 1009 file 백업 + REPORT_v11.md + 7 csv]
-│
-└── archive/                                 [W1~W4 sprint archive, 4/16 ~ 5/8]
-    ├── 2026_05_08_cleanup/
-    └── w1_w4_sprint_results/                 [master_drafts + rq1_motivation + rq2_aware + rq3_agnostic + cache_rq1 등]
-```
-
-> **figures**: `experiments/figures/paper_exact_v7/` (6 figure, 5/27 발표 anchor) — 별도 위치
-
-## 활성 vs archive 분류
-
-**활성** (현 5/27 발표 + 6/11 보고서 직접 인용):
-- `analysis/` 9 분석 file
-- `raw/` 1304 json + 15 csv (server 측정)
-- `연구_한계점_4종_명시_5월5일회의록_기반.md` + `Exqutor_§V-B_Adaptive_Sampling_의사코드.md` (학술 명시)
-- `experiments/figures/paper_exact_v7/` 6 figure
-
-**archive** (W1~W4 sprint, paper-exact 전 4/16~5/8 측정):
-- `archive/w1_w4_sprint_results/` 의 master_drafts + rq1_motivation + rq2_aware + rq3_agnostic + cache_rq1 (총 ~800 file)
-- archive 인덱스: `archive/README.md`
-
-## 본 narrative 와의 매핑
-
-| narrative 단계 | source |
-|---|---|
-| §1 paper §V-B 위치 | `Exqutor_§V-B_Adaptive_Sampling_의사코드.md` (Algorithm 1 의사코드) |
-| §3 폐기 39 method | `_internal/METHOD_REGISTRY.md` |
-| §4 단독 대체 best −10.17% | `analysis/method_level_breakdown_20260513.md` + `raw/03_RQ3_단독대체_CaseA/` |
-| §5 결합 best −7.37% | `analysis/centroid_tuple_cheap_approximation_results_20260513.md` + `raw/04_RQ3_결합_CaseB/` |
-| §5 α sweep 시나리오 B 확정 | `analysis/alpha_sweep_results_20260514.md` + `raw/05_결합비율_alpha_sweep/` |
-| §6 결합 < 단독 한계 | `analysis/alpha_sweep_results_20260514.md` |
-| §7 결합 진짜 가치 | `analysis/method_level_breakdown_20260513.md` |
-| §8 Pareto Top 5 + reservoir O(1) | `analysis/resource_efficiency_pareto_20260513.md` |
-| §10 다중 테이블 Centroid tuple | `analysis/multi_join_restratification_results_20260513.md` + `raw/07_저비용_근사_4후보/` |
-| K granularity 부록 | `analysis/km_granularity_sensitivity_3way_K10_K20_K30_20260513.md` + `raw/06_클러스터수_K_민감도/` |
-| 한계 (RQ_Limitation) | `연구_한계점_4종_명시_5월5일회의록_기반.md` |
-
-## 본 연구 핵심 수치 (사용 source 와 연결)
-
-| 항목 | 정량 | 출처 |
-|---|---|---|
-| paper Fig 12 재현 | mean qe_trim **1.618** vs paper 1.69 (**−4.3%**) | `raw/01_RQ1_논문_baseline_재현/` 9 B1 cell |
-| RQ1 random sampling 부정확 | Bern sel=0.01 **1.748** → KM20 **1.637** (−6.35%) | `raw/01_RQ1_논문_baseline_재현/rq1_*.csv` |
-| RQ2 Bern → Proportional | Bern → Prop **−9.38% ~ −9.53%** | `raw/02_RQ2_5방식_표본할당/rq2_*.csv` |
-| RQ2 Neyman paradox | Anti 1.540 < Prop 1.580 < **Neyman 1.595** | `raw/02_RQ2_5방식_표본할당/` |
-| RQ3 단독 best (9-cell mean) | minibatch_partial **−10.17%** | `raw/03_RQ3_단독대체_CaseA/단독_best_minibatch_partial/` |
-| RQ3 결합 best (A2-Fig9 single) | Centroid tuple sparse_rp **−7.37%** | `raw/04_RQ3_결합_CaseB/결합_best_Centroid_tuple/` |
-| α=0.5 best (산술 평균) | 4 method 中 3 method 가 α=0.5 best | `raw/05_결합비율_alpha_sweep/alpha_0.5_default/` |
-| Pareto Top 5 | sparse_rp / chao_weighted / neuram / pca1d / hilbert | `analysis/resource_efficiency_pareto_20260513.md` |
-| reservoir O(1) memory | 메모리 O(1) + −9.25% Δ% (anchor 수준) | `analysis/resource_efficiency_pareto_20260513.md` |
-
-## 정리 history
-
-- **4/16 ~ 5/8**: W1~W4 sprint 측정 (RQ1 motivation + RQ2 KM20 + RQ3 16 method)
-- **5/9 ~ 5/14**: paper exact 측정 framework launch + 1065 file portfolio 회수
-- **5/14 15:00**: W1~W4 sprint → `archive/w1_w4_sprint_results/` 이동
-- **5/14 16:00**: `_internal/analysis/` (9 file) → `analysis/` + server raw (1304 file) → `raw/` (한국어 10 sub-dir)
-- **5/14 16:05**: 사용자 추가 정리 — `paper_exact_v7/` 제거하고 `results/` 직속으로 통합
-- **5/14 16:10**: 중복 `algorithm1_box.md` 제거 (`Exqutor_§V-B_Adaptive_Sampling_의사코드.md` 와 동일)
-
-## 다른 자료 위치
-
-| 영역 | 위치 |
-|---|---|
-| 측정 script | `_internal/scripts/measure_paper_exact.py` (1100 line) |
-| handoff | `_internal/handoff/active/handoff_v17_session_finalize_20260514_0721.md` |
-| 본 narrative 산문 | `submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` |
-| 종합 이해 v2 (저녁 회의 base) | `submission/_drafts/속도는벡터_프로젝트_종합이해_v2.md` |
-| METHOD_REGISTRY (57 method) | `_internal/METHOD_REGISTRY.md` |
-| EXPERIMENT_REGISTRY | `_internal/EXPERIMENT_REGISTRY.md` |
-| REPORT v11 (server, 1362 line) | server `/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact/REPORT_paper_exact.md` (로컬 backup: `raw/10_전체측정_백업/REPORT_paper_exact_v11.md`) |
-| figures (6 figure) | `experiments/figures/paper_exact_v7/` |
+> **속도는벡터** (연세대 캡스톤) — Exqutor 논문 §V-B Adaptive Sampling 재현 + 분포 인지
+> stratification ensemble 의 정량적 가치 검증. 본 폴더는 그 **모든 측정 결과**를 외부인
+> (지도교수 · 멘토 · 발표 청중) 이 별도 설명 없이 읽을 수 있도록 정리한 것이다.
+>
+> 재정리 일자 2026-05-17 · 총 측정 1932 file (raw 691 + server 1241) → 본 트랙 1474 + archive 360 + 중복 사본 54 제외
 
 ---
 
-작성: 2026-05-14 16:10 KST · 사용자 정리 후 (paper_exact_v7 제거, results 직속 통합) 반영 + narrative 매핑 + 핵심 수치 출처 명시
+## 1. 변인 (variable) 정의
+
+이 실험은 "단일 테이블에서 인덱스 없이 벡터 쿼리의 카디널리티를 추정할 때, 무작위
+표본(Bernoulli) 대신 분포를 인지한 층화(stratified) 표본을 결합하면 추정이 얼마나
+정확해지는가" 를 측정한다. 각 측정 file 은 다음 변인의 한 조합이다.
+
+| 변인 | 값 | 의미 |
+|---|---|---|
+| **dataset** | DEEP(96d) · SIFT(128d) · SSN(256d) · YFCC(192d) · WIKI · DEEP+WIKI · DEEP+SIFT · DEEP+YFCC | 임베딩 데이터셋. 괄호는 벡터 차원 |
+| **sf** (scale factor) | 1 · 10 · 100 | 테이블 크기 배율 (sf=100 ≈ 본 논문 기본 규모) |
+| **sel** (selectivity) | 0.001 · 0.01 · 0.10 | 쿼리 필터 선택도. 본실험 기본 = 0.01 |
+| **mode** | B1 · CaseA · CaseB | 측정 방식 (아래 상세) |
+| **single / multi** | single · multi(concat) | 단일 벡터 컬럼 vs 다중 벡터 결합(concatenation) |
+| **K** | 10 · 20 · 30 | 층화 클러스터 개수 (KMeans K). 기본 = 20 |
+| **method** | 16종 (4절) | 결합에 쓰는 분포 인지 추정기 |
+
+### mode 3종 (가장 중요)
+
+- **B1** — paper §V-B 의 Bernoulli Adaptive Sampling 그대로. 모멘텀 기반 동적 표본
+  (Eq 1~6, N=385). **본 연구의 baseline.**
+- **CaseB** — `est_final = (est_B1 + est_method) / 2` 산술 평균. paper Bernoulli 추정값과
+  우리 method 의 KM20 stratified 추정값을 결합. **본 연구의 핵심 측정.**
+- **CaseA** — paper Bernoulli 를 우리 method 로 *단독 대체*. negative control
+  (결합이 아닌 대체는 효과 없음을 보이는 대조군). → `_archive_미사용method/` 에 보존.
+
+> CaseB 가 B1 보다 q-error 가 낮으면 "결합이 추정을 개선했다" 는 뜻이다.
+
+---
+
+## 2. cell 코드 → 의미명 매핑표
+
+원본 측정 file 은 `A1-DEEP`, `A2-Fig9` 같은 **cell 코드**로 식별되었다 (paper figure 와
+1:1 대응). 본 정리에서는 이를 사람이 읽을 수 있는 `{데이터셋}_{sf}` 의미명으로 바꿨다.
+
+| cell 코드 | 의미명 | paper 대응 | 비고 |
+|---|---|---|---|
+| A1-DEEP | `DEEP_sf100` | Fig 5/6/12 | DEEP 96d, sel=0.01 기준 |
+| A1-SIFT | `SIFT_sf100` | Fig 5/6/12 | SIFT 128d |
+| A1-SSN | `SSN_sf100` | Fig 5/6/12 | SimSearchNet++ 256d |
+| A2-Fig7 | `YFCC_sf10` | Fig 7 | YFCC 192d |
+| A2-Fig9 | `DEEP+WIKI_sf10` | Fig 9 | cross-table (다중 테이블 조인) |
+| A4-sel | `DEEP_sf100_Fig13sel` | Fig 13 | **단일 sel cell — sel sweep 아님.** sel=0.001 한 점만 측정 |
+| A5-scale-sf1 | `DEEP_sf1` | Fig 14 | scale axis |
+| A5-scale-sf10 | `DEEP_sf10` | Fig 14 | scale axis |
+| A5-scale-sf100 | `DEEP_sf100_scaleaxis` | Fig 14 | scale axis (A1-DEEP 과 별개 측정 run) |
+| A5-scale-sf{1,10}-SIFT | `SIFT_sf{1,10}` | — | SIFT scale 확장 |
+| A5-scale-sf{1,10}-SSN | `SSN_sf{1,10}` | — | SSN scale 확장 |
+| A6-WIKI-sf{1,10} | `WIKI_sf{1,10}` | — | WIKI single |
+| A7-YFCC-sf1 | `YFCC_sf1` | — | YFCC scale 확장 |
+| A8-DEEP+SIFT-sf10 | `DEEP+SIFT_sf10` | — | 다중 벡터 (비-concat) |
+| A9-DEEP+SIFT-concat-sf{1,10,100} | `DEEP+SIFT_concat_sf{...}` | — | 다중 벡터 concatenation |
+| A10-DEEP+WIKI-concat-sf{1,10} | `DEEP+WIKI_concat_sf{...}` | — | 다중 벡터 concatenation |
+| A11-DEEP+YFCC-concat-sf{1,10} | `DEEP+YFCC_concat_sf{...}` | — | 다중 벡터 concatenation |
+| A2-Fig8 | (scope 외) | Fig 8 | paper §V-A multi-vector. 본 연구 §V-B 범위 외 |
+| A3-TPCDS | (scope 외) | Fig 10/11 | paper §V-A ECQO. 본 연구 §V-B 범위 외 |
+
+> **충돌 주의**: A1-DEEP · A4-sel · A5-scale-sf100 은 모두 "DEEP, sf=100" 이지만
+> *서로 다른 측정 cell* (각각 Fig 5/6/12 · Fig 13 · Fig 14) 이다. 의미명에
+> `_Fig13sel` · `_scaleaxis` suffix 를 붙여 구분했다.
+
+---
+
+## 3. 디렉토리 트리
+
+```
+experiments/results/
+├── README.md                     ← 이 파일 (데이터 사전)
+│
+├── 01_baseline_paper재현/        paper §V-B Bernoulli (B1) cell별 baseline
+├── 02_single_vector_본실험/      ★ CaseB 16-method, single 벡터, sel=0.01 (본 연구 핵심)
+├── 03_selectivity_sweep/         sel 0.001 / 0.10 민감도 (16-method)
+├── 04_multi_vector_concat/       다중 벡터 concatenation (224d/864d/288d, 16-method)
+├── 05_K_granularity/             클러스터 수 K=10/20/30 민감도
+├── 06_부가측정/                  alpha sweep · cheap approximation · multi-join 재학습
+│
+├── _summary/                     RQ1·RQ2 집계 CSV + REPORT (분석 산출물)
+├── _archive_미사용method/        16종 외 40 method + CaseA — 본 분석 제외, 보존
+├── _archive_scope외/             DEEP+CC3M(Fig8) · TPCDS(Fig10/11) — 본 연구 범위 외
+│
+├── analysis/                     정량 분석 보고서 (.md)
+├── archive/                      W1~W4 초기 sprint 측정 (paper-exact 이전)
+└── raw/                          ★ 원본 측정 (절대 미변경, 본 트랙은 이것의 복사본)
+```
+
+### 각 폴더 설명
+
+| 폴더 | file 수 | 내용 |
+|---|---:|---|
+| `01_baseline_paper재현/` | 17 | cell 별 B1 (Bernoulli Adaptive Sampling). paper Fig 12 재현 anchor |
+| `02_single_vector_본실험/` | 278 | **본 연구 핵심.** 단일 벡터 sel=0.01 에서 16 method × CaseB. q-error 비교의 main 측정 |
+| `03_selectivity_sweep/` | 680 | sel 을 0.001 / 0.10 으로 바꿔 본 16-method 측정. 선택도 민감도 |
+| `04_multi_vector_concat/` | 357 | 두 데이터셋 벡터를 이어붙인(concat) 다중 벡터 측정. 다중 테이블 일반화 |
+| `05_K_granularity/` | 150 | 층화 클러스터 수 K 를 10/20/30 으로 바꾼 측정 |
+| `06_부가측정/` | 36 | 결합 비율 α sweep(0.3~0.6) + 저비용 근사 4후보 + 다중 조인 재학습 |
+| `_summary/` | 16 | RQ1(bernoulli vs km20) · RQ2(5-way allocation) CSV 15 + REPORT v11 |
+| `_archive_미사용method/` | 354 | 16종에 들지 않는 40 method 측정 + CaseA(단독 대체) 전량. **본 분석에는 쓰지 않으나 보존** |
+| `_archive_scope외/` | 7 | A2-Fig8(DEEP+CC3M) 6 + TPCDS CSV 1. 본 논문 §V-A 영역이라 본 연구 §V-B 범위 밖 |
+
+> 트랙 01~06 안에서 같은 cell 이 두 측정 캠페인에 모두 있으면
+> `run-paper-exact/` (5월 paper-exact portfolio) 와 `run-v6-v10/` (확장 측정 v6~v10) 으로
+> 하위 분리했다. 같은 cell 의 독립 재측정이라 평균 내지 말고 캠페인별로 본다.
+
+---
+
+## 4. 16 method 목록 + paradigm 분류
+
+본 분석은 정합성을 통과한 **16 method** 만 사용한다 (paper N=385 budget 준수 +
+측정 커버 완료). paradigm 은 추정 원리별 분류다.
+
+| paradigm | method | 추정 원리 |
+|---|---|---|
+| **P1 Cluster** | `minibatch_partial`, `gmm` | 클러스터링 기반 층화 |
+| **P2 Spatial** | `hilbert_real`, `skilling_hilbert`, `zorder_morton`, `faiss_ivf` | 공간 채움 곡선 · 공간 인덱스 |
+| **P3 Streaming** | `chao_weighted` | 가중 스트리밍 표본 (Chao 1982) |
+| **P4 DimReduction** | `sparse_rp`, `pca1d`, `rsvd`, `ica_fastica` | 차원 축소 후 층화 |
+| **P5 QMC/Hashing** | `cum_sqrtf`, `lavallee_hidiroglou` | 최소분산 층화 (Dalenius-Hodges, Lavallée-Hidiroglou) |
+| **P6 Quantization** | `rabitq_strat`, `mhist2` | 벡터 양자화 · 히스토그램 |
+| **P9 InfoTheoretic** | `hyperloglog` | 카디널리티 스케치 (Flajolet 2007) |
+
+> 16종 외 40 method (halton, sobol, dbscan, lsh, reservoir 등) 는 정합성 위반·중복·
+> 측정 미커버 사유로 `_archive_미사용method/` 에 보존만 한다. 사유는
+> `_internal/METHOD_REGISTRY.md` 참조.
+
+---
+
+## 5. 파일명 읽는 법
+
+본 트랙의 측정 file 은 일관된 이름 규칙을 따른다.
+
+```
+{데이터셋}_{sf}_{mode}_{method}.json
+```
+
+| 예시 파일명 | 해석 |
+|---|---|
+| `SIFT_sf100_CaseB_gmm.json` | SIFT 데이터셋, sf=100, CaseB(결합), gmm method |
+| `DEEP_sf1_B1.json` | DEEP, sf=1, B1 baseline (method 없음) |
+| `DEEP+WIKI_concat_sf10_CaseB_sparse_rp.json` | DEEP+WIKI concat, sf=10, CaseB, sparse_rp |
+| `SIFT_sf100_K30_CaseB_rsvd.json` | SIFT sf=100, K=30, CaseB, rsvd |
+| `DEEP+WIKI_sf10_alpha0.5_CaseB_pca1d.json` | α=0.5 결합 비율 sweep |
+
+상위 디렉토리 경로가 추가 변인을 담는다:
+`03_selectivity_sweep/SIFT_sf100/sel0.001/CaseB/...` → sel=0.001.
+`05_K_granularity/DEEP_sf100/K10/run-v6-v10/...` → K=10, v6-v10 측정 캠페인.
+
+### JSON 내부 구조
+
+```json
+{
+  "cell": "A1-SIFT", "dataset": "SIFT", "sf": 100,
+  "mode": "CaseB", "method": "gmm", "selectivity": 0.01,
+  "n_queries": 1000, "trials": 10,
+  "avg_q_error_trimmed": 1.743,      ← 핵심 지표: 절사평균 q-error (낮을수록 정확)
+  "final_size_mean": 597.4, "final_size_std": 127.4,
+  "trial_results": [ ... 10 trial 상세 ... ],
+  "kst": "17:37:22"
+}
+```
+
+핵심 지표는 `avg_q_error_trimmed` — 추정 카디널리티와 실제값의 비율 오차를 10 trial
+절사평균한 값. **1.0 에 가까울수록 정확**. CaseB 가 B1 보다 작으면 결합이 효과 있다는 뜻.
+
+---
+
+## 6. 재현 정보
+
+- **측정 서버**: `165.132.140.240` (capstone2026), 작업 디렉토리
+  `/mnt/hdd0/home/capstone2026`
+- **측정 스크립트**: `_internal/scripts/measure_paper_exact.py`
+- **paper §V-B Adaptive Sampling hyperparameter** (Exqutor Eq 1~6, 전 측정 공통):
+
+  | 파라미터 | 값 | 의미 |
+  |---|---|---|
+  | N_init | 385 | 초기 표본 크기 (paper Eq 1) |
+  | m | 0.9 | 모멘텀 계수 |
+  | eta_0 | 0.1 | 초기 학습률 |
+  | alpha | 50 | 적응 게인 |
+  | beta | 1.5 | 적응 지수 |
+  | gamma | 0.99 | 감쇠 계수 |
+  | update_period | 50 | 갱신 주기 |
+
+- **CaseB 결합식**: `est_final = (est_B1 + est_method) / 2.0` (단순 산술 평균).
+  표본 budget 은 두 추정기가 공유 (paper Eq 1 의 N=385).
+- **DB / 라이브러리**: PostgreSQL + pgvector, DuckDB / Python, NumPy, FAISS
+- **분석 산출물**: `_summary/REPORT_paper_exact_v11.md` (전체 측정 종합 REPORT),
+  `analysis/` (정량 분석 보고서)
+
+---
+
+## 부록: 원본 → 정리 트랙 매핑
+
+| 원본 소스 | 정리 후 위치 |
+|---|---|
+| `raw/Type*/...paper_main/CaseB/` (16 method) | `02_single_vector_본실험/.../run-paper-exact/` |
+| `raw/Type*/...paper_main/CaseB/` (40 method) | `_archive_미사용method/02_single_vector_본실험/` |
+| `raw/_shared_B1/` | `01_baseline_paper재현/.../run-paper-exact/` |
+| `raw/.../K_granularity/K=*/` | `05_K_granularity/.../run-paper-exact/` |
+| `raw/.../alpha_sweep/alpha_0.X/` | `06_부가측정/alpha_sweep/` |
+| `raw/.../cheap_approximation/` | `06_부가측정/cheap_approximation/` |
+| `server_sync/v9_sel_sweep_0530/` | `03_selectivity_sweep/` |
+| `server_sync/concat_track_0537/` | `04_multi_vector_concat/` |
+| `server_sync/{v6,v6v7,v7,v8,v10,g2}/` | `02_single_vector_본실험` 또는 `05_K_granularity` (`run-v6-v10/`) |
+| `raw/.../RQ3_CaseB/`, `RQ1_baseline/` | paper_main 과 byte-identical 인 54건 제외 (5/15 reorg 사본). A2-Fig9 독립 측정 4건만 `02_.../run-rq3-detail/` 보존 |
+
+> `raw/` 원본은 **절대 변경하지 않았다** — 본 트랙은 전부 복사본이다.
+> 재정리는 `_internal/scripts/reorg_results_E7.py` 가 수행 (dry-run + 복사 모드).

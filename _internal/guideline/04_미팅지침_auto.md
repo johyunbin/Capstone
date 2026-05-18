@@ -1,19 +1,19 @@
 # 미팅지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-05-08 22:00 (5/8 19:00~19:30 비대면 회의 회의록 finalize, 5/22 박광현 교수님 미팅 framework 추가)
+> 마지막 실행: 2026-05-08 22:00
 
-## 5/22 박광현 교수님 미팅 framework (W3, D-14 from 5/8)
+## 박광현 교수님 미팅 framework
 
-다음 미팅은 **5/22 박광현 교수님 미팅** (D-14, W3 종료 시점).
-미팅 전 brief 요구사항:
+박광현 교수님 미팅 자료는 `submission/_drafts/박광현_5월22일_미팅/` 에 정리돼 있다.
+미팅 전 brief 작성 시 다음 framing 으로 진행 현황을 요약한다:
 
-1. **W2 자문 회신 결과 요약** (박성원 멘토 → RQ2 Neyman 검토 + RQ3 method 분류 + Adaptive 비교 합의 내용)
-2. **W2 추가 측정 결과 요약** — 4강 vs Adaptive Sampling paired Δ% (단일 10 cell × 5 sel) + Multi 광범위 (3 cell × Tier 1 17종)
-3. **W3 마감 제안** — 발표자료 초안 (Slides v4 18 page redesign 진행 상태) + supplementary slide (자문 결과)
-4. **5/27 최종 발표 D-day 점검** + 5/28 전시회 자료 + 6/11 최종보고서
+1. **본 연구 framing 요약** — 본 연구는 Exqutor 논문 재현이 아니라, sample selection 단계 개입이 cardinality 추정 Q-error 에 미치는 영향을 전 데이터셋·전 조작 변인에 걸쳐 검증하는 실험.
+2. **측정 결과 요약** — B1(대조군) / CaseA(완전 대체) / CaseB(결합) 3-way paired Δ% 비교. 조작 변인(selectivity / method 16종 / single·multi-vector / scale factor / strata 수 K) 교차 측정 진행 현황.
+3. **발표·보고서 진행 상태** — 5/27 발표 deck + 6/11 최종보고서.
+4. **5/27 최종 발표 D-day 점검** + 6/11 최종보고서.
 
-브리핑 파일명: `_internal/records/kakaotalk/20260522_박광현교수님_미팅브리핑.md`
+브리핑 파일명: `_internal/records/kakaotalk/YYYYMMDD_박광현교수님_미팅브리핑.md`
 
 ## 미팅지침의 범위
 

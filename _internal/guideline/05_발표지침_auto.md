@@ -1,18 +1,23 @@
 # 발표지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-05-08 22:00 (5/27 최종 발표 deck redesign v2 framework 반영)
+> 마지막 실행: 2026-05-08 22:00
 
-## 5/27 최종 발표 deck redesign v2 framework (W4 active)
+## 5/27 최종 발표 deck — 현재 base (5/16 framing 단순화 반영)
 
-본 발표 deck redesign 안은 `_internal/slide_redesign_v2_20260508.md` 에 markdown design doc 으로 작성되어 있다 (5/8 21:00 사용자 confirm). 핵심:
+5/27 발표 deck 의 최신 작성 base 는 다음 두 문서다:
 
-- **16 page → 18 page 확장** — 기존 academic v3 의 16 page 에 S6.5 (RQ3 Paradigm Framework, 5 paradigm × 11 method matrix) + S10.5 (★4 sparse RP, P4 Dim Reduction representative) 2 page 추가.
-- **Top 4 = 5 paradigm 중 4 distinct representative** narrative — ★1 HDBSCAN (P1) / ★2 MB_partial (P3) / ★3 Hilbert (P2) / **★4 sparse RP (P4)** ← Hybrid 에서 sparse RP 로 교체.
-- **LSH Wave 0 fail = P5 limitation honest reporting** — S6.5 + S15 L8 callout 추가.
-- **Slides.jsx 실제 수정 X** — design doc only. 실제 변환은 W4 (5/23~5/26) 별도 task. 변환 도구는 `_internal/scripts/build_native_pptx_5_8.py` + `build_charts_5_8.py` 사용.
+- narrative base — `submission/_drafts/속도는벡터_본연구_narrative_v7_20260517.md`
+- deck prompt — `submission/_drafts/속도는벡터_5_27_키노트_prompt_v12_part{1,2,3}_20260517.md`
 
-본 5/27 발표 준비 시 위 redesign v2 design doc 을 우선 참조한다.
+발표 deck framing 핵심 (5/16 단순화):
+
+- 본 연구는 Exqutor 논문 재현이 아니라, **sample selection 단계 개입이 cardinality 추정 Q-error 에 미치는 영향을 전 데이터셋·전 조작 변인에 걸쳐 검증하는 실험**이다.
+- 측정은 **B1(대조군) / CaseA(완전 대체) / CaseB(결합)** 3-way 로 짝지어 진행한다.
+- method 는 8 paradigm 대표 16종이며, 정확도와 자원 효율이 함께 상위인 5개를 "16개 측정 방법 중 Top 5 method" 라 부른다(과거 "Pareto Top 5" 표현은 팀원 이해를 위해 교체).
+- 모든 수치는 REPORT v12(`experiments/results/raw/REPORT_분석/REPORT_paper_exact_v12.md`) 실측 기준으로 인용한다.
+
+본 5/27 발표 준비 시 위 narrative v7 + prompt v12 를 우선 참조한다.
 
 ## 발표지침의 범위
 
@@ -77,8 +82,8 @@ ls templates/samples/ppt-크기-수정/ 2>/dev/null
 | 2 | 연구 배경 | 1.5분 | VAQ 문제 정의 + pgvector 한계 |
 | 3 | 관련 연구 | 1.5분 | Exqutor, VBASE, DuckDB 비교 |
 | 4 | 본 논문 핵심 | 2분 | ECQO + Adaptive Sampling 요약 |
-| 5 | 연구 방법론 | 2분 | Cascaded Vector Similarity Decomposition |
-| 6 | 실험 설계 | 2분 | 데이터셋, 지표, 비교축 |
+| 5 | 연구 방법론 | 2분 | sample selection 단계 개입 + B1/CaseA/CaseB 3-way |
+| 6 | 실험 설계 | 2분 | 데이터셋, 지표, 조작 변인 |
 | 7 | 현재 진행 상황 | 1분 | 환경 구축, 예비 실험 |
 | 8-9 | 중간 결과 | 2분 | 있으면 차트/표, 없으면 예비 분석 |
 | 10 | 향후 계획 | 1분 | 남은 실험 + 일정 |
@@ -122,7 +127,7 @@ ls templates/samples/ppt-크기-수정/ 2>/dev/null
   - 실행 계획 비교: 표
 - [ ] 다이어그램 필요 부분 목록화
   - 시스템 아키텍처 (Exqutor 구조)
-  - Cascade Decomposition 흐름도
+  - sample selection 단계 개입 흐름도 (B1/CaseA/CaseB)
   - 실험 파이프라인
 
 출력 파일: `submission/발표/{유형}_슬라이드내용.md`
@@ -187,7 +192,7 @@ ls templates/samples/ppt-크기-수정/ 2>/dev/null
 - [ ] Q&A 예상 질문 + 답변 준비 (최소 10개)
 
 예상 질문 카테고리:
-1. **방법론**: Cascade Decomposition의 구체적 작동 원리
+1. **방법론**: sample selection 단계 개입의 구체적 작동 원리 (B1/CaseA/CaseB)
 2. **실험 설계**: 왜 이 데이터셋/지표를 선택했는가
 3. **결과 해석**: 성능 차이의 원인은?
 4. **한계**: 어떤 상황에서 효과가 없는가

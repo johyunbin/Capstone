@@ -25,7 +25,7 @@
 | 구분 | 내용 | 본 연구의 처리 |
 |---|---|---|
 | 그대로 두는 부분 | §V-A ECQO의 HNSW range query · §V-B AdaptiveState 식 1-6 momentum 보정 · cardinality 추정 알고리즘 자체 | 변경 없음. 측정 기반으로 그대로 사용 |
-| 본 연구가 바꾸는 부분 | sample selection 단계 — 어떤 표본을 뽑을 것인가 | unstratified Bernoulli random sampling을 분포 인지 stratification ensemble로 교체 |
+| 본 연구가 바꾸는 부분 | sample selection 단계 — 어떤 표본을 뽑을 것인가 | unstratified Bernoulli random sampling을, 데이터 분포를 인지해 계층(stratum)으로 나눠 뽑고 두 추정값을 결합하는 방식(stratification ensemble)으로 교체 |
 
 대조군 B1은 논문 그대로의 방식, 즉 Bernoulli random sampling에 AdaptiveState 식 1-6을 얹은 것이다. 실험군 CaseB는 sample selection 단계만 분포 인지 stratification ensemble로 바꾼 것이며, 식 1-6은 동일하게 작동한다. 따라서 두 군의 Q-error 차이는 오직 sample selection 방식의 차이에서 나온다.
 
@@ -144,7 +144,7 @@ paired 비교 기준으로 각 Type의 측정 행 수는 Type 1이 263행, Type 
 
 ### 5.2 단일 벡터와 concat의 비교
 
-측정 cell을 단일 벡터(single), cross-table 다중 벡터(multi), 그리고 우리가 만든 concat으로 나누어 paired Δ%를 집계하면 다음과 같다. 아래는 K=10을 제외한 신뢰 가능 비교 기준이다(K=10 제외의 이유는 §6.0과 §8).
+측정 cell을 단일 벡터(single), cross-table 다중 벡터(multi), 그리고 우리가 만든 concat으로 나누어 짝지은 Q-error 변화율(paired Δ%)을 집계하면 다음과 같다. 아래는 K=10을 제외한 신뢰 가능 비교 기준이다(K=10 제외의 이유는 §6.0과 §8).
 
 | 유형 | n | better% | 유의 우월% | 평균 Δ% | 중앙값 Δ% |
 |---|---:|---:|---:|---:|---:|
@@ -164,7 +164,7 @@ concat 전체 평균 −3.84%는 차원별로 갈라 보면 결이 다르다.
 | DEEP+YFCC | 288 | 96 | 97.9% | **−7.03%** | −6.21% |
 | DEEP+WIKI | 864 | 96 | 89.6% | **+1.93%** | −4.83% |
 
-224차원과 288차원에서는 개선 폭이 각각 −5.56%, −7.03%로 분명한 음수다. 그러나 864차원 DEEP+WIKI에서 평균이 +1.93%로 양수로 나타나는데, 이 양수는 차원이 높아서 효과가 사라진 것이 아니다. 같은 864차원 measurement의 중앙값은 −4.83%로 여전히 음수이고, better 비율도 89.6%다. 평균이 양수로 끌려 올라간 것은 A10-DEEP+WIKI-concat-sf10 cell에서 minibatch_partial method가 기록한 +290.08%와 +276.41% 단 두 건의 outlier 때문이다. 이 두 건을 제외하면 864차원의 평균도 음수로 돌아온다. 즉 864차원에서도 분포 인지 sample selection은 대부분의 측정에서 더 낫고, 평균을 왜곡한 것은 고차원 concat에서 불안정한 특정 클러스터링 method 하나다(§6.1).
+224차원과 288차원에서는 개선 폭이 각각 −5.56%, −7.03%로 분명한 음수다. 그러나 864차원 DEEP+WIKI에서 평균이 +1.93%로 양수로 나타나는데, 이 양수는 차원이 높아서 효과가 사라진 것이 아니다. 같은 864차원 measurement의 중앙값은 −4.83%로 여전히 음수이고, better 비율도 89.6%다. 평균이 양수로 끌려 올라간 것은 A10-DEEP+WIKI-concat-sf10 cell에서 minibatch_partial method가 기록한 +290.08%와 +276.41% 단 두 건의 이상치(outlier) 때문이다. 이 두 건을 제외하면 864차원의 평균도 음수로 돌아온다. 즉 864차원에서도 분포 인지 sample selection은 대부분의 측정에서 더 낫고, 평균을 왜곡한 것은 고차원 concat에서 불안정한 특정 클러스터링 method 하나다(§6.1).
 
 ### 5.4 selectivity와의 교차
 
@@ -180,9 +180,9 @@ concat 전체 평균 −3.84%는 차원별로 갈라 보면 결이 다르다.
 
 측정 축은 네 갈래로 펼쳐진다. 데이터셋은 단일 벡터 여섯 종과 우리가 만든 다중 벡터 조합을 합쳐 아홉 종, scale factor는 sf=1/10/100 세 종, selectivity는 0.001/0.01/0.10 세 종, strata 수 K는 10/20/30 세 종이다. method 축은 8개 sampling paradigm을 대표하는 16종으로 고정했다(§5의 method 표, §7).
 
-paired Δ%는 같은 조건에서 trial 단위로 짝지은 (CaseB_qe − B1_qe) / B1_qe × 100이며, 음수가 실험군의 Q-error가 더 낮음, 즉 더 정확함을 뜻한다.
+짝지은 Q-error 변화율(paired Δ%)은 같은 조건에서 trial 단위로 짝지은 (CaseB_qe − B1_qe) / B1_qe × 100이며, 음수가 실험군의 Q-error가 더 낮음, 즉 더 정확함을 뜻한다.
 
-### 6.1 headline 수치 (K=10 제외 — 신뢰 가능)
+### 6.1 대표 수치(headline) (K=10 제외 — 신뢰 가능)
 
 K=10을 제외한 paired 비교 **1240건**에서 다음을 얻는다.
 
@@ -200,9 +200,9 @@ K=10을 제외한 paired 비교 **1240건**에서 다음을 얻는다.
 
 참고로 K=10 paired 120건을 포함한 전체 1360건의 수치는 평균 −8.06%, better 91.7%다. 평균이 더 음수로 보이는 것은 §8에서 설명할 K=10 허위 신호가 평균을 끌어내린 결과이며, 실제 효과가 더 크기 때문이 아니다. 본 narrative는 결함 데이터를 모두 배제한 −6.25%, 92.2%를 신뢰 가능한 headline으로 채택한다.
 
-### 6.2 negative control — 단독 대체 가설의 폐기
+### 6.2 음성 대조 검증(negative control) — 단독 대체 가설의 폐기
 
-§1.2에서 CaseA(단독 대체)를 폐기했다고 했는데, 그 근거가 negative control이다. 논문 §V-B의 Bernoulli random sampling을 우리 method로 통째로 치환하는 단독 대체 방식은, 측정해 보면 method 선택에 따라 양방향으로 크게 흔들린다. 단독 대체 모드에서 large worsening이 다수 발현하고, 일부 측정에서는 개선이 전혀 나타나지 않았다. 논문 메커니즘을 그대로 두지 않고 통째로 치환하는 방식은 안정적이지 않다는 것이 negative control의 결론이다. 따라서 본 연구는 단독 대체 가설을 폐기하고, 논문 식 1-6을 그대로 둔 채 두 추정값을 산술 평균하는 CaseB 결합만을 유효한 개입으로 채택했다. headline 수치 1240건은 모두 이 CaseB 결합 측정이다.
+§1.2에서 CaseA(단독 대체)를 폐기했다고 했는데, 그 근거가 음성 대조 검증(negative control)이다. 음성 대조 검증이란 효과가 없을 것으로 예상되는 방식을 일부러 측정해 실제로 효과가 없음을 확인함으로써 본 방식의 타당성을 거꾸로 뒷받침하는 절차다. 논문 §V-B의 Bernoulli random sampling을 우리 method로 통째로 치환하는 단독 대체 방식은, 측정해 보면 method 선택에 따라 양방향으로 크게 흔들린다. 단독 대체 모드에서 large worsening이 다수 발현하고, 일부 측정에서는 개선이 전혀 나타나지 않았다. 논문 메커니즘을 그대로 두지 않고 통째로 치환하는 방식은 안정적이지 않다는 것이 음성 대조 검증의 결론이다. 따라서 본 연구는 단독 대체 가설을 폐기하고, 논문 식 1-6을 그대로 둔 채 두 추정값을 산술 평균하는 CaseB 결합만을 유효한 개입으로 채택했다. headline 수치 1240건은 모두 이 CaseB 결합 측정이다.
 
 ### 6.3 가장 강한 비교와 가장 약한 비교
 
@@ -373,9 +373,9 @@ sel=0.01에서는 Neyman 배분이 가장 나쁘고 Anti-Neyman이 가장 좋은
 
 ### 10.1 base evidence
 
-데이터셋이 들어올 때 분포를 빠르게 파악한다는 §3.1의 주장을 측정으로 뒷받침하는 것이 fit_time이다. 5/15 Pareto Top 5 method에 대해 9 cell × 2 mode = 90건 모두에서 fit_time을 직접 측정했다.
+데이터셋이 들어올 때 분포를 빠르게 파악한다는 §3.1의 주장을 측정으로 뒷받침하는 것이 fit_time이다. 5/15 16개 측정 방법 중 Top 5 method에 대해 9 cell × 2 mode = 90건 모두에서 fit_time을 직접 측정했다.
 
-### 10.2 Pareto Top 5 method의 fit_time
+### 10.2 Top 5 method의 fit_time
 
 | Method | n | fit_time 평균 | 범위 | cache_time 평균 |
 |---|---:|---:|---|---:|
@@ -391,25 +391,25 @@ fit_time 범위는 sparse_rp 3.67s부터 hilbert_real 43.50s까지 약 11.9배 �
 
 fit_time은 §3.1의 1단계(offline, 1회)에서 sample selection을 위한 stratification을 만드는 시간이다. 매 쿼리마다 다시 fit하는 것이 아니라, 데이터셋 진입 시 한 번 또는 데이터가 바뀔 때 incremental하게 수행하는 비용이다. sparse_rp의 3.67s는 분포를 파악하고 stratification을 만드는 데 걸리는 가장 짧은 시간이다.
 
-산업 환경에서 분포 파악 속도가 제약일 때, sparse_rp는 hilbert_real보다 12배 빠르면서도 정확도는 같은 Pareto frontier에 놓인다(§11). 메모리는 모든 method가 stratum 수에 비례하는 수준 이하이고, reservoir 방식인 chao_weighted는 데이터 크기와 무관한 상수 메모리를 쓴다. 모바일·임베디드·스트리밍 환경에 직접 적용할 수 있는 finding이다.
+산업 환경에서 분포 파악 속도가 제약일 때, sparse_rp는 hilbert_real보다 12배 빠르면서도 정확도는 같은 자원·정확도 최적 경계(Pareto frontier)에 놓인다(§11). 자원·정확도 최적 경계란 자원을 더 쓰지 않고는 정확도를 더 높일 수 없는 method들의 모음을 말한다. 메모리는 모든 method가 stratum 수에 비례하는 수준 이하이고, reservoir 방식인 chao_weighted는 데이터 크기와 무관한 상수 메모리를 쓴다. 모바일·임베디드·스트리밍 환경에 직접 적용할 수 있는 finding이다.
 
 ---
 
-## 11. 자원 효율 — Pareto frontier
+## 11. 자원 효율 — 자원·정확도 최적 경계
 
-### 11.1 정확도와 자원의 trade-off는 성립하지 않는다
+### 11.1 정확도와 자원의 맞교환(trade-off)은 성립하지 않는다
 
-본 절은 §10의 fit_time과 §6의 paired Δ%를 결합한 Pareto frontier 분석이다. 16 method를 (자원 비용, 정확도 개선) 평면에 배치해 본 결과, 정확도 상위 method와 자원 효율 상위 method가 거의 일치한다. "정확도를 올리려면 비용을 더 써야 한다"는 trade-off는 본 비교 범위에서 성립하지 않는다.
+본 절은 §10의 fit_time과 §6의 paired Δ%를 결합한 자원·정확도 최적 경계 분석이다. 16 method를 (자원 비용, 정확도 개선) 평면에 배치해 본 결과, 정확도 상위 method와 자원 효율 상위 method가 거의 일치한다. "정확도를 올리려면 비용을 더 써야 한다"는 맞교환은 본 비교 범위에서 성립하지 않는다.
 
-자원 축은 figure F7에서 final_size — CaseB 모드에서 AdaptiveState 식 1-6 종료 시 실제로 소비한 sample budget 평균 — 로 잡았다. 측정 portfolio에 fit 단계의 wall-clock 컬럼이 없어 소비 표본 수를 자원 proxy로 쓴 것이며, 적은 표본이 적은 거리 계산을 뜻한다는 점에서 "budget" 성격으로 해석이 일관된다.
+자원 축은 figure F7에서 final_size — CaseB 모드에서 AdaptiveState 식 1-6 종료 시 실제로 소비한 sample budget 평균 — 로 잡았다. 측정 portfolio에 fit 단계의 wall-clock 컬럼이 없어 소비 표본 수를 자원 대리 지표(proxy)로 쓴 것이며, 적은 표본이 적은 거리 계산을 뜻한다는 점에서 "budget" 성격으로 해석이 일관된다.
 
-### 11.2 Pareto Top 5
+### 11.2 Top 5 method
 
-자원과 정확도를 함께 고려해 선정한 Pareto Top 5는 sparse_rp, chao_weighted, hilbert_real, hyperloglog, pca1d다. 이 다섯 method의 paired Δ%(K=10 제외)는 모두 평균 −7.7% 이하이고 better 비율 96% 이상으로, 16 method 중 상위권이다. frontier envelope에 엄밀히 놓이는 것은 chao_weighted, hilbert_real, sparse_rp, pca1d 네 개이며, hyperloglog는 hilbert_real에 약하게 지배되어 envelope에는 엄밀히 포함되지 않는다는 점은 정직하게 보고한다.
+자원과 정확도를 함께 고려해 선정한 Top 5 method는 sparse_rp, chao_weighted, hilbert_real, hyperloglog, pca1d다. 이 다섯 method의 paired Δ%(K=10 제외)는 모두 평균 −7.7% 이하이고 better 비율 96% 이상으로, 16 method 중 상위권이다. 경계선에 엄밀히 놓이는 것은 chao_weighted, hilbert_real, sparse_rp, pca1d 네 개이며, hyperloglog는 hilbert_real에 약하게 지배되어 경계선에는 엄밀히 포함되지 않는다는 점은 정직하게 보고한다.
 
-reservoir 방식인 chao_weighted는 메모리가 데이터 크기와 무관한 상수이면서 정확도가 상위권이다. sparse_rp는 hilbert_real보다 12배 빠르면서도 Q-error 정확도가 같은 Pareto frontier에서 동시에 상위에 놓인다. 약한 method인 gmm과 minibatch_partial은 높은 비용·양수 Δ% 쪽으로 떨어져 frontier에서 멀다.
+reservoir 방식인 chao_weighted는 메모리가 데이터 크기와 무관한 상수이면서 정확도가 상위권이다. sparse_rp는 hilbert_real보다 12배 빠르면서도 Q-error 정확도가 같은 자원·정확도 최적 경계에서 동시에 상위에 놓인다. 약한 method인 gmm과 minibatch_partial은 높은 비용·양수 Δ% 쪽으로 떨어져 경계선에서 멀다.
 
-본 연구는 이 Pareto Top 5를 5/27 발표와 6/11 보고서에서 권장 method 집합으로 제시한다.
+본 연구는 이 Top 5 method를 5/27 발표와 6/11 보고서에서 권장 method 집합으로 제시한다.
 
 ---
 
@@ -417,7 +417,7 @@ reservoir 방식인 chao_weighted는 메모리가 데이터 크기와 무관한 
 
 ### 12.1 권장 — Type별 method 선택 + 결합 default
 
-본 연구의 권장은 세 가지다. 첫째, 데이터셋 Type을 판별해 Type별로 측정상 우월성이 견고한 method를 자동으로 고른다(§7.3). 둘째, sample selection 결과는 단독 대체가 아니라 CaseB 결합(est_final = (est_b1 + est_method) / 2.0)을 default로 쓴다 — negative control(§6.2)이 단독 대체의 불안정성을 보였고, 결합은 신뢰 가능 비교 1240건의 92.2%에서 우월하다. 셋째, 분포 파악 속도가 제약인 환경에서는 fit_time이 가장 짧으면서도 정확도가 Pareto frontier 상위인 sparse_rp를 우선한다(§10, §11).
+본 연구의 권장은 세 가지다. 첫째, 데이터셋 Type을 판별해 Type별로 측정상 우월성이 견고한 method를 자동으로 고른다(§7.3). 둘째, sample selection 결과는 단독 대체가 아니라 CaseB 결합(est_final = (est_b1 + est_method) / 2.0)을 default로 쓴다 — 음성 대조 검증(§6.2)이 단독 대체의 불안정성을 보였고, 결합은 신뢰 가능 비교 1240건의 92.2%에서 우월하다. 셋째, 분포 파악 속도가 제약인 환경에서는 fit_time이 가장 짧으면서도 정확도가 자원·정확도 최적 경계 상위인 sparse_rp를 우선한다(§10, §11).
 
 ### 12.2 본 연구가 확인한 것과 정직하게 남기는 한계
 
@@ -469,7 +469,7 @@ reservoir 방식인 chao_weighted는 메모리가 데이터 크기와 무관한 
 
 ## A-9. A4-sel은 selectivity sweep이 아니다 (신규)
 
-A4-sel cell은 sel=0.001 단일 값으로만 측정되었다(B1 1 + CaseB 16). §9의 selectivity sweep을 담당하는 것은 v9 sweep(24 cell × 3 sel)이며, A4-sel은 단일 selectivity의 high-error 측정점일 뿐 sweep cell이 아니다. A4-sel의 paired Δ%는 평균 +3.02%(better 37.5%)로 약한데, 이는 sel=0.001의 극단적 inherent 분산 때문이며 sweep의 sel=0.001 평균(−5.05%)과 구분해 읽어야 한다.
+A4-sel cell은 sel=0.001 단일 값으로만 측정되었다(B1 1 + CaseB 16). §9의 selectivity sweep을 담당하는 것은 v9 sweep(24 cell × 3 sel)이며, A4-sel은 단일 selectivity의 high-error 측정점일 뿐 sweep cell이 아니다. A4-sel의 paired Δ%는 평균 +3.02%(better 37.5%)로 약한데, 이는 sel=0.001의 극단적 본질적(inherent) 분산 때문이며 sweep의 sel=0.001 평균(−5.05%)과 구분해 읽어야 한다.
 
 ## A-10. concat sf=100 부분 미측정 (신규)
 

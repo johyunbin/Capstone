@@ -1,16 +1,26 @@
 # 실험지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-05-08 22:00 (RQ1+RQ2+RQ3 100% finalize, Adaptive 비교 framework 추가)
+> 마지막 실행: 2026-05-08 22:00 (측정 framework finalize)
 
-## 5/8 22:00 finalize 후 핵심 패턴 (W2~W3 active)
+## 본 연구 framing (5/16 단순화 — 이 지침의 측정 대상)
 
-본 RQ1/RQ2/RQ3 측정 framework 가 완성되었으므로 W2 자문 회신 후 launch 할 추가 측정은 **chain_unified.py CELLS dict + monkey-patch 패턴**을 따른다. 신규 method 측정 시:
+본 연구의 목적은 Exqutor 논문 재현이 아니다. **sample selection 단계 개입이 cardinality 추정 Q-error 에 미치는 영향을, 전 데이터셋·전 조작 변인에 걸쳐 검증하는 실험**이다. 측정은 **3-way** 로 짝지어 진행한다:
 
-1. `_internal/scripts/measure_multi_paradigm.py` (5 paradigm 11 method) 또는 `measure_multi_adaptive_sampling.py` (Adaptive Sampling 본 논문) 와 같은 dedicated 측정기를 작성. CELLS dict 직접 정의 X — `chain_unified.py.CELLS` 를 import + filter 후 monkey-patch.
+- **B1 (대조군)** — paper §V-B 그대로의 Bernoulli random sampling N=385. AdaptiveState 식 1-6 momentum 보정 포함. 비교 기준선.
+- **CaseA (실험군·완전 대체)** — `est_final = est_method`. Bernoulli 없이 16 method 분포 인지 stratification 추정값만 단독 사용.
+- **CaseB (실험군·결합/증강)** — `est_final = (est_b1 + est_method) / 2.0`. paper Bernoulli 추정값과 16 method 추정값의 산술 평균.
+
+개입 지점은 오직 sample selection 단계 한 곳이며, cardinality 추정 알고리즘과 AdaptiveState 식 1-6 은 paper 그대로 둔다. 조작 변인은 selectivity(0.001/0.01/0.10), method(16종 — 8 paradigm 대표), single/multi-vector, scale factor(1/10/100), strata 수 K(10/20/30). 정합성 위반·미커버 등으로 폐기한 40여 method 는 본 분석에서 제외한다.
+
+## 측정 launch 패턴
+
+추가 측정 launch 는 **chain_unified.py CELLS dict + monkey-patch 패턴**을 따른다. 신규 method 측정 시:
+
+1. `_internal/scripts/measure_multi_paradigm.py` 또는 `measure_paper_exact.py` 와 같은 dedicated 측정기를 작성. CELLS dict 직접 정의 X — `chain_unified.py.CELLS` 를 import + filter 후 monkey-patch.
 2. **silent skip risk** 방지: 측정기 도입부에 `assert len(CELLS) >= N` + `print(list(CELLS.keys()))` 로 cell 목록 확인 (5/7 STAGE 2 silent skip 사고 재발 방지).
-3. paired 측정 시 query_id alignment 필수 — `analyze_multi_paradigm.py` 의 query_id paired Δ% 패턴 따름.
-4. 측정 결과는 `experiments/results/multi_{tag}_*.csv` 로 저장, 이후 `analyze_multi_paradigm.py` 또는 `master_v6_fill_partial.py` 가 fill 한다.
+3. paired 측정 시 query_id alignment 필수 — B1/CaseA/CaseB 간 query_id paired Δ% 패턴 따름.
+4. 측정 결과는 `experiments/results/` 트랙으로 저장, 이후 `aggregate_v12.py` + `paired_delta_v12.py` 가 통합·paired 계산을 한다.
 
 ## 실험지침의 범위
 
@@ -23,11 +33,11 @@
 - DB 테이블 생성, 인덱스(HNSW/IVFFlat) 구축
 - EXPLAIN ANALYZE 실행 및 실행 계획 캡처
 - 벤치마크 스크립트 작성/실행 (선택도 sweep, Recall@k, QPS, latency)
-- Exqutor 적용 전/후 비교 실행 (RQ3 4강 vs Adaptive Sampling paired Δ%)
+- B1 / CaseA / CaseB 3-way 짝지어 측정 + paired Δ% 계산 (sample selection 방식별 Q-error 비교)
 - 결과 수집 → CSV/JSON 구조화 → 비용 추정 오차 계산
 - matplotlib/seaborn 차트 생성
 - 실험 로그 md 작성 (날짜/환경/데이터셋/목적/결과)
-- **5 paradigm framework 11 method × 4강 selection paired alignment** (5/8 RQ3 확정 후)
+- **16 method (8 paradigm 대표) × B1/CaseA/CaseB selection paired alignment**
 
 **IS NOT (이 지침이 하지 않는 것 → 담당 지침):**
 - 실험 설계서 작성(데이터셋 선정, 지표 설정, 비교축 설계) → 연구설계지침

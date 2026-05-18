@@ -1,18 +1,20 @@
 # 제출물지침 (AUTO)
 
 > 대상: Capstone 프로젝트 | 모드: 자동 실행 (전권 위임)
-> 마지막 실행: 2026-05-08 22:00 (자문 메일 v4 박성원 멘토 단독 발송 case 추가)
+> 마지막 실행: 2026-05-08 22:00
 
-## 5/8 22:00 finalize 후 핵심 패턴 (W2 active)
+## 본 연구 framing (5/16 단순화 — 제출물에 담는 연구 내용)
+
+제출물(보고서·발표자료·자문내역서 등)에 연구 내용을 쓸 때는 현재 framing 을 따른다. 본 연구는 Exqutor 논문 재현이 아니라, **sample selection 단계 개입이 cardinality 추정 Q-error 에 미치는 영향을 전 데이터셋·전 조작 변인에 걸쳐 검증하는 실험**이다. 측정은 **B1(대조군) / CaseA(완전 대체) / CaseB(결합)** 3-way 로 짝지어 진행하며, 개입 지점은 sample selection 단계 한 곳이다(cardinality 추정 알고리즘과 AdaptiveState 식 1-6 은 paper 그대로 유지). 자세한 framing 은 `submission/_drafts/속도는벡터_본연구_narrative_v7_20260517.md` 를 base 로 한다.
+
+## 자문 메일 발송 패턴
 
 자문 메일 발송 시 **단독 vs 다중 분기**를 명확히 구분한다:
 
-- **단독 발송**: 박성원 멘토 (채림 석사) — 전문 자문 1인 (RQ2 Neyman + RQ3 method 분류 + Adaptive 비교 가용성).
-  draft 위치: `submission/_drafts/속도는벡터_연구지도확인서_20260508.md` v3 (5/8 19:30 회의 합의안).
-- **교수님 별도 발송**: 박광현 교수님 — 5/22 미팅 사전 brief (4강 method × 5 paradigm + Adaptive 측정 launch 보고).
-- 자문 outline 3줄 합의 (5/8 회의): ① 실험 (RQ2 Neyman + RQ3 method 탐색) ② 데이터셋 (SF1·SF10 한정) ③ 자문 only (현 상황 전체).
+- **단독 발송**: 박성원 멘토 (임채림 석사) — 전문 자문 1인.
+- **교수님 별도 발송**: 박광현 교수님 — 미팅 사전 brief. 최신 미팅 자료는 `submission/_drafts/박광현_5월22일_미팅/` 참조.
 
-발송 전 체크리스트는 `_internal/자문메일_발송체크리스트_20260508.md` 참조.
+발송 전 체크리스트가 있으면 `submission/_drafts/` 의 자문메일 관련 문서를 참조한다.
 
 ## 제출물지침의 범위
 
@@ -130,9 +132,9 @@ echo "기존 제출물: $(ls submission/ 2>/dev/null | wc -l)건"
 
 **연구제안서:**
 - 연구 제목, 팀명(속도는벡터), 지도교수
-- 연구 배경 및 필요성 (Exqutor 논문 핵심 문제)
-- 연구 목표 (비교 분석 및 실험 검증)
-- 연구 방법 (Cascade Decomposition 3단계)
+- 연구 배경 및 필요성 (Exqutor 논문 핵심 문제 — 고정 비율 cardinality 추정)
+- 연구 목표 (sample selection 단계 개입의 Q-error 영향 검증)
+- 연구 방법 (B1/CaseA/CaseB 3-way paired 측정)
 - 기대 효과
 - 참고문헌
 

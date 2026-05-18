@@ -4,17 +4,17 @@ _생성_: 2026-05-17
 
 _출처_: `_internal/cache/rq3/aggregated_v12_full.parquet` (통합 측정) · `_internal/cache/rq3/paired_delta_v12.parquet` (paired Δ%)
 
-_framing_: B1 = 대조군 (Bernoulli random sampling + Adaptive Sampling Eq 1-6) · CaseB = 실험군 (16 method 분포 인지 stratification ensemble + Adaptive Sampling). 본 보고서는 paper Exqutor §V-B Adaptive Sampling에서 **sample selection** 단계를 random Bernoulli 대신 분포 인지 방식으로 교체했을 때의 Q-error 변화를 정량 평가한다. cardinality 추정 알고리즘과 AdaptiveState 식 1-6은 paper 그대로 유지하며, 본 연구의 개입 지점은 오로지 sample selection 단계다. CaseA(단독 대체) 계열은 본 narrative에 부합하지 않아 폐기했다.
+_framing_: B1 = 대조군 (Bernoulli random sampling + Adaptive Sampling Eq 1-6) · CaseB = 실험군 (16 method로 데이터 분포를 인지해 계층(stratum)으로 나눠 뽑고 두 추정값을 결합하는 방식(stratification ensemble) + Adaptive Sampling). 본 보고서는 paper Exqutor §V-B Adaptive Sampling에서 **sample selection** 단계를 random Bernoulli 대신 분포 인지 방식으로 교체했을 때의 Q-error 변화를 정량 평가한다. cardinality 추정 알고리즘과 AdaptiveState 식 1-6은 paper 그대로 유지하며, 본 연구의 개입 지점은 오로지 sample selection 단계다. CaseA(단독 대체) 계열은 본 narrative에 부합하지 않아 폐기했다.
 
-> **★ 본 보고서 headline 수치는 K10 paired 비교를 제외한 신뢰 가능 수치다.** 검증 과정에서 K=10 측정에 구조적 결함이 확인되었기 때문이다 (§7 상세). headline: paired CaseB better **92.2%**, mean Δ% **−6.25%**.
+> **★ 본 보고서 대표 수치(headline)는 K10 paired 비교를 제외한 신뢰 가능 수치다.** 검증 과정에서 K=10 측정에 구조적 결함이 확인되었기 때문이다 (§7 상세). headline: paired CaseB better **92.2%**, mean Δ% **−6.25%**.
 
 ---
 
 ## 0. 요약 — 본 보고서가 말하는 것
 
-통합 1444건의 측정(B1 80 + CaseB 1364)을 단일 portfolio로 모아, 같은 cell·selectivity·strata 조건에서 대조군 B1과 실험군 CaseB를 trial 단위로 짝지어 비교했다. paired 비교 1360건 가운데 K=10 변형 측정 120건을 제외한 1240건이 신뢰 가능한 비교다. 이 1240건에서 실험군 CaseB가 대조군 B1보다 Q-error가 낮은 경우는 1143건(92.2%)이며, paired Δ% 평균은 −6.25%, 중앙값은 −6.15%다. one-sided BH-FDR 보정 검정에서 통계적으로 유의하게 우월한 경우는 971건(78.3%), Cliff's δ가 large 임계(0.474)를 넘어 우월한 경우는 1023건(82.5%)이다.
+통합 1444건의 측정(B1 80 + CaseB 1364)을 단일 portfolio로 모아, 같은 cell·selectivity·strata 조건에서 대조군 B1과 실험군 CaseB를 trial 단위로 짝지어 비교했다. paired 비교 1360건 가운데 K=10 변형 측정 120건을 제외한 1240건이 신뢰 가능한 비교다. 이 1240건에서 실험군 CaseB가 대조군 B1보다 Q-error가 낮은 경우는 1143건(92.2%)이며, 짝지은 Q-error 변화율(paired Δ%) 평균은 −6.25%, 중앙값은 −6.15%다. one-sided BH-FDR 보정 검정에서 통계적으로 유의하게 우월한 경우는 971건(78.3%), Cliff's δ가 large 임계(0.474)를 넘어 우월한 경우는 1023건(82.5%)이다.
 
-핵심 메시지는 단순하다. paper §V-B의 unstratified Bernoulli random sampling을 분포 인지 stratification ensemble로 교체하면, 동일한 sample budget(paper Eq 1, N=385) 안에서 cardinality 추정의 Q-error가 일관되게 개선된다. 이 개선은 selectivity가 낮을수록 더 뚜렷하고(sel 0.001/0.01/0.10에서 better 비율 84.4/92.4/99.2%로 단조 증가), 단일 벡터 데이터셋에서 가장 크며(−10.37%), 16개 method 중 14개가 통계적으로 견고한 우월성을 보인다. 정확도 상위 method들이 동시에 자원 효율 상위에 위치하여(§8 Pareto), "정확도와 비용의 trade-off"는 본 비교 범위에서 성립하지 않는다.
+핵심 메시지는 단순하다. paper §V-B의 unstratified Bernoulli random sampling을 분포 인지 stratification ensemble로 교체하면, 동일한 sample budget(paper Eq 1, N=385) 안에서 cardinality 추정의 Q-error가 일관되게 개선된다. 이 개선은 selectivity가 낮을수록 더 뚜렷하고(sel 0.001/0.01/0.10에서 better 비율 84.4/92.4/99.2%로 단조 증가), 단일 벡터 데이터셋에서 가장 크며(−10.37%), 16개 method 중 14개가 통계적으로 견고한 우월성을 보인다. 정확도 상위 method들이 동시에 자원 효율 상위에 위치하여(§8 Pareto), "정확도와 비용의 맞교환(trade-off)"은 본 비교 범위에서 성립하지 않는다.
 
 본 보고서는 동시에, 검증 과정에서 드러난 한계를 숨기지 않는다. 가장 중요한 것은 K granularity 축의 K=10 측정 결함이다 (§7, §9). 대조군 B1이 strata 수 K에 의존하는 구조를 가져, K=10에서 B1의 Q-error가 손상되었고, 그 손상된 B1과 짝지은 K=10 CaseB 96건의 −36.15%, 그것이 섞인 K=10 행 전체 평균 −26.85%는 모두 허위다. 이 결함 때문에 깨끗한 K granularity 비교가 성립하지 않으므로, 본 보고서는 K granularity(§7)를 본문 finding이 아닌 부속·미완 결과이자 honest limitation으로 격하하여 보고한다.
 
@@ -110,7 +110,7 @@ K=30 B1은 1.16~1.72 범위로 정상이고, K=20(paper default) B1도 1.6~1.7�
 
 ## 3. paired Δ% 핵심 — 대조군 B1 vs 실험군 CaseB
 
-본 절이 보고서의 중심이다. paired Δ%는 같은 cell·selectivity·strata에서 trial 단위로 짝지은 (CaseB_qe − B1_qe) / B1_qe × 100이며, 음수가 실험군 CaseB의 Q-error가 더 낮음(더 정확함)을 뜻한다.
+본 절이 보고서의 중심이다. 짝지은 Q-error 변화율(paired Δ%)은 같은 cell·selectivity·strata에서 trial 단위로 짝지은 (CaseB_qe − B1_qe) / B1_qe × 100이며, 음수가 실험군 CaseB의 Q-error가 더 낮음(더 정확함)을 뜻한다.
 
 ### 3.1 headline 수치 (K=10 제외 — 신뢰 가능)
 
@@ -144,7 +144,7 @@ K=10 제외 기준, 개별 (cell × method × sel × K) 단위의 양 극단은 
 
 ## 4. selectivity 효과 — 낮을수록 개선 폭이 크다
 
-paper Fig 13은 selectivity가 낮을수록 cardinality 추정의 inherent Q-error가 커짐을 보인다. 본 절은 그 selectivity 축에서 실험군의 우월성이 어떻게 변하는지 측정한다. 아래 수치는 figure F8(§8.2)의 sweep 데이터셋(K=20 default, 24 cell × 16 method) 기준이다.
+paper Fig 13은 selectivity가 낮을수록 cardinality 추정의 본질적(inherent) Q-error가 커짐을 보인다. 본 절은 그 selectivity 축에서 실험군의 우월성이 어떻게 변하는지 측정한다. 아래 수치는 figure F8(§8.2)의 sweep 데이터셋(K=20 default, 24 cell × 16 method) 기준이다.
 
 | sel | n | better | better% | 유의 우월% | 평균 Δ% | 중앙값 Δ% |
 |---|---:|---:|---:|---:|---:|---:|
@@ -203,7 +203,7 @@ selectivity와 교차하면 두 유형 모두 sel이 높을수록 better 비율�
 
 16개 method 중 **14개는 평균 Δ%가 음수이며 better 비율 86% 이상**으로 견고하게 우월하다. P2 Spatial(hilbert_real, zorder_morton, skilling_hilbert), P4 DimReduction(pca1d, sparse_rp, ica_fastica, rsvd), P3 Streaming(chao_weighted), P9 InfoTheoretic(hyperloglog), P5 QMC(cum_sqrtf, lavallee_hidiroglou)에 속한 method가 모두 여기에 든다. 특히 hilbert_real, pca1d, sparse_rp, rsvd는 better 비율 100%로, K=10을 제외한 모든 측정 cell에서 예외 없이 B1을 이긴다.
 
-**약한 method는 P1 Cluster paradigm에 집중된다**. gmm은 평균 +1.90%(better 55.3%)로 사실상 B1과 동등하거나 약간 못하고, minibatch_partial은 평균 +2.67%지만 중앙값은 −4.20%다. minibatch_partial의 양수 평균은 §3.3에서 본 A10-DEEP+WIKI-concat-sf10의 +290%, +276% 두 outlier 때문으로, 이 2건을 제외하면 평균이 −4.92%로 돌아온다. 즉 minibatch_partial은 대부분의 cell에서는 작동하지만 864차원 concat 같은 극단 조건에서 불안정하다. faiss_ivf는 평균 −2.32%로 약한 개선에 머문다.
+**약한 method는 P1 Cluster paradigm에 집중된다**. gmm은 평균 +1.90%(better 55.3%)로 사실상 B1과 동등하거나 약간 못하고, minibatch_partial은 평균 +2.67%지만 중앙값은 −4.20%다. minibatch_partial의 양수 평균은 §3.3에서 본 A10-DEEP+WIKI-concat-sf10의 +290%, +276% 두 이상치(outlier) 때문으로, 이 2건을 제외하면 평균이 −4.92%로 돌아온다. 즉 minibatch_partial은 대부분의 cell에서는 작동하지만 864차원 concat 같은 극단 조건에서 불안정하다. faiss_ivf는 평균 −2.32%로 약한 개선에 머문다.
 
 결론적으로 P1 Cluster paradigm은 분포 인지 sample selection의 우월성을 일관되게 보이지 못하며, 본 연구의 권장 method에서 제외하는 근거가 된다.
 
@@ -221,9 +221,9 @@ selectivity와 교차하면 두 유형 모두 sel이 높을수록 better 비율�
 
 paradigm 수준에서 P3 Streaming, P4 DimReduction이 가장 강하고(평균 −8% 초과), P9, P5, P2가 −7% 전후로 뒤따른다. P6 Quantization은 −5.79%로 중간, P1 Cluster는 −1.46%로 가장 약하다. P2 Spatial과 P1 Cluster의 std가 큰 것(8.14, 8.71)은 각각 faiss_ivf, minibatch_partial의 outlier 때문이다.
 
-### 6.3 Pareto Top 5 spotlight
+### 6.3 16개 측정 방법 중 Top 5 method spotlight
 
-§8의 자원-정확도 분석에서 정확도와 자원 효율을 함께 고려해 선정한 Pareto Top 5는 sparse_rp, chao_weighted, hilbert_real, hyperloglog, pca1d다. 이 다섯 method의 paired Δ%(K=10 제외)는 모두 평균 −7.7% 이하이며 better 비율 96% 이상으로, 16 method 중 상위권에 위치한다. 본 연구의 5/27 발표·6/11 보고서에서 권장 method 집합으로 제시하기에 충분한 근거를 갖는다.
+§8의 자원-정확도 분석에서 정확도와 자원 효율을 함께 고려해 선정한 16개 측정 방법 중 Top 5 method는 sparse_rp, chao_weighted, hilbert_real, hyperloglog, pca1d다. 이 다섯 method의 paired Δ%(K=10 제외)는 모두 평균 −7.7% 이하이며 better 비율 96% 이상으로, 16 method 중 상위권에 위치한다. 본 연구의 5/27 발표·6/11 보고서에서 권장 method 집합으로 제시하기에 충분한 근거를 갖는다.
 
 ---
 
@@ -270,18 +270,18 @@ K granularity는 본 보고서의 본문 finding이 아니라 **부속·미완 �
 
 ## 8. figure 설명
 
-### 8.1 F7 — Pareto frontier (자원 × 정확도)
+### 8.1 F7 — 자원·정확도 최적 경계(Pareto frontier) (자원 × 정확도)
 
 **파일**: `experiments/figures/paper_exact_v8/F7_pareto_frontier.png` (+ .pdf, _data.csv)
 
-F7은 16개 sample selection method를 (자원 비용, 정확도 개선) 평면에 배치한 산점도다. 축 정의는 다음과 같다.
+F7은 16개 sample selection method를 (자원 비용, 정확도 개선) 평면에 배치한 산점도다. 자원·정확도 최적 경계(Pareto frontier)란 자원을 더 쓰지 않고는 정확도를 더 높일 수 없는 method들의 모음을 말한다. 축 정의는 다음과 같다.
 
-- **x축 (자원 비용)**: `final_size` — CaseB 모드에서 AdaptiveState(Eq 1-6) 종료 시 실제로 소비한 sample budget의 평균. **이 그림의 자원 축은 wall-clock 시간이 아니라 소비 표본 수 proxy다.** 측정 portfolio에 fit 단계의 wall-clock 컬럼이 없어, 측정된 final_size를 자원 proxy로 사용한다. 적은 표본 = 적은 거리 계산 = 적은 비용이라는 점에서 두 지표 모두 "budget" 성격으로 해석이 일관된다. final_size 범위는 1851~2448 표본이다.
+- **x축 (자원 비용)**: `final_size` — CaseB 모드에서 AdaptiveState(Eq 1-6) 종료 시 실제로 소비한 sample budget의 평균. **이 그림의 자원 축은 wall-clock 시간이 아니라 소비 표본 수 대리 지표(proxy)다.** 측정 portfolio에 fit 단계의 wall-clock 컬럼이 없어, 측정된 final_size를 자원 proxy로 사용한다. 적은 표본 = 적은 거리 계산 = 적은 비용이라는 점에서 두 지표 모두 "budget" 성격으로 해석이 일관된다. final_size 범위는 1851~2448 표본이다.
 - **y축 (정확도 개선)**: method 단위 평균 paired Δ%. 음수가 개선이다. 범위는 −8.71%(pca1d) ~ +3.47%(minibatch_partial)다.
 
-빨강 점선은 lower-left Pareto frontier(낮은 비용 + 낮은 Δ%가 우월)다. frontier 위에 엄밀히 놓이는 method는 **chao_weighted, hilbert_real, sparse_rp, pca1d 네 개**다(final_size가 작으면서 Δ%가 갱신되는 점). hyperloglog는 "Pareto Top 5"로 함께 권장하지만, final_size 1943·Δ% −7.62%로 hilbert_real(1891·−8.65%)에 약하게 지배되어 frontier envelope에는 엄밀히 포함되지 않는다 — 이 점은 정직하게 보고한다.
+빨강 점선은 lower-left 자원·정확도 최적 경계(낮은 비용 + 낮은 Δ%가 우월)다. 최적 경계 위에 엄밀히 놓이는 method는 **chao_weighted, hilbert_real, sparse_rp, pca1d 네 개**다(final_size가 작으면서 Δ%가 갱신되는 점). hyperloglog는 "Top 5 method"로 함께 권장하지만, final_size 1943·Δ% −7.62%로 hilbert_real(1891·−8.65%)에 약하게 지배되어 경계선에는 엄밀히 포함되지 않는다 — 이 점은 정직하게 보고한다.
 
-F7이 전하는 메시지는 명확하다. **정확도 상위 method와 자원 효율 상위 method가 거의 일치하며, "정확도를 위해 비용을 더 쓴다"는 trade-off가 본 비교 범위에서 성립하지 않는다.** 약한 method(gmm, minibatch_partial)는 오른쪽 위(높은 비용 + 양수 Δ%)에 떨어져 frontier에서 멀다.
+F7이 전하는 메시지는 명확하다. **정확도 상위 method와 자원 효율 상위 method가 거의 일치하며, "정확도를 위해 비용을 더 쓴다"는 맞교환이 본 비교 범위에서 성립하지 않는다.** 약한 method(gmm, minibatch_partial)는 오른쪽 위(높은 비용 + 양수 Δ%)에 떨어져 최적 경계에서 멀다.
 
 ### 8.2 F8 — selectivity sweep heatmap
 
@@ -303,7 +303,7 @@ heatmap의 색이 selectivity가 높아질수록(0.001 → 0.10) 일관되게 �
 
 **(3) concat sf=100 부분 미측정.** concat 다중 벡터 cell 중 DEEP+SIFT는 sf=1/10/100 세 규모를 모두 측정했으나, DEEP+WIKI와 DEEP+YFCC는 sf=1/10만 측정되었고 sf=100은 없다. 이는 원본 데이터셋 측의 한계(해당 조합의 sf=100 적재 미비)이며, concat 분석(§5)의 sf=100 커버리지는 DEEP+SIFT 1종으로 제한된다.
 
-**(4) measurement run 단위 systematic bias.** 별도 검증(`B1_variance_root_cause_종합분석`)에서 B1 baseline은 trial 단위 inherent CV가 약 6%, measurement run 단위 systematic bias가 ±10~25%로 확인되었다. 본 보고서의 paired 비교는 같은 measurement 안에서 B1과 CaseB를 짝짓기 때문에 이 bias의 영향을 상쇄하지만, paired Δ%의 절대 크기를 다른 측정 캠페인과 직접 비교할 때는 caveat이 필요하다.
+**(4) measurement run 단위 systematic bias.** 별도 검증(`B1_variance_root_cause_종합분석`)에서 B1 baseline은 trial 단위 inherent CV가 약 6%, measurement run 단위 systematic bias가 ±10~25%로 확인되었다. 본 보고서의 paired 비교는 같은 measurement 안에서 B1과 CaseB를 짝짓기 때문에 이 bias의 영향을 상쇄하지만, paired Δ%의 절대 크기를 다른 측정 캠페인과 직접 비교할 때는 주의(caveat)가 필요하다.
 
 **(5) 두 캠페인 측정 중복 정리.** 통합 단계에서 여러 캠페인을 합칠 때 같은 (cell, sel, K_norm, method, mode) 조합의 중복 측정이 발생했고, dedup rank(신규 16-method chain 우선) 기준으로 정리하여 최종 1444행을 만들었다. 정리 후 content_hash 중복 0건, paired 키 중복 0건으로, §3 이하의 paired 비교 1360건은 모두 독립적이다.
 
@@ -319,7 +319,7 @@ heatmap의 색이 selectivity가 높아질수록(0.001 → 0.10) 일관되게 �
 
 **핵심 finding**: paper Exqutor §V-B Adaptive Sampling의 sample selection 단계를 unstratified Bernoulli random sampling에서 분포 인지 stratification ensemble로 교체하면, 동일한 sample budget(N=385) 안에서 cardinality 추정의 Q-error가 일관되게 개선된다. paired 비교 1240건 중 92.2%에서 실험군이 우월하고, 평균 Δ%는 −6.25%, 통계적 유의 우월 78.3%, 효과크기 large 우월 82.5%로 신호가 견고하다. cardinality 추정 알고리즘과 AdaptiveState 식 1-6은 paper 그대로 두었으며, 본 연구의 개입은 오직 sample selection 단계에 한정된다 — 즉 본 연구가 보이는 것은 sample selection 단계의 개선이 cardinality 추정 Q-error의 측정 가능한 개선으로 이어진다는 evidence다.
 
-이 개선은 조건에 따라 강약이 갈린다. selectivity가 낮을수록 개선 폭이 크고(0.001/0.01/0.10에서 better 84.4/92.4/99.2% 단조 증가), 단일 벡터 데이터셋에서 가장 크다(−7.66%, K=10 제외 기준). 다중 벡터를 연결한 concat에서는 우월 방향성은 유지되나 개선 크기가 작다(−3.84%). 16개 method 중 14개가 견고하게 우월하며, P1 Cluster paradigm(gmm, minibatch_partial)만 일관성을 보이지 못한다. 정확도 상위 method가 자원 효율 상위와 일치하여 trade-off가 성립하지 않는다(F7 Pareto). strata 수 K(§7)는 본문 finding이 아닌 부속·미완 결과로, K=10 대조군 B1의 측정 결함 때문에 깨끗한 비교가 성립하지 않는다 — 신뢰 가능한 분모만 보면 K=20 ≈ K=30이며, 본 연구는 paper default K=20을 그대로 채택한다.
+이 개선은 조건에 따라 강약이 갈린다. selectivity가 낮을수록 개선 폭이 크고(0.001/0.01/0.10에서 better 84.4/92.4/99.2% 단조 증가), 단일 벡터 데이터셋에서 가장 크다(−7.66%, K=10 제외 기준). 다중 벡터를 연결한 concat에서는 우월 방향성은 유지되나 개선 크기가 작다(−3.84%). 16개 method 중 14개가 견고하게 우월하며, P1 Cluster paradigm(gmm, minibatch_partial)만 일관성을 보이지 못한다. 정확도 상위 method가 자원 효율 상위와 일치하여 맞교환이 성립하지 않는다(F7 자원·정확도 최적 경계). strata 수 K(§7)는 본문 finding이 아닌 부속·미완 결과로, K=10 대조군 B1의 측정 결함 때문에 깨끗한 비교가 성립하지 않는다 — 신뢰 가능한 분모만 보면 K=20 ≈ K=30이며, 본 연구는 paper default K=20을 그대로 채택한다.
 
 본 보고서가 정직하게 남기는 한계는 K=10 B1의 구조적 결함, A4-sel이 단일 selectivity 측정점이라는 점, concat sf=100의 부분 미측정, measurement run bias, 그리고 통계 검정의 해상도·보정·효과크기·집계 가중 한계다(§9). 이 한계들은 본 핵심 finding의 신뢰성을 훼손하지 않는다 — headline 수치는 결함 데이터를 모두 배제한 1240건에서 산출되었고, paired 설계가 run bias를 상쇄하며, cell-weighted 재집계로도 결론이 유지되기 때문이다.
 

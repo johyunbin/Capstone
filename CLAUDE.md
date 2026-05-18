@@ -8,22 +8,22 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/16 01:16 update — handoff_v32 추가, framing 단순화 + v10 chain 진행 중)
+## 동적 state + 인계 (5/18 06:10 update — handoff_v36, 캠페인 완료·데이터 수집 완료)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v32 + v31 read 로 0% loss 인계**.
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v36 read 로 0% loss 인계** (self-contained).
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v32_5_16_v10chain진행중_20260516_0116.md` (5/16 01:16, framing 단순화 = "sample selection 영역만 contribution + paper §V-B 영역 Adaptive Eq 1-6 그대로" — 박세은 5/15 20:49 의도 일치 · v8 chain stop (50 method) → v10 chain (16 method × 12 cell, framing 일치) launch · K=10 KeyError fix + A8 NPY symlink + chain monitor PID 87193 작동 · prompt v11 3 part paste 대기) + `@_internal/handoff/active/handoff_v31_5_16_세션마무리_chain진행중_20260516_0020.md` (5/16 00:20 base) + `@_internal/handoff/active/handoff_v27_5_15_narrative_v5_reframing_20260515_2135.md` (5/15 21:35 narrative v5 진화 종합)
-- **★ 본 연구 narrative 최종 정리 v1 (5/14 07:55, 박세은 review + 박광현 5/15 + 5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_최종정리_v1.md` (10 단계: 문제 → 탐색 → 폐기 39 → 단독 대체 best −10.17% → 결합 시도 best −7.37% → 결합 한계 발견 → 결합 진짜 가치 (안정성 + 변동성 감소) → 자원 효율 (정확도 best 5 = 파레토 best 5) → 권장 (단독 우선 + 결합 보조) → 다중 테이블) + PDF
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v36_5_18_캠페인완료_데이터수집_20260518_0610.md` (5/18 06:10 — 3-way matched 캠페인 1508건 완료·검증(WARN 0·anomaly 0) · 통합 데이터 aggregated_v13/paired_delta_v13/v13_summary 생성 완료 · 다음 세션 = task I 의 REPORT v13/narrative v8 작성, 데이터 완비)
+- **★ 본 연구 narrative (5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_v7_20260517.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 측정 3-way B1/CaseA/CaseB)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
-- **측정 portfolio** (1001 file, B1 9 + CaseA 495 + CaseB 496, REPORT v11 1362 line): `@_internal/MASTER_README.md`
-- **handoff 통합** (v0~v11 archive): `@_internal/handoff/archive/`
+- **측정 portfolio + 분석** (통합 1444 file: B1 80 + CaseB 1364): `@_internal/cache/rq3/aggregated_v12_full.parquet` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v12.md`
+- **handoff 통합** (v0~v34 archive): `@_internal/handoff/archive/`
 - **57 method × 9 paradigm**: `@_internal/METHOD_REGISTRY.md`
 - **9 cells × 56 method × 3 modes matrix**: `@_internal/EXPERIMENT_REGISTRY.md`
 - **server 자원 + tmux**: `@_internal/SERVER_REGISTRY.md`
-- **★ 5/27 발표 키노트 deck v4 FINAL (20 slide, Capstone Design System)**: `@submission/_drafts/속도는벡터 · Capstone Final 5_27 (Keynote v4).pdf` + `.pptx` + `.html` (5/12 23:07 export, 박세은/강재현 6건 피드백 반영). v3 prompt + v3 정정 v2 prompt 는 reference: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v3_storyline_proper_20260512.md` + `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v3_정정v2_20260512_2250.md`
+- **★ 5/27 발표 키노트 prompt v12 (3 part)**: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v12_part{1,2,3}_20260517.md`
 - **5/27 발표 storyline v2**: `@plans/5_27_storyline_draft_20260511_1410.md`
 - **6/11 보고서 outline v2** (5/8 base) + **v3 update plan**: `@plans/최종보고서_outline_v2_20260508.md`, `@plans/6_11_보고서_outline_v3_update_plan_20260511.md`
-- **5/15 박광현 미팅 자료** (4 file, 5/12 11:56 PDF + 12:15 README update): `@submission/_drafts/박광현_5월15일_미팅/`
+- **5/22 박광현 미팅 자료**: `@submission/_drafts/박광현_5월22일_미팅/`
 - **팀원 카톡 v2 (발송용)**: `@submission/_drafts/팀원_카톡_5_27_finalize_20260511.md`
 
 ## 새 RQ 구조 (5/5 확정 + 5/12 02:50 paper exact 실측 REPORT v11 반영)
@@ -180,4 +180,4 @@ Capstone/
 - 일정표: https://capstone.cs.yonsei.ac.kr/capstone/?page_id=370
 - Exqutor: https://github.com/BDAI-Research/Exqutor
 - 팀 GitHub: https://github.com/johyunbin/Capstone
-- 팀 Notion: https://www.notion.so/306db4d4869b8039affeca0b0fa4d2fa
+- 팀 Notion: https://www.notion.so/8110e4b8d680833a90bf01032872b1eb

@@ -74,8 +74,7 @@ set -u   # set -e 는 쓰지 않음 — 1 측정 실패가 전체를 죽이면 �
          # 각 측정은 || 로 개별 처리, fail 은 _main.log 에 [WARN] 기록.
 
 SCRIPT=/mnt/hdd0/home/capstone2026/cache/rq3/measure_paper_exact.py
-TS=$(date +%Y%m%d_%H%M)
-OUT_BASE=/mnt/hdd0/home/capstone2026/results_k_granularity_6cell_${TS}
+OUT_BASE=${1:-/mnt/hdd0/home/capstone2026/results_k_granularity_6cell}
 LOG_DIR=$OUT_BASE/logs
 mkdir -p "$LOG_DIR"
 

@@ -1,0 +1,532 @@
+# 속도는벡터 — 본 연구 narrative v8
+
+> 작성: 2026-05-18 KST · v7 (5/17) 전면 수정 · 3-way matched 캠페인 + REPORT v13 + paired_delta_v13.parquet 실측 동기화
+> 핵심 reframing: **본 연구는 논문 재현이 아니라, 전 데이터셋·전 조작 변인에 대한 완전한 검증 실험이다**
+> v8 변경: 측정을 3-way matched(B1·CaseA·CaseB)로 재구성 · CaseA를 negative control로 부활 · 전 수치 v13 동기화
+> 5/27 발표 + 6/11 보고서의 공통 base narrative
+
+---
+
+## 0. 본 연구 main theme
+
+본 연구는 벡터 증강 분석 쿼리(VAQ)의 cardinality 추정에서, sample selection 방식을 바꾸었을 때 추정 정확도(Q-error)가 어떻게 달라지는지를 **전 데이터셋과 전 조작 변인에 걸쳐 완전히 검증**한다. 단일 벡터 데이터셋 다섯 종(DEEP, SIFT, SimSearchNet++, WIKI, YFCC)에 더해, 우리가 직접 두 데이터셋의 벡터를 차원 방향으로 연결해 만든 다중 벡터(concat) 데이터셋까지를 측정 대상으로 삼았다. 그 위에서 selectivity(0.001/0.01/0.10), sample selection method(16종), 단일/다중 구조, scale factor(sf=1/10/100), strata 수 K(10/20/30)라는 다섯 조작 변인을 빠짐없이 교차시켜, 각 조건에서 sample selection 방식의 효과가 어떻게 변하는지를 정량적으로 확인한다.
+
+본 연구의 출발점은 Exqutor 논문(arXiv:2512.09695v2) §V-B의 Adaptive Sampling이다. 그러나 본 연구가 하려는 것은 그 논문의 결과를 재현하는 것이 아니다. 논문 §V-B는 우리가 Q-error를 측정하기 위해 채택한 측정 방법론의 출발점일 뿐이며, 우리의 목표는 그 방법론을 토대로 측정 공간을 능동적으로 넓혀, sample selection 방식이라는 단일 개입 지점이 추정 정확도에 미치는 영향을 모든 변인에서 빠짐없이 관찰하는 것이다. 측정 결과를 논문 수치와의 일치 여부로 환원하지 않으며, 우리가 만든 데이터셋과 우리가 설계한 변인 조합 위에서 독립적으로 평가한다.
+
+본 연구의 측정은 세 갈래(3-way)로 짝지어진다. 대조군 **B1**(논문 그대로의 Bernoulli random sampling), 실험군 **CaseA**(Bernoulli를 우리 method로 통째 치환하는 완전 대체), 실험군 **CaseB**(두 추정값을 결합하는 방식)다. 한 측정이 세 mode를 같은 조건에서 동시에 산출하므로 셋이 완벽히 짝지어진다. 이 3-way 측정이 그리는 arc는 명확하다 — 베르누이(B1)에서 출발해, 완전 대체(CaseA)는 불안정함을 확인하고, 결합(CaseB)이 답이라는 결론에 이른다. 논문 §V-B의 cardinality 추정 알고리즘 자체와 AdaptiveState 식 1-6은 본 연구가 건드리지 않는다. 본 연구의 개입은 오로지 sample selection 단계에 한정된다.
+
+---
+
+## 1. framing — 무엇을 바꾸고 무엇을 그대로 두는가
+
+### 1.1 개입 지점은 sample selection 단계 하나뿐
+
+본 연구의 framing은 단순하다. cardinality 추정 파이프라인 가운데 우리가 손대는 것은 sample selection 단계 하나뿐이고, 나머지는 전부 논문의 것을 그대로 둔다. 이 분리는 박세은 팀장이 5/16 정리한 의도("우리는 추가 method를 통해 Q-error만 보완하면 되는 것 아니냐. cardinality 추정은 알아서 할 것이고")를 그대로 반영한다.
+
+| 구분 | 내용 | 본 연구의 처리 |
+|---|---|---|
+| 그대로 두는 부분 | §V-A ECQO의 HNSW range query · §V-B AdaptiveState 식 1-6 momentum 보정 · cardinality 추정 알고리즘 자체 | 변경 없음. 측정 기반으로 그대로 사용 |
+| 본 연구가 바꾸는 부분 | sample selection 단계 — 어떤 표본을 뽑을 것인가 | unstratified Bernoulli random sampling을, 데이터 분포를 인지해 계층(stratum)으로 나눠 뽑는 방식(stratification)으로 교체 |
+
+대조군 B1은 논문 그대로의 방식, 즉 Bernoulli random sampling에 AdaptiveState 식 1-6을 얹은 것이다. 실험군은 sample selection 단계만 분포 인지 stratification으로 바꾼 것이며, 식 1-6은 동일하게 작동한다. 따라서 대조군과 실험군의 Q-error 차이는 오직 sample selection 방식의 차이에서 나온다.
+
+### 1.2 3-way 측정 — B1·CaseA·CaseB
+
+본 연구는 sample selection 단계의 개입을 두 가지 방식으로 측정하여, 대조군과 함께 세 mode를 한 측정에서 짝지어 비교한다.
+
+- **B1 (대조군)**: 논문 §V-B 그대로의 unstratified Bernoulli random sampling. est = est_b1.
+- **CaseA (실험군·완전 대체)**: 논문 Bernoulli를 우리 method의 분포 인지 stratification 표본으로 통째 치환한다. AdaptiveState에 우리 method의 추정값만 입력한다. est = est_method.
+- **CaseB (실험군·결합)**: 논문 Bernoulli 추정값과 우리 method 추정값을 산술 평균한다. est_final = (est_b1 + est_method) / 2.0.
+
+est_b1은 논문 방식 그대로의 Bernoulli random sample 추정값이고, est_method는 분포 인지 stratification으로 뽑은 표본의 추정값이다. CaseB의 est_final이 AdaptiveState 식 2-6의 입력으로 들어간다. sample budget은 두 estimator가 공유하며, 그 크기는 논문 식 1의 N=385다. 즉 CaseB는 논문의 sample budget을 늘리지 않고, 동일한 예산 안에서 표본을 뽑는 방식만 바꾼다. 이것이 본 연구가 "minimal augmentation"이라 부르는 개입의 실체다 — 논문 식 1-6을 위반하지 않고, sample selection 단계에 분포 인지 방식을 더한 것.
+
+한 측정(`measure_3way` 함수)이 B1·CaseA·CaseB 세 mode를 같은 cell·selectivity·strata·method 조건에서, 같은 10 trial·1000 query로 동시에 산출한다. 세 mode가 한 측정에서 나오므로 셋이 완벽히 짝지어진다(matched). 이전 narrative(v7)는 CaseA(완전 대체)를 "폐기"로 서술했으나, v8은 CaseA를 측정된 negative control로 본문에 수록한다 — 효과가 불안정할 것으로 예상되는 방식을 일부러 측정하여 실제로 불안정함을 확인함으로써, 결합(CaseB)이 진짜로 가치를 만든다는 것을 거꾸로 입증하기 위함이다(§6.2).
+
+### 1.3 framing의 학술적 의의
+
+논문 본인의 contribution(cardinality 추정 알고리즘)을 그대로 인정하고, 우리는 그 입력인 표본의 품질만을 통제 변인으로 다룬다. 학부 캡스톤 디자인이라는 성격에 맞게, 새 알고리즘을 제안하는 것이 아니라 하나의 변인을 끝까지 통제해 그 효과를 측정하는 검증 연구의 자세를 일관되게 유지한다. 동시에 본 연구는 측정 대상을 논문이 다룬 데이터셋에 가두지 않고, 직접 만든 concat 데이터셋과 직접 설계한 변인 조합으로 측정 공간을 능동적으로 확장한다. 이 두 가지 — 개입 지점의 최소화와 측정 공간의 능동적 확장 — 가 본 narrative의 base axis다.
+
+---
+
+## 2. 측정 방법론의 출발점 — 논문 §V-B Adaptive Sampling
+
+본 절은 우리가 채택한 측정 방법론의 출발점을 소개한다. 논문 Exqutor §V-A와 §V-B는 인덱스 유무에 따라 두 갈래로 cardinality를 추정한다.
+
+§V-A의 ECQO는 벡터 인덱스가 있을 때 HNSW(Hierarchical Navigable Small World) 그래프 위의 range query로 1-2ms 수준에서 정확한 cardinality를 얻는 메커니즘이다. 본 연구는 이 부분을 측정 대상으로 삼지 않으며, 논문 본인의 결과를 그대로 인정한다.
+
+§V-B의 Adaptive Sampling은 벡터 인덱스가 없을 때 Bernoulli random sample N=385개로 표본을 뽑고, momentum 기반 식으로 표본 크기를 동적으로 조정하는 메커니즘이다. 본 연구의 측정은 이 §V-B를 출발점으로 삼는다. 논문의 여섯 식은 다음과 같다.
+
+```
+식 1: N = ⌈z²·P̂(1-P̂)/e²⌉ = 385       (sample budget, z=1.96 / P̂=0.5 / e=0.05)
+식 2: Ĉ = Σ(matching rows) × (1 - sampling_ratio)   (Bernoulli estimator)
+식 3: δ = max(true_Q-err, 1/true_Q-err)              (Q-error)
+식 4: η ← m·η + (1-m)·δ/α                            (momentum update, m=0.9 / α=50)
+식 5: N_t+1 ← N_t × (1 + η·β·sign(...))              (sample size update, β=1.5)
+식 6: η ← η · γ                                       (learning rate decay, γ=0.99)
+```
+
+period P=50 쿼리마다 식 4-6으로 표본 크기를 갱신한다. 본 연구는 이 여섯 식을 측정 기반으로 그대로 사용하고, 식 1의 N=385라는 sample budget도 그대로 유지한다. 우리가 바꾸는 것은 식 2의 입력으로 들어가는 표본을 어떻게 뽑느냐 하나뿐이다.
+
+논문 §V-B 자체에는 "Algorithm 1" 같은 의사 코드 블록이 없다. 여섯 식과 자연 산문, 그리고 일곱 개의 하이퍼파라미터만으로 기술되어 있다. 따라서 본 narrative도 의사 코드 형식을 쓰지 않고, 우리의 개입을 자연 산문으로 기술한다.
+
+---
+
+## 3. 우리의 sample selection 방식 — 세 단계 흐름
+
+본 연구가 sample selection 단계에서 실제로 하는 일을 세 단계로 정리한다. 세 단계 전부를 거치는 것이 실험군 CaseB이고, 3단계(결합)를 생략한 것이 실험군 CaseA다.
+
+### 3.1 1단계 — 분포 인지 stratification (offline, 1회)
+
+데이터셋이 처음 들어올 때 한 번 수행하는 오프라인 단계다. 데이터의 행 수와 구조, 차원을 보고 데이터셋 Type을 판별한 뒤(§4), Type에 맞는 sample selection method를 고르고(§7), 그 method로 K=20개의 stratum을 만든다. 결과적으로 각 행은 stratum_id 0..K-1 가운데 하나로 매핑된다. 이 단계의 비용(fit_time)은 method마다 다른데, 가장 빠른 sparse_rp가 수 초 수준이다(§10).
+
+이 단계가 본 연구가 말하는 "데이터셋 진입 시 빠르게 분포를 파악한다"의 실체다. 우리가 쓰는 method들 — 클러스터링, 차원 축소, quantization 등 — 자체가 데이터 분포를 파악하는 도구이며, 데이터셋이 들어올 때 이들이 분포를 빠르게 잡아낸다.
+
+### 3.2 2단계 — 표본 추출 (online, 매 쿼리)
+
+쿼리가 들어올 때마다 수행하는 온라인 단계다. 논문 식 1의 sample budget N(초기 385, AdaptiveState 식 5로 동적 조정)을 그대로 쓰되, 1단계에서 만든 K=20개 stratum에 **균등 배분(equal allocation)** 으로 표본을 나누어 뽑는다 — budget을 K로 나눠 각 stratum에 N/K씩 배정한다. 뽑힌 표본에서 est_method를 계산한다. 논문이 정한 표본 예산은 손대지 않고, 표본을 어느 stratum에서 뽑을지만 분포 인지 stratification으로 바꾼다.
+
+배분 방식 자체는 균등으로 고정한다. 이 점은 측정 코드(`measure_paper_exact.py`의 `measure_case_a`·`measure_case_b`)에서 직접 확인된다 — 두 함수 모두 `equal_alloc`으로 stratum별 표본 수를 정한다. 균등 배분은 stratum별 표준편차 σ_h를 추정해야 하는 Neyman 배분 등과 달리 추가 통계량 없이 동작하는 robust한 기본값이다. (배분 방식의 우열 자체 — Equal/Proportional/Neyman/Anti-Neyman — 는 분포를 아는 상황을 가정한 RQ2에서 별도로 다룬다. §9.2 참조. 이전 narrative v7 §3.2가 이 단계를 "비례 배분(proportional allocation)"으로 적은 것은 RQ2의 별도 결과와 혼동한 오기이며, 본 v8에서 균등 배분으로 정정한다.)
+
+### 3.3 3단계 — 결합 (online, 매 쿼리)
+
+쿼리마다 두 추정값을 결합하는 단계다. 논문 방식 그대로의 Bernoulli 추정값 est_b1과 우리 방식의 est_method를 산술 평균하여 est_final = (est_b1 + est_method) / 2.0을 만들고, 이것을 논문 식 2-6 보정에 그대로 넣는다. 결합은 산술 평균 하나뿐이며, 논문 식 1-6을 전혀 위반하지 않는다. 실험군 CaseB는 이 세 단계의 직접적인 구현이다.
+
+결합 규칙으로 산술 평균을 택한 것은 임의 선택이 아니다. 산술 평균 외 7종 대안(기하·조화·가중·min·max 등)을 후처리 proxy로 검토한 결과, 산술 평균이 capped Q-error가 가장 낮았고 7종 대안 전부가 측정의 94.6~100%에서 산술 평균보다 나빴다. 특히 기하 평균은 두 추정기가 모두 과소추정 경향이라 더 아래로 당기면 악화되고, Bernoulli가 0-hit인 쿼리에서 √(0·x)=0으로 추정이 붕괴(zero-collapse)하여 추정 실패율이 산술 평균의 1.3%에서 6.1%로 폭증한다. 산술 평균이 robust한 선택임이 확인된 것이다.
+
+### 3.4 세 mode와 세 단계의 대응
+
+세 측정 mode는 위 세 단계와 다음과 같이 대응한다.
+
+| mode | 1단계 stratification | 2단계 표본 추출 | 3단계 결합 | est |
+|---|---|---|---|---|
+| B1 (대조군) | — (Bernoulli random) | Bernoulli 무작위 | — | est_b1 |
+| CaseA (실험군·완전 대체) | 적용 | 분포 인지 stratification | 생략 | est_method |
+| CaseB (실험군·결합) | 적용 | 분포 인지 stratification | 산술 평균 | (est_b1 + est_method)/2 |
+
+1단계와 2단계가 본 연구의 sample selection 방식의 핵심이고, 3단계는 논문 식 1-6을 그대로 둔 채 두 추정값을 평균하는 최소한의 결합이다. CaseA는 3단계를 생략하여 method 추정값을 단독으로 쓰는 mode이고, CaseB는 3단계까지 거쳐 두 추정값을 결합하는 mode다. §6에서 보겠지만, 3단계 결합의 유무가 안정성을 가른다 — 이 흐름은 뒤따르는 모든 절 — §4(데이터셋 Type), §5(다중 벡터), §7(동적 method 선택), §10(fit_time) — 의 base가 된다.
+
+---
+
+## 4. 데이터셋 Type 분류 — 측정 공간을 어떻게 펼쳤는가
+
+### 4.1 분류 기준 — 규모 × 구조 × 차원
+
+본 연구의 측정 portfolio는 1508건의 3-way 측정으로 구성되며(§6.0), 그 측정 cell들을 데이터 규모, 단일/다중 구조, 차원이라는 세 축으로 다섯 Type으로 분류한다. 이 분류는 §7의 동적 method 선택의 직접적인 base다.
+
+| Type | 정의 | 차원 | 대표 데이터셋 | 측정 수 |
+|---|---|---:|---|---:|
+| Type 1 | 소규모 단일 sf=1 (0.1M 행) | 96~768 | DEEP/SIFT/SSN/WIKI/YFCC sf=1 | 272 |
+| Type 2 | 중규모 단일 sf=10 (1M 행) | 96~768 | DEEP/SIFT/SSN/WIKI sf=10 | 224 |
+| Type 3 | 대규모 단일 sf=100 (10M 행, 저~중차원) | 96~256 | DEEP/SIFT/SSN sf=100 | 464 |
+| Type 4a | 대규모 다중 224~288d (10M 행) | 224~288 | DEEP+SIFT, DEEP+YFCC | 372 |
+| Type 4b | 대규모 다중 864d 이상 (10M 행) | 864~1024 | DEEP+WIKI, DEEP+CC3M | 176 |
+
+다섯 Type의 측정 수를 합치면 3-way 측정 1508건이 된다.
+
+### 4.2 Type 1 — 소규모 단일 sf=1
+
+행 수 0.1M의 단일 테이블 데이터다. 측정 portfolio 가운데 가장 작은 규모이며, 데이터가 작을수록 random Bernoulli 표본의 분산이 커지므로 분포 인지 stratification이 그 분산을 줄이는 이득이 크게 나타나는 구간이다.
+
+### 4.3 Type 2 — 중규모 단일 sf=10
+
+행 수 1M의 단일 테이블 데이터다. sf=1과 sf=100의 중간 규모이며, 데이터 규모에 따른 효과의 변화를 sf=1·sf=10·sf=100 세 단계로 직접 측정해 확인할 수 있게 하는 중간점이다.
+
+### 4.4 Type 3 — 대규모 단일 sf=100 (저~중차원)
+
+행 수 10M의 단일 테이블, 96~256차원 데이터다. 측정 수 464건으로 portfolio에서 가장 큰 비중을 차지하며, K=20 설정이 일관되게 잘 작동하는 구간이다.
+
+### 4.5 Type 4a — 대규모 다중 224~288d
+
+행 수 10M의 다중 테이블, 224~288차원 데이터다. 우리가 직접 만든 concat 데이터셋(DEEP+SIFT 224d, DEEP+YFCC 288d)과 cross-table 다중 벡터 cell이 이 Type에 속한다.
+
+### 4.6 Type 4b — 대규모 다중 864d 이상
+
+행 수 10M의 다중 테이블, 864차원 이상 데이터다. 우리가 DEEP과 WIKI를 연결해 만든 864차원 concat, 그리고 DEEP+CC3M 1024차원 cell이 여기 속한다. 두 데이터셋의 분포가 섞인 고차원 공간에서는 sample selection 방식의 효과가 가장 불안정하게 나타나며, 특히 일부 클러스터링 method가 이 차원에서 크게 흔들린다(§5, §6.4).
+
+### 4.7 Type 분류가 동적 method 선택의 base가 되는 이유
+
+다섯 Type 분류는 §7의 동적 method 선택의 직접적인 base다. 데이터셋이 들어오면 Type을 판별하고, Type에 맞는 sample selection method를 자동으로 고른 뒤 CaseB ensemble로 결합한다. 각 Type별로 어떤 method가 잘 맞는지를 측정으로 확인하고, 그 결과를 선택 규칙으로 옮긴 것이 본 연구가 제안하는 흐름이다.
+
+---
+
+## 5. 우리가 만든 다중 벡터 데이터셋 — 측정 공간의 능동적 확장
+
+### 5.1 왜 직접 데이터셋을 만들었는가
+
+본 연구의 측정은 논문이 다룬 단일 벡터 데이터셋에 머무르지 않는다. 다중 벡터 환경에서 sample selection 방식이 어떻게 작동하는지를 보기 위해, 우리는 서로 다른 두 데이터셋의 벡터를 차원 방향으로 직접 연결(concat)해 새로운 측정 대상을 만들었다. DEEP과 SIFT를 연결한 224차원, DEEP과 YFCC를 연결한 288차원, DEEP과 WIKI를 연결한 864차원의 세 concat 데이터셋이 그것이다. 이는 측정 공간을 수동적으로 받아들이지 않고 능동적으로 넓힌 결과이며, 단일 벡터에서 관찰한 효과가 다중 벡터 고차원 공간에서도 유지되는지를 우리 손으로 확인하기 위한 설계다.
+
+### 5.2 단일 벡터와 concat의 비교
+
+측정 cell을 단일 벡터(single), cross-table 다중 벡터(multi), 그리고 우리가 만든 concat으로 나누어 결합 실험군 CaseB와 대조군 B1의 짝지은 Q-error 변화율(paired Δ%)을 집계하면 다음과 같다(CaseB_vs_B1, 1508건 전수).
+
+| 유형 | n | better% | 유의% | 평균 Δ% | 중앙값 Δ% |
+|---|---:|---:|---:|---:|---:|
+| single | 960 | 89.1% | 64.5% | −4.12% | −4.38% |
+| multi (cross-table) | 212 | 89.6% | 67.0% | −4.54% | −4.61% |
+| concat | 336 | 89.0% | 66.4% | **+0.92%** | −4.31% |
+
+세 유형 모두 better 비율이 89~90%로 사실상 동일하다 — 분포 인지 sample selection의 우월 방향성은 단일·다중·연결 구조 전반에서 유지된다. single과 multi는 평균 Δ%도 −4.12%·−4.54%로 명확한 음수다.
+
+concat의 평균 Δ%만 +0.92%로 양수인데, 이는 다중 벡터에서 효과가 사라졌다는 뜻이 아니다. concat의 better 비율은 89.0%로 single과 같고 중앙값도 −4.31%로 음수다. 평균을 양수로 끌어올린 것은 §6.3에서 볼 A10-DEEP+WIKI-concat-sf10 cell의 minibatch_partial 이상치 두 건뿐이다.
+
+### 5.3 concat의 차원별 분해 — 864d 평균 양수의 정체
+
+concat 전체 평균 +0.92%는 차원별로 갈라 보면 결이 다르다.
+
+| concat 데이터셋 | 차원 | n | better% | 평균 Δ% | 중앙값 Δ% |
+|---|---:|---:|---:|---:|---:|
+| DEEP+SIFT | 224 | 144 | 88.2% | **−4.08%** | −4.24% |
+| DEEP+YFCC | 288 | 96 | 90.6% | **−4.20%** | −4.35% |
+| DEEP+WIKI | 864 | 96 | 88.5% | **+13.54%** | −4.33% |
+
+224차원과 288차원에서는 개선 폭이 각각 −4.08%, −4.20%로 분명한 음수다. 그러나 864차원 DEEP+WIKI에서 평균이 +13.54%로 양수로 나타나는데, 이 양수는 차원이 높아서 효과가 사라진 것이 아니다. 같은 864차원 측정의 중앙값은 −4.33%로 여전히 음수이고, better 비율도 88.5%다. 평균이 양수로 끌려 올라간 것은 A10-DEEP+WIKI-concat-sf10 cell에서 minibatch_partial method가 기록한 +1043.19%와 +510.62% 단 두 건의 이상치(outlier) 때문이다. 이 두 건을 제외하면 864차원의 평균도 −2.70%로 음수로 돌아온다. 즉 864차원에서도 분포 인지 sample selection은 대부분의 측정에서 더 낫고, 평균을 왜곡한 것은 고차원 concat에서 불안정한 특정 클러스터링 method 하나다(§6.4).
+
+### 5.4 selectivity와의 교차
+
+단일 벡터와 concat 모두 selectivity가 높을수록 better 비율이 오른다. single은 sel 0.001/0.01/0.10에서 83.0/88.0/97.1%, concat은 80.4/88.4/98.2%다. 우리가 만든 concat 데이터셋에서도 sel=0.10 구간에서는 112건 중 110건이 개선되어, 다중 벡터 고차원 공간에서도 분포 인지 sample selection의 우월성이 거의 예외 없이 성립한다.
+
+---
+
+## 6. 3-way paired Δ% — B1·CaseA·CaseB
+
+### 6.0 측정 portfolio와 3-way matched
+
+본 연구의 측정 portfolio는 1508건의 3-way 측정이다. 각 측정은 `measure_3way` 함수가 대조군 B1·실험군 CaseA·실험군 CaseB를 같은 cell·selectivity·strata·method 조건에서, 같은 10 trial·1000 query로 동시에 산출한 것이다(통합 4524 row = 1508 × 3 mode). 세 mode가 한 측정에서 나오므로 모든 paired 비교가 trial 단위로 정확히 짝지어진다. 이전 측정 캠페인(REPORT v12)이 별도로 측정된 B1을 lookup·fallback으로 짝짓던 구조적 한계가 v13에는 존재하지 않는다.
+
+측정 축은 다섯 갈래로 펼쳐진다. 데이터셋은 단일 벡터 다섯 종과 우리가 만든 다중 벡터 조합을 합쳐 아홉 종, scale factor는 sf=1/10/100 세 종, selectivity는 0.001/0.01/0.10 세 종, strata 수 K는 10/20/30 세 종이다. method 축은 7개 sampling paradigm을 대표하는 16종으로 고정했다(§7).
+
+짝지은 Q-error 변화율(paired Δ%)은 같은 조건에서 trial 단위로 짝지은 (exp_qe − base_qe) / base_qe × 100이며, 음수가 앞에 놓인 mode의 Q-error가 더 낮음, 즉 더 정확함을 뜻한다.
+
+### 6.1 대표 수치(headline) — 결합 실험군 CaseB vs 대조군 B1
+
+paired 비교 1508건에서 결합 실험군 CaseB와 대조군 B1을 비교한 결과는 다음과 같다.
+
+| 지표 | 값 |
+|---|---|
+| CaseB better (Δ% < 0) | **1344 / 1508 = 89.1%** |
+| 평균 Δ% | **−3.06%** (이상치 2건 제외 시 −4.09%) |
+| 중앙값 Δ% | **−4.38%** |
+| 통계적 유의 우월 (one-sided BH-FDR p<0.05 & better) | 984 / 1508 = 65.3% |
+| 효과크기 Cliff's δ large (≥0.474) 우월 | 1088 / 1508 = 72.1% |
+
+핵심 메시지는 단순하다. 논문 §V-B의 unstratified Bernoulli random sampling을 분포 인지 stratification ensemble로 바꾸면, 동일한 sample budget(N=385) 안에서 cardinality 추정의 Q-error가 일관되게 개선된다. 측정한 비교의 약 열 건 중 아홉 건에서 Q-error가 낮아진다. 평균 Δ%가 −3.06%로 보이는 것은 §6.3에서 볼 concat 측정 두 건의 극단 이상치(+1043%, +510%)가 평균을 0 쪽으로 끌어올린 결과이며, 이 두 건을 제외한 평균은 −4.09%, 이상치에 둔감한 중앙값은 −4.38%다. 즉 신뢰 가능한 headline은 "약 9할 비교에서 우월, 중앙값 −4.38% 개선"이며, 통계적 유의 우월 65.3%·효과크기 large 우월 72.1%로 신호가 견고하다.
+
+이전 측정 캠페인(REPORT v12)의 headline은 better 92.2%·평균 −6.25%였다. v13에서 89.1%·−3.06%로 약화된 것은 측정 품질의 하락이 아니다. v13의 대조군 B1이 논문에 더 충실한 1단계 측정으로 바뀌었기 때문이다. 이전 캠페인의 B1은 80M 벡터를 cluster당 500개로 캐시한 중간 모집단에서 표본을 뽑는 2단계 구조였고, 이 구조가 일부 cell에서 B1의 Q-error를 +3~7% 부풀려 실험군을 인위적으로 좋아 보이게 했다. v13은 측정 코드를 80M 전체 벡터에서 직접 표본을 뽑는 1단계로 통일했다 — 더 깨끗하고 낮은 baseline이며, 그만큼 실험군의 상대 개선폭이 줄어든다. 완전한 검증을 시도한 결과 대조군 측정 구현의 미묘한 결함까지 찾아내 논문에 충실하게 바로잡은 것으로, v13이 더 엄정하다.
+
+### 6.2 3-way 비교와 negative control — 완전 대체(CaseA)
+
+세 종류의 paired 비교를 한 표에 모은다.
+
+| 비교 | n | better% | 유의% | 평균 Δ% | 중앙값 Δ% |
+|---|---:|---:|---:|---:|---:|
+| CaseA_vs_B1 (완전 대체 vs 대조군) | 1508 | 35.2% | 6.8% | +12.90% | +1.09% |
+| **CaseB_vs_B1** (결합 vs 대조군) | 1508 | **89.1%** | 65.3% | −3.06% | −4.38% |
+| CaseA_vs_CaseB (완전 대체 vs 결합) | 1508 | 3.5% | 0.0% | +13.92% | +7.02% |
+
+**CaseA(완전 대체)는 negative control이다.** 음성 대조 검증(negative control)이란 효과가 없거나 불안정할 것으로 예상되는 방식을 일부러 측정해, 실제로 그러함을 확인함으로써 본 방식의 타당성을 거꾸로 뒷받침하는 절차다. 이전 narrative v7은 CaseA를 측정 없이 "폐기"로 서술했으나, v13은 CaseA를 B1·CaseB와 한 측정에서 짝지어 실측했다.
+
+실측 결과 CaseA는 B1 대비 35.2%만 우월하고 평균 +12.90%로 오히려 나쁘다. 이 불안정성은 method에 따라 양극으로 갈린다. 강한 spatial/dimreduction method(hilbert_real CaseA 평균 −0.42%, ica_fastica +0.03%, skilling_hilbert +0.06%)는 사실상 B1과 중립이다 — 강한 method로 Bernoulli를 통째 치환해도 손해는 없지만 결합이 주는 −6%대 개선도 얻지 못한다. 반면 약한 method, 특히 P1 Cluster의 gmm(CaseA 평균 +29.60%)과 minibatch_partial(+125.40%)은 B1을 파국적으로 악화시킨다. 즉 완전 대체는 최선의 경우 중립, 최악의 경우 파국이며, 어떤 method가 강한지 미리 모르는 상황에서는 신뢰할 수 없다.
+
+그런데 같은 method 집합으로 CaseB(결합)는 89.1%에서 우월하다. 그리고 CaseA가 CaseB보다 나은 경우는 1508건 중 53건(3.5%)뿐으로, **CaseB가 완전 대체를 96.5%에서 이긴다.** 같은 강한 method는 결합해도 −6%대로 개선되고, 같은 약한 method(gmm, minibatch_partial)는 결합 시 Bernoulli 절반이 완충 역할을 하여 파국이 완화된다 — minibatch_partial은 CaseA에서 평균 +125%지만 CaseB에서는 이상치 제외 평균 −2.52%로 돌아온다. **negative control인 CaseA는, 개선의 원천이 method 단독이 아니라 method를 Bernoulli와 결합하는 데 있음을 그 부재로써 증명한다.** 측정의 arc는 베르누이(B1) → 완전 대체(CaseA, 불안정) → 결합(CaseB, 답)으로 완결된다.
+
+### 6.3 가장 강한 비교와 가장 약한 비교
+
+개별 (cell × method × sel × K) 단위 CaseB_vs_B1의 양 극단은 다음과 같다.
+
+가장 강한 개선 8건은 모두 sel=0.01 조건의 spatial/dimreduction method다 — A1-SSN hilbert_real −13.60%, A2-Fig9 skilling_hilbert −13.45%, A5-scale-sf10 skilling_hilbert −13.45%, A1-DEEP hilbert_real −13.21%, A5-scale-sf100 hilbert_real −13.21%, A1-SIFT ica_fastica −12.98%, A1-SSN chao_weighted −12.65%, A1-SIFT zorder_morton −12.36% 순이며, 모두 one-sided BH-FDR p_adj가 0.0028 수준으로 강하게 유의하다.
+
+가장 큰 악화는 우리가 만든 DEEP+WIKI 864차원 concat의 sf=10 cell에서 minibatch_partial이 기록한 +1043.19%, +510.62% 두 건이다. 이는 P1 Cluster paradigm의 minibatch_partial이 864차원 concat 데이터에서 불안정함을 보여주는 사례이며, §6.1 headline 평균을 끌어올린 이상치 두 건이다. 그 밖의 큰 악화도 거의 전부 약한 method(gmm, faiss_ivf)가 차지한다.
+
+### 6.4 method/paradigm 분석
+
+사용 16 method별 CaseB_vs_B1 paired Δ%는 다음과 같다.
+
+| Method | Paradigm | n | better% | 유의% | 평균 Δ% | 평균(이상치 제외) | 중앙값 Δ% |
+|---|---|---:|---:|---:|---:|---:|---:|
+| hilbert_real | P2 | 95 | 98.9% | 86.3% | −6.54% | −6.54% | −5.91% |
+| skilling_hilbert | P2 | 94 | 100.0% | 76.6% | −6.34% | −6.34% | −5.75% |
+| chao_weighted | P3 | 95 | 100.0% | 83.2% | −6.30% | −6.30% | −6.22% |
+| ica_fastica | P4 | 94 | 100.0% | 83.0% | −6.13% | −6.13% | −5.69% |
+| pca1d | P4 | 94 | 97.9% | 84.0% | −6.05% | −6.05% | −5.55% |
+| zorder_morton | P2 | 94 | 98.9% | 75.5% | −5.87% | −5.87% | −4.89% |
+| hyperloglog | P9 | 95 | 100.0% | 75.8% | −5.75% | −5.75% | −4.58% |
+| cum_sqrtf | P5 | 94 | 97.9% | 66.0% | −5.14% | −5.14% | −4.53% |
+| lavallee_hidiroglou | P5 | 94 | 94.7% | 69.1% | −4.82% | −4.82% | −4.40% |
+| rsvd | P4 | 94 | 91.5% | 58.5% | −4.36% | −4.36% | −4.10% |
+| sparse_rp | P4 | 95 | 84.2% | 68.4% | −3.69% | −3.69% | −4.37% |
+| mhist2 | P6 | 94 | 88.3% | 47.9% | −3.16% | −3.16% | −3.41% |
+| rabitq_strat | P6 | 94 | 84.0% | 43.6% | −2.67% | −2.67% | −3.56% |
+| faiss_ivf | P2 | 94 | 69.1% | 43.6% | −0.69% | −0.69% | −2.70% |
+| gmm | P1 | 94 | 40.4% | 29.8% | **+4.63%** | +4.63% | +2.68% |
+| minibatch_partial | P1 | 94 | 79.8% | 52.1% | **+14.06%** | −2.52% | −3.58% |
+
+16개 method 가운데 14개는 평균 Δ%가 음수이고 better 비율 84% 이상으로 견고하게 우월하다. 상위권은 hilbert_real(−6.54%)·skilling_hilbert(−6.34%)·chao_weighted(−6.30%)·ica_fastica(−6.13%)·pca1d(−6.05%)로 P2 Spatial·P3 Streaming·P4 DimReduction 계열이다. skilling_hilbert·chao_weighted·ica_fastica는 better 비율 100.0%로 모든 측정 cell에서 예외 없이 B1을 이긴다.
+
+약한 2개 method는 P1 Cluster paradigm에 집중된다. gmm은 평균 +4.63%(better 40.4%)로 사실상 B1보다 못하다. minibatch_partial은 평균 +14.06%지만 이는 §6.3에서 본 DEEP+WIKI 864차원 이상치 두 건 때문이며, 이를 제외하면 평균이 −2.52%로 돌아온다 — 대부분의 cell에서는 작동하나 우리가 만든 864차원 concat 같은 극단 조건에서 파탄난다. faiss_ivf는 평균 −0.69%로 B1과 거의 동등하다 — paradigm 라벨은 P2이나 알고리즘은 IVF 클러스터링으로, 클러스터링 계열 method(gmm·minibatch_partial·faiss_ivf)가 공통적으로 약하다는 패턴을 보인다. 결론적으로 P1 Cluster를 포함한 클러스터링 계열은 분포 인지 sample selection의 우월성을 일관되게 보이지 못하며, 본 연구의 권장 method에서 제외하는 근거가 된다.
+
+paradigm 수준에서는 P3 Streaming −6.30%, P9 InfoTheoretic −5.75%, P4 DimReduction −5.05%, P5 QMC −4.98%, P2 Spatial −4.86%가 강하게 우월하고, P6 Quantization −2.91%가 중간, P1 Cluster +9.34%(gmm·minibatch_partial 이상치 포함)가 유일하게 양수다.
+
+---
+
+## 7. 동적 method 선택 — 데이터셋 Type에 따라 method를 고른다
+
+### 7.1 base axis
+
+본 절은 §4의 다섯 Type 분류와 §6.4의 method별 측정 결과를 토대로, 데이터셋이 들어오면 어떤 method를 자동으로 고를지를 정하는 흐름을 제안한다. 동적으로 바뀌는 것은 sample selection method 선택과 결합 단계뿐이며, 논문 식 1-6은 어떤 경우에도 그대로 둔다.
+
+본 연구가 다루는 16 method는 7개 paradigm을 대표한다.
+
+| Paradigm | 사용 method | 개수 |
+|---|---|---:|
+| P1 Cluster | minibatch_partial · gmm | 2 |
+| P2 Spatial | hilbert_real · zorder_morton · skilling_hilbert · faiss_ivf | 4 |
+| P3 Streaming | chao_weighted | 1 |
+| P4 DimReduction | sparse_rp · pca1d · rsvd · ica_fastica | 4 |
+| P5 QMC | cum_sqrtf · lavallee_hidiroglou | 2 |
+| P6 Quantization | rabitq_strat · mhist2 | 2 |
+| P9 InfoTheoretic | hyperloglog | 1 |
+
+paradigm 라벨은 v13 측정 portfolio 기준이다(faiss_ivf는 v13 portfolio에서 P2로 분류된다). 모두 sample selection 단계의 메커니즘이다. 정합성 위반·미커버 등으로 폐기한 40여 method는 본 narrative에서 다루지 않는다(사용자 5/15 결정).
+
+### 7.2 4단계 흐름
+
+```
+[데이터셋 진입]
+        ↓
+[Step 1] 데이터셋 프로파일 파악
+  - 행 수 (sf=1 / sf=10 / sf=100)
+  - 테이블 구조 (단일 / 다중)
+  - 차원 (저 96d / 중 256d / 고 864d 이상)
+        ↓
+[Step 2] Type 판별 (Type 1/2/3/4a/4b 가운데 하나)
+        ↓
+[Step 3] Type별 권장 sample selection method 자동 선택
+        ↓
+[Step 4] CaseB ensemble — est_final = (est_b1 + est_method) / 2.0
+        ↓
+[논문 §V-B AdaptiveState 식 1-6 보정 — 그대로 유지]
+```
+
+Step 1-3이 sample selection method를 고르는 부분이고, Step 4가 두 추정값을 산술 평균하는 결합이다. 논문 메커니즘은 Step 4 다음에 그대로 작동하며, 동적으로 바뀌는 것은 method 선택과 결합뿐이다.
+
+### 7.3 Type별 권장 method
+
+§6.4의 method별 측정 결과와 §10의 fit_time을 토대로, Type별 권장 method를 다음과 같이 정한다. v13 측정에서 강한 14개 method는 Type 전반에서 견고하게 우월하므로, Type별 권장은 그 강한 method 집합 안에서 정확도와 분포 파악 속도를 함께 고려한 것이다.
+
+| Type | 권장 method | 근거 |
+|---|---|---|
+| Type 1 (소규모 단일 sf=1) | chao_weighted, hilbert_real | 정확도 상위 + 소규모에서 fit 비용 부담 작음 |
+| Type 2 (중규모 단일 sf=10) | chao_weighted, pca1d | 효과 일관, fit 비용 중간 |
+| Type 3 (대규모 단일 sf=100 저~중차원) | chao_weighted, hilbert_real, pca1d | K=20 안정 구간, 정확도 상위 |
+| Type 4a (대규모 다중 224~288d) | hilbert_real, ica_fastica, pca1d | 다중 벡터에서 better 비율 상위 |
+| Type 4b (대규모 다중 864d 이상) | hilbert_real, pca1d (클러스터링 method 회피) | 864d에서 클러스터링 파탄(§6.4) |
+
+핵심은 두 가지다. 첫째, Type별로 측정상 우월성이 견고한 강한 method를 자동으로 고른다. chao_weighted는 정확도 상위(−6.30%)이면서 분포 파악 속도도 빠른 편이라 여러 Type의 기본 권장이 된다. 둘째, P1 Cluster paradigm과 클러스터링 계열(gmm, minibatch_partial, faiss_ivf)은 §6.4에서 본 대로 일관성이 없어 모든 Type에서 권장에서 빼며, 특히 Type 4b 864차원에서는 명시적으로 회피한다.
+
+### 7.4 evidence base
+
+이 흐름의 evidence base는 §6의 3-way 측정 portfolio다. 1508건의 측정에서 CaseB_vs_B1이 89.1%에서 우월하다는 사실, 그리고 §6.4의 method별 표가 Step 3의 선택 규칙을 직접 뒷받침한다. 권장 method 집합은 §11의 자원·정확도 분석을 토대로 하며, 그 근거 figure(F7 자원·정확도 Pareto)는 v13 데이터로 재생성되었다(`experiments/figures/paper_exact_v13/`).
+
+---
+
+## 8. K granularity — strata 수의 효과 (본문 finding)
+
+### 8.1 본 절의 위상 — honest limitation에서 finding으로 승격
+
+본 연구는 strata 수 K를 10/20/30으로 sweep하여, K가 실험군에 미치는 영향을 측정했다. 이전 narrative v7에서는 이 절을 본문 finding이 아니라 honest limitation으로 격하했다 — 당시 측정 캠페인의 K=10 대조군 B1이 구조적으로 손상되어 깨끗한 K 비교가 성립하지 않았기 때문이다. **v13에서는 이 결함이 해소되어, K granularity를 본문 finding으로 승격한다.**
+
+### 8.2 v12 K=10 결함과 v13의 해소
+
+이전 캠페인의 대조군 B1은 환경변수로 strata 수를 받아 strata 캐시를 생성하는 2단계 구조였다. 이 구조 때문에 K=10 설정에서 B1의 쿼리별 Q-error에 무한대(inf)가 폭증하여(쿼리 1000건 중 314~391건 수준), K=10 B1의 qe_trim이 정상 범위 1.6~1.7을 벗어나 3.0대로 손상되었다.
+
+v13의 측정 코드는 B1을 80M 전체 벡터에서 직접 표본을 뽑는 1단계로 통일했다(§6.1). 1단계 B1은 strata 캐시를 거치지 않으므로 strata 수 K에 의존하지 않는다. 실측에서 v13 B1의 qe_trim은 K=10에서 1.5132, K=20에서 1.4402, K=30에서 1.5091로 세 K 모두 [1.16, 1.66] 정상 범위에 들어온다. K=10 B1의 추정 실패율도 정상이다. **v12의 K=10 B1 결함은 v13에서 완전히 해소되었고**, 이제 K=10도 자체 K-matched B1을 분모로 깨끗하게 비교할 수 있다.
+
+### 8.3 K granularity finding
+
+K granularity sweep은 6개 cell(A1-DEEP, A2-Fig7, A2-Fig9, A5-scale-sf1, A5-scale-sf10, A5-scale-sf100)을 K=10/20/30으로 측정한다. cell 구성을 통제한 깨끗한 비교를 위해 같은 6개 cell × sel=0.01 부분집합을 K별로 집계한다.
+
+| K | n | better% | 유의% | 평균 Δ% | 중앙값 Δ% |
+|---|---:|---:|---:|---:|---:|
+| K=10 | 96 | 83.3% | 54.2% | −5.16% | −6.30% |
+| K=20 (논문 default) | 96 | 89.6% | 61.5% | **−5.96%** | **−7.63%** |
+| K=30 | 96 | 85.4% | 41.7% | −4.53% | −5.57% |
+
+세 K 모두에서 CaseB가 B1보다 개선되며(평균 −4.53%~−5.96%), **논문 default인 K=20이 가장 강하다**(평균 −5.96%, 중앙값 −7.63%, better 89.6%). K=10은 strata가 너무 적어 각 stratum이 분포의 다봉성(multimodality)을 충분히 분리하지 못해 개선폭이 작고, K=30은 strata가 과하게 잘게 나뉘어 stratum당 표본이 얇아지면서 다시 작아진다. K=20이 분포 분리의 충실도와 stratum당 표본의 충분성 사이의 균형점이다. 본 연구는 논문 default K=20을 그대로 채택하며, 이제 그 선택이 측정으로 뒷받침된다.
+
+(주의: 위 비교는 6개 sweep cell × sel=0.01 부분집합에 한정한 깨끗한 비교다. 전체 portfolio를 K별로 단순 집계하면 K=20이 25개 cell 전체를, K=10·K=30은 6개 sweep cell만 담아 cell 구성이 달라 직접 비교가 성립하지 않는다. cell 구성을 통제한 부분집합이 K granularity의 정당한 비교다.)
+
+---
+
+## 9. selectivity 효과 — 낮은 selectivity일수록 개선 폭이 커진다
+
+### 9.1 selectivity sweep의 핵심 finding
+
+본 연구는 selectivity를 0.001/0.01/0.10 세 단계로 sweep하여, 각 단계에서 실험군의 우월성이 어떻게 변하는지를 측정했다. CaseB_vs_B1 기준 selectivity별 집계는 다음과 같다(1508건 전수).
+
+| sel | n | better% | 유의% | 평균 Δ% | 중앙값 Δ% |
+|---|---:|---:|---:|---:|---:|
+| 0.001 | 448 | **83.3%** | 52.5% | −1.75% | −4.39% |
+| 0.01 | 628 | **87.6%** | 52.4% | −3.54% | −6.61% |
+| 0.10 | 432 | **97.5%** | 97.2% | −3.72% | −4.17% |
+
+핵심은 better 비율의 단조 증가다. selectivity가 0.001 → 0.01 → 0.10으로 높아질수록 better 비율이 83.3% → 87.6% → 97.5%로 일관되게 오른다. selectivity가 0.10에 이르면 측정한 432건 중 421건이 개선되고, 그 421건이 거의 전부 통계적으로 유의하다(유의 97.2%). 분포 인지 sample selection의 우월성은 쿼리가 더 많은 데이터를 선택할수록 거의 예외 없이 성립한다.
+
+selectivity 0.001에서 better 비율이 83.3%로 상대적으로 낮은 것은, 매우 낮은 selectivity에서는 표본에 들어오는 hit 수 자체가 작아 어떤 sample selection 전략이든 추정 분산이 커지기 때문이다. 그럼에도 83.3%는 명확한 우월성이고 중앙값 Δ%도 −4.39%로 음수다. sel=0.001 구간의 평균 Δ%가 −1.75%로 가장 작아 보이는 것은 §5·§6.3의 concat 이상치 일부가 이 구간에 포함된 영향이며, 이상치에 둔감한 중앙값 −4.39%가 실질 개선폭을 더 정확히 나타낸다. 이 단조 증가 패턴은 이전 측정 캠페인에서도 동일하게 관찰되었다.
+
+### 9.2 Neyman 배분의 selectivity 의존성 (부속 evidence)
+
+selectivity 축에서 관찰되는 또 하나의 현상은, 분포를 아는 상황에서 stratum 배분 방식의 우열이 selectivity에 따라 뒤집힌다는 점이다. 이는 CaseB의 sample selection(균등 배분 — §3.2)과는 별개로, 분포를 아는 상황을 가정한 RQ2에서 5-way 배분(Bernoulli/Equal/Proportional/Neyman/Anti-Neyman)을 측정한 부속 evidence다.
+
+| selectivity | Neyman | Anti-Neyman | Proportional | 우열 |
+|---|---:|---:|---:|---|
+| sel=0.01 | 1.595 | 1.540 | 1.580 | Anti < Prop < Neyman (역설) |
+| sel=0.10 | 1.1076 | 1.1101 | 1.1135 | Neyman < Anti < Prop (고전 이론 정합) |
+
+sel=0.01에서는 Neyman 배분이 가장 나쁘고 Anti-Neyman이 가장 좋은 역설이 나타나지만, sel=0.10에서는 Neyman이 가장 좋아 고전 이론과 일치한다. sel=0.01 역설의 원인은 본 데이터셋이 Neyman 배분의 가정 — 클러스터 간 표준편차의 이질성 — 을 만족하지 않기 때문이다(σ_j 범위가 1.3~1.6배로 좁고 클러스터 크기의 변동계수가 0). Neyman 이론 자체가 무효라는 뜻이 아니라, 본 데이터셋이 그 가정 조건을 충족하지 못하며 그 효과가 selectivity에 따라 다르게 드러난다는 의미다. 이는 selectivity라는 변인 하나가 배분 방식의 우열까지 바꿀 수 있음을 보여주는 부속 evidence다(근거 데이터: rq2_DEEP_sf100_5way_allocation.csv, rq2_SIFT_sf100_5way_allocation.csv).
+
+---
+
+## 10. 분포 파악 속도 — fit_time
+
+### 10.1 base evidence
+
+데이터셋이 들어올 때 분포를 빠르게 파악한다는 §3.1의 주장을 측정으로 뒷받침하는 것이 fit_time이다. v13의 3-way 캠페인은 1508건 측정 전부에서 method별 stratification fit 시간을 기록했으므로, 16 method 전 cell에 걸친 fit_time을 직접 집계할 수 있다.
+
+### 10.2 16 method의 fit_time
+
+| Method | fit_time 평균 | fit_time 중앙값 |
+|---|---:|---:|
+| sparse_rp | **2.91s** | 1.43s |
+| mhist2 | 6.69s | 2.81s |
+| rsvd | 6.85s | 3.08s |
+| rabitq_strat | 8.87s | 3.38s |
+| chao_weighted | 11.03s | 4.25s |
+| cum_sqrtf | 15.26s | 6.75s |
+| lavallee_hidiroglou | 15.57s | 6.92s |
+| pca1d | 15.92s | 6.07s |
+| minibatch_partial | 16.99s | 6.99s |
+| faiss_ivf | 17.75s | 6.80s |
+| ica_fastica | 20.94s | 11.74s |
+| zorder_morton | 24.62s | 8.96s |
+| gmm | 29.57s | 18.77s |
+| hilbert_real | 40.66s | 15.31s |
+| hyperloglog | 53.22s | 18.45s |
+| skilling_hilbert | **53.92s** | 17.41s |
+
+fit_time은 sparse_rp 평균 2.91초부터 skilling_hilbert 53.92초까지 약 18배 차이가 난다. 평균과 중앙값이 크게 벌어지는 것은 fit_time이 데이터 규모에 의존하기 때문이다 — sf=100 대용량·864차원 concat 같은 큰 cell에서 fit이 오래 걸려 평균을 끌어올리고, 중앙값이 "전형적인 cell"의 fit 시간을 더 잘 나타낸다. cache_time은 method와 무관하게 평균 9.13초(중앙값 2.88초) 수준이며 벡터 차원과 데이터 규모에 의존한다.
+
+### 10.3 해석
+
+fit_time은 §3.1의 1단계(offline, 1회)에서 sample selection을 위한 stratification을 만드는 시간이다. 매 쿼리마다 다시 fit하는 것이 아니라, 데이터셋 진입 시 한 번 또는 데이터가 바뀔 때 incremental하게 수행하는 비용이다. sparse_rp의 2.91초는 분포를 파악하고 stratification을 만드는 데 걸리는 가장 짧은 시간이다.
+
+산업 환경에서 분포 파악 속도가 제약일 때, sparse_rp는 정확도 상위 method 대비 fit이 한 자릿수 초 안에 끝난다는 강점을 갖는다. 다만 §6.4에서 본 대로 sparse_rp의 v13 정확도(평균 −3.69%)는 정확도 상위권(hilbert_real −6.54%, chao_weighted −6.30%)보다는 약하므로, 분포 파악 속도와 정확도를 함께 고려한 권장은 §11에서 다룬다. 메모리는 모든 method가 stratum 수에 비례하는 수준 이하이고, reservoir 방식인 chao_weighted는 데이터 크기와 무관한 상수 메모리를 쓴다.
+
+---
+
+## 11. 자원 효율 — 정확도와 분포 파악 속도
+
+### 11.1 약한 method는 두 축 모두에서 나쁘다
+
+본 절은 §10의 fit_time과 §6.4의 paired Δ%를 결합한 자원·정확도 분석이다. 16 method를 (분포 파악 비용, 정확도 개선) 두 축에 놓고 보면, 두 갈래의 관찰이 나온다.
+
+첫째, **약한 method는 두 축 모두에서 나쁘다.** P1 Cluster의 gmm은 정확도가 평균 +4.63%로 B1보다 못하면서 fit_time도 29.57초로 느린 편이다. faiss_ivf는 정확도 −0.69%로 B1과 거의 동등하면서 fit_time 17.75초다. 즉 클러스터링 계열 약한 method를 굳이 쓸 이유는 어느 축에서도 없다 — 정확도를 위해 비용을 더 쓰는 맞교환의 문제가 아니라, 그냥 두 축 모두에서 열등하다.
+
+둘째, **강한 method 사이에는 정확도와 분포 파악 속도 사이에 완만한 spread가 있다.** v13 측정에서 정확도 상위는 hilbert_real(−6.54%)·skilling_hilbert(−6.34%)·chao_weighted(−6.30%)·ica_fastica(−6.13%)·pca1d(−6.05%)이고, fit_time 상위(빠름)는 sparse_rp(2.91s)·mhist2(6.69s)·rsvd(6.85s)·rabitq_strat(8.87s)·chao_weighted(11.03s)다.
+
+### 11.2 chao_weighted — 정확도와 속도의 균형점
+
+두 축을 함께 보면 method는 셋으로 나뉜다. **chao_weighted**는 정확도 상위권(−6.30%, better 100%)이면서 fit_time도 11.03초로 빠른 편이라, 정확도와 분포 파악 속도를 함께 만족하는 균형점이다. **hilbert_real**은 정확도가 가장 좋지만(−6.54%) fit_time이 40.66초로 느려, 분포 파악 비용을 감수하고 정확도를 최대화하는 선택이다. **sparse_rp**는 fit_time이 2.91초로 가장 빠르지만 정확도(−3.69%)가 상위권보다 약해, 분포 파악 속도가 결정적 제약일 때의 선택이다.
+
+이전 측정 캠페인은 정확도 상위 method가 곧 자원 효율 상위라 "맞교환이 성립하지 않는다"고 보고했으나, v13에서는 강한 method 사이에 완만한 정확도↔속도 spread가 관찰된다. 다만 그 spread는 약한 method와 강한 method를 가르는 차이에 비하면 작다 — 14개 강한 method는 어느 것을 골라도 −3.7%~−6.5%의 개선을 주며, 그 안에서 chao_weighted가 균형, hilbert_real이 정확도 최대, sparse_rp가 속도 최대를 담당한다.
+
+정확도와 분포 파악 비용을 한 평면에 놓은 자원·정확도 Pareto frontier는 v13 데이터로 재생성했다(`experiments/figures/paper_exact_v13/`) — 자원 축을 소비 표본 수로 잡은 버전과 fit_time으로 잡은 버전 두 가지이며, 후자가 분포 파악 비용과 정확도를 함께 보는 본래의 Pareto다. 정확도 축은 이상치에 견고한 median Δ%를 쓴다. 실측 frontier에서 chao_weighted는 두 버전 모두에 놓여 정확도와 분포 파악 속도의 균형점임이 확인되며, fit_time 버전 frontier에는 sparse_rp가, final_size 버전 frontier에는 cum_sqrtf·ica_fastica·hilbert_real이 함께 놓인다.
+
+---
+
+## 12. 권장과 향후 작업
+
+### 12.1 권장 — Type별 method 선택 + 결합 default
+
+본 연구의 권장은 세 가지다. 첫째, 데이터셋 Type을 판별해 Type별로 측정상 우월성이 견고한 method를 자동으로 고른다(§7.3) — 클러스터링 계열(gmm, minibatch_partial, faiss_ivf)은 모든 Type에서 제외한다. 둘째, sample selection 결과는 단독 대체가 아니라 CaseB 결합(est_final = (est_b1 + est_method) / 2.0)을 default로 쓴다 — negative control인 CaseA(완전 대체)가 1508건 중 35.2%만 우월한 불안정성을 보였고(§6.2), 결합은 89.1%에서 우월하다. 셋째, 정확도와 분포 파악 속도를 함께 고려하면 chao_weighted가 균형점이고, 정확도가 최우선이면 hilbert_real, 분포 파악 속도가 제약이면 sparse_rp를 선택한다(§11).
+
+### 12.2 본 연구가 확인한 것과 정직하게 남기는 한계
+
+본 연구는 sample selection 방식을 random Bernoulli에서 분포 인지 stratification으로 바꾸었을 때 Q-error가 개선되는 것을, 다섯 종의 단일 벡터 데이터셋과 우리가 직접 만든 다중 벡터 데이터셋, 그리고 selectivity·method·구조·scale·K라는 다섯 조작 변인 전반에서 확인했다. 결합 실험군 CaseB는 대조군 B1 대비 1508건 중 89.1%에서 우월하고, 완전 대체 실험군 CaseA는 negative control로서 불안정함을 실측으로 보였다 — 개선의 원천이 method 단독이 아니라 결합에 있음이 입증되었다. 개선은 selectivity가 높을수록 크고, 16 method 중 14개가 견고하게 우월하며, K granularity는 v13에서 결함이 해소되어 본문 finding으로 승격되었다(논문 default K=20이 최적).
+
+동시에 본 연구는 한계를 숨기지 않는다. headline 평균을 끌어올린 concat 이상치 두 건(A10-DEEP+WIKI-concat-sf10 minibatch_partial), P1 Cluster paradigm의 비일관성, concat sf=100 부분 미측정(DEEP+SIFT만 측정), DEEP+CC3M cell의 측정점 4건, A4-sel의 단일 selectivity 측정을 정직하게 명시한다. 또한 이전 캠페인 대비 headline이 92.2%/−6.25%에서 89.1%/−3.06%로 약화된 것은 대조군 B1을 논문에 더 충실한 1단계 측정으로 바로잡은 결과임을 분명히 한다 — 완전한 검증을 시도했고, 그 과정에서 대조군의 측정 결함까지 찾아내 정직하게 바로잡았다는 점이 본 연구의 강점이다. 이 한계들은 핵심 finding의 신뢰성을 훼손하지 않는다 — headline은 검증된 1508건 전수에서 산출되었고, 평균과 함께 중앙값·이상치 제외 평균을 병기하며, 3-way matched 설계가 측정 환경 변동을 상쇄한다.
+
+### 12.3 향후 작업
+
+5/27 발표 이후의 작업은 두 갈래다. 하나는 박광현 교수님이 제안한 4 엔진 통합 POC — PostgreSQL pgvector, DuckDB, vector.c 기반 PG, 그리고 추가 엔진을 통합해 sample selection 방식이 엔진을 가로질러 일반화되는지를 검증하는 것이다. 다른 하나는 측정 공간의 추가 확장 — 더 다양한 다중 modal 벡터 조합, real workload 환경에서의 검증이다. 단기로는 v13 측정과 재생성된 자원·정확도 figure를 반영한 5/27 발표 deck 갱신이 남아 있다.
+
+본 narrative v8은 5/27 발표와 6/11 최종보고서의 공통 base이며, 두 산출물은 본 narrative의 3-way 측정 evidence를 토대로 작성된다.
+
+---
+
+# 부록 §A — 정정 룰과 한계 명시
+
+## A-1. 논문 §V-B에는 의사 코드가 없다
+
+논문 §V-B는 여섯 식과 자연 산문, 일곱 하이퍼파라미터만으로 기술된다. "Algorithm 1" 같은 algorithmic block 형식이 논문에 없다. 본 narrative도 의사 코드 형식을 쓰지 않고 §3의 세 단계를 자연 산문으로 기술했다.
+
+## A-2. framework의 novelty 한정
+
+본 연구가 통합한 네 구성요소는 각각 새로운 것이 아니다. Stratified Reservoir Sampling은 Vitter 1985 + Al-Kateb 2014, BIRCH CF-tree는 Zhang SIGMOD 1996(batch 축 자원 한계로 폐기, CF tuple 형식만 입력으로 사용), 논문 식 2-6 통합 부분은 논문 §V-B 그대로, Distribution-aware stratification은 Cochran 1977 §5.5다. 본 연구의 contribution은 알고리즘 자체가 아니라, 네 구성요소를 통합하고, 논문 §V-B 위에서 sample selection 단계만을 통제 변인으로 다루며, 다섯 Type 분류와 동적 method 선택을 제안하고, 전 조작 변인에 걸친 3-way 측정 evidence를 산출한 검증 설계에 있다.
+
+## A-3. 논문 §V-B의 single-table 가정과 구현 코드 한계
+
+논문 §V-B 자체는 single-table KNN query에 대한 sampling 기반 cardinality 추정을 명시한다. 그러나 논문 공개 코드(BDAI-Research/Exqutor)의 single-table 부분이 동작하지 않아, 본 연구의 측정 일부가 multi-join으로 자연스럽게 이동했다. 임채림 연구원 자문에 근거한다.
+
+## A-4. 논문 §V-B sampling은 block + row 혼합이다
+
+논문 §V-B의 sampling은 초기 N=385 budget을 block 단위로 뽑고, 식 5의 표본 크기 갱신 시 추가 행을 row 단위로 뽑는 block + row 혼합 방식이다. "block only"라는 이전 표현은 부정확하다. 임채림 연구원 자문에 근거하며, 본 narrative §3의 1단계(offline) + 2단계(online) 분리가 이 혼합 구조를 반영한다.
+
+## A-5. "분포를 안다 / 모른다"의 이분법 폐기
+
+이전 narrative의 "분포를 안다 / 모른다" 이분법 구분은 부정확하다. 우리가 쓰는 method — 클러스터링, 차원 축소, quantization 등 — 자체가 분포를 파악하는 도구이며, 데이터셋이 들어올 때 이 method들이 분포를 빠르게 파악한다(§10의 fit_time). 이 이분법 자체가 논문 §V-B의 "without index" 가정을 잘못 해석한 것이다. 박세은 팀장 5/15 정리에 근거한다.
+
+## A-6. 논문 §V-B는 "without index" 가정이다
+
+논문 §V-B는 벡터 인덱스가 없는 상황을 가정한 sampling 기반 cardinality 추정이다. 다만 "without index"는 인덱스의 부재를 뜻할 뿐 분포 정보 자체의 부재를 뜻하지 않는다(A-5와 일치). 우리의 분포 인지 sample selection은 "without index" 가정 안에서 유효하다.
+
+## A-7. "Anti-Neyman > Neyman"의 정확한 의미 — selectivity 의존
+
+이전 narrative의 "Anti-Neyman > Neyman = Neyman 가설 무효"는 부정확하다. 정확한 의미는 세 가지다. Neyman 가설 자체는 Cochran 1977 §5.5 고전 이론으로 유효하다. 본 데이터셋이 Neyman 가정 조건(클러스터 간 σ_j 이질성)을 만족하지 않는다(σ_j 범위 1.3~1.6배로 좁고 클러스터 크기 변동계수 0). 그리고 그 효과가 selectivity에 의존한다(sel=0.01 역설 / sel=0.10 정합). 상세는 §9.2.
+
+## A-8. K=10 대조군 B1의 구조적 결함 — v13에서 해소 (v8 갱신)
+
+이전 측정 캠페인(REPORT v12)의 대조군 B1은 환경변수로 strata 수를 받아 strata 캐시를 만드는 2단계 구조라, K=10 설정에서 B1의 쿼리별 Q-error에 무한대가 폭증하여(쿼리 1000건 중 314~391건) qe_trim이 정상 범위 1.6~1.7을 벗어나 3.0대로 손상되었다. 이 때문에 v7은 K granularity를 본문 finding이 아닌 honest limitation으로 격하했다.
+
+**v13은 이 결함을 해소했다.** 측정 코드를 80M 전체 벡터에서 직접 표본을 뽑는 1단계로 통일하여 strata 캐시를 우회했고, v13 B1의 qe_trim은 K=10/20/30 전부 [1.16, 1.66] 정상 범위에 들어온다(§8.2). 이에 따라 v8은 K granularity를 본문 finding으로 승격했으며(§8), 깨끗한 6-cell 비교에서 논문 default K=20이 K=10·K=30보다 강한 개선을 보였다.
+
+## A-9. A4-sel은 selectivity sweep이 아니다
+
+A4-sel cell은 sel=0.001 단일 값으로만 측정되었다. §9의 selectivity sweep을 담당하는 것은 portfolio 전체의 sel 3종 측정이며, A4-sel은 단일 selectivity의 high-error 측정점일 뿐 sweep cell이 아니다.
+
+## A-10. concat sf=100 부분 미측정
+
+우리가 만든 concat 다중 벡터 cell 중 DEEP+SIFT는 sf=1/10/100 세 규모를 모두 측정했으나, DEEP+WIKI와 DEEP+YFCC는 sf=1/10만 측정되었고 sf=100은 없다. 이는 원본 데이터셋 측의 한계(해당 조합의 sf=100 적재 미비)이며, §5의 concat 분석에서 sf=100 커버리지는 DEEP+SIFT 한 종으로 제한된다. 또한 DEEP+CC3M(1024차원) cell A2-Fig8은 측정점이 4건뿐이라 단독 cell finding으로 인용하지 않는다.
+
+## A-11. method 명명 한계
+
+별도 audit에서 일부 method 구현이 byte-identical하거나 알고리즘 명칭과 실제 구현이 불일치함이 확인되었다. hilbert_real은 실제로 PCA 2D lex sort이고(Faloutsos 1989가 아님), sparse_rp는 Achlioptas 2003이 아닌 Li-Hastie-Church 2006 variant다. 본 narrative는 사용 16 method만 분석 대상으로 하여 byte-identical 중복 method를 배제했고, hilbert_real·sparse_rp는 정직하게 명명된 구현을 사용한다. paradigm 라벨은 v13 측정 portfolio 기준이며, faiss_ivf는 v13 portfolio에서 P2로 분류된다(일부 이전 문서는 P1로 표기). paradigm 간 비교 시 이 명명 한계를 발표·보고서에 명시할 것을 권장한다.
+
+## A-12. 통계 검정의 한계 (v8 갱신)
+
+본 narrative의 통계 수치는 결론을 뒤집지 않으나 한계를 정직하게 명시한다. paired 비교는 (cell, method, sel, K)마다 trial n=10으로 수행되어, n=10 one-sided Wilcoxon이 도달 가능한 최소 p값이 1/1024 ≈ 0.001이며 효과가 강한 비교들이 이 바닥값에 몰린다 — 우열 판단은 p값이 아니라 Δ%와 효과크기로 한다. 효과크기에 관해서는 한 가지를 정정한다. 이전 보고서는 Cliff's δ·Hedges' g가 독립표본 공식이라 paired effect를 "보수적으로(작게)" 추정한다고 적었으나, 통계 보완(stats_supplement_v12) 재계산에서 B1·실험군의 trial 간 Pearson 상관이 평균 −0.013으로 0에 가깝다는 것이 확인되었다. 상관이 0이면 paired 공식과 독립표본 공식이 거의 같은 값을 준다 — 보고된 효과크기는 보수적이지 않고, 두 공식이 사실상 일치한다.
+
+## A-13. CaseB 결합 단계는 균등 배분을 쓴다 (v8 신규)
+
+이전 narrative v7 §3.2는 CaseB의 2단계 표본 추출을 "비례 배분(proportional allocation)"으로 기술했으나, 이는 분포를 아는 상황을 가정한 RQ2의 별도 결과(§9.2)와 혼동한 오기다. 측정 코드(`measure_paper_exact.py`의 `measure_case_a`·`measure_case_b`)는 `equal_alloc`으로 stratum별 표본 수를 균등하게 배정한다 — sample budget을 K로 나눠 각 stratum에 N/K씩 배정하는 **균등 배분(equal allocation)** 이다. 본 v8 §3.2를 균등 배분으로 정정했다. 균등 배분은 stratum별 표준편차를 추정해야 하는 Neyman 등과 달리 추가 통계량 없이 동작하는 robust한 기본값이다.
+
+## A-14. CaseA는 폐기 가설이 아니라 측정된 negative control이다 (v8 신규)
+
+이전 narrative v7은 CaseA(완전 대체)를 "본 연구 framing에 부합하지 않아 폐기"로 서술했다. v13의 3-way matched 캠페인은 CaseA를 B1·CaseB와 한 측정에서 짝지어 1508건 전수 실측했다. 따라서 v8은 CaseA를 폐기 가설이 아니라 **측정된 negative control**로 본문(§6.2)에 수록한다 — 완전 대체가 불안정함(35.2%만 우월, 평균 +12.90%)을 실측으로 보임으로써, 결합(CaseB)이 개선의 진짜 원천임을 거꾸로 입증한다. 측정의 arc는 베르누이(B1) → 완전 대체(CaseA, 불안정) → 결합(CaseB, 답)으로 완결된다.
+
+## A-15. 결합 규칙 산술 평균은 7종 대안 검토에서 robust하다 (v8 신규)
+
+CaseB의 결합 규칙(산술 평균)은 임의 선택이 아니다. 8종 결합 규칙(산술·기하·조화·가중 2종·min·max·기하 zero 회피)을 1508개 3-way 측정의 component로 후처리 비교한 결과, 산술 평균이 capped Q-error 최저였고 7종 대안 전부가 측정의 94.6~100%에서 산술 평균보다 나빴다. 기하 평균은 두 추정기의 공통 과소추정 경향과 Bernoulli 0-hit 시 zero-collapse로 추정 실패율이 1.3%→6.1%로 폭증한다. 이 비교는 AdaptiveState 루프 밖의 후처리 proxy이므로 절대 Q-error는 실측 CaseB와 다르나, 규칙 간 상대 순위(산술 평균 우위)는 공정하다.
+
+---
+
+작성: 2026-05-18 KST · v7(5/17) 전면 수정 · 모든 수치는 REPORT_paper_exact_v13.md 및 paired_delta_v13.parquet·aggregated_v13_full.parquet 직접 재계산으로 확인 · 5/27 발표 + 6/11 보고서의 공통 base narrative

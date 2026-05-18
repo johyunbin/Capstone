@@ -8,19 +8,19 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/18 06:10 update — handoff_v36, 캠페인 완료·데이터 수집 완료)
+## 동적 state + 인계 (5/18 13:30 update — handoff_v37, task I·deck v13·3차 자문요청 완료)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v36 read 로 0% loss 인계** (self-contained).
+> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v37 read 로 0% loss 인계** (self-contained).
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v36_5_18_캠페인완료_데이터수집_20260518_0610.md` (5/18 06:10 — 3-way matched 캠페인 1508건 완료·검증(WARN 0·anomaly 0) · 통합 데이터 aggregated_v13/paired_delta_v13/v13_summary 생성 완료 · 다음 세션 = task I 의 REPORT v13/narrative v8 작성, 데이터 완비)
-- **★ 본 연구 narrative (5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_v7_20260517.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 측정 3-way B1/CaseA/CaseB)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v37_5_18_taskI_deckv13_3차자문_20260518_1330.md` (5/18 13:30 — task I(REPORT v13·narrative v8)·5/27 발표 deck v13(키노트 prompt 3-part + 보조자료)·3차 자문요청 완료 + figure 세션 통합 · 다음 세션 = 업데이트된 deck(PDF) 검토 + 3차 자문요청 점검)
+- **★ 본 연구 narrative (5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_v8_20260518.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 측정 3-way B1/CaseA/CaseB. v7은 이력)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
-- **측정 portfolio + 분석** (통합 1444 file: B1 80 + CaseB 1364): `@_internal/cache/rq3/aggregated_v12_full.parquet` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v12.md`
+- **측정 portfolio + 분석** (3-way matched 1508 측정 = B1·CaseA·CaseB 각 1508): `@_internal/cache/rq3/aggregated_v13_full.parquet` · `v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` (v12는 이력)
 - **handoff 통합** (v0~v34 archive): `@_internal/handoff/archive/`
 - **57 method × 9 paradigm**: `@_internal/METHOD_REGISTRY.md`
 - **9 cells × 56 method × 3 modes matrix**: `@_internal/EXPERIMENT_REGISTRY.md`
 - **server 자원 + tmux**: `@_internal/SERVER_REGISTRY.md`
-- **★ 5/27 발표 키노트 prompt v12 (3 part)**: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v12_part{1,2,3}_20260517.md`
+- **★ 5/27 발표 키노트 prompt v13 (3 part) + 발표 보조자료**: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v13_part{1,2,3}_20260518.md` · `@submission/_drafts/속도는벡터_5_27_발표보조자료_v13_20260518.md` (v12는 이력)
 - **5/27 발표 storyline v2**: `@plans/5_27_storyline_draft_20260511_1410.md`
 - **6/11 보고서 outline v2** (5/8 base) + **v3 update plan**: `@plans/최종보고서_outline_v2_20260508.md`, `@plans/6_11_보고서_outline_v3_update_plan_20260511.md`
 - **5/22 박광현 미팅 자료**: `@submission/_drafts/박광현_5월22일_미팅/`

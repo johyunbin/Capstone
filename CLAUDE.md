@@ -142,19 +142,23 @@ Capstone/
 
 **핵심 원칙**: 구조적 경계는 `_`, 제목 내부는 공백
 
+**버전 분기는 타임코드로** — `v13/v14` 식 버전 넘버나 `ver`/`wave`/`phase` 단어를 파일명 분기자로 쓰지 않는다 (혼용 시 선후 관계 파악·장기 재활용 불가). 모든 작업 산출물은 `<문서명>_YYYYMMDD_HHMMSS.ext` 타임코드로 분기한다. 수정 시 덮어쓰기보다 새 타임코드 파일을 생성해 이력을 보존하고, 최종 제출 확정본만 타임코드를 수동 제거한다.
+
 | 디렉토리 | 패턴 | 예시 |
 |----------|------|------|
 | `plans/` | `문서명_YYYYMMDD_HHMMSS.ext` | `연구설계안_20260403_162818.md` |
+| `submission/` | `팀명_문서명_YYYYMMDD_HHMMSS.ext` | `속도는벡터_3차자문요청_20260518_162300.md` |
+| `_internal/handoff/` | `handoff_YYYYMMDD_HHMMSS_키워드.md` · `새세션_복붙_프롬프트_YYYYMMDD_HHMMSS.md` | `handoff_20260518_164701_deckv16검증.md` |
 | `records/kakaotalk/` | `YYYYMMDD_제목.md` | `20260403_교수님미팅 샘플링방향전환.md` |
 | `records/weekly/` | `주간보고_YYYY-MM-DD.md` | `주간보고_2026-03-28.md` |
 | `reference/analysis/` | `(NN) 제목.ext` | `(01) Exqutor 상세분석.md` |
 | `reference/summaries/` | `[N] Title Case 논문제목 총정리.ext` | `[13] pgvector Open-Source ... 총정리.md` |
-| `submission/` | `팀명_문서명.ext` | `속도는벡터_연구제안서.docx` |
 
 - `_` 용도: 이름↔날짜, 날짜↔시간, 팀명↔문서명 등 **논리적 경계**
 - 공백 용도: 제목·문서명 내 자연어 띄어쓰기
 - 영문 논문 제목: **Title Case** (관사·전치사·접속사 소문자, 약어 대문자)
 - 시스템/약어: 원표기 유지 (`pgvector`, `DuckDB`, `HNSW`, `GPU`, `LSH`)
+- 상세 원본: `_internal/naming_convention.md`
 
 ## 도구
 

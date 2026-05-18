@@ -81,7 +81,7 @@ CELL_META = {
     "A1-SSN":          {"dataset": "SimSearchNet++","dim": 256,  "sf": 100, "type": "Type3",  "single_multi": "single"},
     "A2-Fig7":         {"dataset": "YFCC",          "dim": 192,  "sf": 10,  "type": "Type4a", "single_multi": "multi"},
     "A2-Fig9":         {"dataset": "DEEP+WIKI",     "dim": 864,  "sf": 10,  "type": "Type4b", "single_multi": "multi"},
-    "A2-Fig8":         {"dataset": "DEEP+CC3M",     "dim": 1024, "sf": 10,  "type": "Type4a", "single_multi": "multi"},
+    "A2-Fig8":         {"dataset": "DEEP+CC3M",     "dim": 1024, "sf": 10,  "type": "Type4b", "single_multi": "multi"},
     "A4-sel":          {"dataset": "DEEP",          "dim": 96,   "sf": 100, "type": "Type3",  "single_multi": "single"},
     "A5-scale-sf1":    {"dataset": "DEEP",          "dim": 96,   "sf": 1,   "type": "Type1",  "single_multi": "single"},
     "A5-scale-sf10":   {"dataset": "DEEP",          "dim": 96,   "sf": 10,  "type": "Type2",  "single_multi": "single"},

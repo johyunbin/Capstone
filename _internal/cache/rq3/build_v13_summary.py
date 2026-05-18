@@ -28,9 +28,10 @@ USE_16 = ["minibatch_partial", "gmm", "faiss_ivf", "hilbert_real", "zorder_morto
           "skilling_hilbert", "chao_weighted", "sparse_rp", "pca1d", "rsvd",
           "ica_fastica", "cum_sqrtf", "lavallee_hidiroglou", "rabitq_strat",
           "mhist2", "hyperloglog"]
-# K granularity sweep cell — 6 cell × sel=0.01 × 16 method × K{10,20,30}
+# K granularity sweep cell — 8 cell × sel=0.01 × 16 method × K{10,20,30}
+# A1-SIFT·A1-SSN 은 full grid 측정의 일부로 sel=0.01 K{10,20,30} 보유 (작업 3에서 8-cell 전환)
 KGRAN_CELLS = ["A5-scale-sf1", "A5-scale-sf10", "A2-Fig7", "A2-Fig9",
-               "A1-DEEP", "A5-scale-sf100"]
+               "A1-DEEP", "A5-scale-sf100", "A1-SIFT", "A1-SSN"]
 
 _LINES = []
 
@@ -41,7 +42,11 @@ def out(s=""):
 
 
 def stats(sub: pd.DataFrame) -> dict:
-    """paired 부분집합 → better/sig/effect-size 집계. delta<0 = exp 우위."""
+    """paired 부분집합 → better/sig/effect-size 집계.
+
+    better = 측정의 delta_pct_mean(10 trial Δ% 평균)이 음수인 측정 수.
+    better% = better / n — delta_pct_median 기준이 아닌 mean 기준이 정본 정의.
+    """
     n = len(sub)
     if n == 0:
         return dict(n=0, better=0, better_pct=0.0, sig=0, sig_pct=0.0,
@@ -107,6 +112,8 @@ def main():
     # ============ 3. 3-way headline ============
     out("\n## 3. 3-way paired Δ% headline")
     out("> delta = (exp_qe − base_qe)/base_qe × 100, trial-paired 10 trial. 음수 = exp 우위.")
+    out("> **better% 정의**: 측정별 delta_pct_mean(10 trial Δ% 평균)이 음수인 측정의 비율 — "
+        "mean 기준이 정본. median 기준으로 세면 값이 달라지므로 혼용 금지.")
     out("| 비교 | n | better | better% | 유의% | δlarge% | mean Δ% | median Δ% |")
     out("|---|--:|--:|--:|--:|--:|--:|--:|")
     for comp in ["CaseA_vs_B1", "CaseB_vs_B1", "CaseA_vs_CaseB"]:
@@ -176,8 +183,8 @@ def main():
         out(f"| {cell} | {ds} | {sm} | {s['n']} | {s['better_pct']:.1f}% | "
             f"{s['mean']:+.2f}% | {s['median']:+.2f}% |")
 
-    # ============ 5. K granularity (clean — 6 cell × sel0.01) ============
-    out("\n## 5. K granularity — CaseB_vs_B1 (6 K-gran cell × sel=0.01, matched 3-way)")
+    # ============ 5. K granularity (clean — 8 cell × sel0.01) ============
+    out("\n## 5. K granularity — CaseB_vs_B1 (8 K-gran cell × sel=0.01, matched 3-way)")
     out("> v12 와 달리 v13 은 각 측정이 자체 B1(1단계) 보유 → K=10 도 깨끗한 비교.")
     kg = cbb[(cbb["cell"].isin(KGRAN_CELLS)) & (cbb["sel"] == 0.01)]
     out("| K | n | better | better% | 유의% | δlarge% | mean Δ% | median Δ% |")
@@ -230,6 +237,23 @@ def main():
     for _, r in cbb.nlargest(8, "delta_pct_mean").iterrows():
         out(f"| {r['cell']} | {r['method']} | {r['sel']:g} | {int(r['K'])} | "
             f"{r['delta_pct_mean']:+.2f}% | {r['p_adj_bh']:.4f} | {r['cliffs_delta']:+.3f} |")
+
+    # ============ 9. fit_time / cache_time (분포 파악 비용) ============
+    out("\n## 9. method별 fit_time / cache_time (분포 파악 비용)")
+    out("> fit_time_sec·cache_time_sec 는 측정 단위 값(3 mode 공통). "
+        "B1 mode 1508 측정 기준 method별 집계, fit_time mean 오름차순.")
+    b1 = agg[agg["mode"] == "B1"]
+    out("| method | n | fit_time mean | fit_time median | cache_time mean |")
+    out("|---|--:|--:|--:|--:|")
+    frows = []
+    for m in b1["method"].unique():
+        g = b1[b1["method"] == m]
+        frows.append((g["fit_time_sec"].mean(), m, len(g),
+                      g["fit_time_sec"].median(), g["cache_time_sec"].mean()))
+    for fmean, m, n, fmed, cmean in sorted(frows):
+        out(f"| {m} | {n} | {fmean:.2f}s | {fmed:.2f}s | {cmean:.2f}s |")
+    ct = b1["cache_time_sec"]
+    out(f"- cache_time (전 1508 측정): 평균 {ct.mean():.2f}s · 중앙값 {ct.median():.2f}s")
 
     OUT_MD.write_text("\n".join(_LINES) + "\n")
     print(f"\nwrote {OUT_MD}")

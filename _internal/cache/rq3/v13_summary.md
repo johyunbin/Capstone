@@ -1,6 +1,6 @@
 # REPORT v13 / narrative v8 수치 요약 — 3-way matched 캠페인
 
-_생성_: 2026-05-18 06:02 · 출처 aggregated_v13_full.parquet (4524 row) + paired_delta_v13.parquet (4524 row)
+_생성_: 2026-05-18 20:17 · 출처 aggregated_v13_full.parquet (4524 row) + paired_delta_v13.parquet (4524 row)
 
 ## 1. 측정 portfolio
 - 3-way 측정: **1508건** (각 측정 = B1·CaseA·CaseB matched). row 4524 = 1508×3
@@ -27,6 +27,7 @@ _생성_: 2026-05-18 06:02 · 출처 aggregated_v13_full.parquet (4524 row) + pa
 
 ## 3. 3-way paired Δ% headline
 > delta = (exp_qe − base_qe)/base_qe × 100, trial-paired 10 trial. 음수 = exp 우위.
+> **better% 정의**: 측정별 delta_pct_mean(10 trial Δ% 평균)이 음수인 측정의 비율 — mean 기준이 정본. median 기준으로 세면 값이 달라지므로 혼용 금지.
 | 비교 | n | better | better% | 유의% | δlarge% | mean Δ% | median Δ% |
 |---|--:|--:|--:|--:|--:|--:|--:|
 | CaseA_vs_B1 | 1508 | 531 | 35.2% | 6.8% | 13.5% | +12.90% | +1.09% |
@@ -122,14 +123,14 @@ _생성_: 2026-05-18 06:02 · 출처 aggregated_v13_full.parquet (4524 row) + pa
 | A6-WIKI-sf10 | WIKI | single | 48 | 77.1% | -0.92% | -3.64% |
 | A10-DEEP+WIKI-concat-sf10 | DEEP+WIKI | concat | 48 | 81.2% | +30.94% | -4.24% |
 
-## 5. K granularity — CaseB_vs_B1 (6 K-gran cell × sel=0.01, matched 3-way)
+## 5. K granularity — CaseB_vs_B1 (8 K-gran cell × sel=0.01, matched 3-way)
 > v12 와 달리 v13 은 각 측정이 자체 B1(1단계) 보유 → K=10 도 깨끗한 비교.
 | K | n | better | better% | 유의% | δlarge% | mean Δ% | median Δ% |
 |---|--:|--:|--:|--:|--:|--:|--:|
-| K=10 | 96 | 80 | 83.3% | 54.2% | 64.6% | -5.16% | -6.30% |
-| K=20 | 96 | 86 | 89.6% | 61.5% | 70.8% | -5.96% | -7.63% |
-| K=30 | 96 | 82 | 85.4% | 41.7% | 67.7% | -4.53% | -5.57% |
-- (K-gran subset cells: A1-DEEP, A2-Fig7, A2-Fig9, A5-scale-sf1, A5-scale-sf10, A5-scale-sf100)
+| K=10 | 128 | 107 | 83.6% | 55.5% | 65.6% | -5.26% | -6.47% |
+| K=20 | 128 | 115 | 89.8% | 53.1% | 67.2% | -5.55% | -7.12% |
+| K=30 | 128 | 110 | 85.9% | 47.7% | 69.5% | -4.96% | -6.02% |
+- (K-gran subset cells: A1-DEEP, A1-SIFT, A1-SSN, A2-Fig7, A2-Fig9, A5-scale-sf1, A5-scale-sf10, A5-scale-sf100)
 
 ## 6. CaseA_vs_B1 — 완전 대체 실험군 (negative control)
 
@@ -188,3 +189,25 @@ _생성_: 2026-05-18 06:02 · 출처 aggregated_v13_full.parquet (4524 row) + pa
 | A10-DEEP+WIKI-concat-sf10 | gmm | 0.001 | 20 | +31.48% | 0.0053 | -1.000 |
 | A5-scale-sf1-SIFT | gmm | 0.001 | 20 | +31.17% | 0.0053 | -1.000 |
 | A10-DEEP+WIKI-concat-sf10 | faiss_ivf | 0.01 | 20 | +29.71% | 0.0053 | -1.000 |
+
+## 9. method별 fit_time / cache_time (분포 파악 비용)
+> fit_time_sec·cache_time_sec 는 측정 단위 값(3 mode 공통). B1 mode 1508 측정 기준 method별 집계, fit_time mean 오름차순.
+| method | n | fit_time mean | fit_time median | cache_time mean |
+|---|--:|--:|--:|--:|
+| sparse_rp | 95 | 2.91s | 1.43s | 8.17s |
+| mhist2 | 94 | 6.69s | 2.81s | 8.98s |
+| rsvd | 94 | 6.85s | 3.08s | 9.37s |
+| rabitq_strat | 94 | 8.87s | 3.38s | 9.28s |
+| chao_weighted | 95 | 11.03s | 4.25s | 9.79s |
+| cum_sqrtf | 94 | 15.26s | 6.75s | 9.87s |
+| lavallee_hidiroglou | 94 | 15.57s | 6.92s | 9.58s |
+| pca1d | 94 | 15.92s | 6.07s | 8.96s |
+| minibatch_partial | 94 | 16.99s | 6.99s | 9.12s |
+| faiss_ivf | 94 | 17.75s | 6.80s | 9.53s |
+| ica_fastica | 94 | 20.94s | 11.74s | 8.47s |
+| zorder_morton | 94 | 24.62s | 8.96s | 8.46s |
+| gmm | 94 | 29.57s | 18.77s | 9.21s |
+| hilbert_real | 95 | 40.66s | 15.31s | 9.24s |
+| hyperloglog | 95 | 53.22s | 18.45s | 8.85s |
+| skilling_hilbert | 94 | 53.92s | 17.41s | 9.25s |
+- cache_time (전 1508 측정): 평균 9.13s · 중앙값 2.88s

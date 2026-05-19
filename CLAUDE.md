@@ -8,18 +8,18 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/19 갱신 — 발표물 claude.ai/design 프롬프트 4종 작성)
+## 동적 state + 인계 (5/19 갱신 — 발표물 4종 수정본 223845 검증)
 
 > CLAUDE.md = 라우팅 + 안정 룰. 동적 state·진행 수치는 handoff·v13 정본에 있다 — 새 세션은 아래 anchor 하나로 0% loss 인계.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260519_202936_발표물프롬프트4종.md` (보고서 정합성 6건 수정 + 발표물 4종 claude.ai/design 리디자인 프롬프트 신규 + 표지·요약본 기입 완료. 다음 = claude.ai/design 발표물 결과 검증)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260519_225520_223845검증.md` (발표물 4종 claude.ai/design 수정본(223845) 검증 — 포스터·팜플렛·소개영상 정상, 발표 deck 슬라이드 2 누락 발견 → 슬라이드2복원 프롬프트 작성. 다음 = deck 슬라이드2복원 결과 검증, 5/22 교수님 미팅용 최우선)
 - **6/11 최종 보고서 (정본)**: `@submission/_drafts/속도는벡터_6_11_최종보고서_20260519_135021.md` (+ `.pdf`·`.docx`) — Ch.1~7 완결 + review pass·정합성 6건 반영
 - **본 연구 narrative (발표·보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_20260518_175437.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 3-way B1/CaseA/CaseB)
 - **측정 portfolio + 분석 (v13 정본 — 3-way matched 1508 측정)**: 수치 정본 `@_internal/cache/rq3/v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` · raw `@_internal/cache/rq3/aggregated_v13_full.parquet`
-- **5/27 발표 deck (19장·검증 완료)**: `@submission/_drafts/속도는벡터_최종발표_슬라이드.pptx` (+ `.pdf`)
-- **5/28 전시 포스터 + 소개 동영상 키트**: 포스터 `@submission/_drafts/속도는벡터_포스터_20260519_104502.pdf` · 동영상 슬라이드 `@submission/_drafts/속도는벡터_소개영상_슬라이드_20260519_104502.pptx` · 대본 `@submission/_drafts/속도는벡터_소개영상_대본_20260519_104502.md`
+- **발표 deck (19장, 5/22 교수님 미팅·5/27 발표)**: `@submission/_drafts/속도는벡터_최종발표_슬라이드_20260519_223845.pptx` — 18장 수정 정상, 슬라이드 2 복원 대기 (handoff §4·§7)
+- **5/28 전시 포스터·팜플렛·소개영상 (223845 검증 완료)**: `@submission/_drafts/속도는벡터_포스터_20260519_223845.pdf` · `@submission/_drafts/속도는벡터_팜플렛_20260519_223845.pdf` · `@submission/_drafts/속도는벡터_소개영상_슬라이드_20260519_223845.pptx`
 - **6/11 학교 표지·소종 요약본 ([팀 기입] 완료)**: 내용 시트 `@submission/_drafts/속도는벡터_표지_소종요약본_내용_20260519_151358.md` (+ `.pdf`) · .hwpx 2종(표지·소종 요약본, 같은 타임코드)
-- **발표물 claude.ai/design 리디자인 프롬프트 4종**: `@submission/_drafts/속도는벡터_발표deck_claudedesign_프롬프트_20260519_191338.md` 외 팜플렛·포스터·소개영상 — navy 앵커 + 악센트 4색 공유 디자인 시스템, 팀이 claude.ai/design에 복붙해 발표물 생성
+- **발표물 claude.ai/design 프롬프트**: 생성 4종(191338) · 수정 4종(211800) · deck 슬라이드2복원 `@submission/_drafts/속도는벡터_발표deck_claudedesign_슬라이드2복원_20260519_225132.md` — 모두 `submission/_drafts/`
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
 - **registry**: METHOD `@_internal/METHOD_REGISTRY.md` · SERVER `@_internal/SERVER_REGISTRY.md` (EXPERIMENT_REGISTRY 는 5/19 archive — 측정 정본은 v13_summary·REPORT v13)
 - **handoff 이력** (v0~v37 + 타임코드): `@_internal/handoff/archive/`

@@ -8,37 +8,34 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/18 13:30 update — handoff_v37, task I·deck v13·3차 자문요청 완료)
+## 동적 state + 인계 (5/19 갱신 — 6/10 변환 sprint 완료)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 새 세션은 **handoff_v37 read 로 0% loss 인계** (self-contained).
+> CLAUDE.md = 라우팅 + 안정 룰. 동적 state·진행 수치는 handoff·v13 정본에 있다 — 새 세션은 아래 anchor 하나로 0% loss 인계.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_v37_5_18_taskI_deckv13_3차자문_20260518_1330.md` (5/18 13:30 — task I(REPORT v13·narrative v8)·5/27 발표 deck v13(키노트 prompt 3-part + 보조자료)·3차 자문요청 완료 + figure 세션 통합 · 다음 세션 = 업데이트된 deck(PDF) 검토 + 3차 자문요청 점검)
-- **★ 본 연구 narrative (5/27 발표 + 6/11 보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_v8_20260518.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 측정 3-way B1/CaseA/CaseB. v7은 이력)
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260519_154301_변환sprint표지요약본.md` (6/10 변환 sprint 완료 — 6/11 보고서 PDF/docx + 학교 표지·소종 요약본 작성. 다음 = 6/11 최종 검토·제출)
+- **6/11 최종 보고서 (정본)**: `@submission/_drafts/속도는벡터_6_11_최종보고서_20260519_135021.md` (+ `.pdf`·`.docx`) — Ch.1~7 완결 + review pass 반영
+- **본 연구 narrative (발표·보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_20260518_175437.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 3-way B1/CaseA/CaseB)
+- **측정 portfolio + 분석 (v13 정본 — 3-way matched 1508 측정)**: 수치 정본 `@_internal/cache/rq3/v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` · raw `@_internal/cache/rq3/aggregated_v13_full.parquet`
+- **5/27 발표 deck (19장·검증 완료)**: `@submission/_drafts/속도는벡터_최종발표_슬라이드.pptx` (+ `.pdf`)
+- **5/28 전시 포스터 + 소개 동영상 키트**: 포스터 `@submission/_drafts/속도는벡터_포스터_20260519_104502.pdf` · 동영상 슬라이드 `@submission/_drafts/속도는벡터_소개영상_슬라이드_20260519_104502.pptx` · 대본 `@submission/_drafts/속도는벡터_소개영상_대본_20260519_104502.md`
+- **6/11 학교 표지·소종 요약본**: 내용 시트 `@submission/_drafts/속도는벡터_표지_소종요약본_내용_20260519_151358.md` (+ `.pdf`) · .hwpx 2종(표지·소종 요약본, 같은 타임코드)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
-- **측정 portfolio + 분석** (3-way matched 1508 측정 = B1·CaseA·CaseB 각 1508): `@_internal/cache/rq3/aggregated_v13_full.parquet` · `v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` (v12는 이력)
-- **handoff 통합** (v0~v34 archive): `@_internal/handoff/archive/`
-- **57 method × 9 paradigm**: `@_internal/METHOD_REGISTRY.md`
-- **9 cells × 56 method × 3 modes matrix**: `@_internal/EXPERIMENT_REGISTRY.md`
-- **server 자원 + tmux**: `@_internal/SERVER_REGISTRY.md`
-- **★ 5/27 발표 키노트 prompt v13 (3 part) + 발표 보조자료**: `@submission/_drafts/속도는벡터_5_27_키노트_prompt_v13_part{1,2,3}_20260518.md` · `@submission/_drafts/속도는벡터_5_27_발표보조자료_v13_20260518.md` (v12는 이력)
-- **5/27 발표 storyline v2**: `@plans/5_27_storyline_draft_20260511_1410.md`
-- **6/11 보고서 outline v2** (5/8 base) + **v3 update plan**: `@plans/최종보고서_outline_v2_20260508.md`, `@plans/6_11_보고서_outline_v3_update_plan_20260511.md`
-- **5/22 박광현 미팅 자료**: `@submission/_drafts/박광현_5월22일_미팅/`
-- **팀원 카톡 v2 (발송용)**: `@submission/_drafts/팀원_카톡_5_27_finalize_20260511.md`
+- **registry**: METHOD `@_internal/METHOD_REGISTRY.md` · EXPERIMENT `@_internal/EXPERIMENT_REGISTRY.md` · SERVER `@_internal/SERVER_REGISTRY.md`
+- **handoff 이력** (v0~v37 + 타임코드): `@_internal/handoff/archive/`
 
-## 새 RQ 구조 (5/5 확정 + 5/12 02:50 paper exact 실측 REPORT v11 반영)
+## 연구 구조 (RQ + 측정)
 
-| RQ | 질문 | 메인 실험 | 핵심 결과 (5/12 02:50 실측) |
+| RQ | 질문 | 메인 실험 | 핵심 결과 |
 |---|---|---|---|
-| **RQ1** | random sampling 이 skew 데이터셋에서 얼마나 부정확한가? | DEEP/SIFT/SSN sf=100 × Bernoulli vs KM20 stratified × sel{0.01, 0.10} | mean gap **+3.74%** (5 cell × 5 trial) |
-| **RQ2** | 분포 아는 상황에서 어떤 방식이 최적? | KM20 5-way: Bernoulli / Equal / Proportional / Neyman / Anti-Neyman | Bern→Prop **−9.53%** ✓. Anti 1.540 < Prop 1.580 < **Neyman 1.595 paradox** (σ_j range 1.3-1.6× narrow + N_i CV=0) → "분포 알면 prop allocation 답" + RQ3 자연 전환 |
-| **RQ3** | 분포 모르는 상황에서 어떤 방식이 최적? | 8 paradigm × 56 method × 9 cells × 2 modes (**1001 file**: B1 9 + CaseA 495 + CaseB 496, REPORT v11) | **paired CaseB < CaseA 92.5%** (455/492, p<1e-45) + **Cliff's δ large better 63.0%** (311/494) + Hedges' g large 55.7% (275/494) + one-sided p<0.05 outperform 45.3% (224/494). negative control: CaseA 단독 대체 **0/493 = 0%** (large worsening 37.1%). Fig.12 mean qe_trim 1.618 vs paper 1.69 = -4.3% 재현 ✓ |
+| **RQ1** | random sampling 이 skew 데이터셋에서 얼마나 부정확한가? | DEEP/SIFT/SSN sf=100 × Bernoulli vs KM20 stratified × sel{0.01, 0.10} | mean gap **+3.74%** (중간보고서) |
+| **RQ2** | 분포 아는 상황에서 어떤 방식이 최적? | KM20 5-way: Bernoulli / Equal / Proportional / Neyman / Anti-Neyman | Bern→Prop **−9.53%** ✓ · Anti < Prop < **Neyman paradox** → "분포 알면 prop allocation 답" (중간보고서) |
+| **RQ3** | 분포 모르는 상황에서 표본 선택 개입이 추정 오차에 미치는 효과 | 16 method × 5 데이터셋 × 5 조작변인 — **3-way matched 1508 측정** (B1·CaseA·CaseB 각 1508) | 결합 **CaseB vs B1 better 89.1%** (1344/1508) · 중앙값 Δ% **−4.38%** · 완전 대체 CaseA better 35.2% (negative control) |
 
-- **연구 방향**: Exqutor §V-B Adaptive Sampling 영역 paper exact 재현 + 분포 인지 stratification ensemble augment 의 정량적 가치 검증. ECQO §V-A 영역은 paper main result 그대로 인정.
-- **CaseB ensemble 정의** (사용자 5/9 23:18): `est_final = (est_b1 + est_method) / 2.0` simple average. paper §V-B Bernoulli (est_b1) + 우리 method KM20 stratified (est_method) 산술 평균. AdaptiveState (Eq 1-6) 그대로 paper exact 유지. sample budget 두 estimator 공유 (paper Eq 1 N=385).
-- **paradigm rollup 8 (CaseB mean Δ%, 실측 REPORT v11)**: P10 Density **−11.93** (n=1, 약함) / P9 InfoTheoretic **−7.60** (n=9) / P3 Streaming **−6.63** (n=44) / P4 DimReduction **−6.03** (n=104) / P2 Spatial **−5.57** (n=107) / P5 QMC +1.47 (n=62, paradigm-level 만 보고, method 4건 폐기) / P1 Cluster +2.04 (n=87) / P6 Quantization +8.44 (n=53)
-- **사용자 정책 폐기 method** (발표 자료 X, future work X): **정합성 위반 10** (halton/sobol/lhs/hammersley/dense_rp/random_projection/dbscan/ccsketch/lsh/ams_count_sketch — paper N=385 budget 위반, 5/14 환각 검증 H1 정정: 9→10) + **측정 미커버 7** (Tier 2 6: dirichlet/kernelpca/neurocard_lite/birch/hdbscan/agglomerative + KDE 1: kde_parzen, 5/14 07:39 kde_chain 폐기 결정) + **algorithm audit drop 23 method**
-- **Honest limitation**: 측정 portfolio 1001 file 외 미커버 cells 9 카테고리 정직 분류 (REPORT §10) + byte-identical duplicates 7쌍 (REPORT §11) + ★3 hilbert PCA 2D lex sort alias (Faloutsos 1989 ❌, hilbert_real 별도 측정 9 cells × 2 modes) + ★4 sparse_rp Li-Hastie-Church 2006 reference 정정
+- **연구 방향**: Exqutor §V-B Adaptive Sampling 의 표본 선택(sample selection) 단계 하나만 — 무작위 Bernoulli → 분포 인지 stratification — 으로 바꾸는 개입의 효과를 전 변인에 걸쳐 검증. §V-A ECQO·식 1-6·표본 예산 N=385 는 논문 그대로(minimal augmentation).
+- **3-way 측정**: B1(대조군, 논문 그대로 Bernoulli) · CaseA(완전 대체 — Bernoulli 표본을 method 표본으로 통째 치환, 음성 대조군) · CaseB(결합 — `est_final = (est_b1 + est_method) / 2.0` 산술평균). 한 측정이 세 mode 를 동일 조건에서 동시 산출(matched).
+- **method**: 측정 16 method 중 강한 **13** / 클러스터링 계열 3(gmm·minibatch_partial·faiss_ivf) 제외. paradigm 강→약(중앙값 Δ%) = P3 Streaming > P4 DimReduction > P2 Spatial > P9 InfoTheoretic > P5 QMC > P6 Quantization > P1 Cluster. method 선정·폐기(정합성·커버리지·audit) 상세는 `_internal/METHOD_REGISTRY.md`·`_internal/method_audit/`.
+- **honest limitation**: 다중 벡터 측정 극단 이상치 2건 · P1 Cluster paradigm 비일관성 · concat sf=100 부분 미측정 · ★ hilbert_real = PCA 2D lex sort alias / sparse_rp = Li-Hastie-Church 2006 — 상세 REPORT v13 §4.7·§10.
+- **수치 정본**: 진행·측정 수치는 모두 `_internal/cache/rq3/v13_summary.md`·보고서 정본 기준. 옛 handoff·문서의 v11/v12 수치(92.2%/−6.25%·1001 file 등)는 이력 — carry 금지.
 - **설계 history**: `plans/archive/RQ_재정립_과거_버전/` (5/5 + 5/9 evidence)
 - **서버**: `165.132.140.240` (capstone2026), 작업 디렉토리 `/mnt/hdd0/home/capstone2026`, 상세는 `_internal/SERVER_REGISTRY.md`
 
@@ -135,7 +132,7 @@ Capstone/
 - **한국어** 기본, 학술 용어 영어 병기
 - 서사적 학술 산문 (bullet 나열 지양)
 - PDF: Chrome CDP만 사용 (**fpdf2 금지** — 한글 깨짐)
-- 변환: `python3 scripts/md2pdf.py <file.md>` → 같은 위치에 .pdf 생성
+- 변환: `python3 _internal/scripts/md2pdf.py <file.md>` → 같은 위치에 .pdf 생성
 - 폰트: Apple SD Gothic Neo (Chrome 렌더링)
 
 ### 파일명 규칙

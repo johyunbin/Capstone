@@ -225,9 +225,9 @@ selectivity와 교차하면 single·concat 모두 sel이 높을수록 better 비
 | gmm | P1 | 94 | 40.4% | 29.8% | 31.9% | **+4.63%** | +4.63% | +2.68% |
 | minibatch_partial | P1 | 94 | 79.8% | 52.1% | 61.7% | **+14.06%** | −2.52% | −3.58% |
 
-16개 method 중 **14개가 평균 Δ% 음수이며 better 비율 84% 이상**으로 견고하게 우월하다. 상위권은 hilbert_real(−6.54%)·skilling_hilbert(−6.34%)·chao_weighted(−6.30%)·ica_fastica(−6.13%)·pca1d(−6.05%)로, P2 Spatial·P3 Streaming·P4 DimReduction 계열이다. skilling_hilbert·chao_weighted·ica_fastica는 better 비율 100.0%로 모든 측정 cell에서 예외 없이 B1을 이긴다.
+16개 method 중 **13개가 평균 Δ% 음수이며 better 비율 84% 이상**으로 견고하게 우월하다. 상위권은 hilbert_real(−6.54%)·skilling_hilbert(−6.34%)·chao_weighted(−6.30%)·ica_fastica(−6.13%)·pca1d(−6.05%)로, P2 Spatial·P3 Streaming·P4 DimReduction 계열이다. skilling_hilbert·chao_weighted·ica_fastica는 better 비율 100.0%로 모든 측정 cell에서 예외 없이 B1을 이긴다.
 
-약한 2개 method는 P1 Cluster paradigm에 집중된다. gmm은 평균 +4.63%(better 40.4%)로 사실상 B1보다 못하고, minibatch_partial은 평균 +14.06%지만 이는 §3.4의 A10-DEEP+WIKI-concat-sf10 이상치 2건 때문으로, 이를 제외하면 평균이 −2.52%로 돌아오고 중앙값도 −3.58%다. 즉 minibatch_partial은 대부분의 cell에서 작동하나 864차원 concat 같은 극단 조건에서 파탄난다. faiss_ivf는 평균 −0.69%로 B1과 거의 동등한 약한 개선에 머문다 — paradigm 라벨은 P2이나 알고리즘은 IVF 클러스터링으로, 클러스터링 계열 method(gmm·minibatch_partial·faiss_ivf)가 공통적으로 약하다는 패턴을 보인다.
+약한 3개 method는 모두 클러스터링 계열이다. gmm은 평균 +4.63%(better 40.4%)로 사실상 B1보다 못하고, minibatch_partial은 평균 +14.06%지만 이는 §3.4의 A10-DEEP+WIKI-concat-sf10 이상치 2건 때문으로, 이를 제외하면 평균이 −2.52%로 돌아오고 중앙값도 −3.58%다. 즉 minibatch_partial은 대부분의 cell에서 작동하나 864차원 concat 같은 극단 조건에서 파탄난다. faiss_ivf는 평균 −0.69%로 B1과 거의 동등한 약한 개선에 머문다 — paradigm 라벨은 P2이나 알고리즘은 IVF 클러스터링으로, 클러스터링 계열 method(gmm·minibatch_partial·faiss_ivf)가 공통적으로 약하다는 패턴을 보인다.
 
 ### 6.2 paradigm rollup (CaseB_vs_B1)
 
@@ -363,7 +363,7 @@ CaseB의 결합 규칙은 산술평균 est_final = (est_b1 + est_method) / 2.0�
 
 **negative control이 결합의 가치를 입증한다**: 완전 대체 실험군 CaseA는 B1 대비 35.2%만 우월하고 평균 +12.90%로 불안정하다 — 강한 method에서는 중립, 약한 method(gmm, minibatch_partial)에서는 파국이다. Bernoulli를 method로 통째 치환하는 방식은 신뢰할 수 없다. 그런데 같은 method 집합으로 CaseB(결합)는 89.1%에서 우월하고, CaseA를 96.5%에서 이긴다. 즉 개선의 원천은 method 단독이 아니라 method를 Bernoulli와 산술평균으로 결합하는 데 있으며, CaseA라는 negative control이 이를 그 부재로써 증명한다. 측정의 arc는 베르누이(B1) → 완전 대체(CaseA, 불안정) → 결합(CaseB, 답)으로 완결된다.
 
-**조건별 강약**: 개선은 selectivity가 높을수록 크고(0.001/0.01/0.10에서 better 83.3/87.6/97.5% 단조 증가), 단일·다중·연결 구조 전반에서 better 비율 89~90%로 유지된다. 16 method 중 14개가 견고하게 우월하며, P1 Cluster paradigm(gmm, minibatch_partial)과 클러스터링 계열 faiss_ivf만 일관성을 보이지 못한다. strata 수 K는 v13에서 K=10 대조군 결함이 해소되어 본문 finding으로 승격되었고, 깨끗한 8-cell 비교에서 paper default K=20이 K=10·K=30보다 강한 개선을 보였다. 결합 규칙은 8종 대안 검토에서 산술평균이 robust함이 확인되었다.
+**조건별 강약**: 개선은 selectivity가 높을수록 크고(0.001/0.01/0.10에서 better 83.3/87.6/97.5% 단조 증가), 단일·다중·연결 구조 전반에서 better 비율 89~90%로 유지된다. 16 method 중 13개가 견고하게 우월하며, P1 Cluster paradigm(gmm, minibatch_partial)과 클러스터링 계열 faiss_ivf만 일관성을 보이지 못한다. strata 수 K는 v13에서 K=10 대조군 결함이 해소되어 본문 finding으로 승격되었고, 깨끗한 8-cell 비교에서 paper default K=20이 K=10·K=30보다 강한 개선을 보였다. 결합 규칙은 8종 대안 검토에서 산술평균이 robust함이 확인되었다.
 
 **v13의 위상**: v13은 REPORT v12 대비 headline이 92.2%/−6.25%에서 89.1%/−3.06%로 약화되었다. 이는 v13의 대조군 B1이 paper에 더 충실한 1단계 측정으로 바뀌어 baseline이 더 깨끗하고 낮아진 결과이며, 측정 품질의 하락이 아니다 — 완전한 검증을 시도한 결과 대조군 측정 구현의 미묘한 결함까지 찾아내 바로잡았고, b1_2stage_verdict가 사전 추정한 약화 범위에 v13 실측이 정확히 안착했다. v13이 정본이며 v12는 2단계 측정 기반의 이력으로 보존한다. 본 보고서가 정직하게 남기는 한계는 concat 이상치 2건, P1 Cluster의 비일관성, concat sf=100 부분 미측정, 그리고 통계 검정의 해상도·proxy·명명 한계다(§10). 이 한계들은 핵심 finding의 신뢰성을 훼손하지 않는다.
 

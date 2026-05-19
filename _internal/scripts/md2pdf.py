@@ -652,8 +652,12 @@ def _slugify_korean(value, separator):
     return value
 
 
-def _md_to_html(md_text: str) -> str:
-    """Markdown → HTML 변환 (GFM 테이블·코드블록·codehilite·toc 지원, 한글 anchor)."""
+def _md_to_html(md_text: str, subsection_keep: bool = True) -> str:
+    """Markdown → HTML 변환 (GFM 테이블·코드블록·codehilite·toc 지원, 한글 anchor).
+
+    subsection_keep=False 면 H3 단위 page-break-inside:avoid wrap 을 건너뛴다
+    (긴 학술 보고서에서 챕터 도입부가 빈 페이지로 밀리는 낭비를 없앨 때 사용).
+    """
     html = markdown.markdown(
         md_text,
         extensions=[
@@ -667,14 +671,34 @@ def _md_to_html(md_text: str) -> str:
         },
     )
     # H3 단위 keep-together wrap (짤림 방지, 사용자 5/14 16:32 요청)
-    html = _wrap_subsection_keep(html)
+    if subsection_keep:
+        html = _wrap_subsection_keep(html)
     return html
+
+
+def _resolve_image_paths(html: str, base_dir: Path) -> str:
+    """<img src> 상대경로를 base_dir 기준 절대 file:// 로 치환.
+
+    md2pdf 는 temp 디렉토리에 HTML 을 쓰므로, md 안 상대경로 이미지
+    (예: ../../experiments/figures/...) 가 temp 위치 기준으로 깨진다.
+    md 파일 디렉토리 기준 절대경로로 바꿔 Chrome 이 올바로 로드하게 한다.
+    http(s)/data/file/절대경로(`/`)는 그대로 둔다.
+    """
+
+    def _repl(m):
+        src = m.group(1)
+        if src.startswith(("http://", "https://", "data:", "file://", "/")):
+            return m.group(0)
+        abs_path = (base_dir / src).resolve()
+        return f'src="file://{abs_path}"'
+
+    return re.sub(r'src="([^"]+)"', _repl, html)
 
 
 # ==============================================================================
 # CLI
 # ==============================================================================
-def convert(md_path):
+def convert(md_path, subsection_keep=True):
     md_path = Path(md_path)
     md_text = md_path.read_text(encoding="utf-8")
     if not md_text.strip():
@@ -682,7 +706,9 @@ def convert(md_path):
         sys.exit(1)
 
     body_md, meta_html = _extract_meta_block(md_text)
-    html_body = _md_to_html(body_md)
+    html_body = _md_to_html(body_md, subsection_keep=subsection_keep)
+    # 이미지 상대경로 → 절대 file:// (temp HTML 디렉토리에서 상대경로 깨짐 해소)
+    html_body = _resolve_image_paths(html_body, md_path.resolve().parent)
 
     # 메타 블록 삽입 (첫 </h1> 직후)
     if meta_html:
@@ -722,13 +748,16 @@ def convert(md_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("사용법: python3 _internal/scripts/md2pdf.py <파일.md>")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[1:] if a.startswith("--")}
+
+    if not args:
+        print("사용법: python3 _internal/scripts/md2pdf.py <파일.md> [--no-subsection-keep]")
         sys.exit(1)
 
-    md_file = sys.argv[1]
+    md_file = args[0]
     if not os.path.exists(md_file):
         print(f"파일 없음: {md_file}")
         sys.exit(1)
 
-    convert(md_file)
+    convert(md_file, subsection_keep="--no-subsection-keep" not in flags)

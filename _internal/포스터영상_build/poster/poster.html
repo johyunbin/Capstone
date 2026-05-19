@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../design.css">
+<style>
+  @page{size:900mm 1200mm;margin:0;}
+  html,body{margin:0;padding:0;width:900mm;height:1200mm;background:#fff;
+    overflow:hidden;}
+  .poster{
+    width:900mm;height:1200mm;padding:40mm 44mm;
+    display:flex;flex-direction:column;
+  }
+  /* 명시적 mm 높이로 1200mm 세로 전체를 균등하게 채운다
+     (Chrome 인쇄 레이아웃에서 flex-grow 불안정 → 고정 높이) */
+  .band{display:flex;flex-direction:column;justify-content:center;}
+  .b-head{height:114mm;}
+  .b1{height:148mm;}
+  .b2{height:215mm;}
+  .b3{height:192mm;}
+  .b4{height:281mm;}
+  .b5{height:168mm;}
+  .band + .band{border-top:1.2px solid var(--gray-line);}
+
+  /* ── 헤더 ── */
+  .ptick{width:70mm;height:5mm;background:var(--navy);margin-bottom:11mm;}
+  .ptoprow{display:flex;justify-content:space-between;align-items:flex-end;}
+  .pwordmark{
+    font-size:82pt;font-weight:900;letter-spacing:-0.035em;
+    color:var(--ink-strong);line-height:0.92;
+  }
+  .pwordmark .v{color:var(--navy);}
+  .porg{text-align:right;font-size:17pt;font-weight:700;color:var(--navy);
+    line-height:1.5;}
+  .porg small{display:block;font-size:14pt;font-weight:500;color:var(--muted);}
+  .ptitle{
+    font-size:31pt;font-weight:700;color:var(--ink);
+    margin-top:11mm;line-height:1.36;letter-spacing:-0.02em;
+  }
+  .ptitle .hl{color:var(--navy);}
+  .pmembers{font-size:16.5pt;font-weight:600;color:var(--muted);
+    margin-top:9mm;}
+  .pmembers b{color:var(--ink);font-weight:700;}
+
+  /* ── 섹션 공통 ── */
+  .shead{display:flex;align-items:center;gap:7mm;margin-bottom:7mm;}
+  .snum{
+    width:15mm;height:15mm;border-radius:4mm;background:var(--navy);
+    color:#fff;font-size:23pt;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .stitle{font-size:28pt;font-weight:800;color:var(--ink);
+    letter-spacing:-0.02em;}
+  .slead{
+    font-size:17.5pt;font-weight:500;color:var(--ink);line-height:1.58;
+    margin-bottom:8mm;
+  }
+  .slead b,.scap b{color:var(--navy);font-weight:800;}
+  .scap{
+    font-size:14.5pt;font-weight:500;color:var(--muted);line-height:1.55;
+    margin-top:7mm;
+  }
+
+  /* ── ① 연구 배경 ── */
+  .bgrow{display:flex;gap:10mm;}
+  .flowcard{
+    flex:1;background:var(--gray-bg);border:1px solid var(--gray-line);
+    border-radius:6mm;padding:9mm 9mm 10mm;
+  }
+  .flowlbl{font-size:13.5pt;font-weight:700;color:var(--muted);
+    margin-bottom:8mm;letter-spacing:0.03em;}
+  .flow{display:flex;align-items:center;gap:3.4mm;}
+  .fb{
+    flex:1;border:1.6pt solid var(--gray-line);border-radius:3.4mm;
+    background:#fff;padding:8mm 2mm;text-align:center;
+    font-size:14.5pt;font-weight:700;color:var(--ink);line-height:1.26;
+  }
+  .fb.on{background:var(--tint);border-color:var(--navy);color:var(--navy);
+    font-weight:800;}
+  .fb.res{padding:0;border:none;background:none;}
+  .fb.res div{border-radius:3mm;padding:3.8mm 2mm;font-size:13.5pt;}
+  .fb.res .g{background:var(--navy);color:#fff;margin-bottom:2.8mm;}
+  .fb.res .b{background:var(--gray-track);color:var(--muted);}
+  .fa{color:var(--blue-mid);font-weight:800;font-size:17pt;flex:none;}
+  .ratios{flex:0 0 256mm;display:flex;gap:9mm;}
+  .rc{
+    flex:1;background:var(--gray-bg);border:1px solid var(--gray-line);
+    border-radius:6mm;padding:9mm 5mm;text-align:center;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .rcnum{font-size:80pt;font-weight:900;color:var(--navy);line-height:0.92;
+    letter-spacing:-0.03em;}
+  .rcname{font-size:19pt;font-weight:800;color:var(--ink);margin-top:4mm;}
+  .rcdesc{font-size:13pt;font-weight:500;color:var(--muted);margin-top:2.4mm;}
+
+  /* ── ② 우리 방법 ── */
+  .whyrow{display:flex;gap:10mm;margin-bottom:9mm;}
+  .whypanel{flex:1;border-radius:6mm;padding:8mm 9mm 7mm;}
+  .whypanel.rand{background:var(--gray-bg);border:1px solid var(--gray-line);}
+  .whypanel.aware{background:var(--tint);border:1.8pt solid var(--navy);}
+  .whyhd{font-size:15pt;font-weight:800;margin-bottom:6mm;}
+  .whypanel.rand .whyhd{color:var(--muted);}
+  .whypanel.aware .whyhd{color:var(--navy);}
+  .whychart{display:flex;align-items:flex-end;gap:3mm;height:50mm;}
+  .wcol{flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;}
+  .wdot{width:5.6mm;height:5.6mm;border-radius:50%;
+    background:var(--navy);margin-bottom:2.6mm;}
+  .wdot.off{visibility:hidden;}
+  .wbar{width:100%;border-radius:1.6mm 1.6mm 0 0;}
+  .rand .wbar{background:var(--gray-cool);}
+  .aware .wbar{background:var(--blue-mid);}
+  .whycap{font-size:13pt;font-weight:700;margin-top:6mm;text-align:center;}
+  .whypanel.rand .whycap{color:var(--muted);}
+  .whypanel.aware .whycap{color:var(--navy);}
+  .steps{display:flex;gap:9mm;}
+  .step{
+    flex:1;border:1px solid var(--gray-line);border-radius:6mm;
+    padding:10mm 9mm;
+  }
+  .step.hl{background:var(--tint);border-color:var(--navy);border-width:1.8pt;}
+  .stephd{display:flex;align-items:center;gap:5mm;margin-bottom:5.4mm;}
+  .stepn{
+    width:12mm;height:12mm;border-radius:50%;background:var(--navy);color:#fff;
+    font-size:16pt;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .stepname{font-size:20pt;font-weight:800;color:var(--ink);}
+  .step.hl .stepname{color:var(--navy);}
+  .stepbody{font-size:15.5pt;font-weight:500;color:var(--muted);
+    line-height:1.55;}
+  .stepbody b{color:var(--navy);font-weight:800;}
+
+  /* ── ③ 측정 설계 ── */
+  .ways{display:flex;gap:8mm;margin-bottom:9mm;}
+  .way{
+    flex:1;border-left:4pt solid var(--gray-cool);background:var(--gray-bg);
+    border-radius:0 4mm 4mm 0;padding:7mm 8mm;
+  }
+  .way.hl{border-left-color:var(--navy);background:var(--tint);}
+  .wayname{font-size:17pt;font-weight:800;color:var(--ink);}
+  .way.hl .wayname{color:var(--navy);}
+  .waydesc{font-size:13pt;font-weight:500;color:var(--muted);
+    margin-top:2.2mm;line-height:1.5;}
+  .axes5{display:flex;gap:7mm;}
+  .ax{
+    flex:1;border:1px solid var(--gray-line);border-radius:5mm;
+    padding:8mm 4mm;text-align:center;
+  }
+  .axlbl{font-size:13pt;font-weight:700;color:var(--muted);}
+  .axval{font-size:19.5pt;font-weight:800;color:var(--navy);margin-top:3.4mm;
+    line-height:1.24;}
+  .measbar{
+    margin-top:8mm;background:var(--navy);border-radius:5mm;
+    padding:8mm 11mm;display:flex;align-items:center;
+    justify-content:space-between;
+  }
+  .measbar .mtxt{font-size:17pt;font-weight:600;color:#fff;}
+  .measbar .mbig{font-size:40pt;font-weight:900;color:#fff;
+    letter-spacing:-0.02em;}
+  .measbar .mbig small{font-size:19pt;font-weight:600;}
+
+  /* ── ④ 핵심 결과 ── */
+  .hero{display:flex;gap:14mm;align-items:center;
+    background:var(--gray-bg);border:1px solid var(--gray-line);
+    border-radius:7mm;padding:13mm 14mm;}
+  .herobig{flex:none;text-align:center;}
+  .herobig .hn{font-size:200pt;font-weight:900;color:var(--navy);
+    line-height:0.84;letter-spacing:-0.035em;}
+  .herobig .hn small{font-size:88pt;}
+  .herobig .hlbl{font-size:16pt;font-weight:700;color:var(--ink);
+    margin-top:5mm;}
+  .herostats{flex:1;display:grid;grid-template-columns:1fr 1fr;
+    gap:8mm 10mm;}
+  .hstat{border-left:4pt solid var(--navy);padding-left:7mm;}
+  .hstat .hv{font-size:32pt;font-weight:900;color:var(--navy);line-height:1;}
+  .hstat .hk{font-size:13.5pt;font-weight:600;color:var(--muted);
+    margin-top:2.6mm;}
+  .respanels{display:flex;gap:10mm;margin-top:10mm;}
+  .rp{flex:1;border:1px solid var(--gray-line);border-radius:6mm;padding:10mm;}
+  .rptitle{font-size:18.5pt;font-weight:800;color:var(--navy);
+    margin-bottom:7mm;}
+  .rbar{margin-bottom:6.4mm;}
+  .rbl{display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:2.6mm;}
+  .rbl span{font-size:14.5pt;font-weight:700;color:var(--ink);}
+  .rbl b{font-size:22pt;font-weight:900;}
+  .rbar.a .rbl b{color:var(--blue-mid);}
+  .rbar.c .rbl b{color:var(--navy);}
+  .rtrack{height:12mm;background:var(--gray-track);border-radius:3mm;}
+  .rfill{height:100%;border-radius:3mm;}
+  .rbar.a .rfill{width:35.2%;background:var(--blue-mid);}
+  .rbar.c .rfill{width:89.1%;background:var(--navy);}
+  .rpnote{font-size:13.5pt;font-weight:500;color:var(--muted);
+    line-height:1.55;margin-top:5mm;}
+  .rpnote b{color:var(--navy);font-weight:800;}
+  .crow{padding:5mm 0;border-bottom:1px solid var(--gray-line);}
+  .crow:last-child{border-bottom:none;}
+  .ck{font-size:13.5pt;font-weight:700;color:var(--muted);margin-bottom:2.4mm;}
+  .cv{font-size:15pt;font-weight:600;color:var(--ink);}
+  .cv b{color:var(--navy);font-weight:900;font-size:17.5pt;}
+
+  /* ── ⑤ 결론 + QR ── */
+  .pfoot{display:flex;gap:12mm;align-items:center;}
+  .conclbox{flex:1;}
+  .concl{list-style:none;}
+  .concl li{
+    display:flex;gap:5.4mm;align-items:flex-start;
+    font-size:16.5pt;font-weight:600;color:var(--ink);line-height:1.46;
+    margin-bottom:5mm;
+  }
+  .concl li b{color:var(--navy);font-weight:800;}
+  .cdot{
+    width:7.6mm;height:7.6mm;border-radius:50%;background:var(--navy);
+    color:#fff;font-size:12pt;font-weight:800;flex:none;
+    display:flex;align-items:center;justify-content:center;margin-top:0.6mm;
+  }
+  .nextline{
+    margin-top:6mm;background:var(--tint);border-left:4pt solid var(--navy);
+    border-radius:0 4mm 4mm 0;padding:5.6mm 8mm;
+    font-size:14.5pt;font-weight:600;color:var(--ink);line-height:1.5;
+  }
+  .nextline b{color:var(--navy);font-weight:800;}
+  .qrcol{
+    flex:0 0 134mm;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;
+  }
+  .qrbox{
+    width:118mm;height:118mm;border:2.4pt dashed var(--navy);
+    border-radius:6mm;background:var(--tint);
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;
+  }
+  .qrgrid{display:grid;grid-template-columns:repeat(5,10mm);
+    grid-template-rows:repeat(5,10mm);gap:2.6mm;opacity:0.34;}
+  .qrgrid i{background:var(--navy);border-radius:1mm;}
+  .qrgrid i.o{background:transparent;}
+  .qrph{font-size:15pt;font-weight:800;color:var(--navy);margin-top:8mm;}
+  .qrcap{font-size:18pt;font-weight:800;color:var(--ink);margin-top:6mm;
+    text-align:center;}
+  .qrsub{font-size:12.5pt;font-weight:500;color:var(--muted);
+    margin-top:2.4mm;text-align:center;}
+</style></head><body>
+<div class="poster">
+
+  <!-- ════ 헤더 ════ -->
+  <div class="band b-head">
+    <div class="ptick"></div>
+    <div class="ptoprow">
+      <div class="pwordmark">속도는<span class="v">벡터</span></div>
+      <div class="porg">연세대학교<small>2026 캡스톤 디자인</small></div>
+    </div>
+    <div class="ptitle">벡터 분석 쿼리의 <span class="hl">카디널리티 추정</span>을 위한
+      <span class="hl">분포 인지 표본 선택</span></div>
+    <div class="pmembers"><b>박세은 · 강재현 · 조현빈 · 이동욱</b>
+      &nbsp;·&nbsp; 지도교수 박광현 교수</div>
+  </div>
+
+  <!-- ════ ① 연구 배경 ════ -->
+  <section class="band b1">
+    <div class="shead"><div class="snum">1</div><div class="stitle">연구 배경</div></div>
+    <div class="slead">데이터베이스는 쿼리를 실행하기 전, 조건을 만족하는 행이 몇 개일지 —
+      <b>카디널리티</b> — 를 추정한다. 이 추정이 틀리면 잘못된 실행 계획으로 쿼리가 느려진다.</div>
+    <div class="bgrow">
+      <div class="flowcard">
+        <div class="flowlbl">쿼리 실행 과정</div>
+        <div class="flow">
+          <div class="fb">쿼리</div>
+          <div class="fa">→</div>
+          <div class="fb on">카디널리티<br>추정</div>
+          <div class="fa">→</div>
+          <div class="fb">실행 계획</div>
+          <div class="fa">→</div>
+          <div class="fb res"><div class="g">빠른 쿼리</div><div class="b">느린 쿼리</div></div>
+        </div>
+      </div>
+      <div class="ratios">
+        <div class="rc">
+          <div class="rcnum">33%</div>
+          <div class="rcname">pgvector</div>
+          <div class="rcdesc">늘 전체의 33%로 가정</div>
+        </div>
+        <div class="rc">
+          <div class="rcnum">100%</div>
+          <div class="rcname">DuckDB</div>
+          <div class="rcdesc">늘 100%로 가정</div>
+        </div>
+      </div>
+    </div>
+    <div class="scap">기존 벡터 데이터베이스는 데이터 분포를 보지 않고 <b>데이터와 무관한 고정 비율</b>로
+      어림한다 — 추정이 크게 어긋날 수밖에 없다.</div>
+  </section>
+
+  <!-- ════ ② 우리 방법 ════ -->
+  <section class="band b2">
+    <div class="shead"><div class="snum">2</div><div class="stitle">우리 방법</div></div>
+    <div class="slead">논문 <b>Exqutor</b>의 추정 알고리즘은 그대로 두고, 표본을 뽑는 방식 하나만 바꾼다.
+      데이터가 한쪽으로 쏠려 있을 때, 무작위는 쏠린 곳만 뽑지만 <b>분포를 반영하면 골고루 뽑는다</b>.</div>
+    <div class="whyrow">
+      <div class="whypanel rand">
+        <div class="whyhd">기존 방식 · 무작위</div>
+        <div class="whychart">
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:5mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:11mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:19mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:28mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:35mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:40mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:32mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:23mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:15mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:9mm"></div></div>
+          <div class="wcol"><span class="wdot off"></span><div class="wbar" style="height:5mm"></div></div>
+        </div>
+        <div class="whycap">표본이 봉우리에만 몰린다</div>
+      </div>
+      <div class="whypanel aware">
+        <div class="whyhd">분포 인지 표본 추출</div>
+        <div class="whychart">
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:5mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:11mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:19mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:28mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:35mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:40mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:32mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:23mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:15mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:9mm"></div></div>
+          <div class="wcol"><span class="wdot"></span><div class="wbar" style="height:5mm"></div></div>
+        </div>
+        <div class="whycap">드문 곳까지 골고루 들어온다</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="stephd"><div class="stepn">1</div><div class="stepname">분포 파악</div></div>
+        <div class="stepbody">데이터를 비슷한 것끼리 <b>20개 그룹</b>으로 나눈다</div>
+      </div>
+      <div class="step">
+        <div class="stephd"><div class="stepn">2</div><div class="stepname">표본 추출</div></div>
+        <div class="stepbody">각 그룹에서 표본을 <b>골고루</b> 뽑는다</div>
+      </div>
+      <div class="step hl">
+        <div class="stephd"><div class="stepn">3</div><div class="stepname">결합</div></div>
+        <div class="stepbody">논문 추정값과 우리 추정값을 <b>평균</b> 낸다</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ ③ 측정 설계 ════ -->
+  <section class="band b3">
+    <div class="shead"><div class="snum">3</div><div class="stitle">측정 설계</div></div>
+    <div class="slead">세 가지 방식을 <b>똑같은 데이터·조건</b>으로 한 측정에서 동시에 비교하고,
+      다섯 축을 교차해 측정했다.</div>
+    <div class="ways">
+      <div class="way">
+        <div class="wayname">기존 방식</div>
+        <div class="waydesc">논문 그대로의 무작위 — 비교의 기준</div>
+      </div>
+      <div class="way">
+        <div class="wayname">완전 대체</div>
+        <div class="waydesc">무작위를 우리 표본으로 통째 교체</div>
+      </div>
+      <div class="way hl">
+        <div class="wayname">결합</div>
+        <div class="waydesc">두 추정값을 평균 — 우리가 제안하는 방식</div>
+      </div>
+    </div>
+    <div class="axes5">
+      <div class="ax"><div class="axlbl">데이터셋</div><div class="axval">9종<br>96~1024차원</div></div>
+      <div class="ax"><div class="axlbl">데이터 규모</div><div class="axval">10만~<br>1000만 행</div></div>
+      <div class="ax"><div class="axlbl">쿼리 조건</div><div class="axval">0.1 · 1 · 10%</div></div>
+      <div class="ax"><div class="axlbl">표본 선택 방법</div><div class="axval">16가지</div></div>
+      <div class="ax"><div class="axlbl">그룹 수</div><div class="axval">10 · 20 · 30개</div></div>
+    </div>
+    <div class="measbar">
+      <div class="mtxt">다섯 축을 빠짐없이 교차 — 단일 벡터와 다중 벡터를 아우른다</div>
+      <div class="mbig">1508<small>번 측정</small></div>
+    </div>
+  </section>
+
+  <!-- ════ ④ 핵심 결과 ════ -->
+  <section class="band b4">
+    <div class="shead"><div class="snum">4</div><div class="stitle">핵심 결과</div></div>
+    <div class="hero">
+      <div class="herobig">
+        <div class="hn">89.1<small>%</small></div>
+        <div class="hlbl">결합 방식이 기존 방식보다 추정이 정확한 비율</div>
+      </div>
+      <div class="herostats">
+        <div class="hstat"><div class="hv">1344 / 1508</div><div class="hk">더 정확한 측정 수</div></div>
+        <div class="hstat"><div class="hv">약 4.4%</div><div class="hk">추정 오차 중앙값 감소</div></div>
+        <div class="hstat"><div class="hv">65%</div><div class="hk">통계적으로 의미 있는 개선</div></div>
+        <div class="hstat"><div class="hv">72%</div><div class="hk">개선 폭이 큰 경우</div></div>
+      </div>
+    </div>
+    <div class="respanels">
+      <div class="rp">
+        <div class="rptitle">완전 대체는 불안정 — 결합이 답</div>
+        <div class="rbar a">
+          <div class="rbl"><span>완전 대체</span><b>35.2%</b></div>
+          <div class="rtrack"><div class="rfill"></div></div>
+        </div>
+        <div class="rbar c">
+          <div class="rbl"><span>결합</span><b>89.1%</b></div>
+          <div class="rtrack"><div class="rfill"></div></div>
+        </div>
+        <div class="rpnote">통째 교체는 우리 방법이 약할 때 크게 나빠진다. 결합하면 논문 방식이
+          안전망이 되어 — <b>완전 대체와 직접 맞붙여도 96.5%에서 우월</b>, 16가지 방법 중
+          <b>13가지</b>가 안정적으로 우월하다.</div>
+      </div>
+      <div class="rp">
+        <div class="rptitle">조건이 달라져도 일관되게 우월</div>
+        <div class="crow">
+          <div class="ck">쿼리 조건 — 넓을수록 더 우월</div>
+          <div class="cv">0.1% <b>83.3</b> · 1% <b>87.6</b> · 10% <b>97.5</b></div>
+        </div>
+        <div class="crow">
+          <div class="ck">데이터 구조 — 단일·다중 거의 동일</div>
+          <div class="cv">단일 벡터 <b>89.1</b> · 다중 벡터 <b>89.2</b></div>
+        </div>
+        <div class="crow">
+          <div class="ck">그룹 수 — 20개가 최적</div>
+          <div class="cv">10개 <b>83.6</b> · 20개 <b>89.8</b> · 30개 <b>85.9</b></div>
+        </div>
+        <div class="rpnote">세 축의 수치는 모두 <b>결합 방식이 기존 방식을 이긴 비율(%)</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ ⑤ 결론 + 소개 영상 ════ -->
+  <section class="band b5">
+    <div class="pfoot">
+      <div class="conclbox">
+        <div class="shead"><div class="snum">5</div><div class="stitle">결론</div></div>
+        <ul class="concl">
+          <li><span class="cdot">1</span><span>분포를 반영한 표본 선택이 추정 오차를
+            <b>89.1%에서 줄였다</b>.</span></li>
+          <li><span class="cdot">2</span><span>통째 교체는 불안정 —
+            <b>두 추정값의 결합</b>이 답이다.</span></li>
+          <li><span class="cdot">3</span><span>선택도·데이터 구조·그룹 수,
+            <b>모든 조건에서 일관</b>되게 우월하다.</span></li>
+          <li><span class="cdot">4</span><span>데이터 유형에 따라 표본 선택 방법을
+            <b>자동으로 고르는 방식</b>을 제안한다.</span></li>
+        </ul>
+        <div class="nextline"><b>다음 단계</b> — 다른 데이터베이스 엔진에서도 같은 효과가
+          나는지 검증해 나간다.</div>
+      </div>
+      <div class="qrcol">
+        <!-- QR-SLOT-START : 영상 업로드 후 gen_qr.py 로 만든 qr.svg 로 이 블록 교체 -->
+        <div class="qrbox">
+          <div class="qrgrid">
+            <i></i><i></i><i class="o"></i><i></i><i></i>
+            <i></i><i class="o"></i><i></i><i class="o"></i><i></i>
+            <i class="o"></i><i></i><i></i><i></i><i class="o"></i>
+            <i></i><i class="o"></i><i></i><i class="o"></i><i></i>
+            <i></i><i></i><i class="o"></i><i></i><i></i>
+          </div>
+          <div class="qrph">QR 삽입 예정</div>
+        </div>
+        <!-- QR-SLOT-END -->
+        <div class="qrcap">▶ 소개 영상 보기</div>
+        <div class="qrsub">동영상 업로드 후 QR이 삽입됩니다</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body></html>

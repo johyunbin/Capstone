@@ -1,58 +1,51 @@
 # _internal — 내부용 (팀원은 들어오지 않아도 됨)
 
-이 폴더는 **조현빈 개인의 작업 파일과 세션 상태**를 모은 곳이다. 팀 공유가 필요 없는 자료들이며, 팀원이 보아야 할 것은 루트의 `README.md` 가 안내한다.
+이 폴더는 **조현빈 개인의 작업 파일과 세션 상태**를 모은 곳이다. 팀 공유가 필요 없는 자료들이며, 팀원이 보아야 할 것은 루트 `README.md` 가 안내한다.
 
-> **마지막 update**: 2026-05-14 16:05 KST — 9 분석 file `_internal/analysis/` → `experiments/results/paper_exact_v7/analysis/` 이동 + server raw 1304 file → `experiments/results/paper_exact_v7/raw/` 10 sub-dir (한국어 narrative 단위) + README 11 건 + server_wrappers backup archive. 환각 정정 7 건 일괄 적용 + 새 PDF template 적용.
+> 마지막 정리: 2026-05-19 — 디렉토리 총 정리(옛 정본 문서 archive 격리 · archive 일원화 · 완료 캠페인 script 격리 · 네이밍 현행화).
 
-## 새 세션 진입 anchor (1 file read 만으로 0% loss)
+## 새 세션 진입 anchor (0% loss)
 
-- **`handoff/active/handoff_v17_session_finalize_20260514_0721.md`** (5/14 07:21, 본 세션 18.5h 종합 + 시나리오 B 확정 + _drafts 4 file 4차 정정 + PDF 4종)
-- **`handoff/active/handoff_v16_km_granularity_+_multijoin_inflight_20260513_1238.md`** (5/13 12:38, multi-join in-flight 시점 reference)
+- **`handoff/active/handoff_20260519_154301_변환sprint표지요약본.md`** — 현행 세션 인계 anchor. 이 1 file read 로 0% loss 인계.
+- 동반 `handoff/active/새세션_복붙_프롬프트_20260519_154301.md` — 새 세션 첫 입력용.
+- `handoff/active/` 에는 **현행 1세트만** — 이전 세트는 `handoff/archive/`.
 
-## 실험 결과 (★ 5/14 16:00 이동)
+## 핵심 정본 (현행)
 
-**위치 이동**: `_internal/analysis/` → **`experiments/results/paper_exact_v7/analysis/`**
-**실험 raw**: server 1304 file → **`experiments/results/paper_exact_v7/raw/`** (10 한국어 sub-dir)
-**figures**: `experiments/figures/paper_exact_v7/` (6 figure, 5/27 발표 anchor)
-
-전체 인덱스: `experiments/results/paper_exact_v7/README.md`
-
-본 _internal/ 안 분석 file 디렉토리 (`_internal/analysis/`) 는 제거됨.
-
-## 핵심 file (active 9건, root)
-
-| File | 내용 |
+| 위치 | 내용 |
 |---|---|
-| `MASTER_README.md` | 단일 진입점 + measurement 진행 + 5단계 narrative + 일정 |
-| `MASTER_HANDOFF.md` | handoff v0~v6 + validation + Phase 4 통합 |
-| `METHOD_REGISTRY.md` | 57 method × 10 paradigm 분류 + 폐기/rename 권고 |
-| `EXPERIMENT_REGISTRY.md` | 9 cells × 56 methods × 3 modes matrix |
-| `SERVER_REGISTRY.md` | server SSH / 작업 dir / NPY cache / log / tmux / 자원 룰 |
-| `CHANGELOG.md` | 5/10~5/11 핵심 결정/측정/정리 timeline |
-| `naming_convention.md` | file naming 규칙 |
-| `README.md` | 이 file |
+| `cache/rq3/v13_summary.md` | ★ 측정 수치 정본 (3-way matched 1508) |
+| `cache/rq3/aggregated_v13_full.parquet` | v13 집계 raw |
+| `METHOD_REGISTRY.md` | method paradigm 분류 + 폐기/rename 이력 |
+| `SERVER_REGISTRY.md` | server SSH / 작업 dir / 자원 룰 |
+| `naming_convention.md` | 파일 네이밍 규칙 (타임코드 우선) |
+| `state/_schedule.md` | 학기 핵심 일정 |
+| `CHANGELOG.md` | 작업 timeline |
 
-## 무엇이 들어 있나
+## 하위 디렉토리
 
 | 하위 | 무엇 |
 |---|---|
-| `handoff/{active,archive}/` | 새 세션 인계 anchor (active v8/v9) + 이전 v0~v6 archive 5건 |
-| `state/{_next, _schedule, archive}/` | 동적 state (다음 단계 + 일정) + 5/9 이전 archive |
-| `method_audit/{20260510_initial, 20260511_phase4}/` | method 검증 (5/10 8 agent audit 11 file + 5/11 Phase 4 5 file) |
-| `validation/` | 4-layer audit + data/319 |
-| `scripts/{active, archive/5월8일_scripts_정리}/` | 문서 빌드 도구 (md2pdf 등) + 측정 script (analyze_paper_exact / figures_paper_exact / method_phase4_extra 등) |
-| `cache/` | 분석 결과 cache (multi_paradigm_raw / rq3 / single_ensemble_raw / phase_g_analysis 등 67M) |
-| `guideline/` | Claude Code 자동화 지침 (활성 5 + archive 6) — 인덱스 `guideline/README.md` |
-| `learning/` | 학습 자료 (kr/us + 클로드코드활용지침) |
-| `records/` | 회의록 (kakaotalk + weekly + raw_export) |
-| `archive/` | 이전 시점 history — `5월7일_dawn_chain_분석/` + `5월8일_정리흔적/` + `5월9일_method_audit/` + `handoff_v0_v18_초기_세션/` |
-| `문서_archive/` | 5/11 정리 작업 archive — `이전_handoff/` + `5_8_시점_outdated_docs/` + `state_과거_시점/` + `정리작업_log/` |
-| ~~`server_wrappers_backup_20260507/`~~ | 5/14 `archive/server_wrappers_20260507/` 로 이동 |
+| `handoff/{active,archive}/` | 세션 인계 — active 현행 1세트 + archive 이전 세트 |
+| `cache/rq3/` | v13 측정 집계·분석 (구버전 v8/v12 는 `cache/rq3/archive_v8_v12/`) |
+| `scripts/` | 문서 빌드 도구(md2pdf 등) + 측정·분석 script. 완료 캠페인 orchestration 은 `scripts/archive/` |
+| `state/` | 동적 state (`_next` · `_schedule` · 제출공지) |
+| `method_audit/` | method 검증 (5/10 audit + 5/11 phase4) |
+| `validation/` | 4-layer audit + data |
+| `guideline/` | Claude Code 자동화 지침 — 인덱스 `guideline/README.md` |
+| `records/` | 회의록 (kakaotalk + weekly) |
+| `learning/` | 학습 자료 |
+| `포스터영상_build/` | 5/28 포스터·소개영상 build 산출 |
+| `archive/` | 이전 시점 history — 단일 archive (5/19 `문서_archive` 흡수, 한글날짜 → YYYYMMDD) |
 
 ## 디렉토리 분리 이유 (2026-04-15 강재현 피드백 해소)
 
-`Capstone/` 루트에 디렉토리가 너무 많아 어떤 폴더를 봐야 하는지 헷갈린다는 피드백을 해소하기 위해, 팀 공유가 필요 없는 자료를 `_internal/` 하위로 모았다. 팀원이 직접 들어와야 하는 디렉토리는 `submission/`, `experiments/`, `records/`, `plans/`, `reference/` 다섯이며, 그 외에 `templates/`(양식)와 `scripts/`(빌드 도구)는 필요할 때만 사용한다.
+`Capstone/` 루트에 디렉토리가 너무 많다는 피드백을 해소하기 위해, 팀 공유가 필요 없는 자료를 `_internal/` 하위로 모았다. 팀원 진입 디렉토리는 루트 `README.md` 참조.
 
 ## 동기화 규칙
 
-`guideline/`, `learning/`, `cache/` 의 일부 파일은 git 추적 대상이 아니다. PC 간에는 `~/.claude/rules/hygiene.md` 의 동기화 규칙에 따라 rsync 로 옮겨진다.
+`guideline/`·`learning/`·`cache/` 의 일부 파일은 git 추적 대상이 아니다. PC 간에는 `~/.claude/rules/hygiene.md`·`sync.md` 의 규칙에 따라 동기화한다.
+
+---
+
+작성: 2026-04-15 · 갱신: 2026-05-19 (디렉토리 총 정리). 이전 README 는 git history 보존.

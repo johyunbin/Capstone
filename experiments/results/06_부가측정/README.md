@@ -11,4 +11,4 @@
 - 구조: `{측정종류}/DEEP+WIKI_sf10/[변종]/{mode}/{파일}.json`
 - α sweep 의 변종 폴더는 `alpha_0.3` ~ `alpha_0.6`
 
-> α sweep 구조화(5/15) 이전의 stale loose 사본 4건은 `_archive_미사용method/06_부가측정/alpha_sweep/_stale_pre5_15_loose/` 에 격리.
+> α sweep 구조화(5/15) 이전의 stale loose 사본 4건은 `archive/미사용method_측정/06_부가측정/alpha_sweep/_stale_pre5_15_loose/` 에 격리.

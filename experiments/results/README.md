@@ -31,7 +31,7 @@
 - **CaseB** — `est_final = (est_B1 + est_method) / 2` 산술 평균. paper Bernoulli 추정값과
   우리 method 의 KM20 stratified 추정값을 결합. **본 연구의 핵심 측정.**
 - **CaseA** — paper Bernoulli 를 우리 method 로 *단독 대체*. negative control
-  (결합이 아닌 대체는 효과 없음을 보이는 대조군). → `_archive_미사용method/` 에 보존.
+  (결합이 아닌 대체는 효과 없음을 보이는 대조군). → `archive/미사용method_측정/` 에 보존.
 
 > CaseB 가 B1 보다 q-error 가 낮으면 "결합이 추정을 개선했다" 는 뜻이다.
 
@@ -83,12 +83,12 @@ experiments/results/
 ├── 05_K_granularity/             클러스터 수 K=10/20/30 민감도
 ├── 06_부가측정/                  alpha sweep · cheap approximation · multi-join 재학습
 │
-├── _summary/                     RQ1·RQ2 집계 CSV + REPORT (분석 산출물)
-├── _archive_미사용method/        16종 외 40 method + CaseA — 본 분석 제외, 보존
-├── _archive_scope외/             DEEP+CC3M(Fig8) · TPCDS(Fig10/11) — 본 연구 범위 외
-│
+├── _summary/                     RQ1·RQ2 집계 CSV (분석 산출물)
 ├── analysis/                     정량 분석 보고서 (.md)
-├── archive/                      W1~W4 초기 sprint 측정 (paper-exact 이전)
+├── archive/                      구버전·범위 외·초기 sprint 측정
+│   ├── 미사용method_측정/         16종 외 40 method + CaseA — 본 분석 제외, 보존
+│   ├── scope외_측정/              DEEP+CC3M(Fig8) · TPCDS(Fig10/11) — 본 연구 범위 외
+│   └── (W1~W4 초기 sprint · REPORT v11 등)
 └── raw/                          ★ 원본 측정 (절대 미변경, 본 트랙은 이것의 복사본)
 ```
 
@@ -102,9 +102,9 @@ experiments/results/
 | `04_multi_vector_concat/` | 357 | 두 데이터셋 벡터를 이어붙인(concat) 다중 벡터 측정. 다중 테이블 일반화 |
 | `05_K_granularity/` | 150 | 층화 클러스터 수 K 를 10/20/30 으로 바꾼 측정 |
 | `06_부가측정/` | 36 | 결합 비율 α sweep(0.3~0.6) + 저비용 근사 4후보 + 다중 조인 재학습 |
-| `_summary/` | 16 | RQ1(bernoulli vs km20) · RQ2(5-way allocation) CSV 15 + REPORT v11 |
-| `_archive_미사용method/` | 354 | 16종에 들지 않는 40 method 측정 + CaseA(단독 대체) 전량. **본 분석에는 쓰지 않으나 보존** |
-| `_archive_scope외/` | 7 | A2-Fig8(DEEP+CC3M) 6 + TPCDS CSV 1. 본 논문 §V-A 영역이라 본 연구 §V-B 범위 밖 |
+| `_summary/` | 15 | RQ1(bernoulli vs km20) · RQ2(5-way allocation) 집계 CSV |
+| `archive/미사용method_측정/` | 354 | 16종에 들지 않는 40 method 측정 + CaseA(단독 대체) 전량. **본 분석에는 쓰지 않으나 보존** |
+| `archive/scope외_측정/` | 7 | A2-Fig8(DEEP+CC3M) 6 + TPCDS CSV 1. 본 논문 §V-A 영역이라 본 연구 §V-B 범위 밖 |
 
 > 트랙 01~06 안에서 같은 cell 이 두 측정 캠페인에 모두 있으면
 > `run-paper-exact/` (5월 paper-exact portfolio) 와 `run-v6-v10/` (확장 측정 v6~v10) 으로
@@ -128,7 +128,7 @@ experiments/results/
 | **P9 InfoTheoretic** | `hyperloglog` | 카디널리티 스케치 (Flajolet 2007) |
 
 > 16종 외 40 method (halton, sobol, dbscan, lsh, reservoir 등) 는 정합성 위반·중복·
-> 측정 미커버 사유로 `_archive_미사용method/` 에 보존만 한다. 사유는
+> 측정 미커버 사유로 `archive/미사용method_측정/` 에 보존만 한다. 사유는
 > `_internal/METHOD_REGISTRY.md` 참조.
 
 ---
@@ -192,7 +192,7 @@ experiments/results/
 - **CaseB 결합식**: `est_final = (est_B1 + est_method) / 2.0` (단순 산술 평균).
   표본 budget 은 두 추정기가 공유 (paper Eq 1 의 N=385).
 - **DB / 라이브러리**: PostgreSQL + pgvector, DuckDB / Python, NumPy, FAISS
-- **분석 산출물**: `_summary/REPORT_paper_exact_v11.md` (전체 측정 종합 REPORT),
+- **분석 산출물**: `raw/REPORT_분석/REPORT_paper_exact_v13.md` (전체 측정 종합 REPORT),
   `analysis/` (정량 분석 보고서)
 
 ---
@@ -202,7 +202,7 @@ experiments/results/
 | 원본 소스 | 정리 후 위치 |
 |---|---|
 | `raw/Type*/...paper_main/CaseB/` (16 method) | `02_single_vector_본실험/.../run-paper-exact/` |
-| `raw/Type*/...paper_main/CaseB/` (40 method) | `_archive_미사용method/02_single_vector_본실험/` |
+| `raw/Type*/...paper_main/CaseB/` (40 method) | `archive/미사용method_측정/02_single_vector_본실험/` |
 | `raw/_shared_B1/` | `01_baseline_paper재현/.../run-paper-exact/` |
 | `raw/.../K_granularity/K=*/` | `05_K_granularity/.../run-paper-exact/` |
 | `raw/.../alpha_sweep/alpha_0.X/` | `06_부가측정/alpha_sweep/` |

@@ -4,10 +4,10 @@
 
 ```
 reference/
-├── analysis/     시리즈 분석 (01)~(12) — 완료 (12 set, md+pdf)
-│                 Exqutor 상세분석, PostgreSQL, HNSW, KDE 등
-├── papers/       원논문 PDF 69편
-└── summaries/    논문 총정리 82편 — 완료 (82 set, md+pdf)
+├── papers/               원논문 PDF 69편
+├── summaries/            논문 총정리 82편 (md+pdf)
+├── analysis/             시리즈 심층분석 (01)~(12) — Exqutor·PostgreSQL·HNSW·KDE 등
+└── exqutor_query_plans/  Exqutor repo TPC-H/TPC-DS 쿼리 플랜
 ```
 
 ## 핵심 논문

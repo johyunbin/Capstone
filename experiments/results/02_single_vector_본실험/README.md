@@ -14,5 +14,5 @@
 분석 시 `B1` (= `01_baseline_paper재현/`) 와 `CaseB` 의 `avg_q_error_trimmed` 를
 같은 cell 에서 비교한다. CaseB < B1 이면 결합이 추정을 개선한 것이다.
 
-> 16 method 외 method 와 CaseA(단독 대체) 는 `_archive_미사용method/02_single_vector_본실험/`
+> 16 method 외 method 와 CaseA(단독 대체) 는 `archive/미사용method_측정/02_single_vector_본실험/`
 > 에 별도 보존 (본 분석 비사용).

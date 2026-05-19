@@ -20,7 +20,7 @@
 - **5/28 전시 포스터 + 소개 동영상 키트**: 포스터 `@submission/_drafts/속도는벡터_포스터_20260519_104502.pdf` · 동영상 슬라이드 `@submission/_drafts/속도는벡터_소개영상_슬라이드_20260519_104502.pptx` · 대본 `@submission/_drafts/속도는벡터_소개영상_대본_20260519_104502.md`
 - **6/11 학교 표지·소종 요약본**: 내용 시트 `@submission/_drafts/속도는벡터_표지_소종요약본_내용_20260519_151358.md` (+ `.pdf`) · .hwpx 2종(표지·소종 요약본, 같은 타임코드)
 - **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
-- **registry**: METHOD `@_internal/METHOD_REGISTRY.md` · EXPERIMENT `@_internal/EXPERIMENT_REGISTRY.md` · SERVER `@_internal/SERVER_REGISTRY.md`
+- **registry**: METHOD `@_internal/METHOD_REGISTRY.md` · SERVER `@_internal/SERVER_REGISTRY.md` (EXPERIMENT_REGISTRY 는 5/19 archive — 측정 정본은 v13_summary·REPORT v13)
 - **handoff 이력** (v0~v37 + 타임코드): `@_internal/handoff/archive/`
 
 ## 연구 구조 (RQ + 측정)
@@ -57,46 +57,38 @@
 - **개인 파일** (.claude, guideline): rsync
 - .gitignore에 개인 파일 제외 완료 — git에는 팀 공유분만 올라감
 
-## 디렉토리 구조 (2026-05-11 정리 후)
+## 디렉토리 구조 (2026-05-19 총 정리)
 
-루트는 **팀원 핵심 5개 + 도구·양식 2개 + 내부용 1개** 로 정리됨. 팀원 진입 가이드는 루트 `README.md` 참조.
+루트는 **팀원 핵심 4개 + 도구·양식 2개 + 내부용 1개**. 팀원 진입 가이드는 루트 `README.md`, 각 디렉토리 상세는 그 안의 `README.md` 참조.
 
 ```
 Capstone/
-├── README.md              팀원 진입점 (5/11 update — paper exact 결과 + 5/15 박광현 미팅)
+├── README.md              팀원 진입점 (v13 결과 + 새 구조)
 ├── CLAUDE.md              이 파일 (Claude Code 컨텍스트, 라우팅 + 안정 룰)
 │
-├── submission/            ⭐ 우리 팀의 모든 공식 문서
-│   ├── _drafts/           팀 공유 최신본 (발표 v3 + 자문메일 v5 + 연구지도확인서 v3 + 팀원 자료 3건)
-│   │   └── archive/       이전 버전 한글 폴더 12종 (5/11 정리: 발표자료_v3_source / 자문메일_v1_v2_초안 / 중간보고서_4월28일_source 등)
-│   └── 제출완료/          외부에 보낸 자료 (학교 공식 + 멘토 자문)
+├── submission/            ⭐ 공식 문서
+│   ├── _drafts/           팀 공유 작업본 활성 16건 (보고서·발표 deck·포스터·소개영상·표지/요약본·3차 자문메일)
+│   │   └── archive/       이전 버전 (키노트_prompt_history·narrative_history·주제별 폴더 + 2026_05_19_cleanup)
+│   └── 제출완료/          외부 발송 완료 자료 — 동결(미변경)
 │
-├── experiments/           ⭐ 실험
-│   ├── code/              실험 스크립트 (rq1/rq2/rq3/local_analysis)
-│   ├── results/           RQ1·RQ2·RQ3 measurement
-│   ├── figures/paper_exact_v7/  ⭐ 6 figure (5/11 신규)
-│   ├── figures/archive/W1_W4_초기실험_figure/  이전 figure 8 dir (5/11 정리)
-│   └── config/            파라미터
+├── experiments/           ⭐ 실험 (상세 experiments/README.md)
+│   ├── results/           측정 데이터 — 01~06 트랙 + raw 원천 + 데이터 사전 README + archive
+│   ├── figures/           보고서_6_11 + paper_exact_v13 + archive(v7·v8)
+│   ├── code/              초기 sprint archive (활성 측정 도구는 _internal/scripts/)
+│   └── config/            실험 파라미터
 │
-├── plans/
-│   ├── 5_27_storyline_draft_20260511_1410.md  ⭐ 5/27 발표 storyline v2 (5/11 정정)
-│   ├── 최종보고서_outline_v2_20260508.md       ⭐ 6/11 보고서 outline base
-│   └── archive/RQ_재정립_과거_버전/ + 회의_outline_과거/
-├── reference/             참고 자료 (papers 69편 + summaries 82편 + exqutor_query_plans/)
-├── templates/             캡스톤 학교 양식 샘플
+├── plans/                 5_27_storyline + 6_11_보고서_outline (정본) + archive/
+├── reference/             원논문 69편 + 총정리 82편 + 심층분석 + exqutor_query_plans
+├── templates/             캡스톤 학교 양식 (forms/ + samples/)
 │
-└── _internal/             ⛔ 조현빈 개인 작업 (팀원 무시 OK)
-    ├── handoff/active/handoff_v8_*.md  ⭐ 새 세션 인계 anchor (1 file 0% loss)
-    ├── handoff/archive/   v0~v6 + validation_statistics
-    ├── MASTER_README.md / MASTER_HANDOFF.md / METHOD_REGISTRY.md / EXPERIMENT_REGISTRY.md / SERVER_REGISTRY.md / CHANGELOG.md / naming_convention.md
-    ├── state/_schedule.md + _next.md + archive/
-    ├── records/           회의록 (kakaotalk + weekly)
-    ├── scripts/           문서 빌드 도구 + 측정 script (active 32 + archive 43)
-    ├── guideline/         Claude Code 자동화 지침 (활성 5 + archive 6)
-    ├── method_audit/      method 검증 (5/10 P1-P6 audit + 5/11 Phase 4)
-    ├── validation/        4-layer audit + data/319
-    ├── learning/, cache/  학습 자료 + 분석 cache
-    └── 문서_archive/       5/11 정리 (이전_handoff/ + 5_8_시점_outdated_docs/ + state_과거_시점/ + 정리작업_log/)
+└── _internal/             ⛔ 조현빈 개인 작업 (팀원 무시 OK — 상세 _internal/README.md)
+    ├── handoff/active/    ⭐ 새 세션 인계 anchor — 현행 1세트(handoff + 복붙 프롬프트)
+    ├── handoff/archive/   이전 세션 handoff
+    ├── METHOD_REGISTRY.md / SERVER_REGISTRY.md / naming_convention.md / CHANGELOG.md / README.md
+    ├── cache/rq3/         v13 측정 집계·분석 (v13_summary.md 수치 정본)
+    ├── scripts/           문서 빌드 도구 + 측정 script (완료 캠페인은 scripts/archive/)
+    ├── state/ · records/ · method_audit/ · validation/ · guideline/ · learning/ · 포스터영상_build/
+    └── archive/           이전 시점 history — 단일 archive (5/19 문서_archive 흡수, MASTER_*·EXPERIMENT_REGISTRY 격리)
 ```
 
 ## 지침 시스템

@@ -1,5 +1,7 @@
 # EXPERIMENT_REGISTRY.md — 9 Cells × 57 Methods × 3 Modes Matrix
 
+> ⚠️ **이력 문서 (2026-05-19 archive)** — 2026-05-11 측정 matrix 계획 시점 스냅샷. 3-way 캠페인은 완료됐다(1508 측정, 측정 method 16종). 현 수치 정본 = `_internal/cache/rq3/v13_summary.md` · 종합 = `experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md`. 이하 본문의 method 수(57)·진행률은 계획 시점 값.
+>
 > 작성: 2026-05-11 01:35 KST  
 > 출처: handoff_v2 §2 paper exact + handoff_main_session_FULL_STATE §7 진행 상태 + handoff_v5 §6 Phase 4  
 > 사용자 명시 (5/10 14:03 + 18:49 + 20:45): "paper의 모든 항목 완전 똑같이 진행 + 단 하나라도 다르면 안 됨"

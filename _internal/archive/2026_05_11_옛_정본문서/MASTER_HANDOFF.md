@@ -1,5 +1,7 @@
 # MASTER_HANDOFF.md — handoff v0~v5 + validation + Phase 4 통합
 
+> ⚠️ **이력 문서 (2026-05-19 archive)** — 2026-05-11 시점 통합본. 현 세션 인계는 `_internal/handoff/active/` 최신 handoff. 이하 본문은 이력 참조용.
+>
 > 작성: 2026-05-11 01:50 KST  
 > 목적: 10건 handoff (v0/v0.bak/v1/v2/v3/v4/v5/back_validation/main_session_FULL_STATE/validation_statistics) 단일 통합  
 > 새 세션 0% loss 인계 anchor — 본 file 1건 read + MASTER_README.md 1건 read 만으로 모든 진행 상태 파악

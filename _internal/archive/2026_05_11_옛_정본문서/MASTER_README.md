@@ -1,5 +1,7 @@
 # MASTER_README.md — 단일 진입점
 
+> ⚠️ **이력 문서 (2026-05-19 archive)** — 2026-05-11 시점 스냅샷. 측정은 v13으로 완료됐고(3-way 1508), 프로젝트 진입점 역할은 루트 `CLAUDE.md` + `_internal/handoff/active/` 최신 handoff가 대체했다. 현 수치 정본 = `_internal/cache/rq3/v13_summary.md`. 이하 본문은 계획 시점 이력으로만 참조.
+>
 > 작성: 2026-05-11 02:00 KST  
 > **새 세션 / 인수자가 본 file 1건만 read 해도 0% loss 인계 보장**.  
 > 사용자 명시 (5/11 01:15): "여러 세션 작업물 뒤엉킴 → 한 세션에서 ultraplan 통해 모두 정리. 완벽하게 정리하는 한 세션."

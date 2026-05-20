@@ -1,0 +1,96 @@
+# Capstone Overnight Coordinator — Next Operator Runbook
+# Generated: 2026-05-10 00:42 KST
+# By: autonomous coordinator agent (handed off baton)
+
+## Server state at handoff
+- RAM: 645 GB / 1024 GB used; 366 GB available; 10 GB free
+- Swap: 127 GB / 127 GB (99-100%) — DANGEROUS, do NOT launch new heavy tasks
+- Load avg: 298 / 305 / 320 (high but trending down)
+- 18 active python procs (measurement + build)
+- LPM2 method registered (parallel agent landed it 5/10 ~00:30 KST)
+- HNSW_SS dropped from NEW_METHOD_CANONS in measure_multi_paradigm.py — old runs include it, just ignore in analysis
+
+## Phase F state — backup at /mnt/hdd0/home/capstone2026/cache/rq3/phase_f/backup_before_b1b2b3b4b5b6_1529/
+Current per-cell baseline coverage in /mnt/hdd0/home/capstone2026/cache/rq3/phase_f/:
+- partsupp_deep_wiki_1: B1, B5
+- partsupp_fb_wiki_1: B3, B6
+- partsupp_sift_wiki_1: B3, B6
+- partsupp_yfcc_wiki_1: B3, B6
+- multi_join_deep_wiki_1: B6 only
+- multi_join_fb_wiki_1: B3, B6
+- multi_join_sift_wiki_1: B3, B6
+- multi_join_yfcc_wiki_1: B1, B5 (running B3+B6 will overwrite!)
+- partsupp_deep_wiki_10: B1+B2 in progress (true_card 80%, ETA 01:30)
+- multi_join_deep_wiki_10: NOT YET (after partsupp finishes ~01:30, then 2hr)
+
+## Currently running (DO NOT KILL UNLESS SWAP STAYS 100% > 1HR)
+- PID 837109 — Phase F B1+B2 sf=10 (partsupp_deep_wiki_10 + multi_join_deep_wiki_10), partsupp 80% true_card stuck since 23:54, ETA ~01:30 then mj_deep+2hr
+- PID 878254 — Phase F B3+B6 sf=1 (last cell multi_join_yfcc_wiki_1, true_card 60%, ETA ~01:00)
+- PID 775833 — sf=10 build partsupp_fb_wiki_10 (true_card 80%, ETA ~01:00)
+- PID 775839 — sf=10 build multi_join_yfcc_wiki_10 (true_card 80%+, ETA ~00:45)
+- PID 451582 — sf=10 measurement partsupp_deep_wiki_10 (NeurAM "stuck" 5+hr, 78GB RAM, 819% CPU — STILL RUNNING but no log progress; consider killing if 0 progress by 02:00 KST)
+- PID 2060507 — sf=1 ensemble 6 cells × 21 methods (1/6 cells done, ETA ~04:30)
+- PID 3742865 — v9 9 methods × 9 sf=1 existing cells (cell 1 method 6/9 = HKBU_RepSample, ETA ~07:00)
+- PID 3138136, 3241790, 3311667, 3644487 — v8 26 methods × 10 sf=1 new cells (mostly on NeuroCard; ETA ~04:00 cells, but 3311667 way behind)
+- PID 17376, 3279503, 3647420, 3760331 — sf=10 21-method measurements on 4 wiki cells (HDBSCAN method 1/21, ETA hours; won't finish by 08:00)
+- PID 776609, 776610, 807789 — sf=10 10-method measurements on 3 cells (PIDs 451582 partner, NeurAM/NeuroCard runs)
+- PID 823039 — RQ3 ensemble adaptive (running 2.5hr already)
+
+## TASKS WHEN MEMORY RECOVERS (free > 50 GB AND swap < 80%)
+
+### Task A: comprehensive Phase F missing baselines (PRIORITY 1)
+After PID 878254 finishes (B3+B6 sf=1) — verify backup intact then launch:
+```bash
+ssh capstone "cd /mnt/hdd0/home/capstone2026/cache/rq3 && CUDA_VISIBLE_DEVICES=0,2,3 nohup python3 -u measure_phase_f_baselines.py \
+  --cells partsupp_deep_wiki_1 partsupp_sift_wiki_1 partsupp_fb_wiki_1 partsupp_yfcc_wiki_1 \
+          multi_join_deep_wiki_1 multi_join_sift_wiki_1 multi_join_fb_wiki_1 multi_join_yfcc_wiki_1 \
+  --baselines B1 B2 B4 B5 \
+  --out-dir /mnt/hdd0/home/capstone2026/cache/rq3/phase_f_v2_b1245 \
+  > /mnt/hdd0/home/capstone2026/log/phase_f_v2_b1245_\$(date +%H%M).log 2>&1 & echo \\\$!"
+```
+This goes to NEW out-dir to preserve current B3/B6/B1/B5 in /phase_f/. Analysis merges both dirs.
+ETA: ~2hr (similar to current Phase F sf=1 runs)
+
+### Task B: LPM2 measurement
+LPM2 just registered (parallel agent). Run it on existing 9 sf=1 cells with separate out-dir:
+```bash
+ssh capstone "cd /mnt/hdd0/home/capstone2026/cache/rq3 && CUDA_VISIBLE_DEVICES=0,2,3 nohup python3 -u measure_multi_paradigm.py \
+  --cells partsupp_deep_sift_1 partsupp_deep_wiki_1 multi_join_deep_wiki_1 \
+          partsupp_sift_wiki_1 partsupp_fb_wiki_1 partsupp_yfcc_wiki_1 \
+          multi_join_sift_wiki_1 multi_join_fb_wiki_1 multi_join_yfcc_wiki_1 \
+  --methods lpm2 \
+  --out-dir /mnt/hdd0/home/capstone2026/cache/rq3/multi_paradigm_lpm2_existing_sf1 \
+  > /mnt/hdd0/home/capstone2026/log/lpm2_existing_sf1_\$(date +%H%M).log 2>&1 & echo \\\$!"
+```
+ETA: ~30 min
+
+Also launch LPM2 on 10 new v8 sf=1 cells (after the 26-method runs finish):
+```bash
+ssh capstone "cd /mnt/hdd0/home/capstone2026/cache/rq3 && CUDA_VISIBLE_DEVICES=0,2,3 nohup python3 -u measure_multi_paradigm.py \
+  --cells partsupp_deep_fb_1 partsupp_deep_yfcc_1 partsupp_deep_yfcc_pca_1 \
+          partsupp_sift_fb_1 partsupp_sift_yfcc_1 partsupp_sift_yfcc_pca_1 \
+          partsupp_fb_yfcc_1 partsupp_fb_yfcc_pca_1 \
+          partsupp_yfcc_yfcc_pca_1 partsupp_yfcc_pca_wiki_1 multi_join_yfcc_pca_wiki_1 \
+  --methods lpm2 \
+  --out-dir /mnt/hdd0/home/capstone2026/cache/rq3/multi_paradigm_lpm2_new_sf1 \
+  > /mnt/hdd0/home/capstone2026/log/lpm2_new_sf1_\$(date +%H%M).log 2>&1 & echo \\\$!"
+```
+
+### Task C: sf=10 v8 builds (LOW PRIORITY — won't finish)
+After PID 775833 + 775839 finish (~01:00). Launch in waves of 2:
+- Wave 1: partsupp_deep_fb_10 + partsupp_deep_yfcc_10
+- Wave 2: partsupp_deep_yfcc_pca_10 + partsupp_sift_fb_10
+- (continue similarly)
+Each wave: ~1.5hr build. Total 16 v8 sf=10 cells = 12+ hours sequential. NOT achievable by 08:00.
+Recommend: start Wave 1 only after 01:30 KST when memory recovers, accept partial sf=10 v8 coverage.
+
+## Coverage estimates by 08:00 KST
+- sf=1 existing 9 cells: 22 methods done + 9 v9 methods (cell 1-3 done by 08:00) + LPM2 if launched + Phase F all baselines
+- sf=1 new v8 10 cells: 26 methods (mostly done by 04:00 KST except 3311667 cell)
+- sf=10: only Phase F partial; Phase E sf=10 measurements maybe 1-2 cells done
+
+## Final notes
+- NEVER kill multi_join_wiki_1 build unless swap=100% > 1hr continuous
+- PID 451582 NeurAM is suspect — observe if any new log lines by 02:00 KST; if not, kill to free 78 GB
+- HNSW_SS in old CSVs: ignore in analysis
+- Output dirs: multi_paradigm/, multi_paradigm_v8_existing_sf1/, multi_paradigm_v8_new_sf1/, multi_paradigm_v9_existing_sf1/, multi_paradigm_torch_existing/, multi_paradigm_newmethods_existing_v4/, multi_paradigm_new10/, multi_paradigm_new_sf10/, phase_f/

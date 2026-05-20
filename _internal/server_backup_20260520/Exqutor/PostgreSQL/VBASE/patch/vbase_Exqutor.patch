@@ -1,0 +1,311 @@
+diff --git a/src/hnswindex.cpp b/src/hnswindex.cpp
+index ecc1bcc..5b4cc86 100644
+--- a/src/hnswindex.cpp
++++ b/src/hnswindex.cpp
+@@ -17,6 +17,23 @@ extern "C"
+ #include <utils/rel.h>
+ #include <utils/selfuncs.h>
+ #include <access/reloptions.h>
++#include "utils/memutils.h"
++
++}
++
++#include "index.hpp"
++
++
++static List * search_number = NIL;
++static List * search_distance = NIL;
++// static int count = 0;
++static bool need_to_search = true;
++
++
++// Helper function to append a uint64 value to a PostgreSQL List
++static List* lappend_uint64(List* list, uint64 value)
++{
++    return lappend(list, (void*)value);
+ }
+ 
+ extern relopt_kind hnsw_para_relopt_kind;
+@@ -268,10 +285,79 @@ bool hnsw_gettuple(IndexScanDesc scan, ScanDirection dir)
+      * Index can be used to scan backward, but Postgres doesn't support
+      * backward scan on operators
+      */
++    
+     Assert(ScanDirectionIsForward(dir));
++    // if (reuse_computation == false)
++    // {
++    //     MemoryContext oldCtx = MemoryContextSwitchTo(CacheMemoryContext);
++	// 	if (search_number != NIL)
++    //     {
++            
++    //         need_to_search = false;
++    //         auto first = list_head(search_number);
++    //         if (first != NULL)
++    //         {
++    //             std::uint64_t number = (std::uint64_t) lfirst(first);
++    //             search_number = list_delete_first(search_number);
++    //             BlockNumber blkno = (std::uint32_t)(number >> 32);
++    //             OffsetNumber offset = (std::uint32_t)number;
++    //         #if PG_VERSION_NUM >= 120000
++    //             ItemPointerSet(&scan->xs_heaptid, blkno, offset);
++    //         #else
++    //             ItemPointerSet(&scan->xs_ctup.t_self, blkno, offset);
++    //         #endif
++    //             if (search_distance != NIL)
++    //             {
++    //                 auto dist_first = list_head(search_distance);
++    //                 if (dist_first != NULL)
++    //                 {
++    //                     scan->xs_orderbyvals[0] = (Datum) lfirst(dist_first);
++    //                     search_distance = list_delete_first(search_distance);
++    //                 }
++    //                 else
++    //                 {
++    //                     scan->xs_orderbyvals[0] = Float4GetDatum(0.0);
++    //                 }
++    //             }
++    //             else
++    //             {
++    //                 scan->xs_orderbyvals[0] = Float4GetDatum(0.0);
++    //             }
++    //             scan->xs_orderbynulls[0] = false;
++    //             scan->xs_recheckorderby = false;
++    //             // count++;
++    //             MemoryContextSwitchTo(oldCtx);
++    //             return true;
++    //         }
++    //     }
++    //     else {
++    //         // std::cout << "search_number is nil hnsw scan end and return false count : " << count << std::endl;
++    //         MemoryContextSwitchTo(oldCtx);
++    //         reuse_computation = true;
++    //         if (need_to_search == false)
++    //         {
++    //             return false;
++    //         }
++    //     }
++    // }
+ 
+     if (scanState->first)
+     {
++        MemoryContext oldCtx = MemoryContextSwitchTo(CacheMemoryContext);
++        std::cout << "hnsw scan start" << std::endl;
++        
++        // Deep free existing search_number and search_distance lists
++        if (search_number != NIL) {
++            // std::cout << "search_number size in scanState->first: " << list_length(search_number) << std::endl;
++            list_free(search_number);
++            search_number = NIL;
++        }
++        if (search_distance != NIL) {
++            // std::cout << "search_distance size in scanState->first: " << list_length(search_distance) << std::endl;
++            list_free(search_distance);
++            search_distance = NIL;
++        }
++        MemoryContextSwitchTo(oldCtx);
+        scanState->workSpace = new HNSWIndexScan::WorkSpace();
+        std::string path = std::string(DataDir) + std::string("/") +
+                         std::string(DatabasePath) + std::string("/") +
+@@ -303,11 +389,12 @@ bool hnsw_gettuple(IndexScanDesc scan, ScanDirection dir)
+         }
+         scan->xs_inorder = false;
+         scanState->first = false;
++        
+     }
+ 
+     int i = 0;
+     //TODO(Qianxi): set parameter
+-    int distanceThreshold = 3;
++    int distanceThreshold = 4;
+     int queueThreshold = 50;
+     while(true)
+     {
+@@ -345,6 +432,10 @@ bool hnsw_gettuple(IndexScanDesc scan, ScanDirection dir)
+                 i++;
+                 if (scanState->inRange && i >= distanceThreshold)
+                 {
++                    // std::cout << "search number size: "
++                    //           << list_length(search_number) << std::endl;
++                    // std::cout << "search distance size: "
++                    //           << list_length(search_distance) << std::endl;
+                     return false;
+                 }
+                 else
+@@ -374,6 +465,12 @@ bool hnsw_gettuple(IndexScanDesc scan, ScanDirection dir)
+         }
+ 
+         std::uint64_t number = result->GetLabel();
++        // if (reuse_computation == true) {
++        //     MemoryContext oldCtx = MemoryContextSwitchTo(CacheMemoryContext);
++        //     search_number = lappend_uint64(search_number, number);
++        //     search_distance = lappend(search_distance, (void*)Float4GetDatum(result->GetDistance()));
++        //     MemoryContextSwitchTo(oldCtx);
++        // }
+         BlockNumber blkno = (std::uint32_t) (number >> 32);
+         OffsetNumber offset = (std::uint32_t) number;
+     #if PG_VERSION_NUM >= 120000
+@@ -393,6 +490,12 @@ bool hnsw_gettuple(IndexScanDesc scan, ScanDirection dir)
+  */
+ void hnsw_endscan(IndexScanDesc scan)
+ {
++    // if (need_to_search == false)
++    // {
++    //     need_to_search = true;
++    //     // count = 0;
++    //     return;
++    // }
+     HNSWScanOpaque scanState = (HNSWScanOpaque) scan->opaque;
+     HNSWIndexScan::EndScan(scanState->workSpace->resultIterator);
+     scanState->workSpace->resultIterator = nullptr;
+diff --git a/src/hnswindex_scan.cpp b/src/hnswindex_scan.cpp
+index 9f79e99..34918aa 100644
+--- a/src/hnswindex_scan.cpp
++++ b/src/hnswindex_scan.cpp
+@@ -5,7 +5,6 @@
+ 
+ std::map<std::string, std::shared_ptr<hnswlib::SpaceInterface<float>>> HNSWIndexScan::distanceFunction_map;
+ std::map<std::string, std::shared_ptr<hnswlib::HierarchicalNSW<float>>> HNSWIndexScan::vector_index_map;
+-
+ void HNSWIndexScan::LoadIndex(const std::string &p_path,
+                               DistanceMethod distance_method,
+                               int dim)
+@@ -26,6 +25,7 @@ void HNSWIndexScan::LoadIndex(const std::string &p_path,
+         }
+         auto vector_index = std::make_shared<hnswlib::HierarchicalNSW<float>>(
+             distanceFunction.get(), p_path);
++        vector_index->setEf(400);
+         distanceFunction_map.insert(std::make_pair(p_path,distanceFunction));
+         vector_index_map.insert(std::make_pair(p_path,vector_index));
+     }
+diff --git a/src/index.cpp b/src/index.cpp
+index cf4741c..a54af64 100644
+--- a/src/index.cpp
++++ b/src/index.cpp
+@@ -138,7 +138,7 @@ IndexScanDesc sptag_begin_scan(Relation index, int nkeys, int norderbys)
+     std::string path = std::string(DataDir) + std::string("/") +
+         std::string(DatabasePath) + std::string("/") +
+         std::string(RelationGetRelationName(index));
+-    IndexScan::LoadIndex(path);
++        SPTAGIndexScan::LoadIndex(path);
+ 
+     IndexScanDesc scan = RelationGetIndexScan(index, nkeys, norderbys);
+ 
+@@ -163,7 +163,7 @@ void sptag_rescan(IndexScanDesc scan,
+ 
+     if (scanState->workSpace != nullptr)
+     {
+-        IndexScan::EndScan(scanState->workSpace->resultIterator);
++        SPTAGIndexScan::EndScan(scanState->workSpace->resultIterator);
+         scanState->data->Clear();
+         delete scanState->data;
+         scanState->workSpace->resultIterator = nullptr;
+@@ -195,7 +195,7 @@ bool sptag_gettuple(IndexScanDesc scan, ScanDirection dir)
+ 
+     if (scanState->first)
+     {
+-        scanState->workSpace = new IndexScan::WorkSpace();
++        scanState->workSpace = new SPTAGIndexScan::WorkSpace();
+ 	    scanState->data = new SPTAG::ByteArray();
+ 
+         if (scan->orderByData == NULL)
+@@ -232,7 +232,7 @@ bool sptag_gettuple(IndexScanDesc scan, ScanDirection dir)
+         std::string path = std::string(DataDir) + std::string("/") +
+             std::string(DatabasePath) + std::string("/") +
+             std::string(RelationGetRelationName(scan->indexRelation));
+-        scanState->workSpace->resultIterator = IndexScan::BeginScan(scanState->data->Data(),path);
++        scanState->workSpace->resultIterator = SPTAGIndexScan::BeginScan(scanState->data->Data(),path);
+         scanState->first = false;
+     }
+ 
+@@ -242,7 +242,7 @@ bool sptag_gettuple(IndexScanDesc scan, ScanDirection dir)
+     int threshold = 5;
+     while(true)
+     {
+-        bool validResult = IndexScan::GetNet(scanState->workSpace->resultIterator, result);
++        bool validResult = SPTAGIndexScan::GetNet(scanState->workSpace->resultIterator, result);
+         if (!validResult)
+         {
+             return false;
+@@ -290,7 +290,7 @@ bool sptag_gettuple(IndexScanDesc scan, ScanDirection dir)
+ void sptag_endscan(IndexScanDesc scan)
+ {
+     SPTAGScanOpaque scanState = (SPTAGScanOpaque) scan->opaque;
+-    IndexScan::EndScan(scanState->workSpace->resultIterator);
++    SPTAGIndexScan::EndScan(scanState->workSpace->resultIterator);
+     scanState->data->Clear();
+     delete scanState->data;
+     scanState->workSpace->resultIterator = nullptr;
+diff --git a/src/index.hpp b/src/index.hpp
+index acd0562..10e8eb2 100644
+--- a/src/index.hpp
++++ b/src/index.hpp
+@@ -17,6 +17,8 @@ extern "C"
+ 
+ extern "C"
+ {
++    extern bool reuse_computation;
++    
+     typedef enum sptag_DistCalcMethod
+     {
+ 	    sptag_Inner_Product,
+@@ -39,7 +41,7 @@ extern "C"
+         bool inRange;
+         float range;
+         SPTAG::ByteArray *data;
+-        IndexScan::WorkSpace *workSpace;
++        SPTAGIndexScan::WorkSpace *workSpace;
+     } SPTAGScanOpaqueData;
+ 
+     typedef SPTAGScanOpaqueData *SPTAGScanOpaque;
+diff --git a/src/index_scan.cpp b/src/index_scan.cpp
+index 7ec466b..844dc13 100644
+--- a/src/index_scan.cpp
++++ b/src/index_scan.cpp
+@@ -4,9 +4,9 @@
+ #include "index_scan.hpp"
+ 
+ 
+-std::map<std::string, std::shared_ptr<SPTAG::VectorIndex>> IndexScan::vector_index_map;
++std::map<std::string, std::shared_ptr<SPTAG::VectorIndex>> SPTAGIndexScan::vector_index_map;
+ 
+-void IndexScan::LoadIndex(const std::string &p_path)
++void SPTAGIndexScan::LoadIndex(const std::string &p_path)
+ {
+     if(vector_index_map.find(p_path)==vector_index_map.end())
+     {
+@@ -16,19 +16,19 @@ void IndexScan::LoadIndex(const std::string &p_path)
+     }
+ }
+ 
+-std::shared_ptr<SPTAG::ResultIterator> IndexScan::BeginScan(
++std::shared_ptr<SPTAG::ResultIterator> SPTAGIndexScan::BeginScan(
+     const void *p_target, const std::string &p_path)
+ {
+     return vector_index_map[p_path]->GetIterator(p_target);
+ }
+ 
+-bool IndexScan::GetNet(std::shared_ptr<SPTAG::ResultIterator> &resultIterator,
++bool SPTAGIndexScan::GetNet(std::shared_ptr<SPTAG::ResultIterator> &resultIterator,
+                    SPTAG::BasicResult &result)
+ {
+     return resultIterator->Next(result);
+ }
+ 
+-void IndexScan::EndScan(std::shared_ptr<SPTAG::ResultIterator> &resultIterator)
++void SPTAGIndexScan::EndScan(std::shared_ptr<SPTAG::ResultIterator> &resultIterator)
+ {
+     resultIterator->Close();
+ }
+diff --git a/src/index_scan.hpp b/src/index_scan.hpp
+index 6227cd6..444586e 100644
+--- a/src/index_scan.hpp
++++ b/src/index_scan.hpp
+@@ -10,7 +10,7 @@
+ #include <atomic>
+ #include <map>
+ 
+-class IndexScan
++class SPTAGIndexScan
+ {
+ public:
+     struct WorkSpace

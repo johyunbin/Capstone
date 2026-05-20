@@ -44,6 +44,8 @@ import statistics
 
 CONDITION_ORDER = ["baseline", "B1", "CaseB", "oracle"]
 
+BOOTSTRAP_N = 2000  # paired diff(ms) bootstrap 회수
+
 
 # ---------------------------------------------------------------------------
 # 로드 + 집계
@@ -138,8 +140,61 @@ def print_summary(results: list[dict]) -> None:
               f"SeqScan 되지 않아 주입이 건너뛰어졌다. 분석서 제외/주석 필요.")
 
 
+def _bootstrap_ci_paired_diff(a, b, n_boot: int = BOOTSTRAP_N,
+                              rng_seed: int = 7) -> tuple[float, float]:
+    """a − b paired diff (ms) 의 percentile bootstrap 95% CI.
+
+    a, b: 같은 길이 list/array, paired (i 번째 rep 의 같은 epoch).
+    return: (ci_lo, ci_hi) — 2.5 / 97.5 percentile. 표본 < 5 시 (nan, nan).
+    """
+    if np is None or len(a) < 5 or len(b) < 5:
+        return float("nan"), float("nan")
+    aa = np.asarray(a, dtype=float)
+    bb = np.asarray(b, dtype=float)
+    diff = aa - bb
+    n = len(diff)
+    rng = np.random.default_rng(rng_seed)
+    idx = rng.integers(0, n, size=(n_boot, n))
+    boot_means = np.mean(diff[idx], axis=1)
+    return (float(np.percentile(boot_means, 2.5)),
+            float(np.percentile(boot_means, 97.5)))
+
+
+def _hedges_g_paired(a, b) -> float:
+    """Hedges' g (paired): mean(a − b) / sd(a − b), 작은 표본 보정 j = 1 − 3/(4n − 9).
+
+    sd 가 0 인 경우 0.0. 표본 < 2 시 nan.
+    """
+    if np is None or len(a) < 2 or len(b) < 2:
+        return float("nan")
+    aa = np.asarray(a, dtype=float)
+    bb = np.asarray(b, dtype=float)
+    diff = aa - bb
+    n = len(diff)
+    sd = float(np.std(diff, ddof=1))
+    if sd == 0.0:
+        return 0.0
+    d = float(np.mean(diff)) / sd
+    j = 1.0 - 3.0 / (4 * n - 9) if (4 * n - 9) > 0 else 1.0
+    return d * j
+
+
+def _cliffs_delta_paired(a, b) -> float:
+    """Cliff's δ (paired): (#a > b − #a < b) / n. 범위 [−1, 1].
+
+    같은 짝(i 번째 rep) 비교 — independent 2-sample (cartesian) 아님.
+    """
+    if np is None or len(a) < 1 or len(b) < 1:
+        return float("nan")
+    aa = np.asarray(a, dtype=float)
+    bb = np.asarray(b, dtype=float)
+    gt = int(np.sum(aa > bb))
+    lt = int(np.sum(aa < bb))
+    return (gt - lt) / len(aa)
+
+
 def paired_stats(results: list[dict]) -> list[dict]:
-    """cell × (anchor, variant) paired diff + Wilcoxon signed-rank.
+    """cell × (anchor, variant) paired diff + Wilcoxon signed-rank + 효과크기·CI.
 
     measure_latency_realengine.py 는 매 rep 마다 16 variant 를 fixed-seed shuffle 로
     1회씩 측정 → exec_ms[i] 는 같은 epoch (같은 OS state) 의 i 번째 측정. paired test 적합.
@@ -147,7 +202,10 @@ def paired_stats(results: list[dict]) -> list[dict]:
     anchor:
       · baseline → 각 비-baseline variant (15) : speedup 유의성
       · B1       → 각 비-B1, 비-baseline variant (14) : CaseB·oracle 의 B1 대비 가치
-    holm 보정은 anchor 군 내에서.
+    holm 보정은 anchor 군 내에서. 효과크기는 anchor − variant 의 paired diff 기반:
+      · Hedges' g (paired): mean(diff)/sd(diff), 작은 표본 보정
+      · Cliff's δ (paired): (#a>b − #a<b) / n
+      · bootstrap CI: paired diff 의 mean 에 대한 2.5/97.5 percentile
     """
     if wilcoxon is None:
         return []
@@ -175,12 +233,17 @@ def paired_stats(results: list[dict]) -> list[dict]:
                     w, p = float(w), float(p)
                 except Exception:
                     w, p = float("nan"), float("nan")
+                ci_lo, ci_hi = _bootstrap_ci_paired_diff(a[:n], b[:n])
+                hedges_g = _hedges_g_paired(a[:n], b[:n])
+                cliffs_d = _cliffs_delta_paired(a[:n], b[:n])
                 rows.append({
                     "cell": cell, "anchor": anchor, "variant": lab, "n_pairs": n,
                     "median_diff_ms": med_diff,
                     "anchor_med_ms": statistics.median(a[:n]),
                     "variant_med_ms": statistics.median(b[:n]),
                     "w_stat": w, "p_value": p,
+                    "ci_lo_ms": ci_lo, "ci_hi_ms": ci_hi,
+                    "hedges_g": hedges_g, "cliffs_delta": cliffs_d,
                 })
     # holm 보정 (anchor 별 분리)
     for anchor in ("baseline", "B1"):
@@ -224,6 +287,30 @@ def print_paired_stats(rows: list[dict]) -> None:
     print(f"  baseline-vs-* 유의 (p_holm<0.05): {sig_b}/{tot_b}")
     print(f"  B1-vs-*       유의 (p_holm<0.05): {sig_B}/{tot_B}")
     print("  med_diff > 0 = anchor 가 더 느림 (variant 가 빠름).")
+    # effect size 분포 (Hedges' g · Cliff's δ) — anchor 별 분리
+    if np is not None:
+        for anchor in ("baseline", "B1"):
+            sub = [r for r in rows if r["anchor"] == anchor]
+            if not sub:
+                continue
+            g_arr = [r["hedges_g"] for r in sub if r["hedges_g"] == r["hedges_g"]]
+            d_arr = [r["cliffs_delta"] for r in sub if r["cliffs_delta"] == r["cliffs_delta"]]
+            ci_arr = [r for r in sub
+                      if r["ci_lo_ms"] == r["ci_lo_ms"] and r["ci_hi_ms"] == r["ci_hi_ms"]]
+            n_large_g = sum(1 for g in g_arr if abs(g) >= 0.8)
+            n_med_g = sum(1 for g in g_arr if 0.5 <= abs(g) < 0.8)
+            n_small_g = sum(1 for g in g_arr if abs(g) < 0.5)
+            n_large_d = sum(1 for d in d_arr if abs(d) >= 0.474)
+            n_med_d = sum(1 for d in d_arr if 0.33 <= abs(d) < 0.474)
+            n_small_d = sum(1 for d in d_arr if abs(d) < 0.33)
+            n_ci_excludes_zero = sum(1 for r in ci_arr
+                                     if r["ci_lo_ms"] * r["ci_hi_ms"] > 0)
+            print(f"  [{anchor:<8}] Hedges' g: large(|g|≥0.8)={n_large_g} / "
+                  f"medium(0.5≤|g|<0.8)={n_med_g} / small(|g|<0.5)={n_small_g}")
+            print(f"  [{anchor:<8}] Cliff's δ: large(|δ|≥0.474)={n_large_d} / "
+                  f"medium(0.33≤|δ|<0.474)={n_med_d} / small(|δ|<0.33)={n_small_d}")
+            print(f"  [{anchor:<8}] bootstrap 95% CI ∌ 0 (효과 비제로): "
+                  f"{n_ci_excludes_zero}/{len(ci_arr)}")
 
 
 def export_paired_csv(rows: list[dict], out_path: Path) -> None:
@@ -231,7 +318,8 @@ def export_paired_csv(rows: list[dict], out_path: Path) -> None:
         return
     cols = ["cell", "anchor", "variant", "n_pairs", "median_diff_ms",
             "anchor_med_ms", "variant_med_ms", "w_stat", "p_value",
-            "p_holm", "holm_rank"]
+            "p_holm", "holm_rank",
+            "ci_lo_ms", "ci_hi_ms", "hedges_g", "cliffs_delta"]
     with out_path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()

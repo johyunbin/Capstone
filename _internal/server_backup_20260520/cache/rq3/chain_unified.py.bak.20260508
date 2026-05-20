@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Unified RQ1+RQ2+RQ3 measurement chain for any (dataset, sf) cell.
+
+Pre-requisite (run prepare_cell.py first):
+  - {table}_vectors.npy + {table}_pks.npy in /mnt/hdd0/home/capstone2026/cache/rq1
+  - PG stratum_id column populated
+  - query_pool_{name}.parquet + query_selectivity_{name}.parquet
+
+Usage:
+  python chain_unified.py --dataset DEEP --sf 1 --stage rq1_km20
+  python chain_unified.py --dataset SIFT --sf 10 --stage all
+  python chain_unified.py --dataset SSN --sf 100 --stage rq3_hilbert
+"""
+import sys
+import argparse
+from pathlib import Path
+
+sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache/rq3')
+sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache')
+
+import _measure_common as mc
+
+CACHE = Path('/mnt/hdd0/home/capstone2026/cache/rq1')
+
+# Mirror of CELLS dict in prepare_cell.py
+CELLS = {
+    ('DEEP', 1):   {'table':'partsupp_deep_1',   'embed_col':'ps_embedding', 'dim':96,  'pk_col':'ps_partkey'},
+    ('DEEP', 10):  {'table':'partsupp_deep_10',  'embed_col':'ps_embedding', 'dim':96,  'pk_col':'ps_partkey'},
+    ('DEEP', 100): {'table':'partsupp_deep_100', 'embed_col':'ps_embedding', 'dim':96,  'pk_col':'ps_partkey'},
+    ('SIFT', 1):   {'table':'partsupp_sift_1',   'embed_col':'ps_embedding', 'dim':128, 'pk_col':'ps_partkey'},
+    ('SIFT', 10):  {'table':'partsupp_sift_10',  'embed_col':'ps_embedding', 'dim':128, 'pk_col':'ps_partkey'},
+    ('SIFT', 100): {'table':'partsupp_sift_100', 'embed_col':'ps_embedding', 'dim':128, 'pk_col':'ps_partkey'},
+    ('SSN',  1):   {'table':'partsupp_fb_1',     'embed_col':'ps_embedding', 'dim':256, 'pk_col':'ps_partkey'},
+    ('SSN',  10):  {'table':'partsupp_fb_10',    'embed_col':'ps_embedding', 'dim':256, 'pk_col':'ps_partkey'},
+    ('SSN',  100): {'table':'partsupp_fb_100',   'embed_col':'ps_embedding', 'dim':256, 'pk_col':'ps_partkey'},
+    ('YFCC', 1):   {'table':'partsupp_yfcc_1',   'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('YFCC', 10):  {'table':'partsupp_yfcc_10',  'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('YFCC', 100): {'table':'partsupp_yfcc_100', 'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('YFCC_DL', 1):   {'table':'partsupp_yfcc_pca_1',   'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('YFCC_DL', 10):  {'table':'partsupp_yfcc_pca_10',  'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('YFCC_DL', 100): {'table':'partsupp_yfcc_pca_100', 'embed_col':'ps_embedding', 'dim':192, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('WIKI', 1):   {'table':'partsupp_wiki_1',   'embed_col':'ps_embedding', 'dim':768, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('WIKI', 10):  {'table':'partsupp_wiki_10',  'embed_col':'ps_embedding', 'dim':768, 'pk_col':('ps_partkey','ps_suppkey')},
+    ('WIKI', 100): {'table':'partsupp_wiki_100', 'embed_col':'ps_embedding', 'dim':768, 'pk_col':('ps_partkey','ps_suppkey')},
+}
+
+# Methods to measure in 'all' stage. 80M cells use subset_training=True for HDBSCAN/spectral/birch.
+METHODS_BASE = [
+    'hilbert', 'hybrid', 'minibatch', 'minibatch_partial', 'kdtree', 'zorder',
+    'pca1d', 'gmm', 'lsh', 'pq', 'sobol', 'distance_shell', 'random_proj',
+    'kde_pilot', 'sparse_rp', 'importance_sampling',
+]
+METHODS_SLOW = ['hdbscan', 'birch', 'spectral']  # subset_training for 80M
+
+# 5/7 17:51 expansion — 22 → 30 methods for tier-elimination narrative
+METHODS_NEW8 = [
+    'dbscan', 'optics', 'agglomerative', 'hierarchical_kmeans',
+    'faiss_ivf', 'pca_kmeans', 'kmeans_pp', 'coresets',
+]
+
+ALL_METHODS = METHODS_BASE + METHODS_SLOW + METHODS_NEW8
+
+
+def cell_name(dataset, sf):
+    return f'{dataset}_sf{sf}'
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--dataset', required=True, choices=['DEEP', 'SIFT', 'SSN', 'YFCC', 'WIKI', 'YFCC_DL'])
+    ap.add_argument('--sf', type=int, required=True, choices=[1, 10, 100])
+    ap.add_argument('--stage', required=True, help='rq1_km20 | rq3_random20 | rq2_5mode | rq3_<method> | all')
+    ap.add_argument('--port', type=int, default=55435)  # vanilla
+    args = ap.parse_args()
+
+    key = (args.dataset, args.sf)
+    if key not in CELLS:
+        raise SystemExit(f'unsupported cell: {key}')
+    cfg = CELLS[key]
+    name = cell_name(args.dataset, args.sf)
+
+    # Override mc settings for this cell
+    DS = {
+        'name': name,
+        'table': cfg['table'],
+        'embed_col': cfg['embed_col'],
+        'vec_dim': cfg['dim'],
+        'query_pool': CACHE / f'query_pool_{name}.parquet',
+        'query_sel': CACHE / f'query_selectivity_{name}.parquet',
+    }
+    mc.DATASETS = [DS]
+    mc.PORT = args.port
+    mc.SELECTIVITIES = [0.01, 0.05, 0.10, 0.30, 0.50]
+
+    stages_to_run = [args.stage] if args.stage != 'all' else (
+        ['rq1_km20', 'rq3_random20', 'rq2_5mode'] + [f'rq3_{m}' for m in ALL_METHODS]
+    )
+
+    for stage in stages_to_run:
+        print(f'\n========== STAGE {stage} for {name} ==========', flush=True)
+        sys.argv = [f'{stage}.py']
+        run_stage(stage, name, DS)
+
+
+def run_stage(stage, name, DS):
+    if stage == 'rq1_km20':
+        import run_km20
+        sys.argv = ['run_km20.py', '--out-prefix', f'rq1_{name}_km20', '--include-bernoulli']
+        run_km20.DATASETS = [DS]
+        run_km20.main()
+
+    elif stage == 'rq3_random20':
+        try:
+            import run_random20
+        except ImportError:
+            # Some W3 versions split run_random20 into rq3 dir
+            sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache/rq3')
+            import run_random20
+        sys.argv = ['run_random20.py', '--out-prefix', f'rq3_{name}_random20']
+        run_random20.DATASETS = [DS]
+        run_random20.main()
+
+    elif stage == 'rq2_5mode':
+        sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache')
+        import rq2_alloc_python as rq2
+        rq2.DATASETS = [DS]
+        rq2.SELECTIVITIES = [0.01, 0.05, 0.10, 0.30, 0.50]
+        rq2.PORT = mc.PORT  # override hardcoded 55436 → 55435 (vanilla)
+        sys.argv = ['rq2_alloc_python.py', '--out-prefix', f'rq2_alloc_{name}_5mode']
+        rq2.main()
+
+    elif stage.startswith('rq1_km_k_'):
+        K = int(stage.split('_')[-1])
+        import run_km_k_sweep
+        run_km_k_sweep.DATASETS = [DS]
+        run_km_k_sweep.SELECTIVITIES = mc.SELECTIVITIES
+        sys.argv = ['run_km_k_sweep.py', '--K', str(K), '--out-prefix', f'rq1_{name}_km_k']
+        run_km_k_sweep.main()
+
+    elif stage.startswith('rq3_at_k_'):
+        # RQ3 method with K override: stage = 'rq3_at_k_{K}_{method}'
+        rest = stage[len('rq3_at_k_'):]
+        K_str, method = rest.split('_', 1)
+        K = int(K_str)
+        mc.N_STRATA = K
+        out_prefix = f'rq3_{name}_K{K}_{method}'
+        if method in ('distance_shell', 'importance_sampling'):
+            sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache/rq3/online_weight')
+            runner = __import__(method)
+        else:
+            runner = __import__(f'run_{method}')
+        runner.DATASETS = [DS]
+        runner.SELECTIVITIES = mc.SELECTIVITIES
+        sys.argv = [f'{method}.py', '--out-prefix', out_prefix]
+        runner.main()
+
+    elif stage.startswith('rq3_'):
+        method = stage[4:]
+        out_prefix = f'rq3_{name}_{method}'
+        if method in ('distance_shell', 'importance_sampling'):
+            sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache/rq3/online_weight')
+            runner = __import__(method)
+        elif method == 'kde_pilot':
+            # kde_pilot lives at top level rq3/ directory not online_weight (use run_kde_pilot_8m or fallback)
+            try:
+                runner = __import__('run_kde_pilot_8m')
+            except ImportError:
+                sys.path.insert(0, '/mnt/hdd0/home/capstone2026/cache/rq3/online_weight')
+                import kde_pilot as runner
+        elif method == 'random_proj':
+            runner = __import__('run_random_projection')
+        else:
+            runner = __import__(f'run_{method}')
+        runner.DATASETS = [DS]
+        runner.SELECTIVITIES = mc.SELECTIVITIES
+        sys.argv = [f'{method}.py', '--out-prefix', out_prefix]
+        runner.main()
+    else:
+        raise SystemExit(f'unknown stage: {stage}')
+
+
+if __name__ == '__main__':
+    main()

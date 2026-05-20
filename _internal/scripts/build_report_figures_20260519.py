@@ -547,9 +547,9 @@ def fig5_1():
         bbox=dict(boxstyle="round,pad=0.4", fc="#f5f6f8", ec=GRAY,
                   linewidth=0.8))
 
-    ax.set_title("그림 5-1. 동적 method 선택 4단계 흐름도", pad=12,
+    ax.set_title("그림 6-1. 동적 method 선택 4단계 흐름도", pad=12,
                  fontweight="bold")
-    save(fig, "fig5_1_dynamic_method_selection")
+    save(fig, "fig6_1_dynamic_method_selection")
 
 
 # ===========================================================================
@@ -627,9 +627,9 @@ def fig6_1():
                                markerfacecolor=RED, markersize=9,
                                label="마일스톤")],
               loc="upper left", fontsize=9, frameon=True, framealpha=0.95)
-    ax.set_title("그림 6-1. 캡스톤 연구 진행 일정", pad=10, fontweight="bold")
+    ax.set_title("그림 7-1. 캡스톤 연구 진행 일정", pad=10, fontweight="bold")
     plt.tight_layout()
-    save(fig, "fig6_1_gantt")
+    save(fig, "fig7_1_gantt")
 
 
 # ---------------------------------------------------------------------------

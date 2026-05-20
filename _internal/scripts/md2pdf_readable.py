@@ -739,7 +739,7 @@ def convert(md_path, subsection_keep=True):
         f.write(full_html)
         html_path = f.name
 
-    out_pdf = md_path.with_suffix(".pdf")
+    out_pdf = md_path.with_name(md_path.stem + "_readable.pdf")
 
     try:
         _chrome_cdp_pdf(html_path, out_pdf)

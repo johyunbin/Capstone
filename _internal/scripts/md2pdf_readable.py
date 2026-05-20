@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-md2pdf.py — Markdown → PDF 변환 (제출용 빈 여백 최소화 버전, compact)
+md2pdf_readable.py — Markdown → PDF 변환 (가시성 우선 버전)
 
-사용법: python3 _internal/scripts/md2pdf.py <파일.md>
+사용법: python3 _internal/scripts/md2pdf_readable.py <파일.md>
 출력:   <같은 디렉토리>/<파일>.pdf
 방식:   Markdown → HTML+CSS → Chrome CDP (DevTools Protocol) → PDF
 폰트:   Apple SD Gothic Neo + Pretendard + Noto Sans KR (한영 혼용 가독성)
 
 ★ readable vs compact 차이:
-  - compact (이 파일): margin 11/12mm · font 9.8pt · line-height 1.45 · H2 자연 흐름.
-    빈 여백 최소화. 제출·페이지 제한 충족용. 학교 양식 14~22p 충족 목적.
-  - readable (md2pdf_readable.py): margin 18mm · font 10.5pt · line-height 1.75 · H2 마다 페이지 break.
+  - readable (이 파일): margin 18mm · font 10.5pt · line-height 1.75 · H2 마다 페이지 break.
     가시성·여유 우선. 학술 단행본·내부 검토용.
+  - compact (md2pdf.py): margin 11/12mm · font 9.8pt · line-height 1.45 · H2 자연 흐름.
+    빈 여백 최소화. 제출·페이지 제한 충족용.
 
 설계 (2026-05-14 v2):
   - Trading/src/npc_briefing_pdf.py 의 latest CSS (S43 v6, 5/13) 를 base 로 가져왔다.
@@ -49,17 +49,17 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 # ==============================================================================
 CSS = """
 /* Capstone 양식 v2 — primary navy #1a2c4e, accent orange #b85c00.
-   학술 보고서 톤 (compact: margin 13mm + 본문 9.8pt + line-height 1.45). */
-@page { size: A4; margin: 11mm 12mm 11mm 12mm; }
+   학술 보고서 톤 (margin 넉넉 + 본문 10.5pt + line-height 1.75). */
+@page { size: A4; margin: 18mm 18mm 18mm 18mm; }
 
 body {
     font-family: 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR',
                  -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-    font-size: 9.8pt;
-    line-height: 1.45;          /* compact, 학술 가독성 유지 */
+    font-size: 10.5pt;
+    line-height: 1.75;          /* Apple 표준, 학술 가독성 우선 */
     color: #1d1d1f;             /* Apple charcoal */
     background: #ffffff;
-    max-width: 183mm;
+    max-width: 175mm;
     margin: 0 auto;
     word-break: keep-all;
     overflow-wrap: break-word;
@@ -98,7 +98,7 @@ h1 {
     line-height: 1.35;
 }
 
-/* H2 — Apple 스타일 (subtle bg + 좌측 navy 바). 자연 흐름 (학교 sample 양식). */
+/* H2 — Apple 스타일 (subtle bg + 좌측 navy 바) — ★ 각 H2 마다 페이지 break */
 h2 {
     font-size: 14pt;
     font-weight: 700;
@@ -106,12 +106,19 @@ h2 {
     background: #f5f5f7;
     border-left: 5px solid #1a2c4e;
     padding: 9px 16px;
-    margin: 16px 0 10px 0;
+    margin: 0 0 10px 0;
     border-radius: 0 6px 6px 0;
     letter-spacing: -0.01em;
     page-break-after: avoid;
     break-after: avoid;
-    page-break-inside: avoid;
+    page-break-before: always;        /* 각 H2 = 새 페이지 시작 */
+    break-before: page;
+}
+/* 첫 H2 (보통 ## 목차) 는 H1 + 메타 와 같은 페이지 시작 */
+body > h2:first-of-type,
+.meta + h2 {
+    page-break-before: avoid !important;
+    break-before: auto !important;
 }
 
 /* H3 — 단단한 weight + 좌측 얇은 회색 바 */
@@ -258,13 +265,13 @@ strong em, em strong { color: #b85c00; }
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 8px 0;
-    font-size: 8.5pt;
+    margin: 12px 0;
+    font-size: 9pt;
     border: 1px solid #1a2c4e;
     border-radius: 4px;
     overflow: hidden;
     table-layout: auto;
-    /* page-break-inside auto — 큰 표 분리 허용 (페이지 절약) */
+    page-break-inside: avoid;
 }
 th, td {
     word-break: keep-all;
@@ -276,18 +283,18 @@ th {
     background: #1a2c4e;
     color: #ffffff;
     font-weight: 700;
-    padding: 4px 7px;
+    padding: 7px 10px;
     border: 1px solid #1a2c4e;
     text-align: left;
-    font-size: 8.5pt;
-    line-height: 1.3;
+    font-size: 9pt;
+    line-height: 1.4;
 }
 td {
-    padding: 3px 7px;
+    padding: 6px 10px;
     border: 1px solid #cfd8dc;
     vertical-align: top;
     color: #222;
-    line-height: 1.4;
+    line-height: 1.55;
 }
 /* 첫 컬럼 (라벨/순번) 짧게 — 자연스러운 폭 분배 */
 td:nth-child(1) {
@@ -410,11 +417,12 @@ p, li, td { orphans: 2; widows: 2; }
 /* section-keep — H2 단위 통째 page push 는 비활성 (자연 흐름) */
 div.section-keep { /* no-op 유지, 과거 CSS 호환만 */ }
 
-/* H3 section keep-together — compact 모드에서는 비활성 (빈 여백 최소화).
-   readable 버전은 avoid 활성. */
+/* H3 section keep-together — 짤림 방지 (사용자 요청, 5/14 16:32)
+   각 H3 section (### 1.3, ### 2.2 등) 이 페이지 하단에서 짤리면 다음 페이지로 넘김.
+   단 H3 section 자체가 한 페이지 이상이면 자연 분할 (avoid 가 absolute X). */
 div.subsection-keep {
-    page-break-inside: auto;
-    break-inside: auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 """
 

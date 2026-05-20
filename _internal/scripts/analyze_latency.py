@@ -29,6 +29,9 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.colors as mcolors
     import numpy as np
+    # 한글 폰트 명시 — Apple SD Gothic Neo (macOS 기본) → fallback NanumGothic·AppleGothic
+    plt.rcParams["font.family"] = ["Apple SD Gothic Neo", "NanumGothic", "AppleGothic", "DejaVu Sans"]
+    plt.rcParams["axes.unicode_minus"] = False
 except ImportError:
     plt = None
     np = None

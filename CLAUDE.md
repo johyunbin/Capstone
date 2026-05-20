@@ -8,12 +8,12 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/20 갱신 — 엔진 적용 검증 Exqutor 패치 배포)
+## 동적 state + 인계 (5/20 갱신 — 엔진 적용 검증 Phase 2 완료)
 
 > CLAUDE.md = 라우팅 + 안정 룰. 동적 state·진행 수치는 handoff·v13 정본에 있다 — 새 세션은 아래 anchor 하나로 0% loss 인계.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260520_0054_엔진패치배포.md` (엔진 적용 검증 — Exqutor `vector.c`에 카디널리티 주입 GUC `vector.injected_card`·`vector.disable_estimation` 패치 작성·빌드·55435 배포·주입 작동 검증 완료. 다음 = Phase 1 harness 개편(GUC 주입·실쿼리 직접 timing·추정치 생성))
-- **6/11 최종 보고서 (정본)**: `@submission/_drafts/속도는벡터_6_11_최종보고서_20260519_135021.md` (+ `.pdf`·`.docx`) — Ch.1~7 완결 + review pass·정합성 6건 반영
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260520_100812_보고서deck반영.md` (Phase 3 = Phase 2 결과 정본 반영 — 6/11 보고서 §5 chapter 신설(엔진 적용 검증 6 sub-section · 100줄 학술 산문) + chapter shift §5→§6/§6→§7/§7→§8 + §6.4 향후 작업 4갈래 보강 · 신규 figure 3종(speedup heatmap·plan recovery·Wilcoxon significance) · 보고서 PDF 44p 재생성 · 발표물 4종(deck/포스터/팜플렛/소개영상) claude.ai/design 신본 프롬프트 신설 · Phase A 추가 측정 saturated 5 + invariant 3 = 8 cell 진행. 정본 Phase 2 수치 carry: 3-7× speedup · B1 plan=oracle 7/12 fragile · CaseB ×13 oracle-align 148/156=94.9% robust · paired Wilcoxon baseline-vs-* 180/180(100%) / B1-vs-* 13/168(7.7%). 다음 = 사용자 claude.ai/design 4종 산출 + main 검증 + 5/25 보고서·5/26 PPTX·5/27 발표·5/28 포스터·6/11 보고서)
+- **6/11 최종 보고서 (정본)**: `@submission/_drafts/속도는벡터_6_11_최종보고서_20260520_093500.md` (+ `.pdf` 46p·`.docx`) — Ch.1~8 완결 (§5 엔진 적용 검증 신설 · §5→§6/§6→§7/§7→§8 chapter shift) + 신규 figure 3종(fig5_2/5_3/5_4) + Phase 2 정본 수치 반영 + 5축 multi-axis 무결성 검증 fix(§4.7 다섯째 paired 상관 v13 갱신 + §4.7 6번째 한계 신설 hilbert_real PCA alias·sparse_rp Li 2006 + §8 [14] Li 2006 reference). 직전 _20260519_135021 본은 archive.
 - **본 연구 narrative (발표·보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_20260518_175437.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 3-way B1/CaseA/CaseB)
 - **측정 portfolio + 분석 (v13 정본 — 3-way matched 1508 측정)**: 수치 정본 `@_internal/cache/rq3/v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` · raw `@_internal/cache/rq3/aggregated_v13_full.parquet`
 - **발표 deck (19장, 5/22 교수님 미팅·5/27 발표)**: `@submission/_drafts/속도는벡터_최종발표_슬라이드_20260519_223845.pptx` — 슬라이드2복원본 19장 전수 검증·커밋 완료(82f5eca)

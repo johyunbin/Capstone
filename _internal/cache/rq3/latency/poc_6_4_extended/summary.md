@@ -7,60 +7,60 @@
 
 ## 0. 환각 회피 sanity
 
-- paired 평면 분포: {'phase4_extension': 783, 'phase2': 348, 'phase3': 232}
+- paired 평면 분포: {'phase4_extension': 870, 'phase2': 348, 'phase3': 232}
 - legacy carry (phase2+phase3) — anchor=B1 합 = 280 (기대 280) · baseline 합 = 300 (기대 300)
 - §5.4 carry (phase2 only) — anchor=B1 = 168 (기대 168) · |g|<0.5 = 146 (기대 146 = 86.9%)
-- phase4_extension — paired 행 수 = 783 (0 = 측정 raw 미도착 또는 미적재)
+- phase4_extension — paired 행 수 = 870 (0 = 측정 raw 미도착 또는 미적재)
 - sanity: PoC 3 model1_cell_condition % SS 합 = 100.00% (기대 100.0%)
 - sanity: PoC 3 model2_factor_decomp % SS 합 = 100.00% (기대 100.0%)
 - sanity: PoC 3 model3_no_baseline % SS 합 = 100.00% (기대 100.0%)
 - sanity: PoC 3 model4_extended — fit 안 됨 (skip)
-- plane_comparison: n_pairs 총합 = 1363 = anchor 2 (baseline + B1) × 평면 별 paired
+- plane_comparison: n_pairs 총합 = 1450 = anchor 2 (baseline + B1) × 평면 별 paired
 
 ## 1. PoC 1 — plan-level effect size 분층 (legacy carry, 3 평면 통합)
 
 | anchor | plan_recovered | n | small (|g|<0.5) | medium | large (|g|≥0.8) | mean |g| | p_holm<0.05 |
 |---|---|--:|--:|--:|--:|--:|--:|
-| baseline | True | 646 | 151 (23.4%) | 27 (4.2%) | 468 (72.4%) | 4.733 | 416 (64.4%) |
+| baseline | True | 691 | 172 (24.9%) | 40 (5.8%) | 479 (69.3%) | 4.462 | 416 (60.2%) |
 | baseline | False | 59 | 6 (10.2%) | 2 (3.4%) | 51 (86.4%) | 5.247 | 51 (86.4%) |
-| B1 | True | 607 | 560 (92.3%) | 32 (5.3%) | 15 (2.5%) | 0.245 | 13 (2.1%) |
+| B1 | True | 649 | 598 (92.1%) | 36 (5.5%) | 15 (2.3%) | 0.245 | 13 (2.0%) |
 | B1 | False | 51 | 45 (88.2%) | 1 (2.0%) | 5 (9.8%) | 0.450 | 5 (9.8%) |
 
 ## 2. PoC 2 — cluster paired bootstrap (B=2,000, cell 단위 resample)
 
 | metric | point | naïve 95% CI | cluster 95% CI | width ratio (cluster/naïve) |
 |---|--:|--:|--:|--:|
-| mean_median_diff_ms_B1 | 12.240 | [-3.637, 28.882] | [-19.888, 50.733] | 2.172× |
-| pct_p_holm_sig_B1 | 2.736 | [1.520, 4.103] | [0.152, 6.079] | 2.294× |
+| mean_median_diff_ms_B1 | 14.506 | [-1.069, 30.994] | [-16.806, 49.925] | 2.081× |
+| pct_p_holm_sig_B1 | 2.571 | [1.429, 3.714] | [0.143, 5.857] | 2.500× |
 
 ## 3. PoC 3 — variance decomposition (% SS = Type-I 순차 SS · p = Type-III partial, sum-coded contrasts)
 
-n_obs (4 condition) = 2,910 · n_obs (no baseline) = 2,115
-R² — 모델 1 (cell × condition) = 0.942 · 모델 2 (factor·4 cond) = 0.833 · 모델 3 (no baseline) = 0.801 · 모델 4 (extended, dataset+sf 추가) = nan
+n_obs (4 condition) = 3,090 · n_obs (no baseline) = 2,250
+R² — 모델 1 (cell × condition) = 0.946 · 모델 2 (factor·4 cond) = 0.845 · 모델 3 (no baseline) = 0.827 · 모델 4 (extended, dataset+sf 추가) = nan
 
 **모델 2 — query·qid·sel + 4 condition + 교호작용** (legacy)
 
 | factor | df | SS(Type-I) | F | p(Type-III) | % SS |
 |---|--:|--:|--:|--:|--:|
-| C(query_str, Sum) | 3 | 53.952 | 178.512 | 3.902e-162 | 3.10% |
-| C(qid_str, Sum) | 2 | 299.665 | 1487.262 | 1.688e-59 | 17.23% |
-| C(sel_str, Sum) | 2 | 435.875 | 2163.288 | 0.000e+00 | 25.07% |
-| C(cond_str, Sum) | 3 | 429.950 | 1422.586 | 0.000e+00 | 24.72% |
-| C(query_str, Sum):C(cond_str, Sum) | 9 | 43.643 | 48.134 | 4.289e-60 | 2.51% |
-| C(sel_str, Sum):C(cond_str, Sum) | 6 | 185.335 | 306.612 | 1.590e-304 | 10.66% |
-| Residual | 2884 | 290.545 | nan | nan | 16.71% |
+| C(query_str, Sum) | 3 | 94.550 | 326.192 | 6.584e-195 | 4.95% |
+| C(qid_str, Sum) | 2 | 339.493 | 1756.841 | 9.936e-62 | 17.77% |
+| C(sel_str, Sum) | 2 | 521.584 | 2699.143 | 0.000e+00 | 27.31% |
+| C(cond_str, Sum) | 3 | 402.041 | 1387.013 | 0.000e+00 | 21.05% |
+| C(query_str, Sum):C(cond_str, Sum) | 9 | 32.514 | 37.391 | 8.075e-61 | 1.70% |
+| C(sel_str, Sum):C(cond_str, Sum) | 6 | 223.818 | 386.079 | 0.000e+00 | 11.72% |
+| Residual | 3064 | 296.045 | nan | nan | 15.50% |
 
 **모델 3 — baseline 제외 (B1·CaseB·oracle)** (legacy)
 
 | factor | df | SS(Type-I) | F | p(Type-III) | % SS |
 |---|--:|--:|--:|--:|--:|
-| C(query_str, Sum) | 3 | 43.087 | 128.851 | 2.227e-74 | 3.68% |
-| C(qid_str, Sum) | 2 | 335.731 | 1506.021 | 6.600e-63 | 28.67% |
-| C(sel_str, Sum) | 2 | 558.524 | 2505.423 | 0.000e+00 | 47.69% |
-| C(cond_str, Sum) | 2 | 0.012 | 0.056 | 9.730e-01 | 0.00% |
-| C(query_str, Sum):C(cond_str, Sum) | 6 | 0.011 | 0.016 | 9.999e-01 | 0.00% |
-| C(sel_str, Sum):C(cond_str, Sum) | 4 | 0.158 | 0.355 | 8.409e-01 | 0.01% |
-| Residual | 2095 | 233.515 | nan | nan | 19.94% |
+| C(query_str, Sum) | 3 | 75.474 | 236.081 | 3.451e-96 | 5.50% |
+| C(qid_str, Sum) | 2 | 384.618 | 1804.619 | 1.798e-65 | 28.05% |
+| C(sel_str, Sum) | 2 | 673.437 | 3159.750 | 0.000e+00 | 49.11% |
+| C(cond_str, Sum) | 2 | 0.011 | 0.050 | 9.452e-01 | 0.00% |
+| C(query_str, Sum):C(cond_str, Sum) | 6 | 0.013 | 0.020 | 1.000e+00 | 0.00% |
+| C(sel_str, Sum):C(cond_str, Sum) | 4 | 0.151 | 0.354 | 8.416e-01 | 0.01% |
+| Residual | 2230 | 237.640 | nan | nan | 17.33% |
 
 **★ 모델 4 (extended) — dataset/sf factor 추가** (extended)
 
@@ -70,10 +70,10 @@ _(fit 실패 또는 dataset/sf unique <2 — skip)_
 
 | factor | df | SS(Type-I) | F | p(Type-III) | % SS |
 |---|--:|--:|--:|--:|--:|
-| C(cell_str, Sum) | 52 | 988.120 | 514.851 | 0.000e+00 | 56.81% |
-| C(cond_str, Sum) | 3 | 394.383 | 3561.819 | 0.000e+00 | 22.68% |
-| C(cell_str, Sum):C(cond_str, Sum) | 156 | 256.460 | 44.542 | 0.000e+00 | 14.75% |
-| Residual | 2716 | 100.243 | nan | nan | 5.76% |
+| C(cell_str, Sum) | 55 | 1157.044 | 593.222 | 9.272e-01 | 60.57% |
+| C(cond_str, Sum) | 3 | 367.045 | 3450.067 | 9.272e-01 | 19.21% |
+| C(cell_str, Sum):C(cond_str, Sum) | 165 | 283.934 | 48.525 | 9.272e-01 | 14.86% |
+| Residual | 2884 | 102.274 | nan | nan | 5.35% |
 
 ## 4. ★ 신규 — 평면 비교 표 (phase2 vs phase3 vs phase4_extension)
 
@@ -83,23 +83,23 @@ _(fit 실패 또는 dataset/sf unique <2 — skip)_
 | phase2 | B1 | 168 | 95.2% | 0.341 | 86.9% | 4.8% | 8.3% | 7.7% |
 | phase3 | baseline | 120 | 90.8% | 2.177 | 47.5% | 2.5% | 50.0% | 50.0% |
 | phase3 | B1 | 112 | 90.2% | 0.329 | 90.2% | 5.4% | 4.5% | 4.5% |
-| phase4_extension | baseline | 405 | 91.4% | 1.868 | 24.7% | 6.4% | 68.9% | 56.0% |
-| phase4_extension | B1 | 378 | 91.5% | 0.205 | 94.7% | 5.0% | 0.3% | 0.0% |
+| phase4_extension | baseline | 450 | 92.2% | 1.737 | 26.9% | 8.7% | 64.4% | 50.4% |
+| phase4_extension | B1 | 420 | 92.4% | 0.209 | 94.3% | 5.5% | 0.2% | 0.0% |
 
 ## 5. ★ 신규 — dataset × sf 비교 표 (anchor=B1)
 
 | dataset | sf | n_pairs | plan_recovery_pct | mean |g| | large% | p_holm<0.05% | note |
 |---|---|--:|--:|--:|--:|--:|---|
 | DEEP | 10 | 280 | 93.2% | 0.336 | 6.8% | 6.4% |  |
-| SIFT | 10 | 154 | 94.2% | 0.200 | 0.0% | 0.0% |  |
-| SSN | 10 | 112 | 92.9% | 0.227 | 0.9% | 0.0% |  |
-| YFCC | 10 | 112 | 86.6% | 0.190 | 0.0% | 0.0% |  |
+| SIFT | 10 | 168 | 94.6% | 0.203 | 0.0% | 0.0% |  |
+| SSN | 10 | 126 | 93.7% | 0.226 | 0.8% | 0.0% |  |
+| YFCC | 10 | 126 | 88.1% | 0.199 | 0.0% | 0.0% |  |
 
 ## 6. ★ 신규 — sf scaling 표 (sf=1·10·100 condition 효과 변화, anchor=B1)
 
 | sf | n_datasets | n_pairs | plan_recovery_pct | mean |g| | large% | p_holm<0.05% |
 |---|--:|--:|--:|--:|--:|--:|
-| 10 | 4 | 658 | 92.2% | 0.261 | 3.0% | 2.7% |
+| 10 | 4 | 700 | 92.7% | 0.260 | 2.9% | 2.6% |
 
 ## 7. ★ 신규 — sf=100 censoring (statement_timeout 180s 도달 비율)
 

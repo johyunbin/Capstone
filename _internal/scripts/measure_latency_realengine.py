@@ -76,8 +76,16 @@ MIN_INJECT = 1.0                                          # injected_card 하한
 # --- VAQ 쿼리 + 테이블 (TPC-H 전용 — TPC-DS 는 서버 스키마 부재로 사장) ---
 TPC_H_QUERIES = ("q3", "q5", "q8", "q9", "q10", "q11", "q12", "q20")
 TPCH_BASE_TABLES = ("customer", "orders", "lineitem", "supplier", "nation", "region", "part")
-DS_TABLE_SHORT = {"DEEP": "deep", "SIFT": "sift", "SSN": "fb"}   # VAQ 템플릿 partsupp_deep 치환용
-DS_DIM = {"DEEP": 96, "SIFT": 128, "SSN": 256}
+DS_TABLE_SHORT = {                                        # VAQ 템플릿 partsupp_deep 치환용
+    "DEEP": "deep", "SIFT": "sift", "SSN": "fb",          # 단일 3종 sf=1/10/100 적재
+    "WIKI": "wiki", "YFCC": "yfcc",                       # 단일 2종 sf=1/10 (sf=100 미적재 honest exception)
+    "DEEP_SIFT": "deep_sift", "DEEP_WIKI": "deep_wiki",   # 다중 2종 sf=10 적재 (DEEP+YFCC/CC3M 별도 build 필요)
+}
+DS_DIM = {
+    "DEEP": 96, "SIFT": 128, "SSN": 256,
+    "WIKI": 768, "YFCC": 192,
+    "DEEP_SIFT": 224, "DEEP_WIKI": 864,
+}
 
 
 def kst() -> str:
@@ -181,6 +189,9 @@ def _prepare_session(cur, view_ddls: list[str], *, auto_explain: bool = False) -
     if auto_explain:
         cur.execute("LOAD 'auto_explain'")
     cur.execute("LOAD 'vector'")
+    # ★ 자원 점유 cap (5/20 carry — 다른 user 작업 점유 회피 + 측정 안정성)
+    cur.execute("SET work_mem = '256MB'")                  # default 4MB → 256MB (sort/hash 메모리)
+    cur.execute("SET max_parallel_workers_per_gather = 2") # default 2 (query 당 max worker 3 = leader + 2)
     for ddl in view_ddls:
         cur.execute(ddl)
 
@@ -431,7 +442,10 @@ def _dry_run(args) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description="실엔진 latency 측정 harness (TPC-H)")
     ap.add_argument("--query", required=True, choices=TPC_H_QUERIES, help="q3 / q5 / …")
-    ap.add_argument("--dataset", choices=["DEEP", "SIFT", "SSN"], default="DEEP")
+    ap.add_argument("--dataset",
+                    choices=["DEEP", "SIFT", "SSN", "WIKI", "YFCC",
+                             "DEEP_SIFT", "DEEP_WIKI"],
+                    default="DEEP")
     ap.add_argument("--sf", type=int, default=10)
     ap.add_argument("--sel", type=float, default=0.01)
     ap.add_argument("--query-id", type=int, default=0)
@@ -441,8 +455,9 @@ def main() -> None:
                     help="CaseB 결합 method 목록 (기본: 강한 13종)")
     ap.add_argument("--n-timed", type=int, default=15)
     ap.add_argument("--n-warmup", type=int, default=1)
-    ap.add_argument("--statement-timeout", default="600s",
-                    help="Phase 0 baseline latency 측정 후 재산정")
+    ap.add_argument("--statement-timeout", default="180s",
+                    help="cell timeout — sf=100 IO bound base 600s→180s 단축 (5/20 22:53). "
+                         "censoring 도달 시 None(None_count 기록)")
     ap.add_argument("--output", type=Path, default=Path("latency"))
     ap.add_argument("--dry-run", action="store_true",
                     help="서버 미접속 — SQL 변환·GUC·임시 VIEW DDL 검증")

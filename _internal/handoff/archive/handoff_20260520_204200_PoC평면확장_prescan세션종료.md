@@ -221,3 +221,30 @@ CLAUDE.md anchor 갱신: 본 handoff (`handoff_20260520_204200_PoC평면확장_p
 ---
 
 작성: 2026-05-20 20:42 KST — 본 세션 (PoC 평면 확장 Phase A prescan + 자문 메일 _202200 최신화 + 4 엔진 future work framing 확정) 종료. **핵심 = (1) DEEP sf=1 PoC 무의미 폐기, (2) DEEP sf=100 시간 risk 정량 (server background 진행 중, 다음 세션 회수), (3) Track B 폐기, (4) 자문 메일 사용자 발송 대기**. → 다음 = server prescan 결과 회수 + Track A 평면 확정 (사용자 결정) + Phase B 측정 launch + 5/22 박광현 미팅 + 5/24 자문 회신 + 5/26 PPTX + 5/27+29 발표 + 5/28 12:00 포스터 + 6/5 전시회 + 6/10 박광현 마지막 세미나 + 6/11 보고서·상호평가.
+
+---
+
+## ★ 5/21 00:00 carry update (다음 세션 — pgvector 평면 확장 본격 launch)
+
+본 handoff 의 일부 carry 가 5/20 22:00 이후 사용자 결정으로 변경됨:
+
+1. **자문 메일 _202200**: ~~미발송·사용자 발송 대기~~ → **5/20 22:34 박세은 발송 완료** (보고서/슬라이드/포스터/팜플렛/표지 첨부, 5/24 회신 base).
+
+2. **4 엔진 통합 PoC framing**: ~~future work 정직 framing~~ → **본격 실측 진행** (사용자 5/20 22:53/23:54 명시). 단 순서 = (1) pgvector 완전 (측정+분석+자료) → (2) 4 엔진 빌드/측정. 5/27 발표 = pgvector 단독, 6/11 보고서 = pgvector + 4 엔진 통합.
+
+3. **DEEP sf=100 1 cell**: ~~12h hang~~ → 자연 종료. Phase B/C 평면 확장 launch.
+
+4. **측정 매트릭스**: RQ3 v13 1508 수준 — 단일 5종 (DEEP/SIFT/SSN/WIKI/YFCC) + 다중 2종 (DEEP+SIFT/DEEP+WIKI sf=10) × sf 1/10/100 × 4 q × 3 sel = 160 신규 cell × 4 엔진. 자원 cap (systemd-run MemoryMax=50G × 4 병렬·watchdog 5min) 양보 정책 적용.
+
+5. **권한 연장**: ~~5/21 cutoff~~ → **6/11 까지 박세은 5/20 23:46 카톡 발송** (5/21 응답 base).
+
+6. **신규 plan**: `~/.claude/plans/mossy-fluttering-hennessy.md` (ExitPlanMode 5/20 23:38 승인, framing 단순화 + 자원 4 병렬 적극 + 6/11 권한 base).
+
+7. **신규 측정·빌드 산출 (5/21 00:00 시점 진행 중)**:
+   - `latency/phase4_extension/` (server, estimates 진행 중 ~5/21 01:20 ETA)
+   - `launch_phase4_measure.sh` (B2/B3/C/B4 wrap, 4 병렬·sf=100 2 병렬)
+   - `auto_launch_b2_after_b1.sh` (B1 종료 → B/C sequential auto-launch daemon)
+   - `resource_watchdog.sh` (5min 주기 SIGSTOP/SIGCONT daemon)
+   - `measure_latency_realengine.py` + `gen_latency_estimates.py` 9 dataset 확장 (md5 동기화)
+
+본 _204200 본은 5/21 신규 handoff 생성 시 archive 이동 예정.

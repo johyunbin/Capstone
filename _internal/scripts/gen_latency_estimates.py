@@ -56,9 +56,22 @@ PAPER_SELECTIVITIES = (0.001, 0.01, 0.10)   # paper Fig 13 verbatim
 BUDGET = 385                                # paper Eq 1 초기 sample size
 EST_TRIALS = 10                             # 추정치 안정화용 평균 draw 수
 
-DS_TABLE_SHORT = {"DEEP": "deep", "SIFT": "sift", "SSN": "fb"}
-DS_ALIAS = {"DEEP": "DEEP", "SIFT": "SIFT", "SSN": "SSN"}
-DS_DIM = {"DEEP": 96, "SIFT": 128, "SSN": 256}
+DS_TABLE_SHORT = {                                        # partsupp_* PG 테이블명 prefix
+    "DEEP": "deep", "SIFT": "sift", "SSN": "fb",
+    "WIKI": "wiki", "YFCC": "yfcc",
+    "DEEP_SIFT": "deep_sift", "DEEP_WIKI": "deep_wiki", "DEEP_YFCC": "deep_yfcc",
+}
+DS_ALIAS = {                                              # RQ1 cache 파일명 매칭 (query_pool_{ALIAS}_sf*.parquet)
+    "DEEP": "DEEP", "SIFT": "SIFT", "SSN": "SSN",
+    "WIKI": "WIKI", "YFCC": "YFCC",
+    "DEEP_SIFT": "DEEP_SIFT_CONCAT", "DEEP_WIKI": "DEEP_WIKI_CONCAT",
+    "DEEP_YFCC": "DEEP_YFCC_CONCAT",
+}
+DS_DIM = {
+    "DEEP": 96, "SIFT": 128, "SSN": 256,
+    "WIKI": 768, "YFCC": 192,
+    "DEEP_SIFT": 224, "DEEP_WIKI": 864, "DEEP_YFCC": 288,
+}
 CACHE_RQ1 = Path("/mnt/hdd0/home/capstone2026/cache/rq1")
 
 
@@ -129,8 +142,12 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
             D = float(match.iloc[0]["D_target"])
             true_card = float(match.iloc[0]["true_cardinality"])
             # est_b1 — est_trials회 draw 평균 (Bernoulli 분산 큼 → 안정화)
+            # 1단계 fix (5/21): all_vecs 전달 → 2단계 strata 캐시 (cluster당 500 cap,
+            #   큰 cluster 과소대표 corr -0.98) 우회, 전체 벡터 직접 random sample.
+            #   measure_paper_exact.py L469·L1197 의 v13 메인 캠페인과 동일 통일.
             est_b1 = float(np.mean([
-                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng, budget=BUDGET)
+                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng,
+                                      budget=BUDGET, all_vecs=all_vecs)
                 for _ in range(est_trials)]))
             for m in ok_methods:
                 s_m, sz_m = method_cache[m]
@@ -164,7 +181,10 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="VAQ 카디널리티 추정치 생성 (Phase 1)")
-    ap.add_argument("--dataset", choices=["DEEP", "SIFT", "SSN"], default="DEEP")
+    ap.add_argument("--dataset",
+                    choices=["DEEP", "SIFT", "SSN", "WIKI", "YFCC",
+                             "DEEP_SIFT", "DEEP_WIKI", "DEEP_YFCC"],
+                    default="DEEP")
     ap.add_argument("--sf", type=int, default=10)
     ap.add_argument("--n-qvec", type=int, default=30, help="query pool 앞 N개 벡터")
     ap.add_argument("--methods", nargs="+", default=list(DEFAULT_CASEB_METHODS),

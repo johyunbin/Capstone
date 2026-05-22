@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>sf=10 데이터셋 일반화 — 발표 슬라이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --navy:#1E3A5F;        /* deck_v21 실측 */
+    --ink:#1E293B;
+    --blue:#1BACED;
+    --blue-soft:#E8F1F8;
+    --green:#10B981;
+    --gold:#B98526;
+    --gold-soft:#FBF3E1;
+    --red:#CF4A3C;
+    --g700:#3A4658;
+    --g500:#637389;
+    --g400:#93A0AF;
+    --g200:#E4E8ED;
+    --g100:#F4F6F8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#DDE1E6;}
+  .slide{
+    width:1280px;height:720px;background:var(--bg);position:relative;overflow:hidden;
+    font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased;
+  }
+  /* ── header ── */
+  .head{position:absolute;top:38px;left:56px;right:56px;}
+  .eyebrow{
+    display:flex;align-items:center;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+    letter-spacing:.05em;color:var(--green);
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+  .headline{
+    margin-top:10px;font-size:34px;font-weight:700;line-height:1.2;
+    color:var(--navy);letter-spacing:-0.02em;
+  }
+  .rule{width:60px;height:3px;background:var(--green);margin-top:13px;border-radius:1px;}
+  /* ── stage (본문, 세로 중앙) ── */
+  .stage{
+    position:absolute;left:56px;right:56px;top:158px;bottom:104px;
+    display:flex;align-items:center;
+  }
+  .body{width:100%;display:flex;gap:22px;align-items:stretch;}
+  .col-left{flex:1.6;display:flex;flex-direction:column;gap:13px;}
+  .col-right{flex:1;display:flex;flex-direction:column;gap:13px;}
+  /* ── dataset cards ── */
+  .cards{display:flex;gap:13px;}
+  .card{
+    flex:1;background:#fff;border:1px solid var(--g200);border-top:3px solid var(--navy);
+    border-radius:2px;padding:17px 17px 15px;
+  }
+  .ds-name{
+    font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;
+    letter-spacing:.05em;color:var(--g700);
+  }
+  .ds-cap{font-size:12px;font-weight:500;color:var(--g500);margin-top:15px;}
+  .ds-pct{
+    margin-top:3px;font-family:'Inter',sans-serif;font-weight:800;
+    font-size:50px;line-height:1;color:var(--navy);letter-spacing:-0.04em;
+    font-feature-settings:'tnum' 1,'lnum' 1;
+  }
+  .ds-pct .unit{font-size:23px;font-weight:700;margin-left:2px;}
+  .bar{
+    margin-top:13px;height:8px;background:var(--blue-soft);border-radius:4px;overflow:hidden;
+  }
+  .bar .fill{height:100%;background:var(--blue);border-radius:4px;}
+  .ds-note{
+    margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--g500);
+  }
+  /* ── summary strip ── */
+  .summary{
+    background:var(--g100);border:1px solid var(--g200);border-radius:2px;
+    padding:12px 17px;font-size:13.5px;color:var(--g700);line-height:1.55;
+  }
+  .summary b{color:var(--navy);font-weight:700;}
+  .summary .num{font-family:'Inter',sans-serif;font-weight:700;font-feature-settings:'tnum' 1;}
+  /* ── right panels ── */
+  .panel{
+    background:#fff;border:1px solid var(--g200);border-radius:2px;
+    padding:16px 18px;display:flex;flex-direction:column;justify-content:center;
+  }
+  .panel-latency{flex:1.25;border-top:3px solid var(--green);}
+  .panel-exc{flex:1;border-top:3px solid var(--gold);background:var(--gold-soft);}
+  .p-label{font-size:12.5px;font-weight:600;color:var(--g700);}
+  .panel-exc .p-label{color:var(--gold);}
+  .p-big{
+    margin-top:5px;font-family:'Inter',sans-serif;font-weight:800;
+    font-size:46px;line-height:1;color:var(--green);letter-spacing:-0.04em;
+    font-feature-settings:'tnum' 1;
+  }
+  .p-big .unit{font-size:22px;font-weight:700;}
+  .p-text{margin-top:10px;font-size:12.5px;line-height:1.62;color:var(--ink);}
+  .panel-exc .p-text{margin-top:7px;}
+  .p-text b{color:var(--navy);font-weight:600;}
+  /* ── implication bar (바닥 고정) ── */
+  .implication{
+    position:absolute;left:56px;right:56px;bottom:34px;
+    background:var(--navy);border-left:4px solid var(--red);border-radius:2px;
+    padding:14px 22px;color:#fff;font-size:14.5px;line-height:1.5;
+  }
+  .implication b{font-weight:700;color:#fff;}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="eyebrow"><span class="dot"></span>결과 · 데이터셋 일반화</div>
+    <h1 class="headline">엔진 검증 결론이 세 데이터셋에서 그대로 재현된다</h1>
+    <div class="rule"></div>
+  </div>
+
+  <div class="stage">
+    <div class="body">
+      <div class="col-left">
+        <div class="cards">
+          <div class="card">
+            <div class="ds-name">SIFT</div>
+            <div class="ds-cap">정답 계획 회복률</div>
+            <div class="ds-pct">94.2<span class="unit">%</span></div>
+            <div class="bar"><div class="fill" style="width:94.2%"></div></div>
+            <div class="ds-note">11 / 12 cell · 154 paired</div>
+          </div>
+          <div class="card">
+            <div class="ds-name">SSN</div>
+            <div class="ds-cap">정답 계획 회복률</div>
+            <div class="ds-pct">92.9<span class="unit">%</span></div>
+            <div class="bar"><div class="fill" style="width:92.9%"></div></div>
+            <div class="ds-note">11 / 12 cell · 112 paired</div>
+          </div>
+          <div class="card">
+            <div class="ds-name">YFCC</div>
+            <div class="ds-cap">정답 계획 회복률</div>
+            <div class="ds-pct">86.6<span class="unit">%</span></div>
+            <div class="bar"><div class="fill" style="width:86.6%"></div></div>
+            <div class="ds-note">11 / 12 cell · 112 paired</div>
+          </div>
+        </div>
+        <div class="summary">
+          신규 세 데이터셋 통합 — <span class="num">378</span>개 paired 비교에서 정답 계획 회복
+          <b><span class="num">91.5%</span></b>, paired 비교의 <b><span class="num">94.7%</span></b>가
+          무시 가능한 효과크기(small). DEEP도 동일 paired 척도에서 <b><span class="num">93.2%</span></b> —
+          네 데이터셋이 같은 수준이다.
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="panel panel-latency">
+          <div class="p-label">실행 시간 변동에 대한 조건의 설명력</div>
+          <div class="p-big">0.0<span class="unit">%</span></div>
+          <div class="p-text"><b>네 데이터셋 통합 분산 분해</b> — 어느 추정을 주입해도
+            실행 시간은 통계적으로 동등하다.</div>
+        </div>
+        <div class="panel panel-exc">
+          <div class="p-label">관측된 예외 — WIKI (768차원)</div>
+          <div class="p-text">고차원 SeqScan 실행 시간이 시간 제한(180초)을 초과해 측정 보류.
+            sf=1·sf=100·다중 벡터 평면은 5/23 이후 측정.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="implication">
+    결합 추정의 엔진 적용 검증 효과는 <b>데이터셋 수준에서 일반화된다</b> — 정답 계획 회복과 실행 시간 동등성이 네 데이터셋에서 재현
+  </div>
+</div>
+</body>
+</html>

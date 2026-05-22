@@ -37,9 +37,10 @@ except ImportError:
     np = None
 
 try:
-    from scipy.stats import wilcoxon
+    from scipy.stats import wilcoxon, rankdata
 except ImportError:
     wilcoxon = None
+    rankdata = None
 
 import csv
 import math
@@ -164,9 +165,11 @@ def _bootstrap_ci_paired_diff(a, b, n_boot: int = BOOTSTRAP_N,
 
 
 def _hedges_g_paired(a, b) -> float:
-    """Hedges' g (paired): mean(a − b) / sd(a − b), 작은 표본 보정 j = 1 − 3/(4n − 9).
+    """Hedges' g (paired): mean(a − b) / sd(a − b), 소표본 보정 j = 1 − 3/(4·df − 1).
 
-    sd 가 0 인 경우 0.0. 표본 < 2 시 nan.
+    paired difference 의 one-sample 효과크기 → df = n − 1 → j = 1 − 3/(4n − 5)
+    (Codex T4 검증 — 종전 4n−9 는 df=n−2 꼴 오류, 소표본 g 를 과소추정). sd=0 이면
+    mean=0→0.0(무효과), mean≠0→완전 일관 효과라 g 정의 불가→nan. 표본 < 2 시 nan.
     """
     if np is None or len(a) < 2 or len(b) < 2:
         return float("nan")
@@ -176,39 +179,45 @@ def _hedges_g_paired(a, b) -> float:
     n = len(diff)
     sd = float(np.std(diff, ddof=1))
     if sd == 0.0:
-        return 0.0
+        return 0.0 if float(np.mean(diff)) == 0.0 else float("nan")
     d = float(np.mean(diff)) / sd
-    j = 1.0 - 3.0 / (4 * n - 9) if (4 * n - 9) > 0 else 1.0
+    j = 1.0 - 3.0 / (4 * n - 5) if (4 * n - 5) > 0 else 1.0
     return d * j
 
 
-def _cliffs_delta_paired(a, b) -> float:
-    """Cliff's δ (paired): (#a > b − #a < b) / n. 범위 [−1, 1].
+def _rank_biserial_paired(a, b) -> float:
+    """matched-pairs rank-biserial 상관 — paired Wilcoxon signed-rank 의 표준 효과크기.
 
-    같은 짝(i 번째 rep) 비교 — independent 2-sample (cartesian) 아님.
+    r = (W⁺ − W⁻) / (W⁺ + W⁻), W± = |차이| 순위합(부호별, 0 차이 제외). 범위 [−1, 1].
+    (Codex T4 — 종전 _cliffs_delta_paired 는 크기·순위를 버린 paired sign-dominance 라
+    표준 Cliff's δ 가 아니었다 → paired 설계의 정식 효과크기로 교체.)
     """
-    if np is None or len(a) < 1 or len(b) < 1:
+    if np is None or rankdata is None or len(a) < 2 or len(b) < 2:
         return float("nan")
-    aa = np.asarray(a, dtype=float)
-    bb = np.asarray(b, dtype=float)
-    gt = int(np.sum(aa > bb))
-    lt = int(np.sum(aa < bb))
-    return (gt - lt) / len(aa)
+    diff = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    diff = diff[diff != 0.0]                       # 0 차이 제외 (signed-rank 표준)
+    if diff.size == 0:
+        return 0.0
+    ranks = rankdata(np.abs(diff))
+    w_pos = float(ranks[diff > 0].sum())
+    w_neg = float(ranks[diff < 0].sum())
+    total = w_pos + w_neg
+    return (w_pos - w_neg) / total if total > 0 else 0.0
 
 
 def paired_stats(results: list[dict]) -> list[dict]:
     """cell × (anchor, variant) paired diff + Wilcoxon signed-rank + 효과크기·CI.
 
     measure_latency_realengine.py 는 매 rep 마다 16 variant 를 fixed-seed shuffle 로
-    1회씩 측정 → exec_ms[i] 는 같은 epoch (같은 OS state) 의 i 번째 측정. paired test 적합.
+    1회씩 측정 → exec_ms[i] 는 같은 epoch 의 i 번째 측정. paired test 적합.
 
-    anchor:
-      · baseline → 각 비-baseline variant (15) : speedup 유의성
-      · B1       → 각 비-B1, 비-baseline variant (14) : CaseB·oracle 의 B1 대비 가치
-    holm 보정은 anchor 군 내에서. 효과크기는 anchor − variant 의 paired diff 기반:
-      · Hedges' g (paired): mean(diff)/sd(diff), 작은 표본 보정
-      · Cliff's δ (paired): (#a>b − #a<b) / n
-      · bootstrap CI: paired diff 의 mean 에 대한 2.5/97.5 percentile
+    ★ 정합성 게이트 2종 (Codex T4 교차검증 반영):
+      · injection 게이트 — injection_fired=False 인 비-baseline variant 는 주입 미발동
+        (기본 selectivity 플랜) → 측정 무효 → 페어링서 제외 (이 모듈 docstring 상단 원칙).
+      · 페어링 유효성 — exec_ms 는 성공 run 만 담기므로 timeout 이 섞이면 a[i]↔b[i] 가
+        같은 rep 이 아니다. 양쪽 n_timeout=0 일 때만 paired 통계를 산출하고, 그 외에는
+        pairing_valid=False + paired 통계 NaN (anchor/variant 중앙값만 보고).
+    holm 보정은 anchor 군 내 유효 p 값만으로.
     """
     if wilcoxon is None:
         return []
@@ -216,53 +225,76 @@ def paired_stats(results: list[dict]) -> list[dict]:
     for r in results:
         by = {_variant_label(v): v for v in r["variants"]}
         cell = cell_label(r)
-        valid = {lab: v["exec_ms"] for lab, v in by.items()
-                 if v.get("exec_ms") and len(v["exec_ms"]) >= 2}
+        # 페어링 후보: exec_ms ≥2 + (baseline 이거나 injection 발동) — 주입 미발동 treatment 제외
+        valid: dict[str, dict] = {}
+        for lab, v in by.items():
+            ex = v.get("exec_ms")
+            if not ex or len(ex) < 2:
+                continue
+            if v["condition"] != "baseline" and not v.get("injection_fired", False):
+                continue
+            valid[lab] = v
         for anchor in ("baseline", "B1"):
             if anchor not in valid:
                 continue
-            a = valid[anchor]
-            for lab, b in valid.items():
+            va = valid[anchor]
+            a = va["exec_ms"]
+            for lab, vb in valid.items():
                 if lab == anchor or (anchor == "B1" and lab == "baseline"):
                     continue
+                b = vb["exec_ms"]
                 n = min(len(a), len(b))
                 if n < 2:
                     continue
-                diffs = [a[i] - b[i] for i in range(n)]
-                med_diff = statistics.median(diffs)
-                try:
-                    w, p = wilcoxon(a[:n], b[:n], alternative="two-sided",
-                                    zero_method="wilcox")
-                    w, p = float(w), float(p)
-                except Exception:
-                    w, p = float("nan"), float("nan")
-                ci_lo, ci_hi = _bootstrap_ci_paired_diff(a[:n], b[:n])
-                hedges_g = _hedges_g_paired(a[:n], b[:n])
-                cliffs_d = _cliffs_delta_paired(a[:n], b[:n])
+                # rep 페어링 유효성 — 양쪽 timeout 0 일 때만 index 페어링 = rep 페어링
+                pairing_valid = (va.get("n_timeout", 0) == 0 and
+                                 vb.get("n_timeout", 0) == 0 and
+                                 len(a) == len(b))
+                anc_med = statistics.median(a[:n])
+                var_med = statistics.median(b[:n])
+                if pairing_valid:
+                    diffs = [a[i] - b[i] for i in range(n)]
+                    med_diff = statistics.median(diffs)
+                    try:
+                        w, p = wilcoxon(a[:n], b[:n], alternative="two-sided",
+                                        zero_method="wilcox")
+                        w, p = float(w), float(p)
+                    except Exception:
+                        w, p = float("nan"), float("nan")
+                    ci_lo, ci_hi = _bootstrap_ci_paired_diff(a[:n], b[:n])
+                    hedges_g = _hedges_g_paired(a[:n], b[:n])
+                    rank_bis = _rank_biserial_paired(a[:n], b[:n])
+                else:
+                    med_diff = w = p = float("nan")
+                    ci_lo = ci_hi = hedges_g = rank_bis = float("nan")
                 rows.append({
                     "cell": cell, "anchor": anchor, "variant": lab, "n_pairs": n,
+                    "pairing_valid": pairing_valid,
+                    "anchor_n_timeout": int(va.get("n_timeout", 0)),
+                    "variant_n_timeout": int(vb.get("n_timeout", 0)),
                     "median_diff_ms": med_diff,
-                    "anchor_med_ms": statistics.median(a[:n]),
-                    "variant_med_ms": statistics.median(b[:n]),
+                    "anchor_med_ms": anc_med,
+                    "variant_med_ms": var_med,
                     "w_stat": w, "p_value": p,
                     "ci_lo_ms": ci_lo, "ci_hi_ms": ci_hi,
-                    "hedges_g": hedges_g, "cliffs_delta": cliffs_d,
+                    "hedges_g": hedges_g, "rank_biserial": rank_bis,
                 })
-    # holm 보정 (anchor 별 분리)
+    # holm 보정 (anchor 별 분리 — 유효 p 값만 family 에 포함)
     for anchor in ("baseline", "B1"):
-        sub = [r for r in rows if r["anchor"] == anchor]
-        sub_sorted = sorted(sub, key=lambda r: (r["p_value"] if r["p_value"] == r["p_value"] else 2.0))
+        sub = [r for r in rows
+               if r["anchor"] == anchor and r["p_value"] == r["p_value"]]
+        sub_sorted = sorted(sub, key=lambda r: r["p_value"])
         n = len(sub_sorted)
         prev = 0.0
         for rank, r in enumerate(sub_sorted, 1):
-            if r["p_value"] != r["p_value"]:  # NaN
-                r["p_holm"] = float("nan"); r["holm_rank"] = rank
-                continue
             adj = min(1.0, r["p_value"] * (n - rank + 1))
             adj = max(adj, prev)              # 단조증가 강제
             prev = adj
             r["p_holm"] = adj
             r["holm_rank"] = rank
+    for r in rows:                            # 무효(NaN p) 행 — p_holm 미설정분
+        r.setdefault("p_holm", float("nan"))
+        r.setdefault("holm_rank", -1)
     return rows
 
 
@@ -297,21 +329,21 @@ def print_paired_stats(rows: list[dict]) -> None:
             if not sub:
                 continue
             g_arr = [r["hedges_g"] for r in sub if r["hedges_g"] == r["hedges_g"]]
-            d_arr = [r["cliffs_delta"] for r in sub if r["cliffs_delta"] == r["cliffs_delta"]]
+            rb_arr = [r["rank_biserial"] for r in sub if r["rank_biserial"] == r["rank_biserial"]]
             ci_arr = [r for r in sub
                       if r["ci_lo_ms"] == r["ci_lo_ms"] and r["ci_hi_ms"] == r["ci_hi_ms"]]
             n_large_g = sum(1 for g in g_arr if abs(g) >= 0.8)
             n_med_g = sum(1 for g in g_arr if 0.5 <= abs(g) < 0.8)
             n_small_g = sum(1 for g in g_arr if abs(g) < 0.5)
-            n_large_d = sum(1 for d in d_arr if abs(d) >= 0.474)
-            n_med_d = sum(1 for d in d_arr if 0.33 <= abs(d) < 0.474)
-            n_small_d = sum(1 for d in d_arr if abs(d) < 0.33)
+            n_large_r = sum(1 for x in rb_arr if abs(x) >= 0.5)
+            n_med_r = sum(1 for x in rb_arr if 0.3 <= abs(x) < 0.5)
+            n_small_r = sum(1 for x in rb_arr if abs(x) < 0.3)
             n_ci_excludes_zero = sum(1 for r in ci_arr
                                      if r["ci_lo_ms"] * r["ci_hi_ms"] > 0)
             print(f"  [{anchor:<8}] Hedges' g: large(|g|≥0.8)={n_large_g} / "
                   f"medium(0.5≤|g|<0.8)={n_med_g} / small(|g|<0.5)={n_small_g}")
-            print(f"  [{anchor:<8}] Cliff's δ: large(|δ|≥0.474)={n_large_d} / "
-                  f"medium(0.33≤|δ|<0.474)={n_med_d} / small(|δ|<0.33)={n_small_d}")
+            print(f"  [{anchor:<8}] rank-biserial r: large(|r|≥0.5)={n_large_r} / "
+                  f"medium(0.3≤|r|<0.5)={n_med_r} / small(|r|<0.3)={n_small_r}")
             print(f"  [{anchor:<8}] bootstrap 95% CI ∌ 0 (효과 비제로): "
                   f"{n_ci_excludes_zero}/{len(ci_arr)}")
 
@@ -319,10 +351,11 @@ def print_paired_stats(rows: list[dict]) -> None:
 def export_paired_csv(rows: list[dict], out_path: Path) -> None:
     if not rows:
         return
-    cols = ["cell", "anchor", "variant", "n_pairs", "median_diff_ms",
-            "anchor_med_ms", "variant_med_ms", "w_stat", "p_value",
-            "p_holm", "holm_rank",
-            "ci_lo_ms", "ci_hi_ms", "hedges_g", "cliffs_delta"]
+    cols = ["cell", "anchor", "variant", "n_pairs",
+            "pairing_valid", "anchor_n_timeout", "variant_n_timeout",
+            "median_diff_ms", "anchor_med_ms", "variant_med_ms",
+            "w_stat", "p_value", "p_holm", "holm_rank",
+            "ci_lo_ms", "ci_hi_ms", "hedges_g", "rank_biserial"]
     with out_path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
@@ -666,10 +699,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="엔진 적용 검증 실험 분석 (Phase 3)")
     ap.add_argument("--input", type=Path, default=Path("latency"),
                     help="measure_latency_realengine.py 산출 JSON 디렉토리")
-    ap.add_argument("--output", type=Path, default=Path("latency/figures"))
+    ap.add_argument("--output", type=Path, default=None,
+                    help="figure·paired_stats 출력 dir (기본: <input>/figures — PAIRED 경로 규약)")
     ap.add_argument("--self-test", action="store_true",
                     help="서버 미접속 — 합성 데이터로 분석 로직 검증")
     args = ap.parse_args()
+    if args.output is None:                       # 기본 출력 = 입력 dir 의 figures/ (stats_poc PAIRED 규약)
+        args.output = args.input / "figures"
 
     if args.self_test:
         results = _mock_results()

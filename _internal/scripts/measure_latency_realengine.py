@@ -258,11 +258,17 @@ def _parse_capture(notices: list[str], marker: str):
 
 
 def _capture_plan(query: str, qvec, D: float, view_ddls: list[str],
-                  condition: str, injected_card, statement_timeout: str) -> dict:
+                  condition: str, injected_card, statement_timeout: str,
+                  *, analyze: bool = False) -> dict:
     """새 세션 1회 — auto_explain 으로 pass-2 실행 플랜 캡처.
 
     auto_explain LOG 를 client_min_messages=log 로 클라이언트에 받아 파싱한다.
     실패해도 치명적이지 않다 (latency 가 1차 지표) — plan_json=None 으로 반환.
+
+    analyze=True 면 auto_explain.log_analyze/log_timing 을 켜 노드별 Actual Total Time·
+    Actual Rows 가 plan_json 에 포함된다. ★ 단 instrumentation 오버헤드가 실행시간을
+    부풀리므로 이 캡처의 plan_duration_ms 는 정직한 latency 가 아니다 — 노드 시간 '분해'
+    용으로만 쓰고, latency 수치는 별도 비-analyze timed 측정(_run_timed)을 쓴다.
     """
     marker = f"cap_{uuid.uuid4().hex[:12]}"
     sql = build_vaq_sql(query, qvec, D, marker=marker)
@@ -277,7 +283,12 @@ def _capture_plan(query: str, qvec, D: float, view_ddls: list[str],
             cur.execute("SET auto_explain.log_min_duration = 0")
             cur.execute("SET auto_explain.log_format = 'json'")
             cur.execute("SET auto_explain.log_nested_statements = 'off'")
-            cur.execute("SET auto_explain.log_analyze = off")
+            if analyze:
+                cur.execute("SET auto_explain.log_analyze = on")
+                cur.execute("SET auto_explain.log_timing = on")
+                cur.execute("SET auto_explain.log_buffers = on")
+            else:
+                cur.execute("SET auto_explain.log_analyze = off")
             for g in gucs_for(condition, injected_card):
                 cur.execute(g)
             cur.execute("SET plan_cache_mode = force_custom_plan")
@@ -310,12 +321,16 @@ def _iqr(vals: list[float]):
 
 def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
                  est_b1, caseb_by_method, *, n_timed, n_warmup, statement_timeout,
-                 seed=20260520) -> dict:
+                 seed=20260520, analyze_plans=False, capture_only=False) -> dict:
     """한 cell(query×dataset×sf×sel×query_id)의 전 variant 측정.
 
     variant = (condition, method). 매 반복 variant 순서를 무작위 셔플 — 같은 반복 내
     모든 variant 인접 실행(matched) + 캐시 워밍 순서 편향 완화. 플랜 캡처는 timed 루프
     밖에서 variant 당 1회 (auto_explain 오버헤드가 timing 을 오염하지 않도록 분리).
+
+    analyze_plans=True 면 플랜 캡처를 EXPLAIN ANALYZE 모드로 — 노드별 Actual Total Time
+    포함 (Phase 3b 노드 분해용). capture_only=True 면 timed 루프를 건너뛰고 플랜만 캡처
+    (latency 무측정 — exec_ms 빈 리스트).
     """
     sql = build_vaq_sql(query, qvec, D)
     view_ddls = temp_view_ddls(dataset, sf)
@@ -333,7 +348,7 @@ def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
     captured: dict[tuple, dict] = {}
     for (c, m, inj) in variants:
         captured[(c, m)] = _capture_plan(query, qvec, D, view_ddls, c, inj,
-                                         statement_timeout)
+                                         statement_timeout, analyze=analyze_plans)
         cap = captured[(c, m)]
         print(f"[{kst()}]   plan-capture {c}/{m or '-'}: "
               f"injection_fired={cap['injection_fired']} "
@@ -343,7 +358,9 @@ def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
     samples = {k: [] for k in keys}
     timeouts = {k: 0 for k in keys}
     rng = random.Random(seed)
-    for rep in range(n_warmup + n_timed):
+    if capture_only:
+        print(f"[{kst()}]   capture-only — timed 루프 생략")
+    for rep in range(0 if capture_only else n_warmup + n_timed):
         order = keys[:]
         rng.shuffle(order)
         for k in order:
@@ -459,6 +476,11 @@ def main() -> None:
                     help="cell timeout — sf=100 IO bound base 600s→180s 단축 (5/20 22:53). "
                          "censoring 도달 시 None(None_count 기록)")
     ap.add_argument("--output", type=Path, default=Path("latency"))
+    ap.add_argument("--analyze-plans", action="store_true",
+                    help="플랜 캡처를 EXPLAIN ANALYZE 모드로 (노드별 Actual Total Time) — "
+                         "출력 파일명에 _analyze suffix")
+    ap.add_argument("--capture-only", action="store_true",
+                    help="timed 루프 생략 — 플랜만 캡처 (latency 무측정)")
     ap.add_argument("--dry-run", action="store_true",
                     help="서버 미접속 — SQL 변환·GUC·임시 VIEW DDL 검증")
     args = ap.parse_args()
@@ -480,11 +502,13 @@ def main() -> None:
         args.query, args.dataset, args.sf, args.sel, args.query_id,
         qvec, D, true_card, est_b1, caseb,
         n_timed=args.n_timed, n_warmup=args.n_warmup,
-        statement_timeout=args.statement_timeout)
+        statement_timeout=args.statement_timeout,
+        analyze_plans=args.analyze_plans, capture_only=args.capture_only)
 
     args.output.mkdir(parents=True, exist_ok=True)
+    suffix = "_analyze" if (args.analyze_plans or args.capture_only) else ""
     out = args.output / (f"latency_tpc_h_{args.query}_{args.dataset}"
-                         f"_sf{args.sf}_sel{args.sel}_qid{args.query_id}.json")
+                         f"_sf{args.sf}_sel{args.sel}_qid{args.query_id}{suffix}.json")
     out.write_text(json.dumps(result, indent=2, default=str))
     print(f"[{kst()}] saved {out}")
 

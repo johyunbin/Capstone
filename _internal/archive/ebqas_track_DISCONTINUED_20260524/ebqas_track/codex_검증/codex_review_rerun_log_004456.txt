@@ -1,0 +1,46 @@
+종합 verdict: **concern**. 단독 smoke 1 cell은 직접 함수 호출 기준으로는 가능하지만, 24 cell sequential 진입 전에는 recovery 의미, paired invariant, 주석/spec 불일치 3축은 정리하는 편이 맞습니다. “EB-QAS가 B1보다 낫다”는 여전히 측정 전 가설입니다.
+
+검증 실행: `python3 _internal/scripts/test_ebqas.py`는 **10/10 PASS**. `pytest`는 코드 실패가 아니라 read-only sandbox의 temp dir 부재로 수집 전 실패했습니다.
+
+```text
+FileNotFoundError: [Errno 2] No usable temporary directory found in ['/var/folders/.../T/', '/tmp', '/var/tmp', '/usr/tmp', '/Users/hyunbin/Capstone']
+```
+
+**(a) 수학·산술 정확성 — verdict: concern, 신뢰도 0.86**  
+Finding 1. `beta_credible_interval`, posterior `alpha+s / beta+n-s`, `c_hat = total_rows * p_hat`, EB update 식은 spec과 대체로 일치합니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1662), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1731), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1827).  
+Finding 2. `L_log`/`L_stop` 분리는 되어 있지만, T1은 `L_raw=0`에서 `q_post_log = inf`를 요구하는 반면 코드는 `q_log_floor`로 유한값을 반환합니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1741).  
+Finding 3. `params.n_cap`은 현재 코드에서 honor됩니다. 다만 `gamma`는 공개 hyperparam인데 실제 로직에서는 unused입니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1599).  
+정정 권고: `q_post_log`를 진짜 `inf`로 돌릴지, finite logging floor를 새 spec으로 확정할지 하나로 통일하십시오. `gamma`는 제거하거나 실제 감쇠 의미를 구현해야 합니다.
+
+**(b) 안전장치 동작 — verdict: concern, 신뢰도 0.84**  
+Finding 1. explicit mode switch 자체는 구현되어 있습니다. 연속 mismatch threshold 도달 시 `no_history`, Beta(1,1), `early_stop=False`, update skip으로 전환됩니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1807).  
+Finding 2. 그러나 recovery는 현재 코드상 도달 불가능합니다. `prior_mode == "no_history"`면 함수 초입에서 return하므로, 뒤의 `stable_query_count >= n_recovery` 분기는 실행되지 않습니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1789), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1818).  
+Finding 3. `test_recovery_after_stable_streak`는 자동 recovery 대신 “수동 history 전환” 테스트로 의미가 바뀌어 T1의 recovery 요구를 검증하지 않습니다: [test_ebqas.py](/Users/hyunbin/Capstone/_internal/scripts/test_ebqas.py:194).  
+정정 권고: `no_history`에서도 stable counter만 shadow update하거나, recovery를 공식 폐기하고 spec/test 이름을 바꾸십시오. default `w_mismatch=1` drift test도 추가하는 것이 좋습니다.
+
+**(c) paired 비교 통제·schema — verdict: concern, 신뢰도 0.80**  
+Finding 1. EB-QAS의 seed와 query 순서는 기존 B1/CaseB 패턴과 맞습니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1917).  
+Finding 2. EB-QAS `query_results`는 핵심 필드를 담지만, B1/CaseB 기존 JSON에는 query-level row가 없어 실제 4-way invariant는 fallback 상태입니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:2164).  
+Finding 3. invariant가 cell/seed를 key에 넣기는 하지만, 값이 누락되어도 실패하지 않습니다. 현재 pass 테스트도 top-level `cell`·`seed` 없이 통과합니다: [test_ebqas.py](/Users/hyunbin/Capstone/_internal/scripts/test_ebqas.py:341).  
+정정 권고: EB-QAS 두 mode는 `cell`·`seed` 필수로 assert하고, B1/CaseB schema 확장 전에는 “4-way invariant 통과”가 아니라 “EB-QAS 2-mode invariant”로 표기하십시오.
+
+**(d) leakage 방지·prequential invariant — verdict: pass-with-concern, 신뢰도 0.84**  
+Finding 1. `ebqas_estimate` 전 state snapshot, read-only assert, 실행 후 update 순서는 prequential 원칙과 맞습니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1971).  
+Finding 2. `true_cardinality`는 estimation 결과 dict에 들어가지 않고, Q-error 계산 및 update 이후에만 쓰입니다.  
+Finding 3. group key는 `sel` label을 쓰지 않고 log-scale D bucket을 사용합니다. 다만 `template_id="default"`라 group이 과도하게 넓어질 수 있으므로 smoke에서 `n_groups / n_queries`를 기록해야 합니다.  
+정정 권고: smoke launch gate에 group 수, bucket별 true selectivity 분포, mode switch event를 포함하십시오.
+
+**(e) 5/23 평결 4축 호환성 — verdict: pass-with-concern, 신뢰도 0.87**  
+Finding 1. 코드에는 CaseB식 `(est_b1 + est_method) / 2`가 없습니다.  
+Finding 2. method library나 분포 사전 지식 호출도 없습니다. latency objective 필드도 없습니다.  
+Finding 3. 단 `EB-QAS-no-history`는 “B1 exact”가 아니라 Beta(1,1) smoothing을 쓰는 no-history posterior입니다. 해석을 B1 fallback과 혼동하면 통제군 의미가 흐려집니다.  
+정정 권고: label 또는 설명을 `Beta(1,1) no-history / no-stop ablation` 수준으로 좁히십시오.
+
+**(f) Exqutor 인용·코드 주석 verbatim — verdict: concern, 신뢰도 0.82**  
+Finding 1. 헤더의 spec path, 정본 anchor, 환각 회피 룰은 현재 파일 구조와 일치합니다.  
+Finding 2. 그러나 코드 주석은 recovery를 말하면서 동시에 “자동 회복 안 됨”을 말합니다. 이 상태는 verbatim cross-ref로 안전하지 않습니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1780).  
+Finding 3. `q_post_log`도 spec/test doc은 `inf`, 코드는 finite floor라 주석과 동작이 갈립니다.  
+정정 권고: header는 유지 가능하되, recovery와 `q_log_floor` 관련 주석/test명을 실제 정책에 맞춰 다시 고정하십시오.
+
+추가 운영 finding: `main()` CLI에는 `EB-QAS` mode가 아직 연결되어 있지 않습니다: [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:2238). smoke는 직접 함수 호출로 하거나 CLI mode를 추가해야 합니다.
+

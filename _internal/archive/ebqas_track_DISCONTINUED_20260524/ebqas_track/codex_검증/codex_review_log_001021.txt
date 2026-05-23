@@ -1,0 +1,64 @@
+종합 verdict: **concern**. 8개 단독 unit test는 통과했습니다. 다만 `pytest`는 read-only sandbox에서 `FileNotFoundError: No usable temporary directory found ...`로 수집 전 실패했고, `python3 _internal/scripts/test_ebqas.py` 단독 실행은 `8/8 PASS`였습니다. “EB-QAS가 B1보다 낫다”는 측정 전 가설로만 유지해야 합니다.
+
+**(a) 수학·산술 정확성 — concern, 신뢰도 0.86**
+
+Finding: `beta_credible_interval`, posterior `alpha+s / beta+n-s`, `c_hat = total_rows * p_hat`, EB update 식 자체는 spec과 일치합니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1662), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1725), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1814)
+
+Finding: `EBQASParams.n_cap`은 선언·출력되지만 실제 cap에는 반영되지 않습니다. `ebqas_estimate`는 `params.n_cap`이 아니라 `state.n_cap`만 씁니다. `params.n_cap=10` probe에서도 sample size가 385로 나왔습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1594), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1700)
+
+Finding: `q_log_floor`와 EB-QAS용 `gamma`는 파라미터로 노출되지만 현재 계산에 쓰이지 않습니다. 특히 `q_log_floor` 주석은 “inf 대신 사용”이라고 되어 있으나 코드는 `inf`를 반환합니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1593), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1735)
+
+정정 권고: `params.n_cap`을 state 생성 시 주입하거나 파라미터에서 제거하십시오. `q_log_floor`·`gamma`는 실제 로직에 반영하거나 dead param으로 명시 제거하고, `params.n_cap != 385` 회귀 테스트를 추가하는 것이 맞습니다.
+
+**(b) 안전장치 동작 — concern, 신뢰도 0.82**
+
+Finding: explicit mode switch 자체는 구현되어 있습니다. 3회 mismatch 시 `no_history`, Beta(1,1), `early_stop=False`, update skip으로 전환됩니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1794)
+
+Finding: 그러나 `no_history`가 실제로 history를 끄지는 않습니다. `ebqas_estimate`는 `prior_mode`와 무관하게 `state.alpha/beta`를 사용하고, `update_after_execution`도 `no_history` 상태에서 계속 alpha/beta/kappa를 갱신합니다. 즉 `EB-QAS-no-history`는 “no-history”가 아니라 “no-early-stop history posterior”에 가깝습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1725), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1812)
+
+Finding: unit test는 `w_mismatch=0` override로 mode switch mechanics만 검증합니다. default `w_mismatch=1`에서 drift/fallback 의미가 유지되는지, 그리고 `no_history`에서 prior가 중립으로 유지되는지는 검증하지 않습니다. [test_ebqas.py](/Users/hyunbin/Capstone/_internal/scripts/test_ebqas.py:66)
+
+정정 권고: `prior_mode=="no_history"`일 때 추정 prior를 Beta(1,1)로 고정하거나 update를 shadow/recovery counter로 분리하십시오. `EB-QAS-no-history`가 alpha/beta를 누적하지 않는 테스트를 추가해야 합니다.
+
+**(c) paired 비교 통제·row schema — concern, 신뢰도 0.78**
+
+Finding: `measure_ebqas`의 seed와 query 순서는 기존 B1/CaseB와 맞습니다. `query_results` 필수 17필드도 들어 있습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1904), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1994)
+
+Finding: `assert_paired_join_invariant`는 spec보다 약합니다. key가 `(trial_idx, query_idx)`뿐이라 `cell`과 `seed`를 보지 않고, `true_cardinality`도 임의 1건의 EB-QAS vs no-history만 비교합니다. 로컬 probe에서 B1 true-card mismatch, seed mismatch, cell mismatch가 모두 통과했습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:2090), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:2123)
+
+Finding: B1·CaseB에 `query_results`가 없으면 invariant가 graceful fallback으로 2-mode 검사만 합니다. 이 상태로는 “4-way paired invariant 통과”라고 말하면 안 됩니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:2085)
+
+정정 권고: invariant key를 `(cell, trial_idx, seed, query_idx 또는 query_id)`로 확장하고 모든 mode의 모든 row에서 true_cardinality를 비교하십시오. B1/CaseB schema 확장 전에는 결과 문구를 “EB-QAS 2-mode invariant”로 낮추십시오.
+
+**(d) leakage 방지·prequential invariant — concern, 신뢰도 0.84**
+
+Finding: query-time state read-only assert와 after-execution update 순서는 prequential 원칙과 맞습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1953), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1971)
+
+Finding: group key는 selectivity label을 받지 않고 log-scale D bucket만 씁니다. leakage 방지 관점에서는 pass입니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1625), [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1934)
+
+Finding: 다만 `template_id=q_row_idx`는 query vector id에 가까워 group key가 과도하게 세밀해질 수 있습니다. query pool이 1000개이고 n_queries가 1000이면 history가 거의 누적되지 않는 cold-start 실험이 됩니다. leakage는 아니지만 EB-QAS의 본의를 약화합니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1940)
+
+정정 권고: smoke 결과에 `n_groups / n_queries`를 launch gate로 기록하고, 24 cell 전에 `q_row_idx`가 정말 template인지 아니면 query identity인지 확정하십시오.
+
+**(e) 5/23 평결 4축 호환성 — pass-with-concern, 신뢰도 0.87**
+
+Finding: EB-QAS 코드 안에는 CaseB식 `(est_b1 + est_method) / 2`가 없고, posterior mean 기반 대체 구조입니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1749)
+
+Finding: method library나 distribution-aware strata를 호출하지 않고 KM20/B1 sample cache만 사용합니다. latency 필드도 산출하지 않아 objective 혼동은 없습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1895)
+
+Finding: 단 `EB-QAS-no-history` label은 현재 구현과 불일치합니다. 이것을 “history 제거 ablation”으로 해석하면 5/23 평결식 통제군 엄밀성이 흔들립니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1863)
+
+정정 권고: no-history 의미를 코드로 보장하거나 label을 `EB-QAS-no-stop`류로 바꾸십시오. 분석 문서에서는 측정 전 우위 단언을 계속 금지해야 합니다.
+
+**(f) Exqutor 인용·코드 주석 verbatim — pass, 신뢰도 0.90**
+
+Finding: 헤더의 spec path와 정본 anchor cross-ref는 현재 파일 구조와 일치합니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1558)
+
+Finding: 직전 Codex (b)(c)(d)(f) 정정 내역과 환각 회피 룰은 코드 헤더에 반영되어 있고, “EB-QAS가 B1보다 낫다”는 단언도 없습니다. [measure_paper_exact.py](/Users/hyunbin/Capstone/_internal/scripts/measure_paper_exact.py:1565)
+
+Finding: v2/v4 Exqutor §V-B hyperparam·식 동일성은 별도 source map과 일치합니다. 다만 코드 내부 stale param 주석(`q_log_floor`, `gamma`)은 위 (a) 권고대로 정리하는 편이 인용 hygiene에도 안전합니다.
+
+정정 권고: 헤더는 유지 가능하되, dead/stale param 주석만 정리하십시오.
+
+결론적으로 smoke 1 cell은 직접 함수 호출 기준으로 진행 가능하지만, **24 cell sequential 측정 진입 전에는 `params.n_cap`, `no_history` 의미, paired invariant 3건은 고치는 편이 맞습니다.** 특히 4-way paired invariant는 현재 테스트가 주장하는 만큼 강하지 않습니다.
+

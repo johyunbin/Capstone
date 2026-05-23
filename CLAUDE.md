@@ -166,6 +166,26 @@ Capstone/
 - **라이브러리**: Python, NumPy, FAISS
 - **분석**: EXPLAIN ANALYZE, pg_hint_plan
 
+## Multi-Model Workflow (Gemini Ultra 적극 활용 · 2026-05-24 강화)
+
+본 캡스톤은 **Claude + Codex + Gemini Ultra 3-way 협업**. 상세 룰 `@~/.claude/rules/multi-model.md` carry. 본 프로젝트 적용 핵심:
+
+- **발표 deck** = Claude Design (layout · navy 앵커 · hero 그라데이션 · chapter badge · 5행 표) × Gemini **Nano Banana Pro** (illustration · 도식 — 이미지 내 한국어 텍스트 1위 강점) **둘 다 활용**. 사용자 5/24 명시 ("어느 하나만으로 한다기 보다는 둘 다 활용").
+- **포스터 (900×1200 mm 세로 PDF)** = Claude Design 16 단 grid × Nano Banana Pro 5 자산 (VAQ 분석가 시나리오 · plan 트리 비교 · §V-B highlight · 4 갈래 도식 · 본 연구 기여 4 아이콘). brief 정본 `submission/_drafts/속도는벡터_포스터_시각자산_Nano_Banana_Pro_brief_20260524_010021.md`.
+- **소개영상 (300 초)** = Claude Design 슬라이드 PNG × Gemini **Veo 3.1** (인트로 hero · 5행 표 reveal transition · 마무리 close clip 3 개, 총 15 초 cinematic · 네이티브 동기화 오디오) + ElevenLabs 한국어 TTS narration. brief 정본 `submission/_drafts/속도는벡터_소개영상_Veo_3_1_brief_20260524_010021.md`.
+- **보고서 figure** = Claude 정합 표 × Nano Banana Pro figure 보강 (측정 환경 도식·통제 실험 설계).
+- **문헌 교차검증** = Gemini **Deep Research** (Ultra 한도 사실상 자유) — 보고서 §2.2 Exqutor 식·§2.3 Cochran §5.5/§11.10 verbatim 대조.
+- **Codex** = 통계 코드 검증 + 보고서 수치·로직 적대 재검증 (xhigh).
+- **메모리**: 협업 패턴 상세 `@~/.claude/projects/-Users-hyunbin-Capstone/memory/feedback_design_x_gemini_collab.md`.
+
+본 룰 = 매 응답마다 Gemini Ultra 강점 활용 가능성 검토. (사용자 영구 위임 2026-05-24)
+
+## Chrome MCP — macmini 무조건 (영구 위임 2026-05-24)
+
+`list_connected_browsers` 결과에 macmini + macbook 둘 다 있어도 **사용자 명시 선택 없이 macmini (deviceId `644dba75-3349-4c8d-ba29-1507743d45a5`) 자동 선택**. 사용자 영구 위임 (2026-05-24 "맥미니로 연결해 그냥 무조건 · 항상"). 메모리: `@~/.claude/projects/-Users-hyunbin-Claude/memory/feedback_chrome_browser_choice.md`.
+
+claude.ai/design "최종발표" 대화창 = `/p/019e1a41-701c-7134-9ce1-1247262c1563` carry. design system 깨짐 방지를 위해 새 대화창 X · 동일 대화창에 복붙.
+
 ## 팀
 
 | 이름 | 역할 | GitHub |

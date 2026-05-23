@@ -1192,6 +1192,149 @@ def measure_case_b(cell: CellSpec, method_name: str, n_queries: int = 1000,
     return result
 
 
+def measure_case_c(cell: CellSpec, n_queries: int = 1000,
+                   trials: int = TRIALS, output_dir: Optional[Path] = None) -> dict:
+    """CaseC: dual-Bernoulli ensemble (5/23 audit CaseB' 의 pre-registered 실측).
+
+    audit CaseB' (trial cross-pair 재구성, post-hoc — 1,226 measurement slice) 의
+    Codex Review 3 P1 #4 'cherry-pick' risk 를 mitigate 하는 pre-registered design:
+    한 trial 안에 두 독립 AdaptiveState + 두 독립 rng 운영, ensemble 평균.
+
+    Each query:
+        est_a       = bernoulli(samples_b1, rng_a, budget=state_a.size)
+        est_b       = bernoulli(samples_b1, rng_b, budget=state_b.size)
+        est_final   = (est_a + est_b) / 2
+        q_err_final = q_error(est_final, true_card)
+
+    State update (Option A, user 결정 5/23 20:14): 각 state 자기 q_err 로 진화
+    (audit CaseB' 의 cross-trial independent state evolution 과 정합).
+        state_a.update(q_error(est_a, true_card), state_a.size / total_rows)
+        state_b.update(q_error(est_b, true_card), state_b.size / total_rows)
+
+    표본 크기 = 2 × state.size (B1 의 2배 — inherent feature, CaseB 와 동일).
+    Method-independent: B1 와 같은 KM20 samples cache 만 사용 (no method strata).
+    """
+    if not SERVER:
+        raise RuntimeError("server only — _measure_common.py needed")
+
+    print(f"[{mc.kst()}] CaseC paper exact (dual-Bernoulli, Option A): "
+          f"cell={cell.sub} dataset={cell.dataset} table={cell.table} sf={cell.sf}")
+    alias = DATASET_ALIAS.get(cell.dataset, cell.dataset)
+    ds = {
+        "name": cell.dataset, "table": cell.table,
+        "embed_col": cell.embed_col, "vec_dim": cell.vec_dim,
+        "query_pool": Path(f"/mnt/hdd0/home/capstone2026/cache/rq1/query_pool_{alias}_sf{cell.sf}.parquet"),
+        "query_sel": Path(f"/mnt/hdd0/home/capstone2026/cache/rq1/query_selectivity_{alias}_sf{cell.sf}.parquet"),
+    }
+    if not ds["query_pool"].exists():
+        raise FileNotFoundError(f"query pool 미존재: {ds['query_pool']}")
+    if not ds["query_sel"].exists():
+        raise FileNotFoundError(f"query selectivity 미존재: {ds['query_sel']}")
+
+    # 1. Vector + KM20 cluster fetch (B1 와 동일 samples cache — pure dual-Bernoulli)
+    print(f"[{mc.kst()}] fetching {cell.table} vectors (KM20 strata)...")
+    all_vecs, km20_sids = mc.fetch_all_vectors_safe(ds)
+    samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids,
+                                                          n_strata=mc.N_STRATA, seed=42)
+    total_rows = sum(sizes_b1.values())
+    print(f"[{mc.kst()}] total_rows={total_rows} cluster sizes mean={total_rows//mc.N_STRATA}")
+
+    # 2. Query pool load
+    qp, qs_full, qvecs = mc._load_query_pool(ds)
+
+    # 3. Trial loop (dual-state, dual-rng)
+    trial_results = []
+    for trial_idx in range(trials):
+        # 두 독립 rng: B1 trial seed = t*13+7, CaseC b-side = +1M offset (handoff §10.2)
+        rng_a = np.random.default_rng(trial_idx * 13 + 7)
+        rng_b = np.random.default_rng(trial_idx * 13 + 7 + 1_000_000)
+        state_a = AdaptiveState()
+        state_b = AdaptiveState()
+        q_errs = []
+
+        for q_idx in range(n_queries):
+            q_row_idx = q_idx % len(qp)
+            qvec = qvecs[q_row_idx]
+
+            sel = cell.selectivities[0] if cell.selectivities[0] is not None else PAPER_SEL_DEFAULT
+            qs_match = qs_full[(np.isclose(qs_full["selectivity"], sel)) & (qs_full["query_id"] == q_row_idx)]
+            if len(qs_match) > 0:
+                D = float(qs_match.iloc[0]["D_target"])
+                true_card = float(qs_match.iloc[0]["true_cardinality"])
+            else:
+                D = TPC_H_THRESHOLD
+                true_card = total_rows * sel
+
+            # 두 독립 Bernoulli draw (같은 samples cache, 다른 rng & 각자 budget)
+            est_a = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_a, budget=state_a.size)
+            est_b = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_b, budget=state_b.size)
+            est_final = (est_a + est_b) / 2.0
+
+            q_err_final = q_error(est_final, true_card)
+            q_errs.append(q_err_final)
+
+            # Option A (user 결정 5/23 20:14): 각 state 자기 q_err 로 update
+            # (audit CaseB' = cross-trial pair → 두 trial 의 독립 state 진화 정합)
+            ratio_a = state_a.size / total_rows
+            ratio_b = state_b.size / total_rows
+            state_a.update(q_error(est_a, true_card), ratio_a)
+            state_b.update(q_error(est_b, true_card), ratio_b)
+
+        finite = [v for v in q_errs if np.isfinite(v)]
+        inf_count = len(q_errs) - len(finite)
+        avg_qe = float(np.mean(finite)) if finite else float("inf")
+        median_qe = float(np.median(finite)) if finite else float("inf")
+        trial_results.append({
+            "trial": trial_idx,
+            "avg_q_error_finite": avg_qe,
+            "median_q_error_finite": median_qe,
+            "n_finite": len(finite),
+            "n_inf": inf_count,
+            "final_size_a": state_a.size,
+            "final_size_b": state_b.size,
+            "final_eta_a": state_a.eta,
+            "final_eta_b": state_b.eta,
+            "history_len_a": len(state_a.history),
+            "history_len_b": len(state_b.history),
+        })
+        print(f"[{mc.kst()}]   trial {trial_idx+1}/{trials} avg_qe={avg_qe:.3f} "
+              f"(finite={len(finite)}/{len(q_errs)}) "
+              f"final_size_a={state_a.size} final_size_b={state_b.size}")
+
+    avg_q_errors = [r["avg_q_error_finite"] for r in trial_results]
+    avg_q_error_trimmed = trimmed_mean(avg_q_errors, TRIM)
+
+    result = {
+        "cell": cell.sub,
+        "fig": cell.fig,
+        "dataset": cell.dataset,
+        "sf": cell.sf,
+        "mode": "CaseC",
+        "ensemble_strategy": "dual_bernoulli_independent_states",
+        "state_update_strategy": "each_state_own_q_err",  # Option A (user 결정 5/23 20:14)
+        "n_queries": n_queries,
+        "trials": trials,
+        "avg_q_error_trimmed": avg_q_error_trimmed,
+        "final_size_a_mean": float(np.mean([r["final_size_a"] for r in trial_results])),
+        "final_size_a_std": float(np.std([r["final_size_a"] for r in trial_results])),
+        "final_size_b_mean": float(np.mean([r["final_size_b"] for r in trial_results])),
+        "final_size_b_std": float(np.std([r["final_size_b"] for r in trial_results])),
+        "final_eta_a_mean": float(np.mean([r["final_eta_a"] for r in trial_results])),
+        "final_eta_b_mean": float(np.mean([r["final_eta_b"] for r in trial_results])),
+        "trial_results": trial_results,
+        "paper_hyperparam": PAPER_HYPERPARAM,
+        "kst": mc.kst(),
+    }
+
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        out = output_dir / f"{cell.sub}_CaseC.json"
+        out.write_text(json.dumps(result, indent=2))
+        print(f"[{mc.kst()}] saved {out}")
+
+    return result
+
+
 def measure_ecqo(cell: CellSpec, n_queries: int = 100, trials: int = TRIALS,
                  output_dir: Optional[Path] = None) -> dict:
     """ECQO (paper §V-A + Fig 4/10): HNSW range query as cardinality estimator.
@@ -1416,13 +1559,14 @@ def main():
     parser = argparse.ArgumentParser(description="Exqutor paper 100% 정확 재현")
     parser.add_argument("--rq", type=int, choices=[1, 2, 3], required=True,
                         help="1=RQ1 paper exact 재측정 / 2=RQ2 / 3=RQ3 (Exqutor 정확 재현)")
-    parser.add_argument("--phase", choices=["A", "B", "C", "D", "G"],
-                        help="A=B1 baseline / B=CaseA / C=CaseB / D=paired Δ% / G=analysis (RQ3 only)")
+    parser.add_argument("--phase", choices=["A", "B", "C", "D", "E", "G"],
+                        help="A=B1 baseline / B=CaseA / C=CaseB / D=paired Δ% / "
+                             "E=CaseC dual-Bernoulli (v14 5/23) / G=analysis (RQ3 only)")
     parser.add_argument("--cell", default="all",
                         help="A1-DEEP / A1-SIFT / A1-SSN / A2-Fig7 / A2-Fig8 / A2-Fig9 / "
                              "A3-TPCDS / A4-sel / A5-scale-sf{1,10,100} / all")
-    parser.add_argument("--mode", choices=["B1", "CaseA", "CaseB", "ECQO"],
-                        help="Measurement mode (RQ3 only)")
+    parser.add_argument("--mode", choices=["B1", "CaseA", "CaseB", "CaseC", "ECQO"],
+                        help="Measurement mode (RQ3 only). CaseC = dual-Bernoulli ensemble (v14 5/23)")
     parser.add_argument("--method", help="Method name (CaseA/CaseB only, 34 methods)")
     parser.add_argument("--n-queries", type=int, default=1000,
                         help="paper Fig 6 verbatim: 1000 iterations")
@@ -1489,6 +1633,9 @@ def main():
                 print(f"[ERROR] --method required for CaseB")
                 return
             measure_case_b(cell, args.method, args.n_queries, args.trials, args.output)
+        elif args.mode == "CaseC":
+            # v14 (5/23): dual-Bernoulli ensemble, method-independent (no --method needed)
+            measure_case_c(cell, args.n_queries, args.trials, args.output)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
   조건       주입 GUC                              의미
   baseline   vector.disable_estimation=on          플래너 default selectivity (개입 없음)
   B1         vector.injected_card=<est_b1>          논문 무작위 Bernoulli 추정 (대조군)
-  CaseA      vector.injected_card=<est_caseA_mean> 16 method 단독 평균 (완전 대체 · 음성)
+  CaseA      vector.injected_card=<est_caseA_mean> 강한 13 method 단독 평균 (완전 대체 · 음성 대조)
   CaseB      vector.injected_card=<est_caseB>       결합 추정 (est_b1 + est_method)/2 (method-by-method)
   CaseC      vector.injected_card=<est_caseC>       dual-Bernoulli ensemble (B1+B1')/2 (통제군)
   oracle     vector.injected_card=<true_card>       참 카디널리티 (이론적 상한)

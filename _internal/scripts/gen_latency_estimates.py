@@ -11,7 +11,8 @@ measure_paper_exact.py의 measure_b1_paper / measure_case_b / measure_case_c 추
   est_b1         B1 무작위 Bernoulli 추정 (method 무관 — 같은 query_id면 동일)
   est_caseA      method stratified 추정 (완전 대체)
   est_caseB      (est_b1 + est_caseA) / 2  (결합)
-  est_caseA_mean 16 method stratified 평균 (method-agnostic — 같은 query_id면 동일)
+  est_caseA_mean 강한 13 method stratified 평균 (method-agnostic — 같은 query_id면 동일,
+                  v13_summary §4.4 불안정 클러스터링 3종 gmm·minibatch_partial·faiss_ivf 제외)
   est_caseC      dual-Bernoulli ensemble (B1 + B1' 다른 rng) / 2 (method-agnostic)
   true_card      참 카디널리티 (query_selectivity parquet의 true_cardinality)
   D              거리 임계값 (query_selectivity parquet의 D_target)

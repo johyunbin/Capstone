@@ -69,6 +69,20 @@ NEW_CELLS = (
 # 기본 portfolio = v14 carry + 신규 = 18 cell
 DEFAULT_PORTFOLIO = V14_CELLS + NEW_CELLS
 
+# whitelist — measure_paper_exact.py build_cell_specs() 의 모든 sub names (A3-TPCDS 제외 = ECQO mode, CaseC 부적합)
+# Codex BLOCKER D 적용 (5/24) — invalid cell sub name 거부, measure_paper_exact 가 미발견 시 rc=0 으로 끝나는 silent failure 방어
+KNOWN_CELLS = frozenset({
+    "A1-DEEP", "A1-SIFT", "A1-SSN",
+    "A2-Fig7", "A2-Fig8", "A2-Fig9",
+    "A4-sel",
+    "A5-scale-sf1", "A5-scale-sf10", "A5-scale-sf100",
+    "A5-scale-sf1-SIFT", "A5-scale-sf1-SSN",
+    "A5-scale-sf10-SIFT", "A5-scale-sf10-SSN",
+    "A6-WIKI-sf1", "A6-WIKI-sf10",
+    "A7-YFCC-sf1",
+    "A8-DEEP+SIFT-sf10",
+})
+
 
 def kst() -> str:
     return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
@@ -221,6 +235,16 @@ def main() -> None:
                     help="cell list + launch cmd 검증 (서버 불필요)")
     args = ap.parse_args()
 
+    # Codex BLOCKER D — cell whitelist validation + duplicate 금지 (server check 이전)
+    cells = args.cells
+    unknown = [c for c in cells if c not in KNOWN_CELLS]
+    if unknown:
+        raise SystemExit(f"unknown cell sub names: {unknown}\n"
+                         f"valid cells: {sorted(KNOWN_CELLS)}")
+    if len(cells) != len(set(cells)):
+        dup = [c for c in cells if cells.count(c) > 1]
+        raise SystemExit(f"duplicate cell sub names: {sorted(set(dup))}")
+
     if args.dry_run:
         _dry_run()
         return
@@ -230,7 +254,6 @@ def main() -> None:
         print("로컬에서는 --dry-run 만 가능")
         return
 
-    cells = args.cells
     if args.skip_v14_carry:
         cells = [c for c in cells if c not in V14_CELLS]
         print(f"[{kst()}] skip-v14-carry: {len(cells)} cells (신규 만)")

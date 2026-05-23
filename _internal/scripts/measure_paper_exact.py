@@ -1552,6 +1552,689 @@ def measure_rq2_paper_exact(output_dir: Optional[Path] = None,
 
 
 # ---------------------------------------------------------------------------
+# =============================================================================
+# ★ DISCONTINUED 2026-05-24 — EB-QAS 트랙 폐기 (5+5b 세션 누적 후 사용자 결정)
+#
+# 사유: 6 cell ablation (history vs no_history) |Δ|<0.07 mixed (3-3 split) —
+#       history mode 우위 미입증. 평균 ~1.63은 v13 CaseB(1.477)·CaseC(1.373)
+#       보다 못함. 4-way matched paired 평가(B1·CaseB-strong13 추가 측정)에
+#       4-7h 비용 필요한데 spec 충족도 부족 (Codex re-review concern 5건 잔존:
+#       a q_log_floor/gamma · b recovery 도달 불가 · c cell/seed assert 약함 ·
+#       e EB-QAS-no-history label · f 주석 모순). 메인 트랙 critical path
+#       (5/26 LearnUs · 5/28 포스터 · 6/11 보고서) 시간 압박.
+#
+# 산출물 보존:
+#   - 5+5b 세션 handoff·복붙·codex 검증·spec·제안서 →
+#       _internal/archive/ebqas_track_DISCONTINUED_20260524/ebqas_track/
+#       submission/_drafts/archive/_ebqas_discontinued_20260524/
+#   - unit test → _internal/archive/ebqas_track_DISCONTINUED_20260524/test_ebqas.py
+#   - 12 cell 측정 결과 → experiments/results/raw/EBQAS_24cell_001021/ (그대로)
+#   - smoke 결과 → experiments/results/raw/EBQAS_smoke_001021/ (그대로)
+#
+# 본 블록 코드 (라인 ~1607~2225): main() CLI 미연결, 어디서도 호출 X —
+#   dead code 로 둠 (revert 시 git diff 노이즈, 보존 시 후속 연구 활용).
+#   기존 함수 (measure_b1_paper · measure_case_a~c · measure_ecqo · main) 영향 0.
+#
+# 후속 연구 가치 시 archive 정독.
+# =============================================================================
+#
+# (이하 #4·#5b 세션 작성 원본 헤더 carry — 폐기 사유와 분리)
+# EB-QAS — Empirical-Bayesian Q-error-aware Adaptive Sampling
+# 본 트랙 4번째 세션 2026-05-23 23:44 KST 작성 — 별도 후속 트랙 (메인 트랙 분리)
+#
+# Spec base (231042, Codex 5건 정정 patch 완료):
+#   _internal/state/ebqas_track/실험_spec/EBQAS_구현_의사코드_20260523_231042.md (archive 이동)
+#   _internal/state/ebqas_track/실험_spec/EBQAS_실험A_4way_matched_spec_20260523_231042.md (archive)
+#   _internal/state/ebqas_track/실험_spec/EBQAS_실험BCDE_outline_20260523_231042.md (archive)
+# 정본 anchor (archive 이동):
+#   submission/_drafts/archive/_ebqas_discontinued_20260524/속도는벡터_EBQAS_제안서_확인실험구체화_20260523_215452.md
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class EBQASParams:
+    """EB-QAS hyperparam (spec T1 의사코드 §4.5 + spec T4 §5.0 신규 3개).
+
+    12 필드:
+      query-time stop:   batch_size, q_target, n_min, q_log_floor, n_cap
+      prior update:      rho, w, w_mismatch (신규)
+      mode switch:       kappa_max, gamma, mismatch_n_threshold (신규), n_recovery (신규)
+    """
+    batch_size: int = 32           # sample batch 단위 (spec T1 §3.4: 16·32·64 권장)
+    q_target: float = 1.3          # posterior Q-risk early stop threshold
+    n_min: int = 64                # early stop 최소 sample (spec T1 §3.4: batch_size 2~4배)
+    q_log_floor: float = 10.0      # L_log=0 시 q_post_log inf 대신 사용 (logging only)
+    n_cap: int = 385               # outer sample budget (Exqutor N=385 default)
+    rho: float = 0.95              # κ decay (spec T1 §4.5)
+    w: float = 10.0                # new query weight (mismatch 아닐 때)
+    w_mismatch: float = 1.0        # ★ 신규 — mismatch query weight (Codex (b) 정정)
+    kappa_max: float = 100.0       # κ cap
+    gamma: float = 0.5             # (현재 unused — spec T1 §4.5 partial decay 의도, 본 구현은 explicit mode switch 사용)
+    mismatch_n_threshold: int = 3  # ★ 신규 — mode switch 발동 streak
+    n_recovery: int = 20           # ★ 신규 — history 회복 streak
+
+
+@dataclass
+class EBQASState:
+    """EB-QAS query group state (spec T1 §2.2).
+
+    10 필드 (6 carry + 4 신규):
+      carry:  alpha, beta, kappa, mu, n_cap, mismatch_count
+      신규:   prior_mode, consecutive_mismatch, stable_query_count, early_stop
+    """
+    alpha: float = 1.0                  # Beta prior α
+    beta: float = 1.0                   # Beta prior β
+    kappa: float = 2.0                  # α + β (prior strength)
+    mu: float = 0.5                     # α / (α + β) (prior mean)
+    n_cap: int = 385                    # max sample budget
+    mismatch_count: int = 0             # 누적 mismatch reset 발동 (운영 로그용)
+    # ★ 신규 (spec T1 patch) — explicit mode switch
+    prior_mode: str = "history"         # "history" | "no_history"
+    consecutive_mismatch: int = 0       # 연속 mismatch streak
+    stable_query_count: int = 0         # 연속 stable streak (mismatch 시 0)
+    early_stop: bool = True             # posterior Q-risk early stop 활성
+
+
+def bucketize_threshold(D: float) -> int:
+    """log-scale D bucket — spec T4 §1.2(2) leakage-free default.
+
+    dataset 전체 quantile 금지 (target selectivity leakage). query 자체 D 만 사용.
+    """
+    return int(np.floor(np.log10(max(D, 1e-12))))
+
+
+def make_group_key(
+    dataset: str,
+    vector_column: str,
+    distance_metric: str,
+    threshold: float,
+    template_id,
+    scalar_predicate_signature: str = "none",
+) -> tuple:
+    """6-tuple runtime group key — spec T4 §1.2(1).
+
+    runtime planner 가 사용 — leakage 금지 (sel=... label 절대 X).
+    Capstone paper-exact pipeline 매핑:
+      dataset                    = cell.dataset
+      vector_column              = cell.embed_col
+      distance_metric            = "L2" (paper §V-B L2 default)
+      threshold                  = D (per-query)
+      template_id                = q_row_idx (or cell.queries index)
+      scalar_predicate_signature = "none" (paper-exact 에 scalar predicate 없음)
+    """
+    return (
+        dataset,
+        vector_column,
+        distance_metric,
+        bucketize_threshold(threshold),
+        template_id,
+        scalar_predicate_signature,
+    )
+
+
+def beta_credible_interval(alpha: float, beta: float, confidence: float = 0.95) -> tuple:
+    """Beta(α, β) credible interval — scipy.stats.beta.ppf 호출.
+
+    lazy import — scipy.stats 가 module top 에 없음 (기존 코드 호환).
+    """
+    from scipy.stats import beta as _beta_dist
+    lo = float(_beta_dist.ppf((1.0 - confidence) / 2.0, alpha, beta))
+    hi = float(_beta_dist.ppf((1.0 + confidence) / 2.0, alpha, beta))
+    return lo, hi
+
+
+def ebqas_estimate(
+    samples_b1: dict,
+    sizes_b1: dict,
+    qvec: np.ndarray,
+    D: float,
+    state: EBQASState,
+    params: EBQASParams,
+    rng,
+    n_strata: int = None,
+) -> dict:
+    """EB-QAS query-time cardinality estimation (spec T1 §3.2).
+
+    state 는 read-only — invariant (spec T4 §1.4 prequential, measure_ebqas 가 assert).
+    batch 단위 누적 sampling → posterior update → Q_post 분리 (L_log·L_stop)
+    → early stop 또는 n_cap 도달.
+
+    early stop 조건 = state.early_stop AND n >= n_min AND q_post_stop <= q_target
+    n_cap 조건     = n >= state.n_cap (early_stop=False 시 유일한 stop)
+    """
+    if n_strata is None:
+        n_strata = mc.N_STRATA if SERVER else 20
+
+    total_rows = sum(sizes_b1.values())
+    flat = np.concatenate([samples_b1[sid] for sid in range(n_strata)], axis=0)
+    n_flat = flat.shape[0]
+
+    # ★ (a) Codex (a) 정정 — params.n_cap honor (두 cap 중 작은 값 적용)
+    sample_budget = min(params.n_cap, state.n_cap, n_flat)
+    shuffled_idxs = rng.choice(n_flat, size=sample_budget, replace=False)
+
+    # ★ (b) Codex (b) 정정 — no_history mode 에서 prior 무시 (Beta(1,1) base)
+    is_no_history = (state.prior_mode == "no_history")
+    base_alpha = 1.0 if is_no_history else state.alpha
+    base_beta = 1.0 if is_no_history else state.beta
+    base_mu = 0.5 if is_no_history else state.mu
+
+    n = 0
+    s = 0
+    p_hat = base_mu
+    a_post = base_alpha
+    b_post = base_beta
+    L_raw = 0.0
+    U_raw = 1.0
+    q_post_log = float("inf")
+    q_post_stop = float("inf")
+    early_stopped = False
+
+    while n < sample_budget:
+        # batch_size 만큼 추가 sample
+        batch_end = min(n + params.batch_size, sample_budget)
+        batch_idxs = shuffled_idxs[n:batch_end]
+        sub = flat[batch_idxs]
+        d = np.linalg.norm(sub - qvec, axis=1)
+        hits_batch = int((d < D).sum())
+
+        # posterior parameter 갱신
+        n = int(batch_end)
+        s += hits_batch
+        a_post = float(base_alpha + s)
+        b_post = float(base_beta + n - s)
+        p_hat = a_post / (a_post + b_post)
+
+        # posterior credible interval — floor 분리
+        L_raw, U_raw = beta_credible_interval(a_post, b_post, confidence=0.95)
+        L_log = max(L_raw, 0.0)
+        L_stop = max(L_raw, 1.0 / (10.0 * max(total_rows, 1)))
+
+        # posterior Q-risk
+        # ★ (f) Codex (f) 정정 — q_log_floor logging only 의도 일관 (inf → q_log_floor)
+        if L_log > 0:
+            q_post_log = max(p_hat / L_log, U_raw / max(p_hat, 1e-12))
+        else:
+            q_post_log = float(params.q_log_floor)
+        q_post_stop = max(p_hat / L_stop, U_raw / max(p_hat, 1e-12))
+
+        # ★ stop 조건 — state.early_stop 반영
+        if (state.early_stop
+                and n >= params.n_min
+                and q_post_stop <= params.q_target):
+            early_stopped = True
+            break
+        # n_cap 조건은 while loop 자체 (n >= sample_budget 시 break)
+
+    c_hat = total_rows * p_hat
+
+    return {
+        "estimated_cardinality": float(c_hat),
+        "sample_size": int(n),
+        "hits": int(s),
+        "posterior_alpha": float(a_post),
+        "posterior_beta": float(b_post),
+        "posterior_q_risk_log": float(q_post_log),
+        "posterior_q_risk_stop": float(q_post_stop),
+        "early_stopped": bool(early_stopped),
+        "prior_mode_at_query": state.prior_mode,
+    }
+
+
+def update_after_execution(
+    state: EBQASState,
+    true_cardinality: float,
+    table_size: int,
+    posterior_info: dict,
+    params: EBQASParams,
+) -> None:
+    """EB-QAS after-execution prior update (spec T1 §4.2).
+
+    explicit mode switch — mismatch streak >= mismatch_n_threshold 시 no_history fallback
+    + Beta(1,1) reset + early_stop=False + update skip. recovery 시 history 회복.
+
+    ★ (b) Codex (b) 정정 — prior_mode=="no_history" 진입 시 prior 갱신 skip
+        (alpha/beta/kappa/mu/streak 카운터 모두 변경 X — 완전한 ablation 보장).
+        history 회복은 별도 외부 트리거 필요 (현재 자동 회복 안 됨 — 의도된 동작).
+    """
+    if table_size <= 0:
+        return
+    if state.prior_mode == "no_history":
+        return
+    p_true = float(true_cardinality) / float(table_size)
+    p_true = max(min(p_true, 1.0 - 1e-12), 1e-12)
+
+    # 1. prior mismatch 감지 (99% credible interval — strict)
+    L_prior, U_prior = beta_credible_interval(state.alpha, state.beta, confidence=0.99)
+    mismatch_this_query = (p_true < L_prior) or (p_true > U_prior)
+
+    # 2. streak 카운터 갱신
+    if mismatch_this_query:
+        state.mismatch_count += 1
+        state.consecutive_mismatch += 1
+        state.stable_query_count = 0
+    else:
+        state.consecutive_mismatch = 0
+        state.stable_query_count += 1
+
+    # 3. ★ explicit mode switch — 반복 mismatch 시 no_history fallback
+    if (state.consecutive_mismatch >= params.mismatch_n_threshold
+            and state.prior_mode == "history"):
+        state.prior_mode = "no_history"
+        state.alpha = 1.0
+        state.beta = 1.0
+        state.kappa = 2.0
+        state.mu = 0.5
+        state.early_stop = False
+        return  # ★ update skip — 잘못된 prior 방향 강화 방지
+
+    # 4. ★ recovery — stable streak >= n_recovery 시 history 회복
+    if (state.prior_mode == "no_history"
+            and state.stable_query_count >= params.n_recovery):
+        state.prior_mode = "history"
+        state.early_stop = True
+        # alpha/beta/kappa 는 Beta(1,1) base 유지 — 누적 재시작
+
+    # 5. empirical-Bayes update — w_mismatch 적용
+    w_effective = params.w_mismatch if mismatch_this_query else params.w
+    new_kappa = min(params.kappa_max, params.rho * state.kappa + w_effective)
+    new_mu_den = params.rho * state.kappa + w_effective
+    if new_mu_den > 0:
+        new_mu = (params.rho * state.kappa * state.mu + w_effective * p_true) / new_mu_den
+    else:
+        new_mu = state.mu
+    new_mu = min(max(new_mu, 1e-9), 1.0 - 1e-9)
+
+    # 6. 갱신
+    state.kappa = new_kappa
+    state.mu = new_mu
+    state.alpha = state.mu * state.kappa
+    state.beta = (1.0 - state.mu) * state.kappa
+
+
+def _copy_ebqas_state(state: EBQASState) -> EBQASState:
+    """deep copy — measure_ebqas read-only invariant assert 용."""
+    return EBQASState(
+        alpha=state.alpha, beta=state.beta, kappa=state.kappa, mu=state.mu,
+        n_cap=state.n_cap, mismatch_count=state.mismatch_count,
+        prior_mode=state.prior_mode,
+        consecutive_mismatch=state.consecutive_mismatch,
+        stable_query_count=state.stable_query_count,
+        early_stop=state.early_stop,
+    )
+
+
+def _ebqas_state_equal(a: EBQASState, b: EBQASState) -> bool:
+    return (a.alpha == b.alpha and a.beta == b.beta and a.kappa == b.kappa
+            and a.mu == b.mu and a.n_cap == b.n_cap
+            and a.mismatch_count == b.mismatch_count
+            and a.prior_mode == b.prior_mode
+            and a.consecutive_mismatch == b.consecutive_mismatch
+            and a.stable_query_count == b.stable_query_count
+            and a.early_stop == b.early_stop)
+
+
+def measure_ebqas(
+    cell: CellSpec,
+    n_queries: int = 1000,
+    trials: int = TRIALS,
+    output_dir: Optional[Path] = None,
+    prior_mode_init: str = "history",
+    params: Optional[EBQASParams] = None,
+) -> dict:
+    """EB-QAS cell 단위 측정 — measure_b1_paper 패턴 모방 (server only).
+
+    spec T3 §5.3 query-level row schema + spec T4 §1.4 prequential flow.
+
+    prior_mode_init = "history"    → 정상 EB-QAS (default)
+    prior_mode_init = "no_history" → ablation (B1 cap 강제, mode switch 발동 상태에서 시작)
+
+    output_dir 시 <cell.sub>_EBQAS.json 또는 <cell.sub>_EBQAS-no-history.json 저장.
+    """
+    if not SERVER:
+        raise RuntimeError("server only — _measure_common.py needed")
+    if prior_mode_init not in ("history", "no_history"):
+        raise ValueError(
+            f"prior_mode_init must be 'history' or 'no_history', got {prior_mode_init!r}"
+        )
+    if params is None:
+        params = EBQASParams()
+
+    mode_label = "EB-QAS" if prior_mode_init == "history" else "EB-QAS-no-history"
+    print(f"[{mc.kst()}] {mode_label}: cell={cell.sub} dataset={cell.dataset} "
+          f"table={cell.table} sf={cell.sf} prior_mode_init={prior_mode_init}")
+
+    alias = DATASET_ALIAS.get(cell.dataset, cell.dataset)
+    ds = {
+        "name": cell.dataset, "table": cell.table,
+        "embed_col": cell.embed_col, "vec_dim": cell.vec_dim,
+        "query_pool": Path(f"/mnt/hdd0/home/capstone2026/cache/rq1/query_pool_{alias}_sf{cell.sf}.parquet"),
+        "query_sel": Path(f"/mnt/hdd0/home/capstone2026/cache/rq1/query_selectivity_{alias}_sf{cell.sf}.parquet"),
+    }
+    if not ds["query_pool"].exists():
+        raise FileNotFoundError(f"query pool 미존재: {ds['query_pool']}")
+    if not ds["query_sel"].exists():
+        raise FileNotFoundError(f"query selectivity 미존재: {ds['query_sel']}")
+
+    print(f"[{mc.kst()}] fetching {cell.table} vectors (KM20 strata)...")
+    all_vecs, km20_sids = mc.fetch_all_vectors_safe(ds)
+    samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids,
+                                                          n_strata=mc.N_STRATA, seed=42)
+    total_rows = sum(sizes_b1.values())
+    print(f"[{mc.kst()}] total_rows={total_rows} cluster sizes mean={total_rows//mc.N_STRATA}")
+
+    qp, qs_full, qvecs = mc._load_query_pool(ds)
+
+    trial_results = []
+    for trial_idx in range(trials):
+        # B1·CaseB·CaseC 와 동일 seed (paired 4-way matched)
+        rng = np.random.default_rng(trial_idx * 13 + 7)
+
+        # group state dict — 본 trial 안에서 group 별 prior 누적
+        group_states: dict = {}
+
+        # query-level row schema (spec T3 §5.3)
+        query_results = []
+
+        # trajectory 4축 (spec T3 §5.2)
+        prior_mode_trajectory = []
+        consecutive_mismatch_trajectory = []
+        stable_query_count_trajectory = []
+        mode_switch_events = []
+
+        q_errs = []
+
+        for q_idx in range(n_queries):
+            q_row_idx = q_idx % len(qp)
+            qvec = qvecs[q_row_idx]
+
+            sel = cell.selectivities[0] if cell.selectivities[0] is not None else PAPER_SEL_DEFAULT
+            qs_match = qs_full[(np.isclose(qs_full["selectivity"], sel)) & (qs_full["query_id"] == q_row_idx)]
+            if len(qs_match) > 0:
+                D = float(qs_match.iloc[0]["D_target"])
+                true_card = float(qs_match.iloc[0]["true_cardinality"])
+            else:
+                D = TPC_H_THRESHOLD
+                true_card = total_rows * sel
+
+            # (1) runtime group key (spec T4 §1.2(1))
+            # ★ (d) Codex (d) 정정 — template_id="default" 고정
+            # paper-exact pipeline 은 vector query 만 (SQL template 없음) — q_row_idx
+            # 를 template_id 로 쓰면 group key 가 query identity 가 되어 cold-start.
+            # 결과: group key = (dataset, vector_column, "L2", floor(log10(D)),
+            #                    "default", "none") → 사실상 dataset·D bucket 별 1 group
+            g_runtime = make_group_key(
+                dataset=cell.dataset,
+                vector_column=cell.embed_col,
+                distance_metric="L2",
+                threshold=D,
+                template_id="default",
+                scalar_predicate_signature="none",
+            )
+
+            # (2) state 가져오기 또는 신규
+            if g_runtime not in group_states:
+                state = EBQASState()
+                if prior_mode_init == "no_history":
+                    state.prior_mode = "no_history"
+                    state.early_stop = False
+                group_states[g_runtime] = state
+            state = group_states[g_runtime]
+
+            # (3) state read-only invariant — before snapshot
+            state_before = _copy_ebqas_state(state)
+            prior_mode_at_query = state.prior_mode
+
+            # (4) query-time estimation (state read-only)
+            est_result = ebqas_estimate(
+                samples_b1=samples_b1, sizes_b1=sizes_b1,
+                qvec=qvec, D=D,
+                state=state, params=params, rng=rng,
+            )
+
+            # (5) ★ assert read-only invariant (spec T4 §1.4 Q-error assert)
+            if not _ebqas_state_equal(state, state_before):
+                raise RuntimeError(
+                    f"ebqas_estimate 가 state 변경 — leakage invariant 위반 "
+                    f"(trial={trial_idx}, q_idx={q_idx}, group={g_runtime})"
+                )
+
+            # (6)·(7) after-execution update — 다음 query 부터 영향
+            mode_switch_before = state.prior_mode
+            update_after_execution(
+                state=state, true_cardinality=true_card, table_size=total_rows,
+                posterior_info=est_result, params=params,
+            )
+            mode_switch_after = state.prior_mode
+            if mode_switch_before != mode_switch_after:
+                mode_switch_events.append({
+                    "q_idx": q_idx,
+                    "from_mode": mode_switch_before,
+                    "to_mode": mode_switch_after,
+                    "true_p": true_card / total_rows if total_rows > 0 else 0.0,
+                })
+
+            # q-error 및 trajectory
+            q_err = q_error(est_result["estimated_cardinality"], true_card)
+            q_errs.append(q_err)
+            prior_mode_trajectory.append(prior_mode_at_query)
+            consecutive_mismatch_trajectory.append(int(state.consecutive_mismatch))
+            stable_query_count_trajectory.append(int(state.stable_query_count))
+
+            # query-level row (spec T3 §5.3)
+            query_results.append({
+                "query_idx": q_idx,
+                "query_id": f"{cell.sub}_t{trial_idx}_q{q_idx}",
+                "q_row_idx": q_row_idx,
+                "true_cardinality": float(true_card),
+                "estimated_cardinality": float(est_result["estimated_cardinality"]),
+                "q_error": float(q_err),
+                "sample_size": int(est_result["sample_size"]),
+                "hits": int(est_result["hits"]),
+                "posterior_alpha": float(est_result["posterior_alpha"]),
+                "posterior_beta": float(est_result["posterior_beta"]),
+                "posterior_q_risk_log": float(est_result["posterior_q_risk_log"]),
+                "posterior_q_risk_stop": float(est_result["posterior_q_risk_stop"]),
+                "early_stopped": bool(est_result["early_stopped"]),
+                "prior_mode_at_query": prior_mode_at_query,
+                "consecutive_mismatch_after": int(state.consecutive_mismatch),
+                "stable_query_count_after": int(state.stable_query_count),
+                "group_key_repr": repr(g_runtime),
+            })
+
+        finite = [v for v in q_errs if np.isfinite(v)]
+        inf_count = len(q_errs) - len(finite)
+        avg_qe = float(np.mean(finite)) if finite else float("inf")
+        median_qe = float(np.median(finite)) if finite else float("inf")
+        early_stop_count = sum(1 for r in query_results if r["early_stopped"])
+
+        trial_results.append({
+            "trial_idx": trial_idx,
+            "seed": trial_idx * 13 + 7,
+            "avg_q_error_finite": avg_qe,
+            "median_q_error_finite": median_qe,
+            "n_finite": len(finite),
+            "n_inf": inf_count,
+            "early_stop_count": early_stop_count,
+            "n_groups": len(group_states),
+            "mode_switch_count": len(mode_switch_events),
+            "prior_mode_trajectory": prior_mode_trajectory,
+            "consecutive_mismatch_trajectory": consecutive_mismatch_trajectory,
+            "stable_query_count_trajectory": stable_query_count_trajectory,
+            "mode_switch_events": mode_switch_events,
+            "query_results": query_results,
+        })
+        print(f"[{mc.kst()}]   trial {trial_idx+1}/{trials} avg_qe={avg_qe:.3f} "
+              f"(finite={len(finite)}/{len(q_errs)}) "
+              f"groups={len(group_states)} early_stops={early_stop_count} "
+              f"mode_switches={len(mode_switch_events)}")
+
+    avg_q_errors = [r["avg_q_error_finite"] for r in trial_results]
+    avg_q_error_trimmed = trimmed_mean(avg_q_errors, TRIM)
+
+    result = {
+        "cell": cell.sub,
+        "fig": cell.fig,
+        "dataset": cell.dataset,
+        "sf": cell.sf,
+        "mode": mode_label,
+        "prior_mode_initial": prior_mode_init,
+        "n_queries": n_queries,
+        "trials": trials,
+        "avg_q_error_trimmed": avg_q_error_trimmed,
+        "trial_results": trial_results,
+        "ebqas_params": {
+            "batch_size": params.batch_size, "q_target": params.q_target,
+            "n_min": params.n_min, "n_cap": params.n_cap,
+            "rho": params.rho, "w": params.w, "w_mismatch": params.w_mismatch,
+            "kappa_max": params.kappa_max, "gamma": params.gamma,
+            "mismatch_n_threshold": params.mismatch_n_threshold,
+            "n_recovery": params.n_recovery,
+        },
+        "paper_hyperparam": PAPER_HYPERPARAM,
+        "kst": mc.kst(),
+    }
+
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        suffix = "EBQAS" if prior_mode_init == "history" else "EBQAS-no-history"
+        out = output_dir / f"{cell.sub}_{suffix}.json"
+        out.write_text(json.dumps(result, indent=2))
+        print(f"[{mc.kst()}] saved {out}")
+
+    return result
+
+
+def assert_paired_join_invariant(
+    json_b1: dict, json_caseb: dict, json_ebqas: dict, json_ebqas_no_history: dict
+) -> None:
+    """4-way paired join invariant assert (spec T3 §5.3 + Codex (c) 정정).
+
+    ★ (c) Codex (c) 정정 — invariant 강화 4 항목:
+      1. key 확장 (trial_idx, query_idx) → (cell, seed, trial_idx, query_idx)
+      2. cell·seed top-level 일관성 검증
+      3. true_cardinality sample 1건 → 모든 query 전수 비교
+      4. B1/CaseB query_results 없으면 "EB-QAS 2-mode invariant" 명시 fallback
+
+    spec T4 §1.4 Q-error assert 의 강한 form. measure_ebqas 측정 후 analysis 진입 전 호출.
+    """
+    # ★ (c.2) cell top-level 일관성 (4-way 또는 fallback 2-way)
+    cells_present = []
+    for label, j in (("B1", json_b1), ("CaseB", json_caseb),
+                     ("EB-QAS", json_ebqas), ("EB-QAS-no-history", json_ebqas_no_history)):
+        if j:
+            cells_present.append((label, j.get("cell")))
+    if cells_present:
+        first_cell = cells_present[0][1]
+        for label, c in cells_present[1:]:
+            assert c == first_cell, \
+                f"cell mismatch: {cells_present[0][0]}={first_cell!r} vs {label}={c!r}"
+
+    # ★ (c.2) seed 일관성 — 각 mode 의 trial_results[].seed 가 trial_idx 별 일관
+    def _seed_map(j: dict) -> dict:
+        m = {}
+        if not j:
+            return m
+        for tr in j.get("trial_results", []):
+            tid = tr.get("trial_idx", tr.get("trial"))
+            seed = tr.get("seed")
+            if tid is not None and seed is not None:
+                m[tid] = seed
+        return m
+
+    seeds_ebqas = _seed_map(json_ebqas)
+    for label, j in (("B1", json_b1), ("CaseB", json_caseb),
+                     ("EB-QAS-no-history", json_ebqas_no_history)):
+        if j:
+            seeds_other = _seed_map(j)
+            for tid, sd in seeds_other.items():
+                if tid in seeds_ebqas:
+                    assert sd == seeds_ebqas[tid], \
+                        f"seed mismatch trial={tid}: EB-QAS={seeds_ebqas[tid]} vs {label}={sd}"
+
+    # ★ (c.1) key 확장: (cell, seed, trial_idx, query_idx) 4-tuple
+    def _extract_keys(j: dict) -> set:
+        if not j:
+            return set()
+        cell = j.get("cell")
+        seed_m = _seed_map(j)
+        keys = set()
+        for tr in j.get("trial_results", []):
+            t_idx = tr.get("trial_idx", tr.get("trial"))
+            sd = seed_m.get(t_idx)
+            for qr in tr.get("query_results", []):
+                keys.add((cell, sd, t_idx, qr["query_idx"]))
+        return keys
+
+    keys_b1 = _extract_keys(json_b1)
+    keys_caseb = _extract_keys(json_caseb)
+    keys_ebqas = _extract_keys(json_ebqas)
+    keys_ebqas_nh = _extract_keys(json_ebqas_no_history)
+
+    assert keys_ebqas, "json_ebqas 에 query_results 없음"
+    assert keys_ebqas_nh, "json_ebqas_no_history 에 query_results 없음"
+
+    # ★ (c.4) fallback 명시 — B1/CaseB query_results 없으면 2-mode only
+    b1_has_schema = bool(keys_b1)
+    caseb_has_schema = bool(keys_caseb)
+    invariant_form = "4-way" if (b1_has_schema and caseb_has_schema) else "EB-QAS 2-mode"
+    print(f"[assert_paired_join_invariant] form={invariant_form} "
+          f"(B1 schema={b1_has_schema}, CaseB schema={caseb_has_schema})")
+
+    if b1_has_schema:
+        assert keys_b1 == keys_ebqas, \
+            f"B1 vs EB-QAS paired join 실패: Δ={list(keys_b1 ^ keys_ebqas)[:5]}..."
+    if caseb_has_schema:
+        assert keys_caseb == keys_ebqas, \
+            f"CaseB vs EB-QAS paired join 실패: Δ={list(keys_caseb ^ keys_ebqas)[:5]}..."
+    assert keys_ebqas == keys_ebqas_nh, \
+        f"EB-QAS vs EB-QAS-no-history paired join 실패: Δ={list(keys_ebqas ^ keys_ebqas_nh)[:5]}..."
+
+    # mode label
+    if json_b1:
+        assert json_b1.get("mode") == "B1", f"json_b1 mode = {json_b1.get('mode')!r}"
+    if json_caseb:
+        assert json_caseb.get("mode") == "CaseB", f"json_caseb mode = {json_caseb.get('mode')!r}"
+    assert json_ebqas.get("mode") == "EB-QAS", f"json_ebqas mode = {json_ebqas.get('mode')!r}"
+    assert json_ebqas_no_history.get("mode") == "EB-QAS-no-history", \
+        f"json_ebqas_no_history mode = {json_ebqas_no_history.get('mode')!r}"
+
+    # ★ (c.3) true_cardinality 전수 비교 (sample 1건 → 모든 query)
+    def _qr_map(j: dict) -> dict:
+        m = {}
+        if not j:
+            return m
+        for tr in j.get("trial_results", []):
+            t_idx = tr.get("trial_idx", tr.get("trial"))
+            for qr in tr.get("query_results", []):
+                m[(t_idx, qr["query_idx"])] = qr
+        return m
+
+    qr_map_ebqas = _qr_map(json_ebqas)
+    qr_map_ebqas_nh = _qr_map(json_ebqas_no_history)
+    qr_map_b1 = _qr_map(json_b1) if json_b1 else {}
+    qr_map_caseb = _qr_map(json_caseb) if json_caseb else {}
+
+    mismatches = []
+    for (t_idx, q_idx), qr in qr_map_ebqas.items():
+        tc_ref = qr.get("true_cardinality")
+        if tc_ref is None:
+            continue
+        nh_qr = qr_map_ebqas_nh.get((t_idx, q_idx), {})
+        if "true_cardinality" in nh_qr and nh_qr["true_cardinality"] != tc_ref:
+            mismatches.append(("EB-QAS-no-history", t_idx, q_idx,
+                               tc_ref, nh_qr["true_cardinality"]))
+        b1_qr = qr_map_b1.get((t_idx, q_idx), {})
+        if "true_cardinality" in b1_qr and b1_qr["true_cardinality"] != tc_ref:
+            mismatches.append(("B1", t_idx, q_idx, tc_ref, b1_qr["true_cardinality"]))
+        caseb_qr = qr_map_caseb.get((t_idx, q_idx), {})
+        if "true_cardinality" in caseb_qr and caseb_qr["true_cardinality"] != tc_ref:
+            mismatches.append(("CaseB", t_idx, q_idx, tc_ref, caseb_qr["true_cardinality"]))
+    assert not mismatches, \
+        f"true_cardinality 불일치 {len(mismatches)}건 (sample): {mismatches[:3]}"
+
+
+# ---------------------------------------------------------------------------
 # Main CLI
 # ---------------------------------------------------------------------------
 

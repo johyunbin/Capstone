@@ -2,20 +2,25 @@
 """VAQ 쿼리 벡터별 카디널리티 추정치 생성 — 엔진 적용 검증 실험 Phase 1.
 
 특정 (dataset, sf)의 query pool 벡터들에 대해, 각 selectivity·method 조합의
-B1 / CaseA / CaseB 추정치와 참 카디널리티를 산출한다. measure_paper_exact.py의
-measure_b1_paper / measure_case_b 추정 로직을 단일 query·고정 budget(N=385)으로
-축소 재사용 — AdaptiveState 동적 루프 없이 paper Eq1 초기 budget만 사용.
+B1 / CaseA / CaseB / CaseA_mean / CaseC 추정치와 참 카디널리티를 산출한다.
+measure_paper_exact.py의 measure_b1_paper / measure_case_b / measure_case_c 추정
+로직을 단일 query·고정 budget(N=385)으로 축소 재사용 — AdaptiveState 동적 루프
+없이 paper Eq1 초기 budget만 사용.
 
 산출 parquet 1행 = (dataset, sf, sel, query_id, method):
-  est_b1     B1 무작위 Bernoulli 추정 (method 무관 — 같은 query_id면 동일)
-  est_caseA  method stratified 추정 (완전 대체)
-  est_caseB  (est_b1 + est_caseA) / 2  (결합)
-  true_card  참 카디널리티 (query_selectivity parquet의 true_cardinality)
-  D          거리 임계값 (query_selectivity parquet의 D_target)
-  qvec       쿼리 벡터 (harness가 VAQ SQL에 주입)
+  est_b1         B1 무작위 Bernoulli 추정 (method 무관 — 같은 query_id면 동일)
+  est_caseA      method stratified 추정 (완전 대체)
+  est_caseB      (est_b1 + est_caseA) / 2  (결합)
+  est_caseA_mean 16 method stratified 평균 (method-agnostic — 같은 query_id면 동일)
+  est_caseC      dual-Bernoulli ensemble (B1 + B1' 다른 rng) / 2 (method-agnostic)
+  true_card      참 카디널리티 (query_selectivity parquet의 true_cardinality)
+  D              거리 임계값 (query_selectivity parquet의 D_target)
+  qvec           쿼리 벡터 (harness가 VAQ SQL에 주입)
 
 harness(measure_latency_realengine.py)가 이 parquet을 읽어 조건별 주입값을 결정한다.
 CaseB 결합 method = 강한 13종 (v13_summary §4.4 — 불안정 클러스터링 3종 제외).
+CaseA_mean·CaseC 는 method-agnostic — 같은 (dataset, sf, sel, query_id) row 들이
+동일 값을 공유한다 (parquet schema 단순화 — 별도 (sel, query_id) 테이블 분리 회피).
 
 서버 실행:
     python3 gen_latency_estimates.py --dataset DEEP --sf 10 --n-qvec 30 --output latency/
@@ -130,6 +135,9 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
 
     alloc = mc.equal_alloc(n_strata=mc.N_STRATA, budget=BUDGET)
     rng = np.random.default_rng(20260520)
+    # ★ CaseC dual-Bernoulli — B1 a-side rng (20260520) 과 독립된 b-side rng (+1M offset,
+    #   measure_paper_exact.py L1250 measure_case_c 의 seed pattern 과 동일).
+    rng_caseC_b = np.random.default_rng(20260520 + 1_000_000)
     rows: list[dict] = []
     n_q = min(n_qvec, len(qp))
     for q_idx in range(n_q):
@@ -149,15 +157,30 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
                 mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng,
                                       budget=BUDGET, all_vecs=all_vecs)
                 for _ in range(est_trials)]))
+            # ★ est_caseC — dual-Bernoulli ensemble (method-agnostic 통제군).
+            # B1 a-side 와 같은 samples cache, 다른 rng 로 독립 draw → 평균.
+            # measure_paper_exact.py measure_case_c L1269-1271 과 동일 구조.
+            est_b1_b = float(np.mean([
+                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_caseC_b,
+                                      budget=BUDGET, all_vecs=all_vecs)
+                for _ in range(est_trials)]))
+            est_caseC = (est_b1 + est_b1_b) / 2.0
+            # ★ est_caseA_mean — 16 method stratified 추정 평균 (method-agnostic).
+            #   먼저 모든 method estimate 산출 → row 작성 단계에서 mean 주입.
+            est_methods: dict[str, float] = {}
             for m in ok_methods:
                 s_m, sz_m = method_cache[m]
-                est_method = float(np.mean([
+                est_methods[m] = float(np.mean([
                     mc.stratified_estimate(s_m, sz_m, alloc, qvec, D, rng)
                     for _ in range(est_trials)]))
+            est_caseA_mean = float(np.mean(list(est_methods.values()))) if est_methods else 0.0
+            for m, est_method in est_methods.items():
                 rows.append({
                     "dataset": dataset, "sf": sf, "sel": sel, "query_id": q_idx,
                     "method": m, "est_b1": est_b1, "est_caseA": est_method,
                     "est_caseB": (est_b1 + est_method) / 2.0,
+                    "est_caseA_mean": est_caseA_mean,
+                    "est_caseC": est_caseC,
                     "true_card": true_card, "D": D,
                     "qvec": qvec.astype(np.float32).tolist(),
                 })
@@ -176,6 +199,10 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
         smp = df.groupby(["sel", "method"])[
             ["est_b1", "est_caseA", "est_caseB", "true_card"]].mean()
         print(f"\n=== (sel × method) 평균 추정치 — v13 대조용 ===\n{smp.round(1)}")
+        # CaseA_mean·CaseC 는 (sel, query_id) 단위로 unique — sel 단위 평균 표시
+        smp2 = df.groupby(["sel"])[
+            ["est_b1", "est_caseA_mean", "est_caseC", "true_card"]].mean()
+        print(f"\n=== (sel) method-agnostic 추정치 (CaseA_mean·CaseC — v14 대조용) ===\n{smp2.round(1)}")
     return out
 
 

@@ -2,13 +2,15 @@
 """실엔진 latency 측정 harness — 엔진 적용 검증 실험 (Phase 1-2).
 
 오프라인에서 검증된 카디널리티 추정치를 Exqutor 패치 GUC `vector.injected_card`로 VAQ
-실행에 주입하고, end-to-end latency를 4조건으로 비교한다. 엔진(서버 PostgreSQL 55435)은
-고정, 주입 추정치만 유일 변인.
+실행에 주입하고, end-to-end latency를 4-way (B1·CaseA·CaseB·CaseC) + baseline·oracle
+로 비교한다. 엔진(서버 PostgreSQL 55435)은 고정, 주입 추정치만 유일 변인.
 
   조건       주입 GUC                              의미
   baseline   vector.disable_estimation=on          플래너 default selectivity (개입 없음)
-  B1         vector.injected_card=<est_b1>          논문 무작위 Bernoulli 추정
-  CaseB      vector.injected_card=<est_caseB>       결합 추정 (est_b1 + est_method)/2
+  B1         vector.injected_card=<est_b1>          논문 무작위 Bernoulli 추정 (대조군)
+  CaseA      vector.injected_card=<est_caseA_mean> 16 method 단독 평균 (완전 대체 · 음성)
+  CaseB      vector.injected_card=<est_caseB>       결합 추정 (est_b1 + est_method)/2 (method-by-method)
+  CaseC      vector.injected_card=<est_caseC>       dual-Bernoulli ensemble (B1+B1')/2 (통제군)
   oracle     vector.injected_card=<true_card>       참 카디널리티 (이론적 상한)
 
 주입 메커니즘 (서버 vector.c 패치 — 2026-05-20 recon 으로 확정):
@@ -321,12 +323,18 @@ def _iqr(vals: list[float]):
 
 def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
                  est_b1, caseb_by_method, *, n_timed, n_warmup, statement_timeout,
+                 est_caseA_mean=None, est_caseC=None,
                  seed=20260520, analyze_plans=False, capture_only=False) -> dict:
     """한 cell(query×dataset×sf×sel×query_id)의 전 variant 측정.
 
     variant = (condition, method). 매 반복 variant 순서를 무작위 셔플 — 같은 반복 내
     모든 variant 인접 실행(matched) + 캐시 워밍 순서 편향 완화. 플랜 캡처는 timed 루프
     밖에서 variant 당 1회 (auto_explain 오버헤드가 timing 을 오염하지 않도록 분리).
+
+    4-way 확장 (5/24 patch):
+      · est_caseA_mean (method-agnostic 16 method 평균) 가 주어지면 CaseA/mean variant 추가.
+      · est_caseC (dual-Bernoulli ensemble) 가 주어지면 CaseC/None variant 추가.
+      · 둘 다 None 이면 3-way (baseline·B1·CaseB·oracle) 만 — backward compat.
 
     analyze_plans=True 면 플랜 캡처를 EXPLAIN ANALYZE 모드로 — 노드별 Actual Total Time
     포함 (Phase 3b 노드 분해용). capture_only=True 면 timed 루프를 건너뛰고 플랜만 캡처
@@ -339,8 +347,15 @@ def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
     # variant 정의: (condition, method, injected_card)
     variants = [("baseline", None, None), ("B1", None, est_b1),
                 ("oracle", None, true_card)]
+    # CaseA: method-agnostic 16 method 평균 (완전 대체 음성 대조)
+    if est_caseA_mean is not None:
+        variants.append(("CaseA", "mean", est_caseA_mean))
+    # CaseB: method-by-method (carry — 강한 13 method 각각 결합)
     for m, est in caseb_by_method.items():
         variants.append(("CaseB", m, est))
+    # CaseC: dual-Bernoulli ensemble (method-agnostic 통제군)
+    if est_caseC is not None:
+        variants.append(("CaseC", None, est_caseC))
     keys = [(c, m) for (c, m, _) in variants]
     inj_by_key = {(c, m): inj for (c, m, inj) in variants}
 
@@ -405,7 +420,9 @@ def measure_cell(query, dataset, sf, sel, query_id, qvec, D, true_card,
 def load_estimates(path: Path, dataset, sf, sel, query_id, methods):
     """gen_latency_estimates.py 산출 parquet 에서 한 cell 의 추정치 추출.
 
-    Returns: (qvec, D, true_card, est_b1, {method: est_caseB})
+    Returns: (qvec, D, true_card, est_b1, {method: est_caseB}, est_caseA_mean, est_caseC)
+
+    est_caseA_mean·est_caseC 컬럼이 없으면 (구 parquet) None — 3-way fallback.
     """
     import pyarrow.parquet as pq
     df = pq.read_table(path).to_pandas()
@@ -417,7 +434,13 @@ def load_estimates(path: Path, dataset, sf, sel, query_id, methods):
     qvec = np.asarray(r0["qvec"], dtype=np.float32)
     caseb = {m: float(sub[sub["method"] == m].iloc[0]["est_caseB"])
              for m in methods if len(sub[sub["method"] == m])}
-    return qvec, float(r0["D"]), float(r0["true_card"]), float(r0["est_b1"]), caseb
+    # est_caseA_mean·est_caseC 는 method-agnostic — row 별 동일 값. 컬럼 부재 시 None.
+    est_caseA_mean = (float(r0["est_caseA_mean"])
+                      if "est_caseA_mean" in sub.columns else None)
+    est_caseC = (float(r0["est_caseC"])
+                 if "est_caseC" in sub.columns else None)
+    return (qvec, float(r0["D"]), float(r0["true_card"]),
+            float(r0["est_b1"]), caseb, est_caseA_mean, est_caseC)
 
 
 # ---------------------------------------------------------------------------
@@ -434,8 +457,9 @@ def _dry_run(args) -> None:
     for ddl in temp_view_ddls(args.dataset, args.sf):
         print(f"  {ddl}")
 
-    print("\n--- 조건별 GUC ---")
-    for cond, inj in [("baseline", None), ("B1", 123456), ("CaseB", 0.0),
+    print("\n--- 조건별 GUC (4-way 확장 5/24) ---")
+    for cond, inj in [("baseline", None), ("B1", 123456),
+                      ("CaseA", 110000), ("CaseB", 120000), ("CaseC", 124000),
                       ("oracle", 130000)]:
         print(f"  {cond:<9}: {'; '.join(gucs_for(cond, inj))}")
 
@@ -492,15 +516,23 @@ def main() -> None:
     if not args.estimates:
         ap.error("--estimates 필요 (real run) — 또는 --dry-run")
 
-    qvec, D, true_card, est_b1, caseb = load_estimates(
+    (qvec, D, true_card, est_b1, caseb,
+     est_caseA_mean, est_caseC) = load_estimates(
         args.estimates, args.dataset, args.sf, args.sel, args.query_id, args.methods)
+    extra = []
+    if est_caseA_mean is not None:
+        extra.append(f"caseA_mean={est_caseA_mean:.0f}")
+    if est_caseC is not None:
+        extra.append(f"caseC={est_caseC:.0f}")
     print(f"[{kst()}] cell tpc_h/{args.query} {args.dataset} sf{args.sf} "
           f"sel{args.sel} qid{args.query_id}: D={D:.4f} true={true_card:.0f} "
-          f"est_b1={est_b1:.0f} caseB={{{', '.join(f'{m}:{v:.0f}' for m, v in caseb.items())}}}")
+          f"est_b1={est_b1:.0f} {' '.join(extra)} "
+          f"caseB={{{', '.join(f'{m}:{v:.0f}' for m, v in caseb.items())}}}")
 
     result = measure_cell(
         args.query, args.dataset, args.sf, args.sel, args.query_id,
         qvec, D, true_card, est_b1, caseb,
+        est_caseA_mean=est_caseA_mean, est_caseC=est_caseC,
         n_timed=args.n_timed, n_warmup=args.n_warmup,
         statement_timeout=args.statement_timeout,
         analyze_plans=args.analyze_plans, capture_only=args.capture_only)

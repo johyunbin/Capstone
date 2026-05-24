@@ -1,6 +1,7 @@
 # METHOD_REGISTRY.md — 57 Method Paradigm 분류
 
 > 작성: 2026-05-11 01:30 KST  
+> ★ **5/24 carry note (3-multi-AI audit 결과 반영)**: 본 registry 의 P2.1 `hilbert_real` description ("진짜 Hilbert curve") 은 PCA 2D 환원 후 Wikipedia xy2d Hilbert curve 적용을 의미 — high-D Hilbert 아님. 본 연구의 발표·보고서·임채림 연구원 전달용 자료에서는 정정 후 명칭 (`pca2d_hilbert_xy2d` 등 8 method rename + paradigm P9→P5b·P5→P5 Classical Stratification 재분류) carry. 정정 list 와 사유는 `submission/_drafts/속도는벡터_6_11_최종보고서_20260523_215000.md` §4.7 verbatim + `submission/_drafts/속도는벡터_채림님_전달용_구체적_데이터_v2_재구성_20260524_233327.md` §7 carry.
 > 목적: Tier S/A/B/Q1/Q4/Phase 4 분류 폐기 → **paradigm (P1-P10)** 단일 분류  
 > 사용자 명시 (5/11 01:15): "여러 세션 작업물 뒤엉킴 — Tier S/A/B/Q1/Q4/Phase 4 분류 의미 X."  
 > 출처: handoff_v5 §2 + method_verification_20260510 _SUMMARY + handoff_v3 §1 + measure_paper_exact.py line 416-880

@@ -1,0 +1,2139 @@
+{
+  "family": "tpc_h",
+  "query": "q12",
+  "dataset": "SIFT",
+  "sf": 10,
+  "sel": 0.01,
+  "query_id": 0,
+  "D": 420.234130859375,
+  "true_card": 83414.0,
+  "vec_table": "partsupp_sift_10",
+  "n_warmup": 1,
+  "n_timed": 15,
+  "statement_timeout": "180s",
+  "variants": [
+    {
+      "condition": "baseline",
+      "method": null,
+      "injected_card": null,
+      "q_error": null,
+      "exec_ms": [
+        7884.085561032407,
+        5589.425064972602,
+        6919.52710703481,
+        6246.202869922854,
+        7746.319419005886,
+        8071.664071059786,
+        7495.543717988767,
+        7607.608624966815,
+        8182.335847988725,
+        6520.166435977444,
+        4982.627793913707,
+        7791.881270008162,
+        8063.726707012393,
+        7699.365328997374,
+        7372.923749964684
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 7308.341532918768,
+      "exec_ms_median": 7607.608624966815,
+      "exec_ms_iqr": [
+        6520.166435977444,
+        7884.085561032407
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 2709981.16,
+        "Total Cost": 2719039.56,
+        "Plan Rows": 77638,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 2708981.14,
+            "Total Cost": 2709078.18,
+            "Plan Rows": 38819,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 790538.52,
+                "Total Cost": 2706022.26,
+                "Plan Rows": 38819,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 790538.09,
+                    "Total Cost": 2568468.16,
+                    "Plan Rows": 38819,
+                    "Plan Width": 539,
+                    "Inner Unique": true,
+                    "Hash Cond": "((lineitem_10.l_partkey = partsupp_sift_10.ps_partkey) AND (lineitem_10.l_suppkey = partsupp_sift_10.ps_suppkey))",
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 1777318.68,
+                        "Plan Rows": 116457,
+                        "Plan Width": 35,
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Startup Cost": 773871.81,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 1111085,
+                        "Plan Width": 536,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": true,
+                            "Async Capable": false,
+                            "Relation Name": "partsupp_sift_10",
+                            "Alias": "partsupp_sift_10",
+                            "Startup Cost": 0.0,
+                            "Total Cost": 773871.81,
+                            "Plan Rows": 1111085,
+                            "Plan Width": 536,
+                            "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 16956.765,
+      "injection_fired": false,
+      "injected_card_seen": null
+    },
+    {
+      "condition": "B1",
+      "method": null,
+      "injected_card": 93506.49350649353,
+      "q_error": 1.1209928010465093,
+      "exec_ms": [
+        3028.3242790028453,
+        2661.8811540538445,
+        2060.2449560537934,
+        2045.163244009018,
+        2032.616039039567,
+        3664.182677050121,
+        4232.786525040865,
+        3583.0575400032103,
+        3540.8765700412914,
+        2671.4890439761803,
+        2314.3505279440433,
+        3779.970170930028,
+        3456.0985040152445,
+        2611.6141120437533,
+        2625.9660370415077
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 2926.4014473972984,
+      "exec_ms_median": 2671.4890439761803,
+      "exec_ms_iqr": [
+        2314.3505279440433,
+        3583.0575400032103
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1077868.66,
+        "Total Cost": 1078186.25,
+        "Plan Rows": 2722,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1076868.64,
+            "Total Cost": 1076872.04,
+            "Plan Rows": 1361,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1076797.79,
+                "Plan Rows": 1361,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1071975.13,
+                    "Plan Rows": 1361,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 38961,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.64,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1961.051,
+      "injection_fired": true,
+      "injected_card_seen": 93506.493506
+    },
+    {
+      "condition": "oracle",
+      "method": null,
+      "injected_card": 83414.0,
+      "q_error": 1.0,
+      "exec_ms": [
+        3774.6990750310943,
+        3732.610283070244,
+        3341.20730496943,
+        2045.8587149623781,
+        3485.889105941169,
+        3461.3191769458354,
+        3611.4761559292674,
+        2386.3116250140592,
+        2283.944247988984,
+        2422.050546039827,
+        1688.2917860057205,
+        3210.9788910020143,
+        3806.4239849336445,
+        3428.3028590725735,
+        2006.8638569209725
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3014.731680222142,
+      "exec_ms_median": 3341.20730496943,
+      "exec_ms_iqr": [
+        2283.944247988984,
+        3611.4761559292674
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1046142.92,
+        "Total Cost": 1046426.21,
+        "Plan Rows": 2428,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1045142.9,
+            "Total Cost": 1045145.93,
+            "Plan Rows": 1214,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1045080.7,
+                "Plan Rows": 1214,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1040778.93,
+                    "Plan Rows": 1214,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 34756,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1980.696,
+      "injection_fired": true,
+      "injected_card_seen": 83414.0
+    },
+    {
+      "condition": "CaseB",
+      "method": "hilbert_real",
+      "injected_card": 85542.04727956255,
+      "q_error": 1.0255118718627874,
+      "exec_ms": [
+        3554.3429679237306,
+        3761.983387055807,
+        2445.7125900080428,
+        2395.3759050928056,
+        3208.850931026973,
+        5138.965879916213,
+        3638.1429630564526,
+        2369.7683620266616,
+        3939.301355043426,
+        3754.346664994955,
+        2309.99720597174,
+        4393.901461036876,
+        2858.79325598944,
+        4432.870468008332,
+        4116.741992998868
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3451.548638789413,
+      "exec_ms_median": 3638.1429630564526,
+      "exec_ms_iqr": [
+        2445.7125900080428,
+        4116.741992998868
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1052838.11,
+        "Total Cost": 1053128.63,
+        "Plan Rows": 2490,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1051838.09,
+            "Total Cost": 1051841.2,
+            "Plan Rows": 1245,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1051774.09,
+                "Plan Rows": 1245,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1047362.46,
+                    "Plan Rows": 1245,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 35642,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.66,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1951.188,
+      "injection_fired": true,
+      "injected_card_seen": 85542.04728
+    },
+    {
+      "condition": "CaseB",
+      "method": "skilling_hilbert",
+      "injected_card": 83542.63359535203,
+      "q_error": 1.0015421103813753,
+      "exec_ms": [
+        2341.1096510244533,
+        2988.5482139652595,
+        2408.204921055585,
+        2209.766070009209,
+        3078.084427979775,
+        3424.6374720241874,
+        3161.0696270363405,
+        4482.818972086534,
+        2077.737585059367,
+        3840.717014973052,
+        3319.616449996829,
+        3147.2372219432145,
+        3034.310781979002,
+        3084.6409269142896,
+        4032.0938560180366
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3082.310510378403,
+      "exec_ms_median": 3084.6409269142896,
+      "exec_ms_iqr": [
+        2408.204921055585,
+        3424.6374720241874
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1046551.36,
+        "Total Cost": 1046835.12,
+        "Plan Rows": 2432,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1045551.34,
+            "Total Cost": 1045554.38,
+            "Plan Rows": 1216,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1045489.03,
+                "Plan Rows": 1216,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1041180.17,
+                    "Plan Rows": 1216,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 34810,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1848.796,
+      "injection_fired": true,
+      "injected_card_seen": 83542.633595
+    },
+    {
+      "condition": "CaseB",
+      "method": "chao_weighted",
+      "injected_card": 79596.11162166782,
+      "q_error": 1.0479657649167484,
+      "exec_ms": [
+        1865.858315024525,
+        3939.399890950881,
+        2059.3832510057837,
+        2089.0237080166116,
+        2685.8725340571254,
+        3697.7726300247014,
+        3481.45930794999,
+        2516.776002943516,
+        3358.1131420796737,
+        1881.544767995365,
+        2241.5881929919124,
+        3318.2180270086974,
+        3145.9755139658228,
+        2545.8092290209606,
+        3500.0031699892133
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 2809.3491905422593,
+      "exec_ms_median": 2685.8725340571254,
+      "exec_ms_iqr": [
+        2089.0237080166116,
+        3481.45930794999
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1034108.78,
+        "Total Cost": 1034379.23,
+        "Plan Rows": 2318,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1033108.75,
+            "Total Cost": 1033111.65,
+            "Plan Rows": 1159,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1033049.77,
+                "Plan Rows": 1159,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1028942.88,
+                    "Plan Rows": 1159,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 33165,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.68,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 2100.872,
+      "injection_fired": true,
+      "injected_card_seen": 79596.111622
+    },
+    {
+      "condition": "CaseB",
+      "method": "ica_fastica",
+      "injected_card": 92437.46227956256,
+      "q_error": 1.1081768321811993,
+      "exec_ms": [
+        3881.1772719491273,
+        2520.7304019713774,
+        3477.4837299482897,
+        2074.644444976002,
+        3378.3277419861406,
+        3810.04407198634,
+        4023.4683849848807,
+        3213.599143899046,
+        2072.9375140508637,
+        3382.3222960345447,
+        1934.0970539487898,
+        3988.80722199101,
+        4005.5248680291697,
+        3494.16487198323,
+        3403.4312999574468
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3284.861144520199,
+      "exec_ms_median": 3403.4312999574468,
+      "exec_ms_iqr": [
+        2520.7304019713774,
+        3881.1772719491273
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1074511.23,
+        "Total Cost": 1074825.32,
+        "Plan Rows": 2692,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1073511.21,
+            "Total Cost": 1073514.57,
+            "Plan Rows": 1346,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1073441.25,
+                "Plan Rows": 1346,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1068671.74,
+                    "Plan Rows": 1346,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 38515,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.64,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1980.919,
+      "injection_fired": true,
+      "injected_card_seen": 92437.46228
+    },
+    {
+      "condition": "CaseB",
+      "method": "pca1d",
+      "injected_card": 83279.56254272045,
+      "q_error": 1.0016142911078645,
+      "exec_ms": [
+        3084.0999769279733,
+        2637.247345992364,
+        2201.423041988164,
+        3751.724497997202,
+        4057.3981419438496,
+        3402.2981779417023,
+        3390.713081113063,
+        3355.3681920748204,
+        1877.5760299758986,
+        2453.3480290556327,
+        3764.1850659856573,
+        2277.216049027629,
+        3765.09340305347,
+        3225.3452140139416,
+        3390.6923399772495
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3130.673416549913,
+      "exec_ms_median": 3355.3681920748204,
+      "exec_ms_iqr": [
+        2453.3480290556327,
+        3751.724497997202
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1045718.85,
+        "Total Cost": 1046001.67,
+        "Plan Rows": 2424,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1044718.83,
+            "Total Cost": 1044721.86,
+            "Plan Rows": 1212,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1044656.75,
+                "Plan Rows": 1212,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1040362.06,
+                    "Plan Rows": 1212,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 34700,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1851.82,
+      "injection_fired": true,
+      "injected_card_seen": 83279.562543
+    },
+    {
+      "condition": "CaseB",
+      "method": "zorder_morton",
+      "injected_card": 92020.42833219413,
+      "q_error": 1.1031772643943958,
+      "exec_ms": [
+        3609.2213910305873,
+        2225.3564239945263,
+        2167.52150002867,
+        2256.713267066516,
+        4512.9994379822165,
+        3996.339456993155,
+        3349.603537004441,
+        2238.4306219173595,
+        2864.1598790418357,
+        3779.182311031036,
+        4081.583410035819,
+        3977.042953018099,
+        3815.4774489812553,
+        3429.7584110172465,
+        2897.7387020131573
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3270.815985626541,
+      "exec_ms_median": 3429.7584110172465,
+      "exec_ms_iqr": [
+        2256.713267066516,
+        3977.042953018099
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1073208.14,
+        "Total Cost": 1073520.83,
+        "Plan Rows": 2680,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1072208.11,
+            "Total Cost": 1072211.46,
+            "Plan Rows": 1340,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1072138.51,
+                "Plan Rows": 1340,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1067390.26,
+                    "Plan Rows": 1340,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 38342,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.65,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1882.467,
+      "injection_fired": true,
+      "injected_card_seen": 92020.428332
+    },
+    {
+      "condition": "CaseB",
+      "method": "hyperloglog",
+      "injected_card": 82884.3254374573,
+      "q_error": 1.0063905275182867,
+      "exec_ms": [
+        4058.9417159790173,
+        2870.6006159773096,
+        2448.1134980451316,
+        2067.192328046076,
+        2832.7892010565847,
+        3405.2544930018485,
+        3459.7372569842264,
+        2107.066373922862,
+        4030.915215960704,
+        4335.3313689585775,
+        1964.2573710298166,
+        2254.1547199944034,
+        4023.1202269205824,
+        3576.004318892956,
+        3744.6186139713973
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3144.5006599040844,
+      "exec_ms_median": 3405.2544930018485,
+      "exec_ms_iqr": [
+        2254.1547199944034,
+        4023.1202269205824
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1044473.94,
+        "Total Cost": 1044755.59,
+        "Plan Rows": 2414,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1043473.91,
+            "Total Cost": 1043476.93,
+            "Plan Rows": 1207,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1043412.13,
+                "Plan Rows": 1207,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1039135.16,
+                    "Plan Rows": 1207,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 34535,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 2029.702,
+      "injection_fired": true,
+      "injected_card_seen": 82884.325437
+    },
+    {
+      "condition": "CaseB",
+      "method": "cum_sqrtf",
+      "injected_card": 84045.24714798361,
+      "q_error": 1.007567640299993,
+      "exec_ms": [
+        3244.6704941103235,
+        2325.2402970101684,
+        1891.6382080642506,
+        2318.782147951424,
+        3443.0549070239067,
+        2534.5452810870484,
+        3420.5905470298603,
+        3284.943260019645,
+        3018.1888489751145,
+        3560.4324439773336,
+        3606.74275807105,
+        3464.9697380373254,
+        3133.3775009261444,
+        2510.990740964189,
+        3169.6531039197
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3033.0337931563217,
+      "exec_ms_median": 3169.6531039197,
+      "exec_ms_iqr": [
+        2510.990740964189,
+        3443.0549070239067
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1048130.7,
+        "Total Cost": 1048416.08,
+        "Plan Rows": 2446,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1047130.67,
+            "Total Cost": 1047133.73,
+            "Plan Rows": 1223,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1047067.96,
+                "Plan Rows": 1223,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1042734.29,
+                    "Plan Rows": 1223,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 35019,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 2119.753,
+      "injection_fired": true,
+      "injected_card_seen": 84045.247148
+    },
+    {
+      "condition": "CaseB",
+      "method": "lavallee_hidiroglou",
+      "injected_card": 83588.86359535203,
+      "q_error": 1.002096333893016,
+      "exec_ms": [
+        3820.547371986322,
+        2260.341893066652,
+        1897.011740016751,
+        1938.9480039244518,
+        2940.2461589779705,
+        3613.397215027362,
+        3685.4791700607166,
+        3021.401036065072,
+        2060.4443550109863,
+        3170.8702670875937,
+        1685.110422084108,
+        4672.678856062703,
+        3097.657948033884,
+        3647.309722029604,
+        3493.0192850297317
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 2972.8210897167,
+      "exec_ms_median": 3097.657948033884,
+      "exec_ms_iqr": [
+        2060.4443550109863,
+        3647.309722029604
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1046696.99,
+        "Total Cost": 1046980.98,
+        "Plan Rows": 2434,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1045696.97,
+            "Total Cost": 1045700.01,
+            "Plan Rows": 1217,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1045634.61,
+                "Plan Rows": 1217,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1041322.2,
+                    "Plan Rows": 1217,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 34829,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.67,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 2004.06,
+      "injection_fired": true,
+      "injected_card_seen": 83588.863595
+    },
+    {
+      "condition": "CaseB",
+      "method": "rsvd",
+      "injected_card": 104481.06977956256,
+      "q_error": 1.252560358927309,
+      "exec_ms": [
+        3646.936314064078,
+        2615.8238960197195,
+        2074.459964991547,
+        2310.627164086327,
+        3359.238874982111,
+        3696.88500801567,
+        3564.2798020271584,
+        2797.7501190034673,
+        3995.1052070828155,
+        3264.796235016547,
+        4113.357017049566,
+        3353.739673970267,
+        3934.6191770164296,
+        2880.3700560238212,
+        3469.182275934145
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3299.181061787889,
+      "exec_ms_median": 3359.238874982111,
+      "exec_ms_iqr": [
+        2797.7501190034673,
+        3696.88500801567
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1112230.51,
+        "Total Cost": 1112585.43,
+        "Plan Rows": 3042,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1111230.49,
+            "Total Cost": 1111234.29,
+            "Plan Rows": 1521,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1111150.09,
+                "Plan Rows": 1521,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1105760.47,
+                    "Plan Rows": 1521,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 43534,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.61,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1878.331,
+      "injection_fired": true,
+      "injected_card_seen": 104481.06978
+    },
+    {
+      "condition": "CaseB",
+      "method": "sparse_rp",
+      "injected_card": 78883.43135850993,
+      "q_error": 1.0574337166051957,
+      "exec_ms": [
+        2655.519977095537,
+        2125.691556953825,
+        2158.6492349160835,
+        3524.3589589372277,
+        3394.604960922152,
+        2866.7514140252024,
+        3710.9947350108996,
+        2537.3136630514637,
+        2166.2855559261516,
+        3730.537796043791,
+        1646.831780904904,
+        3780.017146957107,
+        3379.059463040903,
+        3414.1162750311196,
+        3288.6848530033603
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 2996.351418765978,
+      "exec_ms_median": 3288.6848530033603,
+      "exec_ms_iqr": [
+        2166.2855559261516,
+        3524.3589589372277
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1031855.99,
+        "Total Cost": 1032123.88,
+        "Plan Rows": 2296,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1030855.97,
+            "Total Cost": 1030858.84,
+            "Plan Rows": 1148,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1030797.62,
+                "Plan Rows": 1148,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1026729.71,
+                    "Plan Rows": 1148,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 32868,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.68,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 2037.877,
+      "injection_fired": true,
+      "injected_card_seen": 78883.431359
+    },
+    {
+      "condition": "CaseB",
+      "method": "mhist2",
+      "injected_card": 80556.77583219414,
+      "q_error": 1.0354684523839146,
+      "exec_ms": [
+        3430.498206987977,
+        2207.2632960043848,
+        2398.6887829378247,
+        3605.9927459573373,
+        2463.7368409894407,
+        4118.241498945281,
+        3249.36124694068,
+        3966.0473009571433,
+        2515.1136849308386,
+        3910.5579149909317,
+        1677.4991180282086,
+        2740.0858440669253,
+        3272.301641991362,
+        3878.805621061474,
+        3662.0104969479144
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 3176.9587403664796,
+      "exec_ms_median": 3272.301641991362,
+      "exec_ms_iqr": [
+        2463.7368409894407,
+        3878.805621061474
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1037132.32,
+        "Total Cost": 1037405.8,
+        "Plan Rows": 2344,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1036132.29,
+            "Total Cost": 1036135.22,
+            "Plan Rows": 1172,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1036072.55,
+                "Plan Rows": 1172,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1031919.6,
+                    "Plan Rows": 1172,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 33565,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.68,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1987.95,
+      "injection_fired": true,
+      "injected_card_seen": 80556.775832
+    },
+    {
+      "condition": "CaseB",
+      "method": "rabitq_strat",
+      "injected_card": 89237.06780587835,
+      "q_error": 1.0698092383278388,
+      "exec_ms": [
+        3416.535634896718,
+        2844.4288490572944,
+        2292.491724016145,
+        1915.4986250214279,
+        1945.3035750193521,
+        3775.3068059682846,
+        3079.9460880225524,
+        2605.472166906111,
+        2187.671474996023,
+        3802.6530380593613,
+        2937.847097055055,
+        2943.12801794149,
+        3719.3378580268472,
+        3984.294309047982,
+        3282.8207679558545
+      ],
+      "n_timeout": 0,
+      "exec_ms_trimmed": 2987.149469070853,
+      "exec_ms_median": 2943.12801794149,
+      "exec_ms_iqr": [
+        2292.491724016145,
+        3719.3378580268472
+      ],
+      "plan_json": {
+        "Node Type": "Gather Merge",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1064461.13,
+        "Total Cost": 1064764.25,
+        "Plan Rows": 2598,
+        "Plan Width": 19,
+        "Workers Planned": 2,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 1063461.11,
+            "Total Cost": 1063464.35,
+            "Plan Rows": 1299,
+            "Plan Width": 19,
+            "Sort Key": [
+              "((partsupp_sift_10.ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector))"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Inner",
+                "Startup Cost": 1.0,
+                "Total Cost": 1063393.93,
+                "Plan Rows": 1299,
+                "Plan Width": 19,
+                "Inner Unique": true,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.56,
+                    "Total Cost": 1058790.96,
+                    "Plan Rows": 1299,
+                    "Plan Width": 539,
+                    "Inner Unique": false,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Async Capable": false,
+                        "Relation Name": "partsupp_sift_10",
+                        "Alias": "partsupp_sift_10",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 773871.81,
+                        "Plan Rows": 37182,
+                        "Plan Width": 536,
+                        "Filter": "((ps_embedding <-> '[9,13,69,119,17,1,12,9,8,7,31,60,17,18,76,23,44,2,13,12,2,4,23,-99,29,0,0,2,3,2,17,-98,35,65,23,48,22,0,5,14,52,73,42,119,27,16,30,18,-98,36,13,29,6,3,4,61,63,6,17,14,0,1,15,44,42,45,31,25,11,1,1,28,73,31,58,62,50,11,2,25,-98,25,6,9,5,2,0,31,60,10,19,55,32,1,0,2,3,22,27,9,18,18,3,0,82,30,57,18,3,0,0,2,-98,22,2,1,5,0,0,9,42,1,0,5,55,5,0,3]'::vector) < '420.234131'::double precision)"
+                      },
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "idx_lineitem_10_part_supp",
+                        "Relation Name": "lineitem_10",
+                        "Alias": "lineitem_10",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 7.65,
+                        "Plan Rows": 1,
+                        "Plan Width": 35,
+                        "Index Cond": "((l_partkey = partsupp_sift_10.ps_partkey) AND (l_suppkey = partsupp_sift_10.ps_suppkey))",
+                        "Filter": "((l_shipmode = ANY ('{RAIL,SHIP}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1994-01-01'::date) AND (l_receiptdate < '1995-01-01 00:00:00'::timestamp without time zone))"
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Index Only Scan",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_10_pkey",
+                    "Relation Name": "orders_10",
+                    "Alias": "orders_10",
+                    "Startup Cost": 0.43,
+                    "Total Cost": 3.54,
+                    "Plan Rows": 1,
+                    "Plan Width": 4,
+                    "Index Cond": "(o_orderkey = lineitem_10.l_orderkey)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plan_duration_ms": 1869.114,
+      "injection_fired": true,
+      "injected_card_seen": 89237.067806
+    }
+  ],
+  "kst": "2026-05-21 23:27:42"
+}

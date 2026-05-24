@@ -62,6 +62,10 @@ DATASET_ALIAS = {
     "DEEP+WIKI": "DEEP",        # Fig 8 multi-vector: ps_image_emb[DEEP] query
     "DEEP+SIFT": "DEEP",        # v7 ext multi 중차원: ps_embedding_deep[DEEP] query
     "DEEP+WIKI cross": "DEEP",  # Fig 9 cross-table: partsupp[DEEP] query
+    # 5/24 신규 — concat 다중 벡터 (build_concat_cells 산출 query pool/sel parquet)
+    "DEEP+SIFT concat": "DEEP_SIFT_CONCAT",  # A9-* — 224d (96+128)
+    "DEEP+WIKI concat": "DEEP_WIKI_CONCAT",  # A10-* — 864d (96+768)
+    "DEEP+YFCC concat": "DEEP_YFCC_CONCAT",  # A11-* — 288d (96+192)
 }
 
 
@@ -350,6 +354,47 @@ def build_cell_specs() -> list[CellSpec]:
         threshold_map={q: TPC_H_THRESHOLD for q in TPC_H_QUERIES},
         mode_pool=["B1", "CaseA", "CaseB"],
     ))
+
+    # === 5/24 신규 — A9·A10·A11 concat 다중 벡터 7 cell (v13 scope 일치) ===
+    # NPY fast-path: cache/rq1/partsupp_{combo}_concat_{sf}_vectors.npy + _strata.npy
+    # query pool/sel: cache/rq1/query_{pool,selectivity}_{COMBO_UPPER}_CONCAT_sf{sf}.parquet
+    # build_concat_cells.py 산출 artifact 재사용 — measure_paper_exact 코드 변경 X
+    for sf in [1, 10, 100]:
+        cells.append(CellSpec(
+            sub=f"A9-DEEP+SIFT-concat-sf{sf}",
+            fig="v13 concat 다중 224d",
+            dataset="DEEP+SIFT concat", sf=sf,
+            table=f"partsupp_deep_sift_concat_{sf}",
+            embed_col="ps_embedding", vec_dim=224,
+            queries=TPC_H_QUERIES,
+            selectivities=PAPER_SELECTIVITIES,  # v13: 3 sel 평면 — full
+            threshold_map={q: TPC_H_THRESHOLD for q in TPC_H_QUERIES},
+            mode_pool=["B1", "CaseA", "CaseB"],
+        ))
+    for sf in [1, 10]:
+        cells.append(CellSpec(
+            sub=f"A10-DEEP+WIKI-concat-sf{sf}",
+            fig="v13 concat 다중 864d",
+            dataset="DEEP+WIKI concat", sf=sf,
+            table=f"partsupp_deep_wiki_concat_{sf}",
+            embed_col="ps_embedding", vec_dim=864,
+            queries=TPC_H_QUERIES,
+            selectivities=PAPER_SELECTIVITIES,
+            threshold_map={q: TPC_H_THRESHOLD for q in TPC_H_QUERIES},
+            mode_pool=["B1", "CaseA", "CaseB"],
+        ))
+    for sf in [1, 10]:
+        cells.append(CellSpec(
+            sub=f"A11-DEEP+YFCC-concat-sf{sf}",
+            fig="v13 concat 다중 288d",
+            dataset="DEEP+YFCC concat", sf=sf,
+            table=f"partsupp_deep_yfcc_concat_{sf}",
+            embed_col="ps_embedding", vec_dim=288,
+            queries=TPC_H_QUERIES,
+            selectivities=PAPER_SELECTIVITIES,
+            threshold_map={q: TPC_H_THRESHOLD for q in TPC_H_QUERIES},
+            mode_pool=["B1", "CaseA", "CaseB"],
+        ))
 
     return cells
 
@@ -1193,7 +1238,9 @@ def measure_case_b(cell: CellSpec, method_name: str, n_queries: int = 1000,
 
 
 def measure_case_c(cell: CellSpec, n_queries: int = 1000,
-                   trials: int = TRIALS, output_dir: Optional[Path] = None) -> dict:
+                   trials: int = TRIALS, output_dir: Optional[Path] = None,
+                   sel_override: Optional[float] = None,
+                   K_override: Optional[int] = None) -> dict:
     """CaseC: dual-Bernoulli ensemble (5/23 audit CaseB' 의 pre-registered 실측).
 
     audit CaseB' (trial cross-pair 재구성, post-hoc — 1,226 measurement slice) 의
@@ -1213,12 +1260,33 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
 
     표본 크기 = 2 × state.size (B1 의 2배 — inherent feature, CaseB 와 동일).
     Method-independent: B1 와 같은 KM20 samples cache 만 사용 (no method strata).
+
+    sel_override / K_override (5/24 추가): v13 scope 일치 (sel·K 평면 전수) 측정용.
+    None 이면 cell.selectivities[0] / mc.N_STRATA default. output JSON 파일명·result dict
+    에 sel·K 정보 포함 → 95 tuple 측정 시 충돌 회피.
+
+    ★ K_override 정합성 (5/24 Codex BLOCKER E re-review fix):
+    CaseC 는 method-independent dual-Bernoulli — sampling 은 cluster 와 무관한 paper
+    exact 경로 (all_vecs 직접 random sample). 따라서 K_override 는 v13 paired row 와
+    매칭용 **metadata** 로만 기록하고, 실제 cluster cache 는 항상 mc.N_STRATA (=20)
+    default 로 build. bernoulli_estimate 호출 시 all_vecs 인자 전달 → strata 완전 무관
+    paper §V-B verbatim 경로. K=10/20/30 tuple 의 측정 결과는 (cell, sel) 가 같으면 K
+    무관 동일 — v13 paired vs B1/CaseB Δ% 만 K 별로 다름 (B1·CaseB 가 K 의존).
     """
     if not SERVER:
         raise RuntimeError("server only — _measure_common.py needed")
 
+    # ★ sel·K override 결정 (5/24) — sel 은 실제 영향, K 는 metadata only (위 docstring)
+    K_meta = K_override if K_override is not None else mc.N_STRATA
+    n_strata = mc.N_STRATA  # ★ 실제 cluster cache 는 항상 KM20 default (CaseC 의도 정합)
+    sel_used = sel_override if sel_override is not None else (
+        cell.selectivities[0] if cell.selectivities and cell.selectivities[0] is not None
+        else PAPER_SEL_DEFAULT)
+
     print(f"[{mc.kst()}] CaseC paper exact (dual-Bernoulli, Option A): "
-          f"cell={cell.sub} dataset={cell.dataset} table={cell.table} sf={cell.sf}")
+          f"cell={cell.sub} dataset={cell.dataset} table={cell.table} sf={cell.sf} "
+          f"sel={sel_used:g} K_meta={K_meta} (sampling K fixed at {n_strata}, "
+          f"all_vecs path — strata-independent)")
     alias = DATASET_ALIAS.get(cell.dataset, cell.dataset)
     ds = {
         "name": cell.dataset, "table": cell.table,
@@ -1232,12 +1300,12 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
         raise FileNotFoundError(f"query selectivity 미존재: {ds['query_sel']}")
 
     # 1. Vector + KM20 cluster fetch (B1 와 동일 samples cache — pure dual-Bernoulli)
-    print(f"[{mc.kst()}] fetching {cell.table} vectors (KM20 strata)...")
+    print(f"[{mc.kst()}] fetching {cell.table} vectors (KM20 cache, K_meta={K_meta})...")
     all_vecs, km20_sids = mc.fetch_all_vectors_safe(ds)
     samples_b1, sizes_b1 = mc.cache_cluster_samples_inmem(all_vecs, km20_sids,
-                                                          n_strata=mc.N_STRATA, seed=42)
+                                                          n_strata=n_strata, seed=42)
     total_rows = sum(sizes_b1.values())
-    print(f"[{mc.kst()}] total_rows={total_rows} cluster sizes mean={total_rows//mc.N_STRATA}")
+    print(f"[{mc.kst()}] total_rows={total_rows} cluster sizes mean={total_rows//n_strata}")
 
     # 2. Query pool load
     qp, qs_full, qvecs = mc._load_query_pool(ds)
@@ -1256,7 +1324,7 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
             q_row_idx = q_idx % len(qp)
             qvec = qvecs[q_row_idx]
 
-            sel = cell.selectivities[0] if cell.selectivities[0] is not None else PAPER_SEL_DEFAULT
+            sel = sel_used
             qs_match = qs_full[(np.isclose(qs_full["selectivity"], sel)) & (qs_full["query_id"] == q_row_idx)]
             if len(qs_match) > 0:
                 D = float(qs_match.iloc[0]["D_target"])
@@ -1265,9 +1333,14 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
                 D = TPC_H_THRESHOLD
                 true_card = total_rows * sel
 
-            # 두 독립 Bernoulli draw (같은 samples cache, 다른 rng & 각자 budget)
-            est_a = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_a, budget=state_a.size)
-            est_b = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_b, budget=state_b.size)
+            # 두 독립 Bernoulli draw (같은 all_vecs, 다른 rng & 각자 budget)
+            # ★ paper exact 경로 (all_vecs 전달) — strata 무관 random sample (5/24 fix).
+            #   기존 strata-flatten 경로 (cache_per_cluster=500 cap) 는 큰 cluster
+            #   under-represented (corr -0.98, 5/21 발견). v16 부터 paper §V-B verbatim.
+            est_a = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_a,
+                                          budget=state_a.size, all_vecs=all_vecs)
+            est_b = mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_b,
+                                          budget=state_b.size, all_vecs=all_vecs)
             est_final = (est_a + est_b) / 2.0
 
             q_err_final = q_error(est_final, true_card)
@@ -1309,6 +1382,10 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
         "fig": cell.fig,
         "dataset": cell.dataset,
         "sf": cell.sf,
+        "sel": sel_used,                # 5/24 추가 — v13 scope 일치 평면 측정
+        "K": K_meta,                    # 5/24 — v13 paired 매칭용 metadata (sampling K 와 분리)
+        "K_sampling_actual": n_strata,  # 실제 cluster cache K (CaseC 는 항상 mc.N_STRATA fixed)
+        "sampling_path": "paper_exact_all_vecs",  # 5/24 fix — strata-independent
         "mode": "CaseC",
         "ensemble_strategy": "dual_bernoulli_independent_states",
         "state_update_strategy": "each_state_own_q_err",  # Option A (user 결정 5/23 20:14)
@@ -1328,7 +1405,8 @@ def measure_case_c(cell: CellSpec, n_queries: int = 1000,
 
     if output_dir:
         output_dir.mkdir(parents=True, exist_ok=True)
-        out = output_dir / f"{cell.sub}_CaseC.json"
+        # 95 tuple 평면 측정 시 충돌 회피 — sel·K_meta suffix (cell × sel × K_meta unique)
+        out = output_dir / f"{cell.sub}_CaseC_sel{sel_used:g}_K{K_meta}.json"
         out.write_text(json.dumps(result, indent=2))
         print(f"[{mc.kst()}] saved {out}")
 
@@ -2256,6 +2334,12 @@ def main():
     parser.add_argument("--trials", type=int, default=TRIALS)
     parser.add_argument("--output", type=Path,
                         default=Path("/mnt/hdd0/home/capstone2026/cache/rq3/paper_exact"))
+    parser.add_argument("--sel", type=float, default=None,
+                        help="(CaseC only, 5/24) selectivity override 0.001/0.01/0.1. "
+                             "None → cell.selectivities[0]. 95 tuple 평면 측정용.")
+    parser.add_argument("--K", type=int, default=None,
+                        help="(CaseC only, 5/24) n_strata override 10/20/30. "
+                             "None → mc.N_STRATA. 95 tuple 평면 측정용.")
     parser.add_argument("--dry-run", action="store_true",
                         help="AdaptiveState convergence trace + cell list only")
     args = parser.parse_args()
@@ -2318,7 +2402,9 @@ def main():
             measure_case_b(cell, args.method, args.n_queries, args.trials, args.output)
         elif args.mode == "CaseC":
             # v14 (5/23): dual-Bernoulli ensemble, method-independent (no --method needed)
-            measure_case_c(cell, args.n_queries, args.trials, args.output)
+            # v16 (5/24): sel·K override 지원 — 95 tuple 평면 측정용
+            measure_case_c(cell, args.n_queries, args.trials, args.output,
+                           sel_override=args.sel, K_override=args.K)
 
 
 if __name__ == "__main__":

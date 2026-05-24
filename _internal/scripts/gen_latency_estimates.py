@@ -136,9 +136,13 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
 
     alloc = mc.equal_alloc(n_strata=mc.N_STRATA, budget=BUDGET)
     rng = np.random.default_rng(20260520)
-    # ★ CaseC dual-Bernoulli — B1 a-side rng (20260520) 과 독립된 b-side rng (+1M offset,
-    #   measure_paper_exact.py L1250 measure_case_c 의 seed pattern 과 동일).
-    rng_caseC_b = np.random.default_rng(20260520 + 1_000_000)
+    # ★ BLOCKER E fix (5/24): rng 완전 분리 — method 와 est_b1·est_caseC 의 sample stream
+    #   독립화. 기존: est_b1 a-side 가 method 와 같은 rng (20260520) 공유 → method 순서
+    #   변경 시 est_b1·est_caseC 비결정성. 현행: 각 generator 별도 seed offset (2M/3M/4M)
+    #   → method estimate 가 몇 개건 어떤 순서건 est_b1·est_caseC deterministic.
+    rng_b1 = np.random.default_rng(20260520 + 4_000_000)         # B1 baseline a-side
+    rng_caseC_a = np.random.default_rng(20260520 + 2_000_000)     # CaseC dual a-side
+    rng_caseC_b = np.random.default_rng(20260520 + 3_000_000)     # CaseC dual b-side
     rows: list[dict] = []
     n_q = min(n_qvec, len(qp))
     for q_idx in range(n_q):
@@ -153,19 +157,24 @@ def gen_estimates(dataset: str, sf: int, n_qvec: int, methods, est_trials: int,
             # est_b1 — est_trials회 draw 평균 (Bernoulli 분산 큼 → 안정화)
             # 1단계 fix (5/21): all_vecs 전달 → 2단계 strata 캐시 (cluster당 500 cap,
             #   큰 cluster 과소대표 corr -0.98) 우회, 전체 벡터 직접 random sample.
-            #   measure_paper_exact.py L469·L1197 의 v13 메인 캠페인과 동일 통일.
+            # BLOCKER E fix (5/24): rng_b1 사용 — method 와 독립.
             est_b1 = float(np.mean([
-                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng,
+                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_b1,
                                       budget=BUDGET, all_vecs=all_vecs)
                 for _ in range(est_trials)]))
             # ★ est_caseC — dual-Bernoulli ensemble (method-agnostic 통제군).
-            # B1 a-side 와 같은 samples cache, 다른 rng 로 독립 draw → 평균.
-            # measure_paper_exact.py measure_case_c L1269-1271 과 동일 구조.
-            est_b1_b = float(np.mean([
+            # BLOCKER E fix (5/24): est_b1 재사용 X — rng_caseC_a/b 두 draw 의 평균.
+            # method 순서·개수 변경에도 est_caseC deterministic 보장.
+            # measure_paper_exact.py measure_case_c L1269-1271 과 동일 dual-Bernoulli 구조.
+            est_caseC_a = float(np.mean([
+                mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_caseC_a,
+                                      budget=BUDGET, all_vecs=all_vecs)
+                for _ in range(est_trials)]))
+            est_caseC_b = float(np.mean([
                 mc.bernoulli_estimate(samples_b1, sizes_b1, qvec, D, rng_caseC_b,
                                       budget=BUDGET, all_vecs=all_vecs)
                 for _ in range(est_trials)]))
-            est_caseC = (est_b1 + est_b1_b) / 2.0
+            est_caseC = (est_caseC_a + est_caseC_b) / 2.0
             # ★ est_caseA_mean — 16 method stratified 추정 평균 (method-agnostic).
             #   먼저 모든 method estimate 산출 → row 작성 단계에서 mean 주입.
             est_methods: dict[str, float] = {}

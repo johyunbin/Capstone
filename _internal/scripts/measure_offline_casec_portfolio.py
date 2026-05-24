@@ -71,6 +71,7 @@ DEFAULT_PORTFOLIO = V14_CELLS + NEW_CELLS
 
 # whitelist — measure_paper_exact.py build_cell_specs() 의 모든 sub names (A3-TPCDS 제외 = ECQO mode, CaseC 부적합)
 # Codex BLOCKER D 적용 (5/24) — invalid cell sub name 거부, measure_paper_exact 가 미발견 시 rc=0 으로 끝나는 silent failure 방어
+# 5/24 확장 — A9·A10·A11 concat 다중 벡터 7 cell 추가 (v13 scope 일치, 총 25 cell)
 KNOWN_CELLS = frozenset({
     "A1-DEEP", "A1-SIFT", "A1-SSN",
     "A2-Fig7", "A2-Fig8", "A2-Fig9",
@@ -81,6 +82,10 @@ KNOWN_CELLS = frozenset({
     "A6-WIKI-sf1", "A6-WIKI-sf10",
     "A7-YFCC-sf1",
     "A8-DEEP+SIFT-sf10",
+    # 5/24 신규 7 cell (concat 다중 벡터, v13 정본 scope 일치)
+    "A9-DEEP+SIFT-concat-sf1", "A9-DEEP+SIFT-concat-sf10", "A9-DEEP+SIFT-concat-sf100",
+    "A10-DEEP+WIKI-concat-sf1", "A10-DEEP+WIKI-concat-sf10",
+    "A11-DEEP+YFCC-concat-sf1", "A11-DEEP+YFCC-concat-sf10",
 })
 
 

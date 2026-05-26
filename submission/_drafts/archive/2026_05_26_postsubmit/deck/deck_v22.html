@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>속도는벡터 · Capstone Final — v22 controlled verification 재프레이밍</title>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;ri=ABbCyAARY29tLmdvb2dsZS5DaHJvbWUAbGh0dHBzOi8vY2xhdWRlLmFpL2Rlc2lnbi92MS9kZXNpZ24vcHJvamVjdHMvMDE5ZTFhNDEtNzAxYy03MTM0LTljZTEtMTI0NzI2MmMxNTYzL2Rvd25sb2FkP3BhdGg9ZGVja192MjIuaHRtbA"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<template id="__bundler_thumbnail" data-bg-color="#FFFFFF">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect x="100" y="200" width="220" height="6" fill="#1E3A5F" />
+    <text x="100" y="320" font-family="sans-serif" font-size="96" font-weight="800" fill="#0A0A0A" letter-spacing="-4">속도는</text>
+    <text x="100" y="420" font-family="sans-serif" font-size="96" font-weight="800" fill="#1E3A5F" letter-spacing="-4">벡터</text>
+  </svg>
+</template>
+<style>
+  :root {
+    /* anchor */
+    --navy:#1E3A5F; --navy-2:#15294A; --navy-soft:#E8EEF6; --navy-mid:#7794BC; --navy-light:#A3B7D1;
+    /* concept colors — three measurement methods */
+    --grey-concept:#94A3B8; --grey-concept-soft:#F1F5F9;
+    --coral:#F97316; --coral-soft:#FFF1E6;       /* 완전 대체 + 한계 박스 */
+    --cyan:#0EA5E9; --cyan-soft:#E5F4FB; --cyan-soft-lite:#F2FAFD; /* 결합 + hero 패널 */
+    /* accent palette */
+    --green:#10B981; --violet:#8B5CF6;
+    /* text scale */
+    --ink:#1E293B; --fg1:#334155; --fg2:#475569; --fg3:#64748B; --fg4:#94A3B8;
+    --bg:#FFFFFF; --bg2:#FAFAFA; --line:#E5E7EB; --line-2:#CBD5E1;
+    /* Korean primary (Apple SD Gothic Neo first) → PPTX export tags Korean runs with Apple SD Gothic Neo */
+    --font-sans:"Apple SD Gothic Neo","Pretendard","IBM Plex Sans KR","Noto Sans KR","Inter",system-ui,sans-serif;
+    /* Number font keeps Inter primary for tabular figures */
+    --font-num:"Inter","Apple SD Gothic Neo","IBM Plex Sans KR",system-ui,sans-serif;
+    /* hero gradient — slides 11 & 13 only */
+    --hero-grad:linear-gradient(135deg, #1E3A5F 0%, #0EA5E9 100%);
+  }
+  html,body{margin:0;padding:0;background:#0A0A0A}
+  body{font-family:var(--font-sans);color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;word-break:keep-all;line-break:strict}
+  deck-stage{background:#0A0A0A}
+  deck-stage>section{background:var(--bg);font-family:var(--font-sans);color:var(--ink);overflow:hidden}
+  .frame{position:absolute;inset:0;padding:56px 76px 52px;box-sizing:border-box;display:flex;flex-direction:column}
+  .title{font-size:44px;font-weight:700;color:var(--navy);letter-spacing:-0.025em;line-height:1.15;max-width:1100px}
+  .title em{color:var(--navy);font-style:normal}
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:13px}
+  .num{font-family:var(--font-num);font-feature-settings:"tnum" 1,"lnum" 1}
+  .bignum{font-family:var(--font-num);font-weight:800;color:var(--navy);letter-spacing:-0.05em;line-height:0.9}
+  .hero-grad{background:var(--hero-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-grad-v{background:linear-gradient(180deg,#1E3A5F 0%,#0EA5E9 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* cover */
+  .cover-frame{padding:0}
+  .cover-mid{flex:1;padding:0 96px;display:flex;flex-direction:column;justify-content:center}
+  .cover-stripe{width:240px;height:4px;background:linear-gradient(90deg,var(--navy) 0%,var(--cyan) 100%);margin:0 0 26px 0}
+  .cover-h1{font-size:168px;font-weight:800;letter-spacing:-0.05em;line-height:0.92;color:var(--navy);margin:0}
+  .cover-h1 .em{background:linear-gradient(90deg,var(--navy) 0%,var(--cyan) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover-sub{margin-top:30px;font-size:30px;font-weight:500;color:var(--fg2);line-height:1.35;letter-spacing:-0.01em;max-width:980px}
+  .cover-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:60px;border-top:1px solid var(--line);padding-top:36px;margin:0 96px 70px}
+  .cover-foot .team{font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.015em;line-height:1.4;white-space:nowrap}
+  .cover-foot .team small{display:block;font-size:18px;font-weight:400;color:var(--fg2);margin-top:6px}
+  .cover-foot .advisor-info{text-align:right;font-size:22px;font-weight:500;color:var(--fg2);letter-spacing:-0.005em;line-height:1.4}
+  .cover-foot .advisor-info strong{color:var(--ink);font-weight:700;display:block}
+
+  /* bar */
+  .bar-row{display:grid;grid-template-columns:200px 1fr 140px;gap:24px;align-items:center}
+  .bar-row .bar-lab{font-size:18px;color:var(--fg1);font-weight:500;text-align:right;letter-spacing:-0.005em}
+  .bar-row.hi .bar-lab{color:var(--navy);font-weight:700}
+  .bar-row .bar-tr{height:44px;background:#F1F5F9;position:relative;overflow:hidden}
+  .bar-row .bar-fill{position:absolute;inset:0 auto 0 0;background:var(--navy-mid)}
+  .bar-row.hi .bar-fill{background:var(--navy)}
+  .bar-row .bar-val{font-family:var(--font-num);font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-0.025em;line-height:1}
+  .bar-row.hi .bar-val{color:var(--navy)}
+
+  /* tri card — 4 방식: 기존 / 완전 대체 / 결합 / 평균 비교군 */
+  .tri-card{padding:18px 20px;display:flex;flex-direction:column;gap:8px;background:#FFFFFF;border:1px solid var(--line)}
+  .tri-card.tri-existing{border:1.5px solid var(--grey-concept)}
+  .tri-card.tri-replace{border:1.5px solid var(--coral)}
+  .tri-card.tri-combine{background:var(--cyan-soft);border:1.5px solid var(--cyan)}
+  .tri-card.tri-control{background:#F5F3FF;border:1.5px solid var(--violet)}
+  .tri-card .tc-head{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;line-height:1.25}
+  .tri-card.tri-existing .tc-head{color:var(--fg2)}
+  .tri-card.tri-replace .tc-head{color:var(--coral)}
+  .tri-card.tri-combine .tc-head{color:var(--cyan)}
+  .tri-card.tri-control .tc-head{color:var(--violet)}
+  .tri-card .tc-body{font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em}
+  .tri-card .tc-tag{font-size:13px;color:var(--fg3);letter-spacing:0.04em;font-weight:500}
+  .tri-card svg{width:100%;height:78px}
+
+  /* approach (slide 10 grid) */
+  .ap-card{border:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:8px;background:#FFFFFF;min-height:0}
+  .ap-card .ap-ico{height:38px;display:flex;align-items:center;justify-content:flex-start}
+  .ap-card .ap-name{font-size:16.5px;font-weight:700;color:var(--ink);letter-spacing:-0.015em;line-height:1.2;word-break:keep-all}
+  .ap-card .ap-intu{font-size:13px;color:var(--ink);font-weight:500;line-height:1.45;letter-spacing:-0.005em}
+  .ap-card .ap-meth{margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:10.5px;color:var(--fg3);line-height:1.5;letter-spacing:-0.01em;word-break:keep-all}
+
+
+  /* find card (slide 26) */
+  .find-card{display:flex;flex-direction:column;gap:10px;padding:20px 22px;border:1px solid var(--line);background:#FFFFFF}
+  .find-card .fc-n{font-family:var(--font-num);font-size:34px;font-weight:800;color:var(--navy);letter-spacing:-0.03em;line-height:1}
+  .find-card .fc-t{font-size:17px;color:var(--ink);font-weight:600;line-height:1.4;letter-spacing:-0.005em}
+
+  /* section accents (step 2) */
+  .acc-bar{width:40px;height:3px;margin-top:14px;flex-shrink:0}
+  .sec-badge{position:absolute;top:30px;left:76px;display:inline-flex;align-items:center;gap:10px;font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.14em;z-index:3}
+  .sec-badge::before{content:"";display:block;width:8px;height:8px;border-radius:50%}
+  section[data-section="bg"] .acc-bar,section[data-section="bg"] .sec-badge::before{background:var(--cyan)}
+  section[data-section="method"] .acc-bar,section[data-section="method"] .sec-badge::before{background:var(--violet)}
+  section[data-section="result"] .acc-bar,section[data-section="result"] .sec-badge::before{background:var(--green)}
+  section[data-section="apply"] .acc-bar,section[data-section="apply"] .sec-badge::before{background:var(--coral)}
+  section[data-section="bg"] .sec-badge{color:var(--cyan)}
+  section[data-section="method"] .sec-badge{color:var(--violet)}
+  section[data-section="result"] .sec-badge{color:var(--green)}
+  section[data-section="apply"] .sec-badge{color:var(--coral)}
+</style>
+</head>
+<body>
+
+<deck-stage width="1280" height="720">
+
+<!-- ============== 1 · 표지 ============== -->
+<section data-screen-label="01 표지">
+  <div class="frame cover-frame">
+    <div style="flex:1"></div>
+    <div class="cover-mid">
+      <div class="cover-stripe"></div>
+      <h1 class="cover-h1">속도는<span class="em">벡터</span></h1>
+      <div class="cover-sub">표본 선택 단계 개입의 controlled verification<br />— 통제 실험으로 메커니즘과 한계를 규명</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="cover-foot">
+      <div class="team">박세은 · 강재현 · 조현빈 · 이동욱<small>속도는벡터</small></div>
+      <div class="advisor-info"><strong>박광현 교수</strong>연세대학교 · 지도교수</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 2 · 문제 제기 ============== -->
+<section data-screen-label="02 문제 제기" data-section="bg">
+  <div class="frame"><div class="sec-badge">배경</div>
+    <div class="title">왜 <em>카디널리티 추정</em>이 중요한가</div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:34px">
+      <!-- pipeline -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:18px">
+        <div style="border:1.5px solid var(--ink);padding:16px 24px;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.005em">쿼리</div>
+        <div style="font-size:24px;color:var(--fg3)">→</div>
+        <div style="border:2px solid var(--navy);padding:16px 24px;font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.005em;background:#E8EEF6">카디널리티 추정</div>
+        <div style="font-size:24px;color:var(--fg3)">→</div>
+        <div style="border:1.5px solid var(--ink);padding:16px 24px;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.005em">실행 계획</div>
+        <div style="font-size:24px;color:var(--fg3)">→</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:21px;color:var(--navy);font-weight:700;letter-spacing:-0.005em">빠른 쿼리</div>
+          <div style="font-size:21px;color:var(--fg3);font-weight:500;letter-spacing:-0.005em">느린 쿼리</div>
+        </div>
+      </div>
+
+      <div style="font-size:30px;font-weight:600;color:var(--ink);letter-spacing:-0.02em;line-height:1.4;max-width:1100px;text-align:center;align-self:center">
+        조건을 만족하는 행의 수를 잘못 추정하면 →<br /><em style="color:var(--navy);font-style:normal;font-weight:700">잘못된 실행 계획</em> → 느린 쿼리
+      </div>
+
+      <!-- fixed-ratio examples -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="border:1px solid var(--line);background:#FAFAFA;padding:18px 24px;display:flex;align-items:center;gap:24px">
+          <div class="num" style="font-size:54px;font-weight:800;color:var(--navy);letter-spacing:-0.03em;line-height:1">33.3<span style="font-size:0.5em">%</span></div>
+          <div style="font-size:16px;color:var(--fg2);line-height:1.45;letter-spacing:-0.005em"><strong style="color:var(--navy)">pgvector</strong> — 늘 전체의 33.3%로 가정</div>
+        </div>
+        <div style="border:1px solid var(--line);background:#FAFAFA;padding:18px 24px;display:flex;align-items:center;gap:24px">
+          <div class="num" style="font-size:54px;font-weight:800;color:var(--navy);letter-spacing:-0.03em;line-height:1">100<span style="font-size:0.5em">%</span></div>
+          <div style="font-size:16px;color:var(--fg2);line-height:1.45;letter-spacing:-0.005em"><strong style="color:var(--navy)">DuckDB</strong> — 늘 100%로 가정</div>
+        </div>
+      </div>
+      <div style="font-size:15px;color:var(--fg3);letter-spacing:-0.005em;text-align:center">기존 벡터 데이터베이스는 이 값을 데이터와 무관하게 고정 비율로 어림한다</div>
+      <div style="margin-top:6px;font-size:11.5px;color:var(--fg4);letter-spacing:-0.005em;text-align:center;line-height:1.5;max-width:1080px;align-self:center">공급자 부품 이미지와 비슷한 부품들을 찾아 2024년 데이터에서 고객 리뷰를 분석해 적절한 할인율을 결정 — VAQ 의 분석가 시나리오 예시 (ICDE)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 3 · 논문 출발점 (큰 파이프라인 도식) ============== -->
+<section data-screen-label="03 출발점" data-section="bg">
+  <div class="frame"><div class="sec-badge">배경</div>
+    <div class="title">논문이 푼 것, <em>우리가 바꾼 것</em></div>
+    <div class="acc-bar"></div><div class="body">
+      <!-- horizontal pipeline · uniform card structure (eyebrow / visual / label) -->
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+        <div style="display:grid;grid-template-columns:1fr 60px 1fr 60px 1fr;align-items:stretch;gap:0">
+
+          <!-- 데이터 -->
+          <div style="border:1.5px solid var(--ink);padding:32px 24px 26px;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="font-size:13px;color:var(--fg3);letter-spacing:-0.005em;font-weight:600;height:20px">데이터</div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;height:140px;min-height:140px;margin:8px 0 18px">
+              <svg viewBox="0 0 160 110" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:200px">
+                <g fill="#1E3A5F">
+                  <circle cx="22" cy="82" r="4"/><circle cx="40" cy="68" r="4"/><circle cx="34" cy="92" r="4"/>
+                  <circle cx="58" cy="56" r="4"/><circle cx="70" cy="74" r="4"/><circle cx="52" cy="84" r="4"/>
+                  <circle cx="82" cy="50" r="4"/><circle cx="96" cy="68" r="4"/><circle cx="108" cy="58" r="4"/>
+                  <circle cx="124" cy="42" r="4"/><circle cx="138" cy="64" r="4"/><circle cx="118" cy="82" r="4"/>
+                  <circle cx="64" cy="36" r="4"/><circle cx="98" cy="32" r="4"/><circle cx="132" cy="90" r="4"/>
+                </g>
+              </svg>
+            </div>
+            <div style="font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-0.005em">데이터</div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--fg3)">→</div>
+
+          <!-- 표본 뽑기 (강조) -->
+          <div style="border:3px solid var(--navy);padding:32px 24px 26px;background:#E8EEF6;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">
+            <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--navy);color:#FFF;font-size:12px;font-weight:700;padding:4px 14px;letter-spacing:0.04em;white-space:nowrap">우리가 바꾼 곳</div>
+            <div style="font-size:13px;color:var(--navy);letter-spacing:-0.005em;font-weight:700;height:20px">표본</div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;height:140px;min-height:140px;margin:8px 0 18px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;align-items:stretch">
+                <div style="border:1px dashed var(--line-2);background:#FFF;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px">
+                  <svg viewBox="0 0 70 60" width="100%" preserveAspectRatio="xMidYMid meet">
+                    <g fill="#94A3B8"><circle cx="18" cy="24" r="3.5"/><circle cx="28" cy="16" r="3.5"/><circle cx="22" cy="34" r="3.5"/><circle cx="32" cy="26" r="3.5"/><circle cx="20" cy="46" r="3.5"/></g>
+                  </svg>
+                  <div style="font-size:11px;color:var(--fg3);font-weight:600">무작위</div>
+                </div>
+                <div style="border:1.5px solid var(--navy);background:#FFF;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px">
+                  <svg viewBox="0 0 70 60" width="100%" preserveAspectRatio="xMidYMid meet">
+                    <g fill="#1E3A5F"><circle cx="12" cy="38" r="3.5"/><circle cx="26" cy="26" r="3.5"/><circle cx="38" cy="16" r="3.5"/><circle cx="50" cy="30" r="3.5"/><circle cx="60" cy="44" r="3.5"/></g>
+                  </svg>
+                  <div style="font-size:11px;color:var(--navy);font-weight:700;white-space:nowrap">분포 인지</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-0.005em;white-space:nowrap">표본 뽑기</div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--fg3)">→</div>
+
+          <!-- 추정 -->
+          <div style="border:1.5px solid var(--ink);padding:32px 24px 26px;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">
+            <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#FAFAFA;color:var(--fg2);font-size:12px;font-weight:600;padding:4px 14px;letter-spacing:0.04em;border:1px solid var(--line);white-space:nowrap">논문 그대로</div>
+            <div style="font-size:13px;color:var(--fg3);letter-spacing:-0.005em;font-weight:600;height:20px">추정</div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;height:140px;min-height:140px;margin:8px 0 18px">
+              <div style="display:flex;align-items:flex-end;gap:7px;height:110px">
+                <div style="width:18px;height:55px;background:var(--navy-mid)"></div>
+                <div style="width:18px;height:90px;background:var(--navy)"></div>
+                <div style="width:18px;height:40px;background:var(--navy-mid)"></div>
+                <div style="width:18px;height:72px;background:var(--navy-mid)"></div>
+                <div style="width:18px;height:34px;background:var(--navy-mid)"></div>
+              </div>
+            </div>
+            <div style="font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-0.005em;white-space:nowrap">카디널리티 추정</div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:22px;font-size:17px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+          <div style="padding:14px 22px;background:#FAFAFA;border-left:3px solid var(--fg3)">
+            논문 <strong style="color:var(--navy)">Exqutor</strong>의 추정 알고리즘은 그대로 인정한다
+          </div>
+          <div style="padding:14px 22px;background:#E8EEF6;border-left:3px solid var(--navy)">
+            <strong style="color:var(--navy)">표본 뽑는 방식</strong>만 — 무작위 → 분포 반영
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11.5px;color:var(--fg4);letter-spacing:-0.005em;line-height:1.5">본 슬라이드는 ICDE step-by-step plan 결함 → ECQO fix 흐름 (§V-A) 의 요약</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 4 · 연구의 흐름 (NEW timeline) ============== -->
+<section data-screen-label="04 연구의 흐름" data-section="bg">
+  <div class="frame"><div class="sec-badge">배경</div>
+    <div class="title">연구가 <em>걸어온 길</em></div>
+    <div class="acc-bar"></div><div class="body">
+      <!-- 3-stage timeline -->
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;align-items:stretch;position:relative">
+          <!-- connecting line behind -->
+          <div style="position:absolute;left:8%;right:8%;top:36px;height:2px;background:var(--line);z-index:0"></div>
+
+          <!-- stage 1 -->
+          <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 18px">
+            <div style="width:24px;height:24px;border-radius:50%;background:#FFF;border:3px solid var(--fg3);margin-top:24px"></div>
+            <div style="margin-top:8px;font-size:14px;color:var(--fg3);font-weight:600;letter-spacing:-0.005em">1단계</div>
+            <div style="margin-top:6px;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.015em;white-space:nowrap">연구 시작</div>
+            <div style="margin-top:18px;border:1px solid var(--line);background:#FAFAFA;padding:18px 22px;width:100%;box-sizing:border-box;flex:1;min-height:118px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
+              <svg viewBox="0 0 80 50" width="80" height="50">
+                <g fill="#94A3B8"><circle cx="14" cy="20" r="3"/><circle cx="22" cy="14" r="3"/><circle cx="18" cy="28" r="3"/><circle cx="26" cy="22" r="3"/><circle cx="34" cy="18" r="3"/><circle cx="58" cy="34" r="3"/></g>
+              </svg>
+              <div style="font-size:14px;color:var(--ink);font-weight:600;text-align:center;line-height:1.4">논문의 무작위 표본 추출</div>
+            </div>
+          </div>
+
+          <!-- stage 2 -->
+          <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 18px">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--navy-mid);border:3px solid var(--navy);margin-top:24px"></div>
+            <div style="margin-top:8px;font-size:14px;color:var(--navy);font-weight:600;letter-spacing:-0.005em">2단계</div>
+            <div style="margin-top:6px;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.015em;white-space:nowrap">중간 발표</div>
+            <div style="margin-top:18px;border:1px solid var(--line);background:#E8EEF6;padding:18px 22px;width:100%;box-sizing:border-box;flex:1;min-height:118px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
+              <svg viewBox="0 0 80 50" width="80" height="50">
+                <path d="M 6 44 Q 26 6 50 22 Q 66 36 76 44" fill="none" stroke="#1E3A5F" stroke-width="1.5"/>
+                <g fill="#1E3A5F"><circle cx="22" cy="22" r="3"/><circle cx="34" cy="16" r="3"/><circle cx="46" cy="22" r="3"/></g>
+              </svg>
+              <div style="font-size:14px;color:var(--ink);font-weight:600;text-align:center;line-height:1.4">한 가지 분포 인지<br />표본 추출 방법 검증</div>
+            </div>
+          </div>
+
+          <!-- stage 3 -->
+          <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 18px">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--navy);border:3px solid var(--navy);margin-top:24px"></div>
+            <div style="margin-top:8px;font-size:14px;color:var(--navy);font-weight:700;letter-spacing:-0.005em">3단계 · 오늘</div>
+            <div style="margin-top:6px;font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.015em;white-space:nowrap">최종 발표</div>
+            <div style="margin-top:18px;border:2px solid var(--navy);background:#E8EEF6;padding:18px 22px;width:100%;box-sizing:border-box;flex:1;min-height:118px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
+              <div style="display:grid;grid-template-columns:repeat(4,12px);gap:3px">
+                <div style="width:12px;height:12px;background:var(--navy)"></div><div style="width:12px;height:12px;background:var(--navy-mid)"></div><div style="width:12px;height:12px;background:var(--navy)"></div><div style="width:12px;height:12px;background:var(--navy-mid)"></div>
+                <div style="width:12px;height:12px;background:var(--navy-mid)"></div><div style="width:12px;height:12px;background:var(--navy)"></div><div style="width:12px;height:12px;background:var(--navy-mid)"></div><div style="width:12px;height:12px;background:var(--navy)"></div>
+              </div>
+              <div style="font-size:14px;color:var(--navy);font-weight:700;text-align:center;line-height:1.4">16가지 방법 · 세 방식<br />모든 데이터셋·조건에서 검증</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- expanding scope band -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:8px">
+          <div style="height:8px;background:#E5E7EB;position:relative"><div style="position:absolute;inset:0 70% 0 0;background:var(--fg3)"></div></div>
+          <div style="height:8px;background:#E5E7EB;position:relative"><div style="position:absolute;inset:0 40% 0 0;background:var(--navy-mid)"></div></div>
+          <div style="height:8px;background:#E5E7EB;position:relative"><div style="position:absolute;inset:0 0% 0 0;background:var(--navy)"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;font-size:13px;color:var(--fg3);letter-spacing:-0.005em;text-align:center">
+          <div>논문 기준점</div><div>한 방법 · 한 가지 검증</div><div>16가지 · 세 방식 · 모든 조건</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding:12px 22px;background:#FAFAFA;border-left:3px solid var(--navy);font-size:15px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;line-height:1.5">
+        단계마다 측정 범위가 넓어지며, 초점이 <strong>"특정 방법"</strong>에서 <strong>"표본 선택 단계 개입의 효과"</strong>로 분명해졌다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 5 · 우리 방법 — 세 단계 (개념 그림) ============== -->
+<section data-screen-label="05 우리 방법" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title">분포를 반영해 표본을 뽑는 <em>세 단계</em></div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:20px">
+      <div style="display:grid;grid-template-columns:1fr 36px 1fr 36px 1fr;gap:0;align-items:stretch">
+
+        <!-- step 1 -->
+        <div style="border:1.5px solid var(--ink);padding:18px 22px;display:flex;flex-direction:column;background:#FFFFFF;gap:10px">
+          <div class="num" style="font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-0.005em">1단계</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1.15">분포 파악</div>
+          <svg viewBox="0 0 280 180" width="100%" preserveAspectRatio="xMidYMid meet" style="height:130px">
+            <!-- scattered → 4 colored groups -->
+            <ellipse cx="62" cy="60" rx="40" ry="30" fill="#DCE5F0" stroke="#1E3A5F" stroke-width="1"/>
+            <g fill="#1E3A5F"><circle cx="48" cy="50" r="3"/><circle cx="58" cy="62" r="3"/><circle cx="70" cy="55" r="3"/><circle cx="76" cy="70" r="3"/><circle cx="56" cy="74" r="3"/></g>
+            <ellipse cx="200" cy="55" rx="42" ry="28" fill="#E5E7EB" stroke="#64748B" stroke-width="1"/>
+            <g fill="#475569"><circle cx="184" cy="48" r="3"/><circle cx="200" cy="58" r="3"/><circle cx="216" cy="50" r="3"/><circle cx="194" cy="68" r="3"/><circle cx="212" cy="64" r="3"/></g>
+            <ellipse cx="78" cy="140" rx="48" ry="28" fill="#E8EEF6" stroke="#7794BC" stroke-width="1"/>
+            <g fill="#7794BC"><circle cx="60" cy="132" r="3"/><circle cx="76" cy="142" r="3"/><circle cx="94" cy="136" r="3"/><circle cx="70" cy="152" r="3"/><circle cx="100" cy="150" r="3"/></g>
+            <ellipse cx="200" cy="142" rx="44" ry="26" fill="#F5F5F4" stroke="#15294A" stroke-width="1"/>
+            <g fill="#15294A"><circle cx="184" cy="135" r="3"/><circle cx="198" cy="146" r="3"/><circle cx="216" cy="138" r="3"/><circle cx="208" cy="152" r="3"/></g>
+            <text x="140" y="20" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="11" font-weight="700" fill="#1E3A5F">20개 그룹</text>
+          </svg>
+          <div style="font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">데이터를 비슷한 것끼리 <strong style="color:var(--navy)">20개 그룹</strong>으로 나눈다</div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--fg3)">→</div>
+
+        <!-- step 2 -->
+        <div style="border:1.5px solid var(--ink);padding:18px 22px;display:flex;flex-direction:column;background:#FFFFFF;gap:10px">
+          <div class="num" style="font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-0.005em">2단계</div>
+          <div style="font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1.15">표본 추출</div>
+          <svg viewBox="0 0 280 180" width="100%" preserveAspectRatio="xMidYMid meet" style="height:130px">
+            <ellipse cx="62" cy="60" rx="40" ry="30" fill="#FAFAFA" stroke="#1E3A5F" stroke-width="1"/>
+            <g fill="#CBD5E1"><circle cx="48" cy="50" r="2.5"/><circle cx="76" cy="70" r="2.5"/><circle cx="56" cy="74" r="2.5"/></g>
+            <g fill="#1E3A5F" stroke="#FFF" stroke-width="1"><circle cx="58" cy="62" r="4.5"/><circle cx="70" cy="55" r="4.5"/></g>
+            <ellipse cx="200" cy="55" rx="42" ry="28" fill="#FAFAFA" stroke="#64748B" stroke-width="1"/>
+            <g fill="#CBD5E1"><circle cx="184" cy="48" r="2.5"/><circle cx="194" cy="68" r="2.5"/><circle cx="212" cy="64" r="2.5"/></g>
+            <g fill="#1E3A5F" stroke="#FFF" stroke-width="1"><circle cx="200" cy="58" r="4.5"/><circle cx="216" cy="50" r="4.5"/></g>
+            <ellipse cx="78" cy="140" rx="48" ry="28" fill="#FAFAFA" stroke="#7794BC" stroke-width="1"/>
+            <g fill="#CBD5E1"><circle cx="60" cy="132" r="2.5"/><circle cx="100" cy="150" r="2.5"/></g>
+            <g fill="#1E3A5F" stroke="#FFF" stroke-width="1"><circle cx="76" cy="142" r="4.5"/><circle cx="94" cy="136" r="4.5"/></g>
+            <ellipse cx="200" cy="142" rx="44" ry="26" fill="#FAFAFA" stroke="#15294A" stroke-width="1"/>
+            <g fill="#CBD5E1"><circle cx="184" cy="135" r="2.5"/><circle cx="208" cy="152" r="2.5"/></g>
+            <g fill="#1E3A5F" stroke="#FFF" stroke-width="1"><circle cx="198" cy="146" r="4.5"/><circle cx="216" cy="138" r="4.5"/></g>
+            <text x="140" y="20" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="11" font-weight="700" fill="#1E3A5F">각 그룹에서 골고루</text>
+          </svg>
+          <div style="font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">각 그룹에서 <strong style="color:var(--navy)">골고루</strong> 표본을 뽑는다</div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--fg3)">→</div>
+
+        <!-- step 3 -->
+        <div style="border:1.5px solid var(--cyan);padding:18px 22px;display:flex;flex-direction:column;background:var(--cyan-soft);gap:10px">
+          <div class="num" style="font-size:16px;font-weight:700;color:var(--cyan);letter-spacing:-0.005em">3단계</div>
+          <div style="font-size:26px;font-weight:700;color:var(--cyan);letter-spacing:-0.02em;line-height:1.15">결합</div>
+          <svg viewBox="0 0 280 180" width="100%" preserveAspectRatio="xMidYMid meet" style="height:130px">
+            <!-- two estimate values flowing into one -->
+            <rect x="20" y="40" width="80" height="40" fill="#FFF" stroke="#94A3B8" stroke-width="1.2"/>
+            <text x="60" y="65" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="700" fill="#64748B">논문 추정</text>
+            <rect x="20" y="110" width="80" height="40" fill="#FFF" stroke="#0EA5E9" stroke-width="1.5"/>
+            <text x="60" y="135" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="700" fill="#0EA5E9">우리 추정</text>
+            <!-- arrows -->
+            <path d="M 102 60 Q 150 60 168 88" stroke="#0EA5E9" stroke-width="1.5" fill="none"/>
+            <path d="M 102 128 Q 150 128 168 100" stroke="#0EA5E9" stroke-width="1.5" fill="none"/>
+            <!-- merge -->
+            <rect x="170" y="74" width="84" height="40" fill="#0EA5E9" stroke="#0EA5E9"/>
+            <text x="212" y="100" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="15" font-weight="800" fill="#FFF">평균</text>
+          </svg>
+          <div style="font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">논문 추정값과 우리 추정값을 <strong style="color:var(--cyan)">평균</strong> 낸다</div>
+        </div>
+
+      </div>
+
+      <div style="padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:15.5px;color:var(--fg3);line-height:1.55;letter-spacing:-0.005em">
+          추정 알고리즘과 표본 크기 보정 과정은 <strong style="color:var(--navy)">논문 그대로</strong>
+        </div>
+        <div style="padding:10px 16px;background:#FAFAFA;border-left:3px solid var(--navy);font-size:15px;color:var(--ink);font-weight:500;letter-spacing:-0.005em;line-height:1.5">
+          연구 질문 — <em style="color:var(--navy);font-style:normal;font-weight:700">분포 인지 층화로 무작위 표집을 바꾸면 추정이 더 정확해지는가?</em>
+        </div>
+        <div style="margin-top:2px;font-size:11.5px;color:var(--fg4);letter-spacing:-0.005em;line-height:1.5">ICDE 는 plan 회복 차원 (ECQO + Adaptive Sampling 전체) 으로 답함 · 본 연구는 §V-B Adaptive Sampling 안의 표본 선택 단 한 단계만 통제 실험</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 6 · 비교한 네 가지 방식 (도식 포함) ============== -->
+<section data-screen-label="06 네 가지 방식" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title">네 가지 방식을 <em>같은 측정 안에서</em> 동시에 비교했다</div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+
+        <div class="tri-card tri-existing">
+          <div class="tc-tag">비교의 기준</div>
+          <div class="tc-head">기존 방식</div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+            <ellipse cx="100" cy="55" rx="85" ry="35" fill="#FAFAFA" stroke="#CBD5E1" stroke-width="1"/>
+            <g fill="#94A3B8"><circle cx="60" cy="50" r="3"/><circle cx="72" cy="62" r="3"/><circle cx="80" cy="48" r="3"/><circle cx="90" cy="55" r="3"/><circle cx="68" cy="42" r="3"/></g>
+            <g fill="#64748B" stroke="#FFF" stroke-width="1"><circle cx="78" cy="55" r="5"/><circle cx="86" cy="48" r="5"/></g>
+          </svg>
+          <div class="tc-body">논문 그대로의 <strong style="color:var(--navy)">무작위 표본 추출</strong>로 추정.</div>
+        </div>
+
+        <div class="tri-card tri-replace">
+          <div class="tc-tag" style="color:var(--coral)">우리 표본만 사용</div>
+          <div class="tc-head">완전 대체</div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+            <ellipse cx="100" cy="55" rx="85" ry="35" fill="#FAFAFA" stroke="#CBD5E1" stroke-width="1"/>
+            <g fill="#CBD5E1" opacity="0.5"><circle cx="60" cy="50" r="2.5"/><circle cx="140" cy="60" r="2.5"/></g>
+            <g fill="#F97316" stroke="#FFF" stroke-width="1"><circle cx="40" cy="55" r="4"/><circle cx="70" cy="42" r="4"/><circle cx="100" cy="62" r="4"/><circle cx="130" cy="48" r="4"/><circle cx="160" cy="58" r="4"/></g>
+          </svg>
+          <div class="tc-body">무작위 표본을 우리 표본으로 <strong style="color:var(--coral)">통째 교체</strong>해 추정.</div>
+        </div>
+
+        <div class="tri-card tri-combine">
+          <div class="tc-tag" style="color:var(--cyan)">두 추정값 평균</div>
+          <div class="tc-head">결합</div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+            <rect x="8" y="14" width="74" height="26" fill="#FFF" stroke="#94A3B8" stroke-width="1.2"/>
+            <text x="45" y="31" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="11" font-weight="700" fill="#64748B">논문 추정값</text>
+            <rect x="8" y="60" width="74" height="26" fill="#FFF" stroke="#0EA5E9" stroke-width="1.3"/>
+            <text x="45" y="77" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="11" font-weight="700" fill="#0EA5E9">우리 추정값</text>
+            <path d="M 84 27 Q 110 27 122 44" stroke="#0EA5E9" stroke-width="1.3" fill="none"/>
+            <path d="M 84 73 Q 110 73 122 56" stroke="#0EA5E9" stroke-width="1.3" fill="none"/>
+            <rect x="124" y="37" width="64" height="26" fill="#0EA5E9" stroke="#0EA5E9"/>
+            <text x="156" y="54" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#FFF">평균</text>
+          </svg>
+          <div class="tc-body">논문 추정값과 우리 추정값을 <strong style="color:var(--cyan)">평균</strong> 내어 함께.</div>
+        </div>
+
+        <div class="tri-card tri-control">
+          <div class="tc-tag" style="color:var(--violet)">또 다른 무작위와의 평균</div>
+          <div class="tc-head">평균 비교군</div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+            <rect x="8" y="14" width="74" height="26" fill="#FFF" stroke="#94A3B8" stroke-width="1.2"/>
+            <text x="45" y="31" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="11" font-weight="700" fill="#64748B">논문 추정값</text>
+            <rect x="8" y="60" width="74" height="26" fill="#FFF" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="3,2"/>
+            <text x="45" y="77" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" fill="#64748B">또 다른 무작위</text>
+            <path d="M 84 27 Q 110 27 122 44" stroke="#8B5CF6" stroke-width="1.3" fill="none"/>
+            <path d="M 84 73 Q 110 73 122 56" stroke="#8B5CF6" stroke-width="1.3" fill="none"/>
+            <rect x="124" y="37" width="64" height="26" fill="#8B5CF6" stroke="#8B5CF6"/>
+            <text x="156" y="54" text-anchor="middle" font-family="Inter, IBM Plex Sans KR, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#FFF">평균</text>
+          </svg>
+          <div class="tc-body">method 자리에 분포와 무관한 <strong style="color:var(--violet)">또 다른 무작위 베르누이</strong>를 넣고 평균한 통제군. method 가 정말로 정보를 주는지를 분리하기 위함.</div>
+        </div>
+      </div>
+
+      <div style="padding:12px 20px;border:1px solid var(--line);background:#FAFAFA;font-size:16px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+        한 번의 측정에서 <strong style="color:var(--navy)">네 방식을 동시 산출</strong> — 외생 요소를 통제하기 위함이며, 차이가 방식 때문임을 분명히 한다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 7 · 측정 설계 (5 axes) ============== -->
+<section data-screen-label="07 측정 설계" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title">무엇을, <em>어떤 조건</em>으로 측정했는가</div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- axis row template: icon | label | num | reason -->
+        <div style="display:grid;grid-template-columns:48px 180px 280px 1fr;gap:18px;align-items:center;padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+          <svg viewBox="0 0 32 32" width="32" height="32"><rect x="4" y="6" width="6" height="20" fill="#8B5CF6"/><rect x="13" y="2" width="6" height="24" fill="#8B5CF6"/><rect x="22" y="10" width="6" height="16" fill="#8B5CF6"/></svg>
+          <div style="font-size:18px;color:var(--fg2);font-weight:500;letter-spacing:-0.005em">데이터셋</div>
+          <div class="num" style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.015em">9종 · 96~1024 차원</div>
+          <div style="font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">차원과 도메인을 폭넓게</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:48px 180px 280px 1fr;gap:18px;align-items:center;padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+          <svg viewBox="0 0 32 32" width="32" height="32"><circle cx="8" cy="20" r="3" fill="#8B5CF6"/><circle cx="16" cy="14" r="5" fill="#8B5CF6"/><circle cx="25" cy="8" r="7" fill="#8B5CF6"/></svg>
+          <div style="font-size:18px;color:var(--fg2);font-weight:500;letter-spacing:-0.005em">데이터 규모</div>
+          <div class="num" style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.015em">10만 · 100만 · 1000만</div>
+          <div style="font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">데이터가 커질 때 효과 변화</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:48px 180px 280px 1fr;gap:18px;align-items:center;padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+          <svg viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="14" fill="none" stroke="#8B5CF6" stroke-width="2"/><path d="M 16 16 L 16 4 A 12 12 0 0 1 27 22 Z" fill="#8B5CF6"/></svg>
+          <div style="font-size:18px;color:var(--fg2);font-weight:500;letter-spacing:-0.005em">선택도</div>
+          <div class="num" style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.015em">0.1% · 1% · 10%</div>
+          <div style="font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">쿼리 조건이 좁을 때부터 넓을 때까지</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:48px 180px 280px 1fr;gap:18px;align-items:center;padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+          <svg viewBox="0 0 32 32" width="32" height="32"><g fill="#8B5CF6"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="23" y="3" width="6" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/><rect x="23" y="13" width="6" height="8"/><rect x="3" y="23" width="8" height="6"/><rect x="13" y="23" width="8" height="6"/></g></svg>
+          <div style="font-size:18px;color:var(--fg2);font-weight:500;letter-spacing:-0.005em">표본 선택 방법</div>
+          <div class="num" style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.015em">16가지</div>
+          <div style="font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">7가지 접근을 고루 대표</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:48px 180px 280px 1fr;gap:18px;align-items:center;padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+          <svg viewBox="0 0 32 32" width="32" height="32"><g stroke="#8B5CF6" stroke-width="2" fill="none"><line x1="4" y1="6" x2="28" y2="6"/><line x1="4" y1="12" x2="28" y2="12"/><line x1="4" y1="18" x2="28" y2="18"/><line x1="4" y1="24" x2="28" y2="24"/></g></svg>
+          <div style="font-size:18px;color:var(--fg2);font-weight:500;letter-spacing:-0.005em">계층 수</div>
+          <div class="num" style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-0.015em">10 · 20 · 30 개</div>
+          <div style="font-size:14.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">논문 기본값 20 중심으로 적을 때·많을 때</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 26px;background:var(--navy);color:#FFFFFF">
+        <div style="font-size:16px;color:var(--navy-light);letter-spacing:-0.005em">다섯 축을 빠짐없이 교차</div>
+        <div class="num" style="font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.015em">→ 1508번 측정 · 4 방식 = 6,032 추정값 짝 비교</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:18px;font-size:11.5px;color:var(--fg4);letter-spacing:-0.005em;line-height:1.5;padding:0 4px">
+        <div>Intel Xeon Gold 6530 / 128 vCPU / 1.0 TB RAM / pgvector 패치 (ICDE 동일 환경)</div>
+        <div style="text-align:right">측정 범위 — 오프라인 1,508 cell + 엔진 56 cell · 다른 엔진·selectivity 일반화 본 연구 범위 밖</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 8 · 데이터셋 ============== -->
+<section data-screen-label="08 데이터셋" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title">측정한 <em>데이터셋</em></div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch">
+
+        <div style="border:1px solid var(--line);padding:22px 26px;display:flex;flex-direction:column">
+          <div style="font-size:16px;color:var(--fg3);font-weight:500;letter-spacing:-0.005em;margin-bottom:18px">단일 벡터 데이터셋</div>
+          <div style="display:flex;flex-direction:column;gap:16px;flex:1;justify-content:center">
+            <div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">DEEP</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:11%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--fg2);font-weight:600">96</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">SIFT</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:15%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--fg2);font-weight:600">128</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">YFCC</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:22%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--fg2);font-weight:600">192</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">SimSearchNet++</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:30%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--fg2);font-weight:600">256</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">WIKI</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:89%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--fg2);font-weight:600">768</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--line);padding:22px 26px;display:flex;flex-direction:column">
+          <div style="font-size:16px;color:var(--fg3);font-weight:500;letter-spacing:-0.005em;margin-bottom:18px">다중 벡터 데이터셋</div>
+          <div style="display:flex;flex-direction:column;gap:16px;flex:1;justify-content:center">
+            <div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">DEEP + SIFT</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:26%;background:var(--navy)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--navy);font-weight:700">224</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">DEEP + YFCC</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:33%;background:var(--navy)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--navy);font-weight:700">288</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">DEEP + WIKI</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:84%;background:var(--navy)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--navy);font-weight:700">864</div>
+            </div><div style="display:grid;grid-template-columns:160px 1fr 70px;gap:14px;align-items:center">
+              <div style="font-size:17px;color:var(--ink);font-weight:600;text-align:right;letter-spacing:-0.005em">DEEP + CC3M</div>
+              <div style="height:14px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:100%;background:var(--navy)"></div></div>
+              <div class="num" style="font-size:14px;color:var(--navy);font-weight:700">1024</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:16px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+        <strong style="color:var(--navy)">96차원부터 1024차원까지</strong> — 단일 벡터와 다중 벡터를 아우른다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 9 · 무작위 vs 분포 인지 ============== -->
+<section data-screen-label="09 무작위 vs 분포 인지" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title">데이터가 쏠려 있을 때, <em>무작위는 쏠린 곳만</em> 뽑는다</div>
+    <div class="acc-bar"></div><div class="body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;align-items:stretch">
+
+        <div style="display:flex;flex-direction:column;border:1px solid var(--line);padding:20px 24px">
+          <div style="font-size:16px;color:var(--fg3);font-weight:500;letter-spacing:-0.005em;margin-bottom:10px">기존 방식 · 무작위</div>
+          <svg viewBox="0 0 420 240" width="100%" preserveAspectRatio="xMidYMid meet" style="flex:1">
+            <path d="M 20 220 Q 110 30 200 90 Q 260 150 400 215 L 400 230 L 20 230 Z" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+            <g fill="#CBD5E1"><circle cx="80" cy="190" r="2.6"/><circle cx="95" cy="170" r="2.6"/><circle cx="110" cy="155" r="2.6"/><circle cx="125" cy="135" r="2.6"/><circle cx="140" cy="115" r="2.6"/><circle cx="155" cy="100" r="2.6"/><circle cx="170" cy="92" r="2.6"/><circle cx="185" cy="98" r="2.6"/><circle cx="210" cy="130" r="2.6"/><circle cx="240" cy="155" r="2.6"/><circle cx="270" cy="175" r="2.6"/><circle cx="310" cy="195" r="2.6"/><circle cx="350" cy="210" r="2.6"/></g>
+            <g fill="#94A3B8" stroke="#FFFFFF" stroke-width="1.5"><circle cx="130" cy="130" r="6"/><circle cx="150" cy="115" r="6"/><circle cx="140" cy="105" r="6"/><circle cx="160" cy="100" r="6"/><circle cx="135" cy="138" r="6"/><circle cx="170" cy="95" r="6"/></g>
+            <text x="120" y="40" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#475569">표본이 봉우리에 집중</text>
+          </svg>
+          <div style="margin-top:10px;font-size:13px;color:var(--fg3);letter-spacing:-0.005em;text-align:center">드문 구간 — 표본 없음</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;border:1.5px solid var(--cyan);padding:20px 24px;background:var(--cyan-soft)">
+          <div style="font-size:16px;color:var(--cyan);font-weight:700;letter-spacing:-0.005em;margin-bottom:10px">분포 인지 표본 추출</div>
+          <svg viewBox="0 0 420 240" width="100%" preserveAspectRatio="xMidYMid meet" style="flex:1">
+            <path d="M 20 220 Q 110 30 200 90 Q 260 150 400 215 L 400 230 L 20 230 Z" fill="#FFFFFF" stroke="#0EA5E9" stroke-width="1" opacity="0.6"/>
+            <g stroke="#FFFFFF" stroke-width="2" opacity="0.7"><line x1="58" y1="230" x2="58" y2="180"/><line x1="96" y1="230" x2="96" y2="135"/><line x1="134" y1="230" x2="134" y2="90"/><line x1="172" y1="230" x2="172" y2="88"/><line x1="210" y1="230" x2="210" y2="113"/><line x1="248" y1="230" x2="248" y2="148"/><line x1="286" y1="230" x2="286" y2="175"/><line x1="324" y1="230" x2="324" y2="195"/><line x1="362" y1="230" x2="362" y2="208"/></g>
+            <g fill="#0EA5E9" stroke="#FFFFFF" stroke-width="1.5"><circle cx="40" cy="215" r="6"/><circle cx="78" cy="185" r="6"/><circle cx="116" cy="160" r="6"/><circle cx="154" cy="108" r="6"/><circle cx="192" cy="105" r="6"/><circle cx="230" cy="138" r="6"/><circle cx="268" cy="170" r="6"/><circle cx="306" cy="190" r="6"/><circle cx="344" cy="205" r="6"/><circle cx="382" cy="215" r="6"/></g>
+            <text x="120" y="40" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0EA5E9">전 구간에서 골고루</text>
+          </svg>
+          <div style="margin-top:10px;font-size:13px;color:var(--cyan);font-weight:600;letter-spacing:-0.005em;text-align:center">드문 구간도 표본에 들어온다</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;font-size:16px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+        분포를 반영하면 드문 구간까지 표본에 들어와 추정이 정확해진다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 10 · 16가지 방법 / 7가지 접근 ============== -->
+<section data-screen-label="10 16가지 방법" data-section="method">
+  <div class="frame"><div class="sec-badge">방법</div>
+    <div class="title"><em>16가지 방법</em>, 7가지 접근</div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:14px">
+      <!-- 4 cards top / 3 cards bottom · each card: icon | name | intuition | methods -->
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:11px;flex:1">
+
+        <div class="ap-card" style="grid-column:span 3">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><polyline points="6,30 18,30 18,16 30,16 30,30 42,30 42,16 54,16" fill="none" stroke="#8B5CF6" stroke-width="2"/></svg></div>
+          <div class="ap-name">공간 곡선</div>
+          <div class="ap-intu">고차원을 한 줄로 펼쳐 균등 구간으로 자른다</div>
+          <div class="ap-meth">Hilbert 곡선 · Z-order 곡선 · 고차원 Hilbert 곡선 · IVF 클러스터링</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 3">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><line x1="6" y1="30" x2="54" y2="6" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="3,2"/><g fill="#8B5CF6"><circle cx="14" cy="26" r="2.5"/><circle cx="22" cy="22" r="2.5"/><circle cx="30" cy="18" r="2.5"/><circle cx="38" cy="14" r="2.5"/><circle cx="46" cy="10" r="2.5"/></g></svg></div>
+          <div class="ap-name">차원 축소</div>
+          <div class="ap-intu">정보가 가장 많은 축으로 압축해 구간을 나눈다</div>
+          <div class="ap-meth">주성분 분석 · 독립성분 분석 · 랜덤 SVD · 희소 랜덤 투영</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 3">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><path d="M 4 30 Q 18 6 30 16 Q 42 24 56 30 L 56 32 L 4 32 Z" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><g stroke="#8B5CF6" stroke-width="1.2" stroke-dasharray="2,1.5"><line x1="14" y1="6" x2="14" y2="32"/><line x1="20" y1="6" x2="20" y2="32"/><line x1="30" y1="6" x2="30" y2="32"/><line x1="44" y1="14" x2="44" y2="32"/></g></svg></div>
+          <div class="ap-name">통계적 층화</div>
+          <div class="ap-intu">각 구간에 데이터가 같은 양씩 담기게 자른다</div>
+          <div class="ap-meth">누적 제곱근 층화 · Lavallée–Hidiroglou 층화</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 3">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><rect x="6" y="14" width="10" height="14" fill="#FFF" stroke="#8B5CF6"/><text x="11" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#8B5CF6">10</text><rect x="20" y="14" width="10" height="14" fill="#FFF" stroke="#8B5CF6"/><text x="25" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#8B5CF6">01</text><rect x="34" y="14" width="10" height="14" fill="#FFF" stroke="#8B5CF6"/><text x="39" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#8B5CF6">11</text></svg></div>
+          <div class="ap-name">양자화</div>
+          <div class="ap-intu">짧은 코드로 바꿔 같은 코드끼리 묶는다</div>
+          <div class="ap-meth">RaBitQ 양자화 · 다차원 히스토그램</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 4">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><ellipse cx="18" cy="18" rx="11" ry="8" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><g fill="#8B5CF6"><circle cx="14" cy="16" r="2"/><circle cx="22" cy="20" r="2"/></g><ellipse cx="40" cy="20" rx="11" ry="8" fill="#EDE9FE" stroke="#15294A" stroke-width="1"/><g fill="#15294A"><circle cx="36" cy="18" r="2"/><circle cx="44" cy="22" r="2"/></g></svg></div>
+          <div class="ap-name">클러스터링</div>
+          <div class="ap-intu">비슷한 것끼리 군집으로 묶는다</div>
+          <div class="ap-meth">미니배치 K-means · 가우시안 혼합 모델</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 4">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><line x1="4" y1="22" x2="56" y2="22" stroke="#64748B" stroke-width="1.5"/><polygon points="52,18 58,22 52,26" fill="#64748B"/><g fill="#94A3B8"><circle cx="12" cy="22" r="2.5"/><circle cx="24" cy="22" r="2.5"/><circle cx="36" cy="22" r="2.5"/></g><g fill="#8B5CF6"><circle cx="18" cy="10" r="3"/><circle cx="42" cy="10" r="3"/></g></svg></div>
+          <div class="ap-name">스트리밍 표본 추출</div>
+          <div class="ap-intu">데이터를 한 번 훑으며 표본을 골라낸다</div>
+          <div class="ap-meth">가중 표본 추출</div>
+        </div>
+
+        <div class="ap-card" style="grid-column:span 4">
+          <div class="ap-ico"><svg viewBox="0 0 60 36" width="60" height="36"><rect x="6" y="10" width="18" height="16" fill="#8B5CF6"/><text x="15" y="22" text-anchor="middle" font-family="Inter, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="800" fill="#FFF">해시</text><line x1="26" y1="18" x2="34" y2="18" stroke="#64748B" stroke-width="1.2"/><polygon points="30,15 36,18 30,21" fill="#64748B"/><g><rect x="38" y="10" width="7" height="7" fill="#FFF" stroke="#8B5CF6"/><rect x="46" y="10" width="7" height="7" fill="#FFF" stroke="#8B5CF6"/><rect x="38" y="19" width="7" height="7" fill="#FFF" stroke="#8B5CF6"/><rect x="46" y="19" width="7" height="7" fill="#FFF" stroke="#8B5CF6"/></g></svg></div>
+          <div class="ap-name">정보 이론 기반</div>
+          <div class="ap-intu">해시로 데이터 분포를 적은 메모리에 요약한다</div>
+          <div class="ap-meth">HyperLogLog</div>
+        </div>
+
+      </div>
+
+      <div style="font-size:15px;color:var(--fg3);line-height:1.55;letter-spacing:-0.005em">
+        일곱 가지 접근에서 <strong style="color:var(--navy)">대표 방법 16가지</strong>를 골라 모두 측정했다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 11 · 핵심 결과 89.1% ============== -->
+<section data-screen-label="11 핵심 결과" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">결합 방식이 추정 오차를 <em>89.1%에서</em> 줄였다 — <span style="color:var(--fg3);font-size:0.7em;font-weight:600">관측</span></div>
+    <div class="acc-bar"></div><div class="body">
+      <div style="display:grid;grid-template-columns:1.05fr 0.95fr;gap:60px;flex:1;align-items:center">
+
+        <div style="display:flex;flex-direction:column;gap:18px;padding:18px 24px;background:var(--cyan-soft-lite);border-radius:2px">
+          <div class="bignum hero-grad" style="font-size:208px;line-height:0.88">89.1<span style="font-size:0.45em;font-weight:700">%</span></div>
+          <!-- visualization bar -->
+          <div style="height:14px;background:#F1F5F9;position:relative;max-width:520px">
+            <div style="position:absolute;inset:0 auto 0 0;width:89.1%;background:var(--hero-grad)"></div>
+          </div>
+          <div style="font-size:21px;color:var(--ink);font-weight:600;letter-spacing:-0.01em;line-height:1.4;max-width:560px">
+            결합 방식이 기존 방식보다 추정 오차를 줄인 비율 — <strong>1,344 / 1,508 cell</strong>
+          </div>
+          <div style="padding-top:12px;border-top:1px solid var(--line);font-size:16px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em;max-width:560px">
+            추정 오차 중앙값 결합이 약 <strong style="color:var(--navy)">4.38%</strong> 더 작음
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;padding-left:32px;border-left:1px solid var(--line)">
+          <div style="font-size:17px;color:var(--fg3);font-weight:500;letter-spacing:-0.005em;margin-bottom:4px">신호의 견고함</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div style="font-size:17px;color:var(--fg1);font-weight:500;letter-spacing:-0.005em">통계적으로 의미 있는 개선</div>
+              <div class="num" style="font-size:30px;font-weight:800;color:var(--cyan);letter-spacing:-0.025em">65<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="height:6px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:65%;background:var(--cyan)"></div></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div style="font-size:17px;color:var(--fg1);font-weight:500;letter-spacing:-0.005em">개선 폭이 큰 경우</div>
+              <div class="num" style="font-size:30px;font-weight:800;color:var(--cyan);letter-spacing:-0.025em">72<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="height:6px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:72%;background:var(--cyan)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding:13px 22px;background:var(--navy);color:#FFF;border-left:3px solid var(--cyan);font-size:16.5px;font-weight:600;letter-spacing:-0.005em;line-height:1.5">
+        이 89% 우위가 <em style="color:#7DD3FC;font-style:normal">분포 인지의 효과</em>인가? — 다음 슬라이드의 <strong style="color:#FFF">통제군</strong>이 답한다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 12 · 환경별 분해 (89.1% 환경 무관 일관성) ============== -->
+<section data-screen-label="12 환경별 분해" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">89.1% 우위가 — <em>환경에 무관하게 일관된다</em></div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;align-items:stretch">
+
+        <!-- panel 1: 선택도 -->
+        <div style="border:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:14px;background:#FFFFFF">
+          <div style="font-size:14px;color:var(--fg3);font-weight:600;letter-spacing:0.04em">선택도</div>
+          <div style="font-size:22px;color:var(--ink);font-weight:700;letter-spacing:-0.01em;line-height:1.25">조건이 넓을수록<br/><em style="color:var(--cyan);font-style:normal">더 우월</em></div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:auto">
+            <div style="display:grid;grid-template-columns:88px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--fg2);font-weight:500;text-align:right">낮음 0.1%</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:83.3%;background:#7DD3FC"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--ink);text-align:right;letter-spacing:-0.02em">83.3<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:88px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--fg2);font-weight:500;text-align:right">중간 1%</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:87.6%;background:#38BDF8"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--ink);text-align:right;letter-spacing:-0.02em">87.6<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:88px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--cyan);font-weight:700;text-align:right">높음 10%</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:97.5%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.02em">97.5<span style="font-size:0.6em">%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- panel 2: 데이터 구조 -->
+        <div style="border:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:14px;background:#FFFFFF">
+          <div style="font-size:14px;color:var(--fg3);font-weight:600;letter-spacing:0.04em">데이터 구조</div>
+          <div style="font-size:22px;color:var(--ink);font-weight:700;letter-spacing:-0.01em;line-height:1.25">단일·다중<br/><em style="color:var(--cyan);font-style:normal">거의 동일</em></div>
+          <div style="display:flex;flex-direction:column;gap:18px;margin-top:auto">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                <div style="font-size:13px;color:var(--fg2);font-weight:500;white-space:nowrap">단일 벡터</div>
+                <div class="num" style="font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-0.03em;line-height:1">89.1<span style="font-size:0.55em">%</span></div>
+              </div>
+              <div style="height:8px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:89.1%;background:var(--cyan)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                <div style="font-size:13px;color:var(--cyan);font-weight:700;white-space:nowrap">다중 벡터</div>
+                <div class="num" style="font-size:32px;font-weight:800;color:var(--cyan);letter-spacing:-0.03em;line-height:1">89.2<span style="font-size:0.55em">%</span></div>
+              </div>
+              <div style="height:8px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:89.2%;background:var(--cyan)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- panel 3: 계층 수 -->
+        <div style="border:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:14px;background:#FFFFFF">
+          <div style="font-size:14px;color:var(--fg3);font-weight:600;letter-spacing:0.04em">계층 수</div>
+          <div style="font-size:22px;color:var(--ink);font-weight:700;letter-spacing:-0.01em;line-height:1.25">20개 계층이<br/><em style="color:var(--cyan);font-style:normal">최적</em></div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:auto">
+            <div style="display:grid;grid-template-columns:60px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--fg2);font-weight:500;text-align:right">10개</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:83.6%;background:#7DD3FC"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--ink);text-align:right;letter-spacing:-0.02em">83.6<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--cyan);font-weight:700;text-align:right">20개</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:89.8%;background:var(--cyan)"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.02em">89.8<span style="font-size:0.6em">%</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr 78px;gap:10px;align-items:center">
+              <div style="font-size:13px;color:var(--fg2);font-weight:500;text-align:right">30개</div>
+              <div style="height:24px;background:#F1F5F9;position:relative"><div style="position:absolute;inset:0 auto 0 0;width:85.9%;background:#38BDF8"></div></div>
+              <div class="num" style="font-size:18px;font-weight:800;color:var(--ink);text-align:right;letter-spacing:-0.02em">85.9<span style="font-size:0.6em">%</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="padding:12px 22px;background:#FAFAFA;border-left:3px solid var(--navy);font-size:15.5px;color:var(--ink);letter-spacing:-0.005em;line-height:1.55">
+        세 패널 수치는 모두 <strong>결합 방식이 기존 방식을 이긴 비율</strong> — 환경이 달라져도 개선이 일관된다 · <em style="color:var(--navy);font-style:normal;font-weight:700">method 무관 평균 효과의 evidence</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 13 ★★ 평균 비교군 통제표 + 사전 등록 통제 측정 ============== -->
+<section data-screen-label="13 평균 비교군 통제표" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">메커니즘 규명 — <em>평균 비교군이 무엇을 보여 주는가</em></div>
+    <div class="acc-bar"></div><div class="body" style="gap:14px">
+
+      <!-- table -->
+      <div style="border:1px solid var(--line);background:#FFFFFF">
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;gap:0;background:#FAFAFA;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--fg3);font-weight:700;letter-spacing:0.04em">
+          <div style="padding:11px 18px">추정 방식</div>
+          <div style="padding:11px 18px;text-align:right">평균 추정 오차</div>
+          <div style="padding:11px 18px;text-align:right">베이스라인을 이긴 비율</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;border-bottom:1px solid var(--line)">
+          <div style="padding:13px 18px;font-size:15px;color:var(--ink);font-weight:600;letter-spacing:-0.005em">베이스라인 <span style="font-weight:400;color:var(--fg3)">(무작위 단독)</span></div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:18px;color:var(--ink);font-weight:700;letter-spacing:-0.02em">1.944</div>
+          <div style="padding:13px 18px;text-align:right;font-size:15px;color:var(--fg4);font-weight:600">—</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;border-bottom:1px solid var(--line)">
+          <div style="padding:13px 18px;font-size:15px;color:var(--ink);font-weight:600;letter-spacing:-0.005em">단독 대체 <span style="font-weight:400;color:var(--fg3)">(분포 인지 단독)</span></div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:18px;color:var(--coral);font-weight:700;letter-spacing:-0.02em">1.984 <span style="font-size:0.7em;font-weight:500">(악화)</span></div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:17px;color:var(--coral);font-weight:700;letter-spacing:-0.02em">44%</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;border-bottom:1px solid var(--line)">
+          <div style="padding:13px 18px;font-size:15px;color:var(--ink);font-weight:600;letter-spacing:-0.005em">결합 방식 <span style="font-weight:400;color:var(--fg3)">(논문 + 분포 인지 평균)</span></div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:18px;color:var(--cyan);font-weight:700;letter-spacing:-0.02em">1.477</div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:17px;color:var(--cyan);font-weight:700;letter-spacing:-0.02em">99%</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;background:var(--cyan-soft-lite);border-bottom:1px solid var(--line)">
+          <div style="padding:13px 18px;font-size:15px;color:var(--ink);font-weight:700;letter-spacing:-0.005em">평균 비교군 <span style="font-weight:400;color:var(--fg3)">(논문 + 또 다른 무작위 평균 · 사후 분석)</span></div>
+          <div class="num hero-grad" style="padding:13px 18px;text-align:right;font-size:20px;font-weight:800;letter-spacing:-0.025em">1.459</div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:17px;color:var(--cyan);font-weight:800;letter-spacing:-0.02em">100%</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.8fr 1.4fr 1.4fr;background:var(--cyan-soft-lite);position:relative">
+          <div style="padding:13px 18px;font-size:15px;color:var(--ink);font-weight:700;letter-spacing:-0.005em;display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--cyan);color:#FFF;font-size:11px;font-weight:800;line-height:1">★</span><span>사전 등록 통제 측정 <span style="font-weight:400;color:var(--fg3)">(또 다른 무작위 두 번 평균 · 5/23 9 셀)</span></span></div>
+          <div class="num hero-grad" style="padding:13px 18px;text-align:right;font-size:20px;font-weight:800;letter-spacing:-0.025em">1.373</div>
+          <div class="num" style="padding:13px 18px;text-align:right;font-size:17px;color:var(--cyan);font-weight:800;letter-spacing:-0.02em">100%</div>
+        </div>
+      </div>
+
+      <!-- emphasis -->
+      <div style="padding:13px 22px;background:var(--navy);color:#FFF;border-left:3px solid var(--cyan);font-size:16.5px;font-weight:600;letter-spacing:-0.005em;line-height:1.5">
+        평균 비교군과 사전 등록 통제 측정 모두 결합 방식보다 더 정확 — <em style="color:#7DD3FC;font-style:normal">89% 우위는 분포 인지가 아닌 앙상블 평균 효과</em>
+      </div>
+
+      <!-- two coral sub-boxes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="padding:12px 16px;background:var(--coral-soft);border-left:3px solid var(--coral);font-size:13px;color:var(--ink);line-height:1.7;letter-spacing:-0.005em">
+          HyperLogLog (무작위 해시) 단독 <strong style="color:var(--coral)">+2.57% 악화</strong> → 평균에 넣으면 <strong style="color:var(--coral)">−4.58% '개선'</strong> 둔갑 · method 정체 무관 증거
+        </div>
+        <div style="padding:12px 16px;background:var(--coral-soft);border-left:3px solid var(--coral);font-size:13px;color:var(--ink);line-height:1.7;letter-spacing:-0.005em">
+          5/23 사전 등록 측정 · <strong style="color:var(--coral)">9 셀 × 10 회 반복 × 1,000 쿼리</strong> · 평균 추정 오차 <strong style="color:var(--coral)">1.373</strong> (vs 결합 1.473) · <strong style="color:var(--coral)">9/9 셀 통제군 우위</strong>
+        </div>
+      </div>
+
+      <div style="font-size:11.5px;color:var(--fg4);letter-spacing:-0.005em;line-height:1.5">통제군을 두지 않았다면 모르고 지나갔을 결과 · 사후 + 사전 등록 두 층 입증</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 14 · 단독 대체 음성 대조 (35.2% focus) ============== -->
+<section data-screen-label="14 단독 대체 음성" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">단독 대체로는 — <em>portfolio 전체로 악화</em></div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:24px">
+
+      <!-- main bar -->
+      <div style="padding:0 30px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-size:22px;color:var(--coral);font-weight:700;letter-spacing:-0.005em;white-space:nowrap">단독 대체 (완전 대체)</div>
+          <div style="font-size:14px;color:var(--fg3);letter-spacing:-0.005em">베이스라인보다 정확한 경우</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px">
+          <div style="flex:1;height:64px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:35.2%;background:var(--coral);display:flex;align-items:center;justify-content:flex-end;padding-right:14px;box-sizing:border-box">
+              <div class="num" style="font-size:24px;font-weight:800;color:#FFF;letter-spacing:-0.02em">35.2<span style="font-size:0.6em">%</span></div>
+            </div>
+          </div>
+          <div class="num" style="font-size:60px;font-weight:800;color:var(--coral);letter-spacing:-0.04em;line-height:1;min-width:180px;text-align:right">35.2<span style="font-size:0.5em">%</span></div>
+        </div>
+      </div>
+
+      <!-- two stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 30px">
+        <div style="padding:18px 22px;border:1px solid var(--coral);background:var(--coral-soft);display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--coral);font-weight:700;letter-spacing:0.06em">portfolio 평균 추정 오차 변화</div>
+          <div class="num" style="font-size:46px;font-weight:800;color:var(--coral);letter-spacing:-0.04em;line-height:1">+12.90<span style="font-size:0.55em">%</span></div>
+          <div style="font-size:13px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">16 method 전반 — 단독 대체 시 베이스라인 대비 오차 평균 증가</div>
+        </div>
+        <div style="padding:18px 22px;border:1px solid var(--line);background:#FFFFFF;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.06em">'베이스라인을 어렴풋이 이기는 신호'</div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-top:4px">5 method</div>
+          <div style="font-size:12.5px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">PCA / ICA / 랜덤 SVD / 희소 랜덤 투영 / 누적 제곱근 — <strong>차원 축소의 일반 효과</strong> (보고서 §4.7)</div>
+        </div>
+      </div>
+
+      <!-- emphasis -->
+      <div style="margin-top:6px;padding:13px 22px;background:var(--navy);color:#FFF;border-left:3px solid var(--coral);font-size:16.5px;font-weight:600;letter-spacing:-0.005em;line-height:1.5">
+        분포 인지 단독으로는 무작위 표집을 <em style="color:#FCA5A5;font-style:normal">대체할 수 없다</em> — 평균에 결합되어야만 가치가 드러난다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 15 · 엔진 적용 가속 hero 3-7× ============== -->
+<section data-screen-label="15 엔진 적용 가속" data-section="apply">
+  <div class="frame"><div class="sec-badge">적용</div>
+    <div class="title">엔진 적용 — <em>베이스라인이 이미 정답 수준 3~7× 가속을 회복</em></div>
+    <div class="acc-bar"></div><div class="body">
+      <div style="display:grid;grid-template-columns:0.85fr 1.15fr;gap:36px;flex:1;align-items:stretch;min-height:0">
+
+        <!-- LEFT: hero -->
+        <div style="display:flex;flex-direction:column;gap:14px;padding:22px 26px;background:var(--cyan-soft-lite)">
+          <div style="font-size:12px;color:var(--fg3);font-weight:600;letter-spacing:0.1em">엔진 적용 가속 폭</div>
+          <div class="bignum hero-grad" style="font-size:168px;line-height:0.88;letter-spacing:-0.06em">3<span style="font-size:0.55em">~</span>7<span style="font-size:0.5em;font-weight:700">×</span></div>
+          <div style="height:10px;background:#F1F5F9;position:relative;max-width:320px">
+            <div style="position:absolute;inset:0 auto 0 0;width:100%;background:var(--hero-grad)"></div>
+          </div>
+          <div style="font-size:18px;color:var(--ink);font-weight:600;letter-spacing:-0.01em;line-height:1.4">
+            12 구간 모두 기본 엔진보다 빠른 실행 계획
+          </div>
+          <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-size:14px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+            12 구간 평균 가속 <strong style="color:var(--navy)">베이스라인 4.43×</strong> · 결합 4.46× · 정답 4.54× — 베이스라인이 가용한 가속의 <strong style="color:var(--navy)">거의 100%</strong> 추출
+          </div>
+        </div>
+
+        <!-- RIGHT: design + comparison + ICDE source -->
+        <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+
+          <!-- 측정 설계 -->
+          <div style="padding:14px 18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div style="font-size:12px;color:var(--fg3);font-weight:600;letter-spacing:0.1em">측정 설계</div>
+              <div style="font-size:11.5px;color:var(--fg3);letter-spacing:-0.005em"><strong style="color:var(--navy)">2,880회</strong> 측정</div>
+            </div>
+            <div style="font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.5;letter-spacing:-0.005em">
+              TPC-H <strong>Q3·Q9·Q10·Q12</strong> · DEEP 8천만 벡터 · 12 구간 · 16 변형 · 15 회 반복
+            </div>
+            <div style="display:flex;align-items:stretch;gap:0;font-family:var(--font-num)">
+              <div style="flex:1;padding:6px 8px;background:#F8FAFC;border:1px solid var(--line);font-size:11px;color:var(--ink);font-weight:600;text-align:center;letter-spacing:-0.005em">추정치</div>
+              <div style="display:flex;align-items:center;padding:0 6px;color:var(--fg3);font-size:11px">→</div>
+              <div style="flex:1;padding:6px 8px;background:#F8FAFC;border:1px solid var(--line);font-size:11px;color:var(--ink);font-weight:600;text-align:center;letter-spacing:-0.005em">PostgreSQL 주입</div>
+              <div style="display:flex;align-items:center;padding:0 6px;color:var(--fg3);font-size:11px">→</div>
+              <div style="flex:1;padding:6px 8px;background:#F8FAFC;border:1px solid var(--line);font-size:11px;color:var(--ink);font-weight:600;text-align:center;letter-spacing:-0.005em">실행 계획 변화</div>
+              <div style="display:flex;align-items:center;padding:0 6px;color:var(--fg3);font-size:11px">→</div>
+              <div style="flex:1;padding:6px 8px;background:var(--cyan-soft);border:1px solid var(--cyan);font-size:11px;color:var(--cyan);font-weight:700;text-align:center;letter-spacing:-0.005em">시간 측정</div>
+            </div>
+          </div>
+
+          <!-- 통계 -->
+          <div style="padding:11px 16px;background:#FAFAFA;border-left:3px solid var(--green);display:flex;align-items:center;gap:14px">
+            <div class="num" style="font-size:24px;font-weight:800;color:var(--green);letter-spacing:-0.03em;line-height:1;white-space:nowrap">100<span style="font-size:0.55em">%</span></div>
+            <div style="font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.45;letter-spacing:-0.005em">
+              기본 엔진 대비 <strong>180건 짝지은 검정</strong> 100% 유의 (p_holm &lt; 0.05) — 의심의 여지 없는 가속
+            </div>
+          </div>
+
+          <!-- ICDE source footnote -->
+          <div style="padding:11px 16px;background:#FFFFFF;border:1px dashed var(--line-2);flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px">
+            <div style="font-size:11px;color:var(--fg3);font-weight:700;letter-spacing:0.08em">쿼리·plan 트리 출처</div>
+            <div style="font-size:12px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+              ICDE VAQ (derived from <strong>TPC-H Query 12</strong>) 흐름 carry — 결론은 <em style="color:var(--navy);font-style:normal;font-weight:700">음성</em>: 베이스라인이 이미 정답 plan 회복
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding:11px 18px;background:var(--navy);color:#FFF;font-size:14.5px;line-height:1.5;letter-spacing:-0.005em;border-left:3px solid var(--coral)">
+        엔진 위에서는 — 결합 방식의 추정 정확도가 latency 로 <em style="color:#FCA5A5;font-style:normal">옮겨가지 않는다</em>. 베이스라인이 이미 정답 plan 을 회복해 가속의 천장에 닿아 있기 때문.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 16 · 94.9% + 4갈래 — 동등 가속 ============== -->
+<section data-screen-label="16 정답 계획 회복" data-section="apply">
+  <div class="frame"><div class="sec-badge">적용</div>
+    <div class="title">결합·베이스라인·정답 — <em>세 가속이 같다</em></div>
+    <div class="acc-bar"></div><div class="body">
+
+      <!-- 4갈래 도식: 동일 굵기 화살표 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:13px 18px;background:#FAFAFA;border:1px solid var(--line)">
+        <div style="font-size:11px;color:var(--fg3);font-weight:700;letter-spacing:0.1em;margin-right:4px;white-space:nowrap">비교 흐름</div>
+        <div style="padding:7px 14px;background:var(--navy-soft);color:var(--navy);font-size:13.5px;font-weight:600;letter-spacing:-0.005em;line-height:1;white-space:nowrap">기본 엔진</div>
+        <div style="flex:0 0 28px;height:2px;background:var(--fg4);position:relative"><div style="position:absolute;right:-3px;top:-3px;width:0;height:0;border-left:6px solid var(--fg4);border-top:4px solid transparent;border-bottom:4px solid transparent"></div></div>
+        <div style="padding:7px 14px;background:var(--navy-soft);color:var(--navy);font-size:13.5px;font-weight:700;letter-spacing:-0.005em;line-height:1;white-space:nowrap;border:1px solid var(--navy)">베이스라인 4.43×</div>
+        <div style="flex:0 0 28px;height:2px;background:var(--fg4);position:relative"><div style="position:absolute;right:-3px;top:-3px;width:0;height:0;border-left:6px solid var(--fg4);border-top:4px solid transparent;border-bottom:4px solid transparent"></div></div>
+        <div style="padding:7px 14px;background:rgba(14,165,233,0.14);color:var(--cyan);font-size:13.5px;font-weight:700;letter-spacing:-0.005em;line-height:1;white-space:nowrap;border:1px solid var(--cyan)">결합 4.46×</div>
+        <div style="flex:0 0 28px;height:2px;background:var(--fg4);position:relative"><div style="position:absolute;right:-3px;top:-3px;width:0;height:0;border-left:6px solid var(--fg4);border-top:4px solid transparent;border-bottom:4px solid transparent"></div></div>
+        <div style="padding:7px 14px;background:rgba(16,185,129,0.14);color:var(--green);font-size:13.5px;font-weight:700;letter-spacing:-0.005em;line-height:1;white-space:nowrap;border:1px solid var(--green)">정답 4.54×</div>
+        <div style="flex:1"></div>
+        <div style="font-size:11px;color:var(--fg3);line-height:1.4;letter-spacing:-0.005em;text-align:right;max-width:200px">세 화살표 동일 굵기 — <strong style="color:var(--navy)">차이 없음</strong></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:0.85fr 1.15fr;gap:36px;flex:1;align-items:stretch;min-height:0">
+
+        <!-- LEFT: hero -->
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px 24px;background:var(--cyan-soft-lite)">
+          <div style="font-size:12px;color:var(--fg3);font-weight:600;letter-spacing:0.1em">정답 계획 회복률 — 결합 방식</div>
+          <div class="bignum hero-grad" style="font-size:140px;line-height:0.88">94.9<span style="font-size:0.42em;font-weight:700">%</span></div>
+          <div style="font-size:18px;color:var(--ink);font-weight:700;letter-spacing:-0.01em;line-height:1.35">
+            베이스라인 4.43× ≈ 결합 4.46× ≈ 정답 4.54×
+          </div>
+          <div style="height:10px;background:#F1F5F9;position:relative;max-width:300px">
+            <div style="position:absolute;inset:0 auto 0 0;width:94.9%;background:var(--hero-grad)"></div>
+          </div>
+          <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--line);font-size:13.5px;color:var(--fg2);line-height:1.55;letter-spacing:-0.005em">
+            결합 방식 13종 평균 <strong style="color:var(--navy)">148 / 156 구간</strong> 회복 — 가속이 동등함을 직접 표시
+          </div>
+        </div>
+
+        <!-- RIGHT: emphasis + structural finding + small note -->
+        <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+
+          <div style="padding:14px 18px;background:var(--navy);color:#FFF;border-left:3px solid var(--cyan);display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:11px;color:#A3B7D1;font-weight:700;letter-spacing:0.1em">핵심 메시지</div>
+            <div style="font-size:16px;line-height:1.5;letter-spacing:-0.005em;color:#FFF;font-weight:600">
+              결합 방식과 베이스라인 모두 <em style="color:#7DD3FC;font-style:normal">정답 수준 plan 회복</em> — latency 동등 = <strong style="color:#FCA5A5">음성·구조적 결과</strong>
+            </div>
+          </div>
+
+          <div style="padding:14px 18px;border:1px solid var(--line);background:#FFFFFF;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:11px;color:var(--fg3);font-weight:700;letter-spacing:0.08em">구조적 한계</div>
+            <div style="font-size:14.5px;color:var(--ink);font-weight:500;line-height:1.55;letter-spacing:-0.005em">
+              추정 정확도 ↑ 가 실행 시간 ↓ 로 이어지지 않는다 — <strong style="color:var(--navy)">베이스라인이 이미 정답 plan 회복</strong> 했기 때문
+            </div>
+          </div>
+
+          <div style="padding:14px 18px;border:1px solid var(--line);background:var(--cyan-soft);display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center">
+            <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.08em">두 방식 정답 plan 회복 비교</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:12px;color:var(--fg2);font-weight:600">베이스라인 단일</div>
+                <div class="num" style="font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-0.025em">7<span style="font-size:0.55em;color:var(--fg3)">/12</span></div>
+                <div style="font-size:11px;color:var(--fg3)">질의별 흔들림</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:12px;color:var(--cyan);font-weight:700">결합 13종 평균</div>
+                <div class="num hero-grad" style="font-size:24px;font-weight:800;letter-spacing:-0.025em">148<span style="font-size:0.55em;color:var(--fg3);font-weight:500"> / 156</span></div>
+                <div style="font-size:11px;color:var(--cyan);font-weight:600">견고함만 차이</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 17 · 12 구간 가속 매트릭스 ============== -->
+<section data-screen-label="17 가속 매트릭스" data-section="apply">
+  <div class="frame"><div class="sec-badge">적용</div>
+    <div class="title">12 구간 모두 — <em>같은 군집의 가속</em></div>
+    <div class="acc-bar"></div><div class="body" style="gap:18px">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border:1px solid var(--line);background:#FAFAFA">
+        <div style="font-size:13px;color:var(--fg3);font-weight:600;letter-spacing:0.04em">쿼리별 평균 가속 — 기본 엔진 = 1×</div>
+        <div style="font-size:12px;color:var(--fg3);letter-spacing:-0.005em">베이스라인·결합·정답 가속이 <strong style="color:var(--navy)">같은 군집에 위치</strong></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;padding:0 20px;flex:1;justify-content:center">
+        <!-- Q3 -->
+        <div style="display:grid;grid-template-columns:60px 1fr 100px;gap:18px;align-items:center">
+          <div style="font-size:18px;color:var(--ink);font-weight:700;text-align:right;font-family:var(--font-num)">Q3</div>
+          <div style="height:38px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:100%;background:var(--hero-grad)"></div>
+            <div style="position:absolute;left:14.3%;top:-3px;bottom:-3px;width:1px;background:var(--fg4);opacity:0.6"></div>
+          </div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.025em;line-height:1">7.0<span style="font-size:0.55em">×</span></div>
+        </div>
+        <!-- Q9 -->
+        <div style="display:grid;grid-template-columns:60px 1fr 100px;gap:18px;align-items:center">
+          <div style="font-size:18px;color:var(--ink);font-weight:700;text-align:right;font-family:var(--font-num)">Q9</div>
+          <div style="height:38px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:42.9%;background:var(--hero-grad)"></div>
+            <div style="position:absolute;left:14.3%;top:-3px;bottom:-3px;width:1px;background:var(--fg4);opacity:0.6"></div>
+          </div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.025em;line-height:1">3.0<span style="font-size:0.55em">×</span></div>
+        </div>
+        <!-- Q10 -->
+        <div style="display:grid;grid-template-columns:60px 1fr 100px;gap:18px;align-items:center">
+          <div style="font-size:18px;color:var(--ink);font-weight:700;text-align:right;font-family:var(--font-num)">Q10</div>
+          <div style="height:38px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:85.7%;background:var(--hero-grad)"></div>
+            <div style="position:absolute;left:14.3%;top:-3px;bottom:-3px;width:1px;background:var(--fg4);opacity:0.6"></div>
+          </div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.025em;line-height:1">6.0<span style="font-size:0.55em">×</span></div>
+        </div>
+        <!-- Q12 -->
+        <div style="display:grid;grid-template-columns:60px 1fr 100px;gap:18px;align-items:center">
+          <div style="font-size:18px;color:var(--ink);font-weight:700;text-align:right;font-family:var(--font-num)">Q12</div>
+          <div style="height:38px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:85.7%;background:var(--hero-grad)"></div>
+            <div style="position:absolute;left:14.3%;top:-3px;bottom:-3px;width:1px;background:var(--fg4);opacity:0.6"></div>
+          </div>
+          <div class="num" style="font-size:32px;font-weight:800;color:var(--cyan);text-align:right;letter-spacing:-0.025em;line-height:1">6.0<span style="font-size:0.55em">×</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="padding:14px 20px;border:1px solid var(--line);background:#FFFFFF;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.06em">12 구간 평균</div>
+          <div style="font-size:14.5px;color:var(--ink);font-weight:600;line-height:1.5;letter-spacing:-0.005em">베이스라인 <strong style="color:var(--navy)">4.43×</strong> · 결합 4.46× · 정답 4.54×</div>
+        </div>
+        <div style="padding:14px 20px;border:1px solid var(--line);background:#FFFFFF;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.06em">한 구간도 느려지지 않음</div>
+          <div style="font-size:14.5px;color:var(--ink);font-weight:600;line-height:1.5;letter-spacing:-0.005em">모든 구간이 <strong style="color:var(--cyan)">1× 위</strong> — 추정치 주입의 음성 결과는 latency 가 아닌 동등성</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 18 · paired Wilcoxon 통계 검증 ============== -->
+<section data-screen-label="18 paired Wilcoxon" data-section="apply">
+  <div class="frame"><div class="sec-badge">적용</div>
+    <div class="title">두 방식의 실행 시간 차이가 — <em>측정으로 분리되지 않는다</em></div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:22px">
+
+      <div style="display:grid;grid-template-columns:0.95fr 1.05fr;gap:36px;align-items:center">
+
+        <!-- LEFT: 100% 유의 -->
+        <div style="padding:24px 28px;background:#FAFAFA;border-left:3px solid var(--green);display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.08em">기본 엔진 대비 · 짝지은 검정</div>
+          <div style="display:flex;align-items:baseline;gap:14px">
+            <div class="num" style="font-size:96px;font-weight:800;color:var(--green);letter-spacing:-0.04em;line-height:1">100<span style="font-size:0.45em">%</span></div>
+            <div style="font-size:14px;color:var(--fg2);line-height:1.45;letter-spacing:-0.005em"><strong style="color:var(--navy)">180/180</strong> 유의<br/>(p_holm &lt; 0.05)</div>
+          </div>
+          <div style="font-size:13.5px;color:var(--ink);line-height:1.55;letter-spacing:-0.005em">
+            추정치 주입이 가속으로 이어진다는 점은 <strong style="color:var(--green)">의심의 여지가 없다</strong> — 어느 두 방식이 더 빠른지의 문제와는 별개
+          </div>
+        </div>
+
+        <!-- RIGHT: 베이스라인 vs 결합 — 노이즈 분포 -->
+        <div style="padding:24px 28px;border:1.5px solid var(--coral);background:var(--coral-soft);display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:12px;color:var(--coral);font-weight:700;letter-spacing:0.08em">베이스라인 ↔ 결합 · paired Δ% 분포</div>
+          <div style="display:flex;align-items:baseline;gap:14px">
+            <div class="num" style="font-size:60px;font-weight:800;color:var(--coral);letter-spacing:-0.03em;line-height:1">+0.13<span style="font-size:0.55em">%</span></div>
+            <div style="font-size:13px;color:var(--fg2);line-height:1.45;letter-spacing:-0.005em">중앙값 Δ%<br/>(체감 0)</div>
+          </div>
+          <!-- 빠름/느림 -->
+          <div style="display:flex;gap:0;border:1px solid var(--line);background:#FFFFFF;overflow:hidden">
+            <div style="flex:349;padding:11px 14px;background:#FFFFFF;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:11px;color:var(--fg3);font-weight:600">결합이 빠름</div>
+              <div class="num" style="font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-0.025em;line-height:1">349</div>
+            </div>
+            <div style="flex:379;padding:11px 14px;background:#FAFAFA;display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--line)">
+              <div style="font-size:11px;color:var(--fg3);font-weight:600">결합이 느림</div>
+              <div class="num" style="font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-0.025em;line-height:1">379</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--ink);line-height:1.55;letter-spacing:-0.005em;font-weight:500">
+            구간별 노이즈 <strong style="color:var(--coral)">17% 이하</strong> · 빠름 ≈ 느림 → 두 방식의 실행 시간 차이가 <strong>측정으로 분리되지 않는다</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:12px 22px;background:var(--navy);color:#FFF;border-left:3px solid var(--coral);font-size:15.5px;font-weight:600;letter-spacing:-0.005em;line-height:1.5">
+        가속은 진짜다 — 다만 결합 방식의 추정 정확도가 <em style="color:#FCA5A5;font-style:normal">베이스라인 대비의 추가 latency 이득</em>으로 옮겨가지는 않는다
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 19 · §1 89.1% + §2 비교 막대 (transformed framing) ============== -->
+<section data-screen-label="19 두 결과 합본" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">두 측정 결과 — <em>모두 분포 인지 효과 아님</em></div>
+    <div class="acc-bar"></div><div class="body" style="gap:14px">
+
+      <!-- §1 — 89.1% combined wins -->
+      <div style="padding:14px 22px;border:1px solid var(--line);background:#FFFFFF">
+        <div style="display:flex;align-items:baseline;gap:18px;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.1em;line-height:1.2;min-width:32px">§1</div>
+          <div style="font-size:18px;color:var(--ink);font-weight:600;letter-spacing:-0.01em;line-height:1.35">결합 방식이 베이스라인보다 추정 오차가 작은 cell 비율 <strong style="color:var(--navy)">89.1%</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px">
+          <div style="flex:1;height:36px;background:#F1F5F9;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:89.1%;background:var(--cyan);display:flex;align-items:center;justify-content:flex-end;padding-right:12px;box-sizing:border-box">
+              <div class="num" style="font-size:18px;font-weight:800;color:#FFF;letter-spacing:-0.02em">89.1<span style="font-size:0.65em">%</span></div>
+            </div>
+          </div>
+          <div class="num" style="font-size:36px;font-weight:800;color:var(--cyan);letter-spacing:-0.04em;line-height:1;min-width:130px;text-align:right">89.1<span style="font-size:0.5em">%</span></div>
+        </div>
+        <div style="margin-top:10px;padding:10px 14px;background:var(--navy);color:#FFF;border-left:3px solid var(--cyan);font-size:13.5px;font-weight:600;letter-spacing:-0.005em;line-height:1.5">
+          단, 이 우위는 <em style="color:#7DD3FC;font-style:normal">method 무관 평균 효과</em> — 슬라이드 13 평균 비교군 참조
+        </div>
+      </div>
+
+      <!-- §2 — comparison bars (35.2% / 89.1%) -->
+      <div style="padding:14px 22px;border:1px solid var(--line);background:#FFFFFF;flex:1;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:18px">
+          <div style="font-size:12px;color:var(--fg3);font-weight:700;letter-spacing:0.1em;line-height:1.2;min-width:32px">§2</div>
+          <div style="font-size:18px;color:var(--ink);font-weight:600;letter-spacing:-0.01em;line-height:1.35">단독 대체 vs 결합 — <strong style="color:var(--navy)">두 결과 모두 분포 인지 효과 아님</strong></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;padding:0 12px;flex:1;justify-content:center">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <div style="font-size:15px;color:var(--coral);font-weight:700;letter-spacing:-0.005em">단독 대체 — portfolio 악화</div>
+              <div style="font-size:12.5px;color:var(--fg3);letter-spacing:-0.005em">베이스라인보다 정확한 경우</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px">
+              <div style="flex:1;height:30px;background:#F1F5F9;position:relative">
+                <div style="position:absolute;inset:0 auto 0 0;width:35.2%;background:var(--coral)"></div>
+              </div>
+              <div class="num" style="font-size:26px;font-weight:800;color:var(--coral);letter-spacing:-0.03em;line-height:1;min-width:110px;text-align:right">35.2<span style="font-size:0.5em">%</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <div style="font-size:15px;color:var(--cyan);font-weight:700;letter-spacing:-0.005em">결합 — 평균 효과</div>
+              <div style="font-size:12.5px;color:var(--fg3);letter-spacing:-0.005em">베이스라인보다 정확한 경우</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px">
+              <div style="flex:1;height:30px;background:#F1F5F9;position:relative">
+                <div style="position:absolute;inset:0 auto 0 0;width:89.1%;background:var(--cyan)"></div>
+              </div>
+              <div class="num" style="font-size:26px;font-weight:800;color:var(--cyan);letter-spacing:-0.03em;line-height:1;min-width:110px;text-align:right">89.1<span style="font-size:0.5em">%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 20 ★★ 본 연구가 정말로 한 일 (NEW) ============== -->
+<section data-screen-label="20 본 연구의 기여" data-section="apply">
+  <div class="frame"><div class="sec-badge">적용</div>
+    <div class="title">본 연구가 <em>정말로 한 일</em></div>
+    <div class="acc-bar"></div><div class="body" style="gap:14px">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1">
+
+        <div style="padding:18px 22px;border:1px solid var(--line);border-top:3px solid var(--navy);background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
+          <div class="num" style="font-size:16px;color:var(--navy);font-weight:700;letter-spacing:0.04em">기여 01</div>
+          <div style="font-size:19px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">표본 선택 단계 개입의 효과 범위를 <em style="color:var(--navy);font-style:normal">통제 실험으로 분리</em></div>
+          <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">평균 비교군이 입증 — 89% 우위는 method 무관 평균 효과</div>
+        </div>
+
+        <div style="padding:18px 22px;border:1px solid var(--line);border-top:3px solid var(--coral);background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
+          <div class="num" style="font-size:16px;color:var(--coral);font-weight:700;letter-spacing:0.04em">기여 02</div>
+          <div style="font-size:19px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">분포 인지 단독 대체는 <em style="color:var(--coral);font-style:normal">무작위 표집을 대체할 수 없음</em></div>
+          <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">portfolio 평균 추정 오차 <strong style="color:var(--coral)">+12.90% 악화</strong></div>
+        </div>
+
+        <div style="padding:18px 22px;border:1px solid var(--line);border-top:3px solid var(--violet);background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
+          <div class="num" style="font-size:16px;color:var(--violet);font-weight:700;letter-spacing:0.04em">기여 03</div>
+          <div style="font-size:19px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">추정 정확도 ↑ 가 엔진 latency ↓ 로 이어지지 않는 <em style="color:var(--violet);font-style:normal">구조적 한계</em></div>
+          <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">베이스라인이 이미 정답 plan 회복으로 가속의 천장</div>
+        </div>
+
+        <div style="padding:18px 22px;border:1px solid var(--line);border-top:3px solid var(--green);background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
+          <div class="num" style="font-size:16px;color:var(--green);font-weight:700;letter-spacing:0.04em">기여 04</div>
+          <div style="font-size:19px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35"><em style="color:var(--green);font-style:normal">2,880 회</em> 엔진 적용 검증 · <em style="color:var(--green);font-style:normal">1,508 회</em> 오프라인 짝 비교 · pgvector 직접 패치</div>
+          <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">측정 하네스 자체가 유효한 산출물</div>
+        </div>
+      </div>
+
+      <div style="padding:14px 22px;background:var(--navy);color:#FFF;border-left:3px solid var(--cyan);font-size:18px;font-weight:700;letter-spacing:-0.01em;line-height:1.45">
+        기법을 제안한 연구가 아니라 — <em style="color:#7DD3FC;font-style:normal">통제 실험으로 메커니즘과 한계를 규명한 연구</em>
+      </div>
+      <div style="padding:10px 16px;background:#FAFAFA;border-left:3px solid var(--violet);font-size:12.5px;color:var(--fg2);letter-spacing:-0.005em;line-height:1.5">
+        통제군 (평균 비교군) 을 추가로 설계한 것이 — 학부 캡스톤으로서 가장 엄밀하게 한 일
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 21 · 결론 (transformed) ============== -->
+<section data-screen-label="21 결론" data-section="result">
+  <div class="frame"><div class="sec-badge">결과</div>
+    <div class="title">결론</div>
+    <div class="acc-bar"></div><div class="body" style="justify-content:center;gap:18px">
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <div style="display:flex;align-items:flex-start;gap:22px;padding:18px 24px;border:1px solid var(--line);border-left:4px solid var(--navy);background:#FFFFFF">
+          <div class="num" style="font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-0.03em;line-height:1;min-width:46px">01</div>
+          <div style="flex:1">
+            <div style="font-size:24px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">측정은 진짜다</div>
+            <div style="margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">1,508 + 2,880 회 측정 · 데이터 무손상</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:22px;padding:18px 24px;border:1px solid var(--line);border-left:4px solid var(--cyan);background:#FFFFFF">
+          <div class="num" style="font-size:28px;font-weight:800;color:var(--cyan);letter-spacing:-0.03em;line-height:1;min-width:46px">02</div>
+          <div style="flex:1">
+            <div style="font-size:24px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">인과는 정직하게 정정 — <em style="color:var(--cyan);font-style:normal">분포 인지 → 앙상블 평균</em></div>
+            <div style="margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">통제군이 보여 준 결과 · 89% 우위는 method 무관 평균 효과</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:22px;padding:18px 24px;border:1px solid var(--line);border-left:4px solid var(--violet);background:#FFFFFF">
+          <div class="num" style="font-size:28px;font-weight:800;color:var(--violet);letter-spacing:-0.03em;line-height:1;min-width:46px">03</div>
+          <div style="flex:1">
+            <div style="font-size:24px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">controlled verification 의 결과 — <em style="color:var(--violet);font-style:normal">메커니즘과 한계의 규명</em></div>
+            <div style="margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">기법 제안이 아니라 통제 실험 · 본 연구의 자가 감사가 만든 정직</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:22px;padding:18px 24px;border:1px solid var(--line);border-left:4px solid var(--green);background:#FFFFFF">
+          <div class="num" style="font-size:28px;font-weight:800;color:var(--green);letter-spacing:-0.03em;line-height:1;min-width:46px">04</div>
+          <div style="flex:1">
+            <div style="font-size:24px;color:var(--ink);font-weight:700;letter-spacing:-0.015em;line-height:1.35">향후 작업 두 갈래</div>
+            <div style="margin-top:4px;font-size:14px;color:var(--fg2);line-height:1.5;letter-spacing:-0.005em">Group A 메커니즘 후속 · Group B 산업 적용 framework <span style="color:var(--fg4)">(placeholder)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 19 · 마무리 ============== -->
+<section data-screen-label="22 마무리">
+  <div class="frame" style="padding:0;justify-content:center">
+    <div style="padding:0 96px;display:flex;flex-direction:column;justify-content:center;flex:1;width:100%;box-sizing:border-box">
+      <div style="width:240px;height:4px;background:linear-gradient(90deg,var(--navy) 0%,var(--cyan) 100%);margin-bottom:36px"></div>
+      <div class="hero-grad" style="font-size:240px;font-weight:800;letter-spacing:-0.05em;line-height:0.92">감사합니다</div>
+      <div style="margin-top:48px;font-size:42px;font-weight:500;color:var(--fg2);letter-spacing:-0.02em">질의응답</div>
+    </div>
+  </div>
+</section>
+
+</deck-stage>
+
+<script type="application/json" id="speaker-notes">
+[
+  "안녕하세요, 속도는벡터 팀입니다. 이번 발표는 — 표본 선택 단계 개입의 controlled verification 입니다. 통제 실험으로 메커니즘과 한계를 규명한 결과를 전해 드립니다.",
+  "데이터베이스는 쿼리를 실행하기 전에 조건을 만족하는 행의 수를 추정합니다. 이를 카디널리티라고 합니다. 이 값이 틀리면 잘못된 실행 계획이 세워져 쿼리가 느려집니다. 그런데 기존 벡터 데이터베이스들은 이 값을 데이터와 무관하게 고정 비율로 어림합니다. pgvector 는 늘 33.3%, DuckDB 는 100% 입니다. 예를 들어 ICDE 가 든 분석가 시나리오 — 공급자 부품과 비슷한 부품을 찾아 2024 년 데이터에서 리뷰를 분석해 할인율을 결정하는 — 이런 VAQ 에서 그 고정 비율 어림이 곧장 느린 쿼리로 이어집니다.",
+  "저희 연구는 논문 Exqutor 에서 출발합니다. 인덱스가 없을 때 데이터에서 표본을 뽑아 카디널리티를 추정하는 방식입니다. 추정 알고리즘 자체는 논문의 성과로 인정하고 그대로 둡니다. 저희가 손댄 곳은 그 앞 단계 하나 — 표본을 뽑는 방식입니다. 논문은 무작위로 뽑았지만, 저희는 데이터 분포를 반영해 뽑습니다. 이 슬라이드의 흐름은 ICDE 의 step-by-step plan 결함 → ECQO fix 흐름의 요약입니다.",
+  "저희 연구가 어떻게 진행됐는지 보여 드립니다. 시작은 논문의 무작위 표본 추출이었고, 중간 발표에서는 한 가지 분포 인지 방법의 검증이었고, 최종 발표를 향해서는 16 가지 방법과 네 방식 비교로 측정을 크게 넓혔습니다. 단계마다 측정 범위가 넓어지며, 초점이 '특정 방법'에서 '표본 선택 단계 개입의 효과'로 분명해졌습니다.",
+  "방법은 세 단계입니다. 데이터를 비슷한 것끼리 20 개 그룹으로 나누고, 각 그룹에서 골고루 표본을 뽑고, 마지막으로 논문 방식의 추정값과 우리 방식의 추정값을 평균 냅니다. 추정 알고리즘과 표본 크기 보정 과정은 논문 것을 그대로 둡니다. 본 연구의 연구 질문은 — 분포 인지 층화로 무작위 표집을 바꾸면 추정이 더 정확해지는가, 입니다. ICDE 는 plan 회복 차원으로 답한 반면, 본 연구는 §V-B Adaptive Sampling 안의 표본 선택 단 한 단계만 통제 실험합니다.",
+  "비교한 네 가지 방식입니다. 기존 방식은 논문 그대로 무작위로 비교 기준이고, 완전 대체는 우리 표본으로 통째 바꾼 것, 결합은 두 추정값의 평균입니다. 그리고 네 번째 — 평균 비교군 — method 자리에 분포와 무관한 또 다른 무작위 베르누이를 넣고 평균한 통제군입니다. method 가 정말로 정보를 주는지 분리하기 위함입니다. 한 번의 측정에서 네 방식을 동시에 산출해 외생 요소를 통제합니다.",
+  "측정을 어떻게 설계했는지 말씀드립니다. 다섯 축 — 데이터셋 9 종, 데이터 규모 10 만·100 만·1000 만 행, 선택도 0.1·1·10%, 16 가지 표본 선택 방법, 계층 수 10·20·30 — 을 빠짐없이 교차해 1508 번 측정했고, 4 방식이면 6032 추정값 짝 비교가 됩니다. 측정 환경은 ICDE 동일 — Intel Xeon Gold 6530 · 128 vCPU · 1.0 TB RAM · pgvector 패치입니다. 측정 범위는 오프라인 1,508 cell 과 엔진 56 cell 이며, 다른 엔진·selectivity 일반화는 본 연구 범위 밖입니다.",
+  "측정에 사용한 데이터셋입니다. 단일 벡터와 다중 벡터를 함께 다뤘고, 차원은 96 부터 1024 까지 폭넓게 포함했습니다.",
+  "왜 분포를 반영해야 하는지 보겠습니다. 데이터가 한쪽으로 쏠려 있을 때 무작위로 뽑으면 표본이 쏠린 곳에만 몰립니다. 드문 구간은 거의 들어오지 않습니다. 분포를 반영하면 드문 구간까지 골고루 들어와 추정이 더 정확해집니다.",
+  "데이터 분포를 반영해 표본을 뽑는 방법은 한 가지가 아닙니다. 일곱 가지 접근에서 대표 방법 16 가지를 골라 모두 측정했습니다.",
+  "핵심 결과 — 관측입니다. 결합 방식은 1508 번의 측정 중 1344 번, 89.1% 에서 기존 방식보다 추정 오차가 작았습니다. 중앙값으로 약 4.38% 작습니다. 신호의 견고함도 — 통계적 유의 65%, 개선 폭 큰 경우 72% — 강합니다. 그렇다면 — 이 89% 우위가 분포 인지의 효과인가? 다음 슬라이드의 통제군이 답합니다.",
+  "89.1% 우위가 환경에 무관한지 세 축으로 점검했습니다. 선택도 — 조건이 넓을수록 더 우월 (83.3·87.6·97.5%). 데이터 구조 — 단일과 다중이 거의 동일 (89.1·89.2%). 계층 수 — 20 개가 최적 (83.6·89.8·85.9%). 환경 무관 일관성 — 이것이 method 무관 평균 효과의 evidence 입니다.",
+  "핵심입니다 — 메커니즘 규명. 표를 보시면 베이스라인 무작위 단독의 평균 추정 오차 1.944, 단독 대체 분포 인지 단독은 1.984 로 베이스라인보다 더 나쁩니다 (44% 만 베이스라인 우위). 결합 방식 1.477 (99%), 평균 비교군 1.459 (100%), 그리고 5/23 사전 등록 통제 측정 — 또 다른 무작위 두 번 평균 — 1.373 (100%). 평균 비교군과 사전 등록 통제 측정 모두 결합 방식보다 더 정확합니다. 따라서 89% 우위는 분포 인지가 아닌 앙상블 평균 효과입니다. 부수 증거로 — HyperLogLog (무작위 해시) 단독은 +2.57% 악화이지만, 평균에 넣으면 −4.58% '개선'으로 둔갑합니다. method 정체와 무관하게 평균이 효과를 만든다는 뜻입니다. 사전 등록 측정도 9/9 셀 모두 통제군이 우위였습니다. 통제군을 두지 않았다면 모르고 지나갔을 결과입니다.",
+  "단독 대체로 가면 — portfolio 전체로 악화합니다. better 35.2% · 평균 추정 오차 +12.90%. 분포 인지 단독으로는 무작위 표집을 대체할 수 없습니다. 베이스라인을 어렴풋이 이기는 신호 5 종 (PCA·ICA·랜덤 SVD·희소 랜덤 투영·누적 제곱근) 도 — 분포 인지 효과가 아닌 차원 축소의 일반 효과입니다 (보고서 §4.7). 평균에 결합되어야만 가치가 드러납니다.",
+  "엔진 적용 결과입니다. TPC-H Q3·Q9·Q10·Q12 · DEEP 8 천만 벡터 · 12 구간 · 16 변형 · 15 회 반복으로 2880 회 측정했습니다. 12 구간 평균 가속이 — 베이스라인 4.43× · 결합 4.46× · 정답 4.54× 입니다. 즉 베이스라인 방식이 이미 가용한 가속의 거의 100% 를 추출합니다. 기본 엔진 대비 180 건 짝지은 검정은 100% 유의 (p_holm < 0.05) 로 가속 자체는 의심의 여지가 없습니다. 다만 ICDE 의 TPC-H Q12 plan 흐름을 따라 본 결론은 음성 — 베이스라인이 이미 정답 plan 을 회복해 있다는 것입니다.",
+  "94.9% 정답 계획 회복률. 그러나 베이스라인 4.43× ≈ 결합 4.46× ≈ 정답 4.54× — 세 가속이 같습니다. 결합 방식과 베이스라인 모두 정답 수준 plan 회복으로 latency 가 동등 — 음성·구조적 결과입니다. 추정 정확도 향상이 실행 시간 단축으로 이어지지 않는다는 뜻 — 베이스라인이 이미 정답 plan 회복으로 가속의 천장에 닿아 있기 때문입니다.",
+  "12 구간 매트릭스입니다. Q3 7× · Q9 3× · Q10 6× · Q12 6× — 한 구간도 느려지지 않았고, 베이스라인·결합·정답 가속이 같은 군집에 위치합니다. 가속의 천장은 4~5× 부근입니다.",
+  "paired Wilcoxon 통계 검증입니다. 기본 엔진 대비는 180/180 100% 유의. 그러나 베이스라인 ↔ 결합 paired Δ% 중앙값은 +0.13% — 빠름 349 vs 느림 379 — 사실상 0 입니다. 노이즈 17% 이하 안에서 두 방식의 실행 시간 차이가 측정으로 분리되지 않습니다. 가속은 진짜이되, 결합 방식의 추정 정확도가 베이스라인 대비의 추가 latency 이득으로는 옮겨가지 않습니다.",
+  "두 결과를 함께 둡니다. §1 — 결합 방식이 베이스라인보다 추정 오차가 작은 cell 89.1%. 단, 이 우위는 슬라이드 13 평균 비교군이 보여 준 — method 무관 평균 효과입니다. §2 — 단독 대체 35.2% portfolio 악화, 결합 89.1% 평균 효과. 두 결과 모두 분포 인지 효과가 아닙니다.",
+  "본 연구가 정말로 한 일 네 가지입니다. 첫째, 표본 선택 단계 개입의 효과 범위를 통제 실험으로 분리했습니다 — 평균 비교군이 입증합니다. 둘째, 분포 인지 단독 대체는 무작위 표집을 대체할 수 없다는 것 — portfolio +12.90% 악화. 셋째, 추정 정확도 향상이 엔진 latency 단축으로 이어지지 않는 구조적 한계 — 베이스라인이 이미 정답 plan 을 회복했기 때문. 넷째, 2880 회 엔진 적용 검증·1508 회 오프라인 짝 비교·pgvector 직접 패치 — 측정 하네스 자체가 유효한 산출물입니다. 기법을 제안한 연구가 아니라, 통제 실험으로 메커니즘과 한계를 규명한 연구. 통제군 — 평균 비교군 — 을 추가로 설계한 것이, 학부 캡스톤으로서 가장 엄밀하게 한 일이었습니다.",
+  "정리하겠습니다. 첫째 — 측정은 진짜입니다. 1,508 회와 2,880 회의 측정 · 데이터 무손상. 둘째 — 인과는 정직하게 정정합니다. 분포 인지가 아니라 앙상블 평균 효과. 셋째 — 본 발표는 controlled verification 의 결과 — 메커니즘과 한계의 규명입니다. 마지막으로 — 향후 작업 두 갈래 — Group A 메커니즘 후속과 Group B 산업 적용 framework — 는 placeholder 로 남깁니다.",
+  "이상으로 발표를 마치겠습니다. 감사합니다. 질문 받겠습니다."
+]
+</script>
+
+<script src="deck-stage.js"></script>
+</body>
+</html>

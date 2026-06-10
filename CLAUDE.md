@@ -8,31 +8,20 @@
 **학기**: 2026-1학기 캡스톤 디자인
 **목표**: 비교 분석 및 실험 — 새 알고리즘 개발이 아닌 벤치마크/검증 중심
 
-## 동적 state + 인계 (5/21 19:00 갱신 — pgvector 평면 확장 sequential 재측정 + DuckDB-vss 빌드 완료 + 자정 종료)
+## 동적 state + 인계 (6/10 17:55 갱신 — 최종보고서 초초안 채움 전달 · 프로젝트 총정리 · 카톡 트리거 대기)
 
-> CLAUDE.md = 라우팅 + 안정 룰. 동적 state·진행 수치는 handoff·v13 정본에 있다 — 새 세션은 아래 anchor 하나로 0% loss 인계.
+> CLAUDE.md = 라우팅 + 안정 룰. 동적 state·진행 수치는 handoff 정본에 있다 — 새 세션은 아래 anchor 하나로 0% loss 인계.
 
-- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260521_190000_pgvector평면확장_sequential재측정.md` — PoC 평면 확장 본격 진행. **핵심 carry**: (1) **measure sf=10 sequential 진행** — 5/22 00:00 KST 자정 자동 종료 (`midnight-stop.timer`, 5/22 다른 분 서버 사용). 1 cell ~9분, 자정까지 sf=10 ~25-35 cell. (2) **measure 는 반드시 sequential** — 정본 phase2 가 sequential (latency 격리). 4 병렬 = contention 오염 (본 세션 발견·폐기). estimates 생성만 4 병렬 OK. (3) **est_b1 = 1-stage** — codex finding #1 fix (`bernoulli_estimate(all_vecs=...)`), estimates 13 file 전수 재생성. (4) **DuckDB-vss 빌드 완료** — binary 40MB + smoke ✓. 4 엔진 중 2번째 (pgvector + DuckDB-vss). (5) 자원 watchdog v4 (systemd service · free≥256GB · our_rss≤512GB · 5초 주기). 다음 세션 = 자정 측정분 로컬 회수 (auto_post_bc_midnight daemon) + 분석 + 최종발표 슬라이드 반영 → 5/22 14:00 박광현 미팅.
-- **★ 본 세션 plan**: `~/.claude/plans/mossy-fluttering-hennessy.md` (4 엔진 × RQ3 매트릭스, ExitPlanMode 5/20 23:38 승인).
-- **★ 서버 권한 — 임채림 연구원 5/21 메일**: 서버 **6/11까지 OK**. sudo 권한 **5/28** 설정 (5/28까지 연구실 실험). → ~5/28 sudo 불필요 (pgvector + DuckDB-vss ✓), 5/28~ VBASE·Milvus (PG dev 패키지·go/etcd/minio = sudo).
-- **★ 4 엔진** = Exqutor 논문 3 엔진 (pgvector·VBASE·DuckDB) 재현 + Milvus (대표 벡터 DB). 5/27·29 발표 = pgvector 단독, 6/11 보고서 = 4 엔진 통합.
-- **★ 자문 메일 (박성원 멘토님 3차) — 5/20 22:34 박세은 발송 완료**: `@submission/_drafts/속도는벡터_3차 자문요청_20260520_202200.pdf`. 5/24 회신 base.
-- **★ 5/22 박광현 미팅 (14:00) 사전보고**: `@submission/_drafts/속도는벡터_5_22_박광현미팅_사전보고_20260520_2355.md` (placeholder = 측정 결과 자리, 다음 세션 채움).
-- **carry 정본**: 보고서 _171521 compact 15p · PoC 1·2·3 (DEEP sf=10 20 cell) · 3-7× · 94.9% (148/156) · 13/168 · 89.1% · 중앙값 −4.38% · model3 condition 0.00% p=0.866 · plan_signature 1-tuple · Q9 sel=0.1 honest exception · v2 PPTX ship-ready.
-- **★ 2026-05-20 교수님 수업 공지 (정본)**: `@_internal/state/캡스톤_교수님공지_20260520.md` — 전시회 6/5 금 정정·세미나/상호평가 일정 5건 신규 + 보고서 10 항목·발표 4 구조·포스터·영상 지적 사항 verbatim + 우리 작업물 영향 (Phase 2·3·4 자체 검증 점검 리스트)
-- **★ 6/11 최종 보고서 신본 (정본 = compact 15p, PoC 실측 반영)**: `@submission/_drafts/속도는벡터_6_11_최종보고서_20260520_171521.md` (+ `.pdf` 15p · `.docx`) — 정본 17/17 + 교수님 12/12 + PoC 실측 정량 충족. readable 24p 는 `_171521_readable.pdf` (내부 검토). 직전 _162500 (48p)·_144446·_124200 본은 carry.
-- **★ Phase 6 §6.4 PoC 산출 (신규)**: `@_internal/scripts/stats_poc_6_4.py` (~370줄) + `@_internal/cache/rq3/latency/poc_6_4/` (5 CSV + summary.md) + `@experiments/figures/보고서_6_11/poc_6_4/{fig_plan_level_g,fig_variance_decomp}.{png,pdf}` (2 figure pair)
-- **★ md2pdf 2 버전**: `@_internal/scripts/md2pdf.py` (compact 제출용 default — margin 11/12mm·font 9.8pt·H2 자연 흐름·subsection-keep auto) + `@_internal/scripts/md2pdf_readable.py` (readable 내부 검토 — margin 18mm·font 10.5pt·H2 break·**output filename fix 5/20 18:56**: `_readable.pdf` 로 분리 출력)
-- **★ analyze_latency.py figure 한글 폰트 fix**: matplotlib rcParams font.family = Apple SD Gothic Neo·NanumGothic·AppleGothic·DejaVu Sans 명시. `experiments/figures/보고서_6_11/fig5_{2,3}_*.{png,pdf}` 재 생성 — 한글 정상.
-- **본 연구 narrative (발표·보고서 공통 base)**: `@submission/_drafts/속도는벡터_본연구_narrative_20260518_175437.md` (논문 재현 아님 — sample selection 단계 개입의 전 변인 검증; 3-way B1/CaseA/CaseB)
-- **측정 portfolio + 분석 (v13 정본 — 3-way matched 1508 측정)**: 수치 정본 `@_internal/cache/rq3/v13_summary.md` · 종합 보고서 `@experiments/results/raw/REPORT_분석/REPORT_paper_exact_v13.md` · raw `@_internal/cache/rq3/aggregated_v13_full.parquet`
-- **발표 deck (19장, 5/22 교수님 미팅·5/27 발표)**: `@submission/_drafts/속도는벡터_최종발표_슬라이드_20260519_223845.pptx` — 슬라이드2복원본 19장 전수 검증·커밋 완료(82f5eca)
-- **5/28 전시 포스터·팜플렛·소개영상 (223845 검증 완료)**: `@submission/_drafts/속도는벡터_포스터_20260519_223845.pdf` · `@submission/_drafts/속도는벡터_팜플렛_20260519_223845.pdf` · `@submission/_drafts/속도는벡터_소개영상_슬라이드_20260519_223845.pptx`
-- **6/11 학교 표지·소종 요약본 ([팀 기입] 완료)**: 내용 시트 `@submission/_drafts/속도는벡터_표지_소종요약본_내용_20260519_151358.md` (+ `.pdf`) · .hwpx 2종(표지·소종 요약본, 같은 타임코드)
-- **발표물 claude.ai/design 프롬프트**: 생성 4종(191338) · 수정 4종(211800) · deck 슬라이드2복원 `@submission/_drafts/속도는벡터_발표deck_claudedesign_슬라이드2복원_20260519_225132.md` — 모두 `submission/_drafts/`
-- **핵심 일정** (학기 전체): `@_internal/state/_schedule.md`
-- **registry**: METHOD `@_internal/METHOD_REGISTRY.md` · SERVER `@_internal/SERVER_REGISTRY.md` (EXPERIMENT_REGISTRY 는 5/19 archive — 측정 정본은 v13_summary·REPORT v13)
-- **handoff 이력** (v0~v37 + 타임코드): `@_internal/handoff/archive/`
+- **★ 새 세션 진입 anchor (0% loss)**: `@_internal/handoff/active/handoff_20260610_175500_프로젝트총정리_트리거대기.md` — 산출 작업 사실상 종결. **남은 트리거 2**(카톡 요청 오면 착수, 그 외 작업 벌이지 않음): ① 최종보고서 수정 요청(박세은이 172500본 기반 수정→인간 검수 진행 중) ② 산학멘토링 결과보고서(hwp 2p 요약, **6/11 목 23:59**, 강재현 담당·클로드 지원 제안됨, 박세은 초안.hwp 카톡 6/9).
+- **★ 최종보고서 현행 base**: `submission/_drafts/속도는벡터_최종보고서_초안_20260610_172500.{md,docx,pdf}` (12p — 박세은 초초안 흐름 채움본, Codex spark 적대검증 합격 + fresh 게이트 합격, 6/10 17:34 카톡 전달). 기술 정본(수치 풀버전) = `submission/_drafts/속도는벡터_6_11_최종보고서_20260523_215000.md` — ⚠️ 인용 시 **오기 3건 정정 적용** (6/10 데이터 역산 확정): DEEP **96차원**(256 아님) · 엔진 partsupp sf10 = **800만 행**(8천만 아님) · 오프라인 sf1/10/100 = **80만/800만/8,000만 행**(Type표 0.1M/1M/10M은 8× 축소 오기).
+- **★ 정직한 프레이밍 의무 (5/23 감사 평결)**: 결합 89.1%(중앙값 −4.38%) 우위 = 두 독립 추정량 평균(앙상블) 효과 — 분포 인지 고유 기여 없음(통제군 CaseC가 결합을 95/95 −5.98% 이김) · latency 는 주입 variant 간 무개선(주입 자체는 기본 엔진 대비 평균 5.67×·plan 회복 94.9% vs 58%). "분포 인지가 개선했다" 단독 서사 금지. method 명칭 = 5/24 audit 정정명칭(pca2d_hilbert_xy2d 등).
+- **수치 정본**: v13 1,508건 `@_internal/cache/rq3/v13_summary.md` · 엔진 추정 `_internal/cache/rq3/latency/estimates_DEEP_sf10.parquet` · latency 12 cell `_internal/cache/rq3/latency/phase2/` · 통제(CaseC) v14/v16 = 5/23 보고서 §4.2.1·§4.2.3. 보고서 그림+베이스 CSV = `experiments/figures/보고서_6_11/team_20260610/` (생성 스크립트 `_internal/scripts/build_team_report_figs_20260610.py`).
+- **제출 완료 (동결)**: `submission/제출완료/` — 포스터·1~4차 자문내역서·참여도조사 등. 산학 4차 자문내역서·컨택내역 = 6/9 LearnUs 제출 완료.
+- **기록**: 카톡·산학멘토링 3·4차 메일 스레드 = `_internal/records/kakaotalk/20260610_*.md`. 6/10 이전 발표·소개영상·QnA 산출물 일괄 아카이브 = `submission/_drafts/archive/2026_06_10_cleanup/` (소개영상 mp4 = git 미추적 유지).
+- **도구**: md→pdf = `python3 _internal/scripts/md2pdf.py <md>` (compact 제출용) · md→docx = `pandoc <md> --resource-path="submission/_drafts" -o <docx>` · hwp = hwpx/hwp MCP.
+- **핵심 일정**: `@_internal/state/_schedule.md` — 남은 마감 = 6/11 최종보고서 + 산학멘토링 결과보고서 (이후 학기 종료).
+- **registry**: METHOD `@_internal/METHOD_REGISTRY.md` (⚠️ 5/11본 — method 명칭은 5/24 audit 정정이 우선) · SERVER `@_internal/SERVER_REGISTRY.md`
+- **handoff 이력**: `@_internal/handoff/archive/`
 
 ## 연구 구조 (RQ + 측정)
 
